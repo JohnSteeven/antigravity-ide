@@ -1,0 +1,56 @@
+{
+  "name": "article167",
+  "version": "1.0.0",
+  "description": "article",
+  "scripts": {
+    "start": "parcel index.html",
+    "server": "node server/index.js",
+    "dev:server": "node server/index.js",
+    "build": "parcel build index.html",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnSteeven/STEEVENWRITES.git"
+  },
+  "keywords": [
+    "LIFE",
+    "INCIDENTS",
+    "ABOUTME"
+  ],
+  "author": "NOBLE JOHN STEEVEN",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JohnSteeven/STEEVENWRITES/issues"
+  },
+  "homepage": "https://github.com/JohnSteeven/STEEVENWRITES#readme",
+  "devDependencies": {
+    "parcel": "^2.16.4"
+  },
+  "browserslist": [
+    "last 1 Chrome version",
+    "last 1 Safari version",
+    "last 1 Firefox version",
+    "last 1 Edge version"
+  ],
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
+    "framer-motion": "^12.42.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "nodemailer": "^9.0.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-icons": "^5.6.0",
+    "react-router-dom": "^6.30.1",
+    "sanitize-html": "^2.14.0",
+    "twilio": "^5.4.0"
+  }
+}
