@@ -22,6 +22,14 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ message: "User no longer exists." });
     }
 
+    if (user.status !== "ACTIVE") {
+      return res.status(403).json({ message: `Account is ${user.status.toLowerCase().replace(/_/g, " ")}.` });
+    }
+
+    if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({ message: "Session expired or terminated. Please login again." });
+    }
+
     req.user = user;
     next();
   } catch (error) {

@@ -17,11 +17,17 @@ const notFound = (req, res) => {
 
 const errorHandler = (error, req, res, next) => {
   const status = error.status || 500;
+  
+  if (status === 500) {
+    console.error(`[ERROR] Internal Server Error:`, error.stack || error);
+  }
+
   res.status(status).json({
     message:
       status === 500
         ? "Something went wrong. Please try again."
         : error.message,
+    errors: error.errors || [],
   });
 };
 

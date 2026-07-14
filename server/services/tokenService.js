@@ -12,6 +12,7 @@ const signAccessToken = (user) =>
     {
       sub: user._id.toString(),
       role: user.role,
+      tokenVersion: user.tokenVersion || 0,
     },
     env.jwtAccessSecret,
     { expiresIn: env.accessTokenTtl }

@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/JohnSteeven/STEEVENWRITES#readme",
   "devDependencies": {
+    "http-proxy-middleware": "^4.2.0",
     "parcel": "^2.16.4"
   },
   "browserslist": [
@@ -45,6 +46,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
+    "multer": "^2.2.0",
     "nodemailer": "^9.0.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

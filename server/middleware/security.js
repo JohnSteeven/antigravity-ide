@@ -3,31 +3,65 @@ const rateLimit = require("express-rate-limit");
 const sanitizeHtml = require("sanitize-html");
 const env = require("../config/env");
 
-const sanitizeValue = (value) => {
+// Fields that contain intentional HTML — must not be stripped
+const HTML_FIELDS = new Set(["body", "contentHtml", "description"]);
+
+// Allowed HTML for rich-text article content
+const ARTICLE_HTML_OPTIONS = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "img", "figure", "figcaption",
+    "iframe", "video", "audio", "source",
+    "blockquote", "pre", "code",
+    "table", "thead", "tbody", "tr", "th", "td",
+    "details", "summary",
+  ]),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    "*": ["class", "id", "style"],
+    a: ["href", "name", "target", "rel"],
+    img: ["src", "alt", "width", "height", "loading"],
+    iframe: ["src", "width", "height", "frameborder", "allowfullscreen", "allow"],
+    video: ["src", "controls", "width", "height", "poster"],
+    audio: ["src", "controls"],
+    source: ["src", "type"],
+  },
+  allowedSchemes: ["http", "https", "data"],
+};
+
+const sanitizePlainText = (value) => {
   if (typeof value === "string") {
+    // Only strip NoSQL injection operators; allow normal text/HTML through plain fields
     return sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
   }
-
-  if (Array.isArray(value)) {
-    return value.map(sanitizeValue);
-  }
-
+  if (Array.isArray(value)) return value.map(sanitizePlainText);
   if (value && typeof value === "object") {
     return Object.keys(value).reduce((acc, key) => {
       if (!key.startsWith("$") && !key.includes(".")) {
-        acc[key] = sanitizeValue(value[key]);
+        acc[key] = sanitizePlainText(value[key]);
       }
       return acc;
     }, {});
   }
-
   return value;
 };
 
 const sanitizeRequest = (req, res, next) => {
-  req.body = sanitizeValue(req.body);
-  req.params = sanitizeValue(req.params);
-  req.query = sanitizeValue(req.query);
+  if (req.body && typeof req.body === "object") {
+    const sanitized = {};
+    for (const [key, value] of Object.entries(req.body)) {
+      if (key.startsWith("$") || key.includes(".")) continue; // block NoSQL injection
+      if (HTML_FIELDS.has(key) && typeof value === "string") {
+        // Preserve HTML for rich content fields
+        sanitized[key] = sanitizeHtml(value, ARTICLE_HTML_OPTIONS);
+      } else {
+        sanitized[key] = sanitizePlainText(value);
+      }
+    }
+    req.body = sanitized;
+  }
+  req.params = sanitizePlainText(req.params);
+  req.query = sanitizePlainText(req.query);
   next();
 };
 

@@ -27,14 +27,14 @@ const ExploreCategories = () => {
       <h2 className="categories-heading">Explore by Category</h2>
 
       <div className="categories-grid">
-        {data.categories.map((category) => (
+        {data.categories.filter((c) => !c.isDeleted && c.isActive !== false).map((category) => (
           <Link
             className="category-item"
             key={category.id}
             to={`/category/${category.slug}`}
           >
             <div className="category-icon">
-              {iconMap[category.icon] || <FiBookOpen />}
+               {iconMap[category.icon] || <FiBookOpen />}
             </div>
 
             <span className="category-name">{category.name}</span>

@@ -122,9 +122,10 @@ const appRouter = createBrowserRouter([
         element: <ReadMyStory />,
       },
       {
+        // Admin-only: requires login + role === admin
         path: "cms",
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <AdminDashboard />
           </ProtectedRoute>
         ),

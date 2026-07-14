@@ -1,18 +1,22 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FiFilter, FiSearch } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
+import { articleApi } from "../services/apiService";
 import ArticlesCard from "./ArticlesCard";
 
-const sortArticles = (articles, sort) => {
+const INITIAL_VISIBLE = 6;
+const LOAD_MORE_COUNT = 6;
+
+const sortArticlesLocal = (articles, sort) => {
   const sorted = [...articles];
 
   if (sort === "popular") {
-    return sorted.sort((a, b) => b.likes + b.views - (a.likes + a.views));
+    return sorted.sort((a, b) => (b.likes || 0) + (b.views || 0) - ((a.likes || 0) + (a.views || 0)));
   }
 
   if (sort === "rated") {
-    return sorted.sort((a, b) => b.rating - a.rating);
+    return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   }
 
   if (sort === "oldest") {
@@ -26,32 +30,69 @@ const ArticlesPage = () => {
   const { data } = useCms();
   const [searchParams] = useSearchParams();
   const showFeatured = searchParams.get("featured") === "true";
+
+  const [allArticles, setAllArticles] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [tag, setTag] = useState("all");
   const [sort, setSort] = useState("latest");
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
+  // Fetch ALL published articles from the API
+  const fetchArticles = useCallback(() => {
+    setLoading(true);
+
+    const params = { status: "published", limit: 50 };
+    if (showFeatured) params.featured = "true";
+
+    articleApi
+      .list(params)
+      .then((res) => {
+        if (Array.isArray(res.articles)) {
+          setAllArticles(res.articles);
+        }
+      })
+      .catch(() => {
+        // API unavailable — fall back to CmsContext
+        setAllArticles(null);
+      })
+      .finally(() => setLoading(false));
+  }, [showFeatured]);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
+
+  // Source data: prefer API, fall back to CmsContext
+  const sourceArticles = useMemo(() => {
+    if (allArticles) return allArticles;
+    return data.articles.filter((a) => a.status === "published");
+  }, [allArticles, data.articles]);
+
+  // Collect unique tags from available articles
   const tags = useMemo(
-    () => [...new Set(data.articles.flatMap((article) => article.tags))],
-    [data.articles]
+    () => [...new Set(sourceArticles.flatMap((a) => a.tags || []))].sort(),
+    [sourceArticles]
   );
 
+  // Client-side filtering (search, category, tag) + sorting
   const filteredArticles = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const publicArticles = data.articles.filter(
-      (article) => article.status === "published"
-    );
 
-    const filtered = publicArticles.filter((article) => {
+    const filtered = sourceArticles.filter((article) => {
       const matchesFeatured =
-        !showFeatured || (article.featured && article.rating >= 3.5);
-      const matchesCategory =
-        category === "all" || article.category.toLowerCase() === category;
-      const matchesTag = tag === "all" || article.tags.includes(tag);
+        !showFeatured || ((article.isFeatured || article.featured) && (article.rating || 0) >= 3.5);
+
+      const articleCategory = (article.category || "").toLowerCase();
+      const matchesCategory = category === "all" || articleCategory === category;
+
+      const articleTags = article.tags || [];
+      const matchesTag = tag === "all" || articleTags.includes(tag);
+
       const matchesSearch =
         !normalizedQuery ||
-        [article.title, article.description, article.category, ...article.tags]
+        [article.title, article.description, article.category, ...(article.tags || [])]
           .join(" ")
           .toLowerCase()
           .includes(normalizedQuery);
@@ -59,8 +100,8 @@ const ArticlesPage = () => {
       return matchesFeatured && matchesCategory && matchesTag && matchesSearch;
     });
 
-    return sortArticles(filtered, sort);
-  }, [category, data.articles, query, showFeatured, sort, tag]);
+    return sortArticlesLocal(filtered, sort);
+  }, [category, sourceArticles, query, showFeatured, sort, tag]);
 
   return (
     <main className="listing-page">
@@ -79,7 +120,7 @@ const ArticlesPage = () => {
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
-              setVisibleCount(6);
+              setVisibleCount(INITIAL_VISIBLE);
             }}
             placeholder="Search articles"
           />
@@ -91,7 +132,7 @@ const ArticlesPage = () => {
             value={category}
             onChange={(event) => {
               setCategory(event.target.value);
-              setVisibleCount(6);
+              setVisibleCount(INITIAL_VISIBLE);
             }}
           >
             <option value="all">All categories</option>
@@ -109,7 +150,7 @@ const ArticlesPage = () => {
             value={tag}
             onChange={(event) => {
               setTag(event.target.value);
-              setVisibleCount(6);
+              setVisibleCount(INITIAL_VISIBLE);
             }}
           >
             <option value="all">All tags</option>
@@ -135,11 +176,11 @@ const ArticlesPage = () => {
       <section className="articles-body listing-results">
         <div className="article-grid">
           {filteredArticles.slice(0, visibleCount).map((article) => (
-            <ArticlesCard articleData={article} key={article.id} />
+            <ArticlesCard articleData={article} key={article.id || article._id} />
           ))}
         </div>
 
-        {filteredArticles.length === 0 && (
+        {!loading && filteredArticles.length === 0 && (
           <p className="empty-state">No published articles match these filters.</p>
         )}
 
@@ -147,7 +188,7 @@ const ArticlesPage = () => {
           <button
             className="secondary-btn load-more-btn"
             type="button"
-            onClick={() => setVisibleCount((count) => count + 6)}
+            onClick={() => setVisibleCount((count) => count + LOAD_MORE_COUNT)}
           >
             Load More Articles
           </button>

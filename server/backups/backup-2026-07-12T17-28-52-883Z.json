@@ -1,0 +1,1031 @@
+{
+  "Article": [
+    {
+      "_id": "6a5361cef8aa38c957de12fa",
+      "title": "The Day I Learned To Start Again",
+      "slug": "the-day-i-learned-to-start-again",
+      "description": "A reflection on rebuilding confidence after a season that did not go as planned.",
+      "excerpt": "",
+      "body": "<h2>The quiet beginning</h2><p>Starting again rarely feels heroic at first. It usually feels small, private, and a little uncertain. But every meaningful change I have made began with one honest decision: I can still move.</p><blockquote>Progress became easier when I stopped demanding proof before I began.</blockquote><p>That lesson changed how I write, build, and show up for people. I learned to treat consistency as a kind of courage.</p>",
+      "coverImage": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [],
+      "videoUrl": "",
+      "audioUrl": "",
+      "pdfAttachment": "",
+      "status": "published",
+      "isFeatured": true,
+      "isMustRead": true,
+      "isTrending": true,
+      "isPinned": true,
+      "publishedAt": "2026-01-12T00:00:00.000Z",
+      "scheduledAt": null,
+      "readingTimeMin": 1,
+      "readingTime": "1 min read",
+      "author": "Noble John Steeven",
+      "category": "Lessons",
+      "subcategory": "Life Lessons",
+      "tags": [
+        "growth",
+        "reflection"
+      ],
+      "views": 1284,
+      "likes": 312,
+      "bookmarks": 74,
+      "rating": 4.8,
+      "seo": {
+        "title": "",
+        "description": "",
+        "keywords": [],
+        "canonicalUrl": "",
+        "openGraphImage": "",
+        "metaRobots": "index,follow"
+      },
+      "createdAt": "2026-07-12T09:43:42.842Z",
+      "updatedAt": "2026-07-12T09:43:42.842Z",
+      "categorySlug": "lessons",
+      "__v": 0
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12ff",
+      "title": "Finding Focus In A Noisy Season",
+      "slug": "finding-focus-in-a-noisy-season",
+      "description": "How I simplified my days, protected attention, and learned to finish what mattered.",
+      "excerpt": "",
+      "body": "<h2>Attention is a home</h2><p>When everything was asking for a response, I began by choosing what deserved one. Focus was not about doing more. It was about refusing to spend my best energy on every passing urgency.</p><p>I built a simple rule: one important task before noise. That small habit changed the shape of my mornings.</p>",
+      "coverImage": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [],
+      "videoUrl": "",
+      "audioUrl": "",
+      "pdfAttachment": "",
+      "status": "published",
+      "isFeatured": true,
+      "isMustRead": true,
+      "isTrending": false,
+      "isPinned": false,
+      "publishedAt": "2026-02-18T00:00:00.000Z",
+      "scheduledAt": null,
+      "readingTimeMin": 1,
+      "readingTime": "1 min read",
+      "author": "Noble John Steeven",
+      "category": "Life",
+      "subcategory": "Habits",
+      "tags": [
+        "focus",
+        "growth",
+        "life"
+      ],
+      "views": 940,
+      "likes": 201,
+      "bookmarks": 48,
+      "rating": 4.6,
+      "seo": {
+        "title": "",
+        "description": "",
+        "keywords": [],
+        "canonicalUrl": "",
+        "openGraphImage": "",
+        "metaRobots": "index,follow"
+      },
+      "createdAt": "2026-07-12T09:43:42.850Z",
+      "updatedAt": "2026-07-12T09:43:42.850Z",
+      "categorySlug": "life",
+      "__v": 0
+    },
+    {
+      "_id": "6a5361cef8aa38c957de1303",
+      "title": "What Travel Taught Me About Patience",
+      "slug": "what-travel-taught-me-about-patience",
+      "description": "A mountain trip, a missed plan, and the unexpected gift of slowing down.",
+      "excerpt": "",
+      "body": "<h2>Plans changed. The day opened.</h2><p>The best part of the trip began after the schedule failed. I stopped rushing from viewpoint to viewpoint and started noticing the road, the tea stalls, the weather, and the people.</p><p>Patience made the journey larger than the destination.</p>",
+      "coverImage": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [],
+      "videoUrl": "",
+      "audioUrl": "",
+      "pdfAttachment": "",
+      "status": "published",
+      "isFeatured": true,
+      "isMustRead": false,
+      "isTrending": true,
+      "isPinned": false,
+      "publishedAt": "2026-03-09T00:00:00.000Z",
+      "scheduledAt": null,
+      "readingTimeMin": 1,
+      "readingTime": "1 min read",
+      "author": "Noble John Steeven",
+      "category": "Travel",
+      "subcategory": "Trips",
+      "tags": [
+        "travel",
+        "reflection"
+      ],
+      "views": 721,
+      "likes": 155,
+      "bookmarks": 34,
+      "rating": 4.3,
+      "seo": {
+        "title": "",
+        "description": "",
+        "keywords": [],
+        "canonicalUrl": "",
+        "openGraphImage": "",
+        "metaRobots": "index,follow"
+      },
+      "createdAt": "2026-07-12T09:43:42.856Z",
+      "updatedAt": "2026-07-12T09:43:42.856Z",
+      "categorySlug": "travel",
+      "__v": 0
+    },
+    {
+      "_id": "6a5361cef8aa38c957de1305",
+      "title": "Building A Personal Blog With Purpose",
+      "slug": "building-a-personal-blog-with-purpose",
+      "description": "Notes from designing a writing space that feels personal, useful, and easy to maintain.",
+      "excerpt": "",
+      "body": "<h2>A site should feel like a room</h2><p>I wanted the blog to feel warm without becoming decorative, useful without losing personality, and structured without feeling heavy.</p><p>The real goal was simple: make publishing easier, so the writing has a place to live.</p>",
+      "coverImage": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [],
+      "videoUrl": "",
+      "audioUrl": "",
+      "pdfAttachment": "",
+      "status": "published",
+      "isFeatured": true,
+      "isMustRead": true,
+      "isTrending": true,
+      "isPinned": false,
+      "publishedAt": "2026-04-02T00:00:00.000Z",
+      "scheduledAt": null,
+      "readingTimeMin": 1,
+      "readingTime": "1 min read",
+      "author": "Noble John Steeven",
+      "category": "Coding",
+      "subcategory": "Projects",
+      "tags": [
+        "cms",
+        "work"
+      ],
+      "views": 1630,
+      "likes": 426,
+      "bookmarks": 119,
+      "rating": 4.9,
+      "seo": {
+        "title": "",
+        "description": "",
+        "keywords": [],
+        "canonicalUrl": "",
+        "openGraphImage": "",
+        "metaRobots": "index,follow"
+      },
+      "createdAt": "2026-07-12T09:43:42.858Z",
+      "updatedAt": "2026-07-12T09:43:42.858Z",
+      "categorySlug": "coding",
+      "__v": 0
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe91d",
+      "title": "The Art of Slow Living",
+      "slug": "slow-living-72629",
+      "description": "",
+      "excerpt": "",
+      "body": "<p>Live life fully and slowly.</p>",
+      "coverImage": "",
+      "gallery": [],
+      "videoUrl": "",
+      "audioUrl": "",
+      "pdfAttachment": "",
+      "status": "published",
+      "isFeatured": false,
+      "isMustRead": false,
+      "isTrending": false,
+      "isPinned": false,
+      "publishedAt": "2026-07-12T17:28:52.736Z",
+      "scheduledAt": null,
+      "readingTimeMin": 1,
+      "readingTime": "1 min read",
+      "author": "Admin Tester",
+      "category": "Life",
+      "categorySlug": "life",
+      "subcategory": "Personal Growth",
+      "tags": [
+        "mindfulness"
+      ],
+      "views": 0,
+      "likes": 0,
+      "bookmarks": 0,
+      "rating": 4,
+      "seo": {
+        "title": "",
+        "description": "",
+        "keywords": [],
+        "canonicalUrl": "",
+        "openGraphImage": "",
+        "metaRobots": "index,follow"
+      },
+      "isDeleted": false,
+      "deletedAt": null,
+      "createdBy": "6a53ced4b22f89a7c65fe8fa",
+      "updatedBy": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.742Z",
+      "updatedAt": "2026-07-12T17:28:52.781Z",
+      "__v": 0
+    }
+  ],
+  "Category": [
+    {
+      "_id": "6a5361cef8aa38c957de12e3",
+      "name": "Coding",
+      "slug": "coding",
+      "description": "Projects, technical updates, development logs.",
+      "longDescription": "Writing code is only half the work. Here, I write about the choices, challenges, and details that go into designing and building software. Expect development logs, notes on tools, and reflections on engineering.",
+      "icon": "code",
+      "heroImage": "",
+      "sortOrder": 1,
+      "isActive": true,
+      "subcategories": [],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.814Z",
+      "updatedAt": "2026-07-12T09:43:42.814Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12e4",
+      "name": "Lessons",
+      "slug": "lessons",
+      "description": "Reflections, growth notes, personal learning.",
+      "longDescription": "Some of the most important things we learn are not technical. These are reflections on starting again, protecting attention, working in teams, and building consistency over time.",
+      "icon": "award",
+      "heroImage": "",
+      "sortOrder": 2,
+      "isActive": true,
+      "subcategories": [],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.815Z",
+      "updatedAt": "2026-07-12T09:43:42.815Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12e5",
+      "name": "Travel",
+      "slug": "travel",
+      "description": "Journeys, places visited, memories.",
+      "longDescription": "Observations and stories from the road. Travel is a different way of paying attention, showing me how people live, work, and connect in different places.",
+      "icon": "send",
+      "heroImage": "",
+      "sortOrder": 3,
+      "isActive": true,
+      "subcategories": [],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.816Z",
+      "updatedAt": "2026-07-12T09:43:42.816Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12e6",
+      "name": "Reflections",
+      "slug": "reflections",
+      "description": "Daily thoughts, slow essays, observations.",
+      "longDescription": "Slower reflections on patience, focus, finishing well, and the quiet practices that make work and daily life sustainable.",
+      "icon": "feather",
+      "heroImage": "",
+      "sortOrder": 4,
+      "isActive": true,
+      "subcategories": [],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.816Z",
+      "updatedAt": "2026-07-12T09:43:42.816Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12e7",
+      "name": "Life",
+      "slug": "life",
+      "description": "General experiences, stories, memories.",
+      "longDescription": "Personal memories, incidental stories, and lessons from ordinary days that stayed with me.",
+      "icon": "heart",
+      "heroImage": "",
+      "sortOrder": 5,
+      "isActive": true,
+      "subcategories": [],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.816Z",
+      "updatedAt": "2026-07-12T09:43:42.816Z"
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe90c",
+      "name": "Life &amp; Reflection",
+      "slug": "life-reflection-72629",
+      "description": "Test description",
+      "longDescription": "",
+      "icon": "book",
+      "heroImage": "",
+      "sortOrder": 0,
+      "isActive": true,
+      "subcategories": [],
+      "isDeleted": false,
+      "deletedAt": null,
+      "createdBy": "6a53ced4b22f89a7c65fe8fa",
+      "updatedBy": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.676Z",
+      "updatedAt": "2026-07-12T17:28:52.676Z",
+      "__v": 0
+    }
+  ],
+  "SubCategory": [
+    {
+      "_id": "6a53ced4b22f89a7c65fe912",
+      "name": "Personal Growth",
+      "slug": "growth-72629",
+      "description": "",
+      "category": "6a53ced4b22f89a7c65fe90c",
+      "isDeleted": false,
+      "deletedAt": null,
+      "createdBy": "6a53ced4b22f89a7c65fe8fa",
+      "updatedBy": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.711Z",
+      "updatedAt": "2026-07-12T17:28:52.711Z",
+      "__v": 0
+    }
+  ],
+  "Tag": [
+    {
+      "_id": "6a5361cef8aa38c957de12e9",
+      "name": "growth",
+      "slug": "growth",
+      "description": "Personal development, maturity, and change.",
+      "color": "#426c67",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.828Z",
+      "updatedAt": "2026-07-12T09:43:42.828Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12ea",
+      "name": "reflection",
+      "slug": "reflection",
+      "description": "Thoughtful essays and slower observations.",
+      "color": "#8f6b48",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.829Z",
+      "updatedAt": "2026-07-12T09:43:42.829Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12eb",
+      "name": "travel",
+      "slug": "travel",
+      "description": "Trips, places, movement, and travel memories.",
+      "color": "#4d6478",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.829Z",
+      "updatedAt": "2026-07-12T09:43:42.829Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12ec",
+      "name": "cms",
+      "slug": "cms",
+      "description": "Content systems, publishing, and web tooling.",
+      "color": "#a85f49",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.829Z",
+      "updatedAt": "2026-07-12T09:43:42.829Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12ed",
+      "name": "focus",
+      "slug": "focus",
+      "description": "Attention, morning routines, and habits.",
+      "color": "#3d7a5a",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.829Z",
+      "updatedAt": "2026-07-12T09:43:42.829Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12ee",
+      "name": "work",
+      "slug": "work",
+      "description": "Teamwork, release engineering, and incident checklists.",
+      "color": "#6a518f",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.829Z",
+      "updatedAt": "2026-07-12T09:43:42.829Z"
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe917",
+      "name": "Mindfulness",
+      "slug": "mindfulness-72629",
+      "description": "",
+      "color": "#426c67",
+      "isDeleted": false,
+      "deletedAt": null,
+      "createdBy": "6a53ced4b22f89a7c65fe8fa",
+      "updatedBy": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.724Z",
+      "updatedAt": "2026-07-12T17:28:52.724Z",
+      "__v": 0
+    }
+  ],
+  "Setting": [
+    {
+      "_id": "6a5361cef8aa38c957de12f4",
+      "key": "site",
+      "value": {
+        "brand": "MyJourney",
+        "hero": {
+          "eyebrow": "Stories from a life in motion",
+          "title": "Stories, Thoughts & Experiences.",
+          "description": "A personal journal for honest lessons, meaningful projects, and moments that shaped the way I see the world.",
+          "primaryLabel": "Start Reading",
+          "secondaryLabel": "Read My Story",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80"
+        },
+        "storyIntro": {
+          "subtitle": "A place for stories",
+          "text": "This is my corner of the internet where I share life experiences, lessons, memorable incidents, and thoughts that shaped my journey.",
+          "cta": "Read My Story"
+        },
+        "quote": {
+          "text": "Life is not measured by the number of breaths we take, but by the moments that take our breath away.",
+          "author": "A reminder I keep close",
+          "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1800&q=80"
+        },
+        "footer": "Thank you for being a part of my journey. Let's grow, learn, and build meaningful things together.",
+        "socials": {
+          "instagram": "https://instagram.com",
+          "linkedin": "https://linkedin.com",
+          "twitter": "https://twitter.com",
+          "email": "mailto:hello@myjourney.com"
+        }
+      },
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.835Z",
+      "updatedAt": "2026-07-12T09:43:42.835Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12f5",
+      "key": "story",
+      "value": {
+        "hero": {
+          "title": "Read My Story",
+          "description": "Every experience, every lesson, and every moment has shaped who I am today. This is my journey.",
+          "image": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=80"
+        },
+        "about": {
+          "eyebrow": "About my journey",
+          "title": "It All Started With A Dream",
+          "text": "I have always been curious, passionate, and driven to learn new things. My journey has not been a straight path. It has been full of lessons, failures, growth, and unforgettable moments that shaped my purpose.",
+          "image": "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80"
+        },
+        "values": [
+          {
+            "title": "Authenticity",
+            "text": "Being real in everything I create and share."
+          },
+          {
+            "title": "Growth",
+            "text": "Learning, evolving, and improving daily."
+          },
+          {
+            "title": "Creativity",
+            "text": "Turning ideas into meaningful experiences."
+          },
+          {
+            "title": "Impact",
+            "text": "Creating work that inspires and helps."
+          }
+        ]
+      },
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.835Z",
+      "updatedAt": "2026-07-12T09:43:42.835Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12f6",
+      "key": "timeline",
+      "value": [
+        {
+          "id": "time-1",
+          "year": "2019",
+          "title": "The Beginning",
+          "description": "Every journey begins with a single step. Mine began with curiosity and a dream."
+        },
+        {
+          "id": "time-2",
+          "year": "2021",
+          "title": "The Growth",
+          "description": "Challenges came, lessons were learned, and I kept growing every day."
+        },
+        {
+          "id": "time-3",
+          "year": "2024",
+          "title": "The Purpose",
+          "description": "Today, I create, explore, and inspire through my work and stories."
+        }
+      ],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.835Z",
+      "updatedAt": "2026-07-12T09:43:42.835Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12f7",
+      "key": "projects",
+      "value": [
+        {
+          "id": "project-1",
+          "title": "Personal Blog",
+          "category": "Writing Platform",
+          "description": "A calm space for long-form stories, lessons, and reflections.",
+          "image": "https://images.unsplash.com/photo-1483058712412-4245e9b90334?auto=format&fit=crop&w=1200&q=80",
+          "status": "Live"
+        },
+        {
+          "id": "project-2",
+          "title": "Web Applications",
+          "category": "Full Stack",
+          "description": "Functional and modern apps built for real-world use.",
+          "image": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80",
+          "status": "Ongoing"
+        },
+        {
+          "id": "project-3",
+          "title": "Photography Journal",
+          "category": "Creative",
+          "description": "Capturing moments that speak beyond words.",
+          "image": "https://images.unsplash.com/photo-1495707902641-75cac588d2e9?auto=format&fit=crop&w=1200&q=80",
+          "status": "Curated"
+        },
+        {
+          "id": "project-4",
+          "title": "UI/UX Designs",
+          "category": "Design",
+          "description": "Thoughtful interfaces that stay readable and user-focused.",
+          "image": "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80",
+          "status": "Selected"
+        }
+      ],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.835Z",
+      "updatedAt": "2026-07-12T09:43:42.835Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12f8",
+      "key": "skills",
+      "value": [
+        {
+          "id": "skill-1",
+          "name": "Web Development",
+          "level": 90
+        },
+        {
+          "id": "skill-2",
+          "name": "UI/UX Design",
+          "level": 85
+        },
+        {
+          "id": "skill-3",
+          "name": "Photography",
+          "level": 75
+        },
+        {
+          "id": "skill-4",
+          "name": "Content Writing",
+          "level": 80
+        }
+      ],
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.835Z",
+      "updatedAt": "2026-07-12T09:43:42.835Z"
+    }
+  ],
+  "Comment": [
+    {
+      "_id": "6a5361cef8aa38c957de12fc",
+      "body": "This felt honest and useful. The part about consistency stayed with me.",
+      "status": "approved",
+      "articleId": "6a5361cef8aa38c957de12fa",
+      "authorName": "Ananya",
+      "parentId": null,
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.847Z",
+      "updatedAt": "2026-07-12T09:43:42.847Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12fd",
+      "body": "Please write more about rebuilding routines.",
+      "status": "pending",
+      "articleId": "6a5361cef8aa38c957de12fa",
+      "authorName": "Rahul",
+      "parentId": null,
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.847Z",
+      "updatedAt": "2026-07-12T09:43:42.847Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de1301",
+      "body": "The one-task-before-noise rule is simple enough to try tomorrow.",
+      "status": "approved",
+      "articleId": "6a5361cef8aa38c957de12ff",
+      "authorName": "Meera",
+      "parentId": null,
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.853Z",
+      "updatedAt": "2026-07-12T09:43:42.853Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de1307",
+      "body": "The room metaphor helped me think differently about personal websites.",
+      "status": "approved",
+      "articleId": "6a5361cef8aa38c957de1305",
+      "authorName": "Divya",
+      "parentId": null,
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.860Z",
+      "updatedAt": "2026-07-12T09:43:42.860Z"
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe927",
+      "body": "What a beautiful perspective!",
+      "status": "approved",
+      "articleId": "6a53ced4b22f89a7c65fe91d",
+      "authorId": "6a53ced4b22f89a7c65fe8fa",
+      "authorName": "Admin Tester",
+      "parentId": null,
+      "isDeleted": false,
+      "deletedAt": null,
+      "createdBy": "6a53ced4b22f89a7c65fe8fa",
+      "updatedBy": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.794Z",
+      "updatedAt": "2026-07-12T17:28:52.803Z",
+      "__v": 0
+    }
+  ],
+  "Subscriber": [
+    {
+      "_id": "6a5361cef8aa38c957de1309",
+      "email": "reader@myjourney.com",
+      "active": true,
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.861Z",
+      "updatedAt": "2026-07-12T09:43:42.861Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de130a",
+      "email": "hello@myjourney.com",
+      "active": true,
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.861Z",
+      "updatedAt": "2026-07-12T09:43:42.861Z"
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe930",
+      "email": "subscriber_72629@example.com",
+      "active": true,
+      "isDeleted": false,
+      "deletedAt": null,
+      "createdAt": "2026-07-12T17:28:52.823Z",
+      "updatedAt": "2026-07-12T17:28:52.823Z",
+      "__v": 0
+    }
+  ],
+  "User": [
+    {
+      "_id": "6a53cb8edfc9ea307ee69d23",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser_63778",
+      "email": "test_63778@example.com",
+      "countryCode": "+91",
+      "mobile": "+919876563778",
+      "passwordHash": "$2b$12$DhfxwLEdiEnT/9ZK6CPGM.iBs9mfkA2xFGSOqwHgOMXhfuGpiqnyu",
+      "role": "reader",
+      "verified": {
+        "email": false,
+        "mobile": false
+      },
+      "newsletter": false,
+      "provider": "password",
+      "failedLoginAttempts": 1,
+      "profile": {
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "coverImage": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
+        "bio": "Reader, builder, and collector of meaningful stories.",
+        "skills": [
+          "Reading",
+          "Writing",
+          "Reflection"
+        ],
+        "bookmarks": [],
+        "likedArticles": [],
+        "savedArticles": [],
+        "comments": []
+      },
+      "createdAt": "2026-07-12T17:14:54.127Z",
+      "updatedAt": "2026-07-12T17:14:55.045Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a53cba4dfc9ea307ee69d2b",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser_72679",
+      "email": "test_72679@example.com",
+      "countryCode": "+91",
+      "mobile": "+919876572679",
+      "passwordHash": "$2b$12$eyUVhyRaWxkalj0CSsm1rO1Zl0kM/tTAOPoZhy.QCvrYTudyjwk3q",
+      "role": "reader",
+      "verified": {
+        "email": false,
+        "mobile": false
+      },
+      "newsletter": false,
+      "provider": "password",
+      "failedLoginAttempts": 1,
+      "profile": {
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "coverImage": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
+        "bio": "Reader, builder, and collector of meaningful stories.",
+        "skills": [
+          "Reading",
+          "Writing",
+          "Reflection"
+        ],
+        "bookmarks": [],
+        "likedArticles": [],
+        "savedArticles": [],
+        "comments": []
+      },
+      "createdAt": "2026-07-12T17:15:16.912Z",
+      "updatedAt": "2026-07-12T17:15:18.058Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a53cbe7ef7774eb2183d448",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser_35524",
+      "email": "test_35524@example.com",
+      "countryCode": "+91",
+      "mobile": "+919876535524",
+      "passwordHash": "$2b$12$TxzNchCyaYGk1JeOsrbxmu1QzPmpkUi1/rwHO4UgsV9qb7CP5AfcC",
+      "role": "reader",
+      "verified": {
+        "email": false,
+        "mobile": false
+      },
+      "newsletter": false,
+      "provider": "password",
+      "failedLoginAttempts": 1,
+      "profile": {
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "coverImage": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
+        "bio": "Reader, builder, and collector of meaningful stories.",
+        "skills": [
+          "Reading",
+          "Writing",
+          "Reflection"
+        ],
+        "bookmarks": [],
+        "likedArticles": [],
+        "savedArticles": [],
+        "comments": []
+      },
+      "createdAt": "2026-07-12T17:16:23.043Z",
+      "updatedAt": "2026-07-12T17:16:23.411Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a53cbf5ef7774eb2183d454",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser_92666",
+      "email": "test_92666@example.com",
+      "countryCode": "+91",
+      "mobile": "+919876592666",
+      "passwordHash": "$2b$12$S0Sn/PKB4pPZjSy0U.Dc5uKZGrMzB51yE5HMC.5d9N343tZD.EAnK",
+      "role": "reader",
+      "verified": {
+        "email": true,
+        "mobile": false
+      },
+      "newsletter": false,
+      "provider": "password",
+      "failedLoginAttempts": 1,
+      "profile": {
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "coverImage": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
+        "bio": "Reader, builder, and collector of meaningful stories.",
+        "skills": [
+          "Reading",
+          "Writing",
+          "Reflection"
+        ],
+        "bookmarks": [],
+        "likedArticles": [],
+        "savedArticles": [],
+        "comments": []
+      },
+      "createdAt": "2026-07-12T17:16:37.027Z",
+      "updatedAt": "2026-07-12T17:16:37.481Z",
+      "__v": 0,
+      "lastLoginAt": "2026-07-12T17:16:37.199Z"
+    },
+    {
+      "_id": "6a53cbfcef7774eb2183d468",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser_44453",
+      "email": "test_44453@example.com",
+      "countryCode": "+91",
+      "mobile": "+919876544453",
+      "passwordHash": "$2b$12$Dy/W63S.zLClJ5cc/PDal.bkIYdwOaq3Ys6kuirFYKZcFbeCtcDGq",
+      "role": "reader",
+      "verified": {
+        "email": true,
+        "mobile": false
+      },
+      "newsletter": false,
+      "provider": "password",
+      "failedLoginAttempts": 1,
+      "profile": {
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "coverImage": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
+        "bio": "Reader, builder, and collector of meaningful stories.",
+        "skills": [
+          "Reading",
+          "Writing",
+          "Reflection"
+        ],
+        "bookmarks": [],
+        "likedArticles": [],
+        "savedArticles": [],
+        "comments": []
+      },
+      "createdAt": "2026-07-12T17:16:44.868Z",
+      "updatedAt": "2026-07-12T17:16:45.317Z",
+      "__v": 0,
+      "lastLoginAt": "2026-07-12T17:16:45.028Z"
+    },
+    {
+      "_id": "6a53cc0def7774eb2183d47c",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser_33986",
+      "email": "test_33986@example.com",
+      "countryCode": "+91",
+      "mobile": "+919876533986",
+      "passwordHash": "$2b$12$xn0bz53qZivDyf833rWkne2dA43YZvvMrhYi2BUcov4OoE.BQaQaC",
+      "role": "reader",
+      "verified": {
+        "email": true,
+        "mobile": false
+      },
+      "newsletter": false,
+      "provider": "password",
+      "failedLoginAttempts": 1,
+      "profile": {
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "coverImage": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
+        "bio": "Reader, builder, and collector of meaningful stories.",
+        "skills": [
+          "Reading",
+          "Writing",
+          "Reflection"
+        ],
+        "bookmarks": [],
+        "likedArticles": [],
+        "savedArticles": [],
+        "comments": []
+      },
+      "createdAt": "2026-07-12T17:17:01.627Z",
+      "updatedAt": "2026-07-12T17:17:02.330Z",
+      "__v": 0,
+      "lastLoginAt": "2026-07-12T17:17:02.065Z"
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe8fa",
+      "firstName": "Admin",
+      "lastName": "Tester",
+      "username": "admintester_72629",
+      "email": "admintester_72629@example.com",
+      "countryCode": "+91",
+      "mobile": "+919999972629",
+      "passwordHash": "$2b$12$nXkpJCDGXPd4K1fUZyW8quAg.UZIwojlBAF5qize94BgPWgCSWnWu",
+      "role": "admin",
+      "verified": {
+        "email": true,
+        "mobile": false
+      },
+      "newsletter": false,
+      "provider": "password",
+      "failedLoginAttempts": 0,
+      "profile": {
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "coverImage": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
+        "bio": "Reader, builder, and collector of meaningful stories.",
+        "skills": [
+          "Reading",
+          "Writing",
+          "Reflection"
+        ],
+        "bookmarks": [],
+        "likedArticles": [],
+        "savedArticles": [],
+        "comments": []
+      },
+      "createdAt": "2026-07-12T17:28:52.241Z",
+      "updatedAt": "2026-07-12T17:28:52.640Z",
+      "__v": 0,
+      "lastLoginAt": "2026-07-12T17:28:52.639Z"
+    }
+  ],
+  "Media": [
+    {
+      "_id": "6a5361cef8aa38c957de12f0",
+      "name": "Writing desk",
+      "fileName": "writing-desk.jpg",
+      "mimeType": "image/jpeg",
+      "type": "image",
+      "url": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80",
+      "provider": "local",
+      "folder": "Articles",
+      "alt": "Notebook and laptop on a writing desk",
+      "sizeBytes": 0,
+      "size": "420 KB",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.832Z",
+      "updatedAt": "2026-07-12T09:43:42.832Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12f1",
+      "name": "Mountain road",
+      "fileName": "mountain-road.jpg",
+      "mimeType": "image/jpeg",
+      "type": "image",
+      "url": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+      "provider": "local",
+      "folder": "Travel",
+      "alt": "Road through mountain landscape",
+      "sizeBytes": 0,
+      "size": "512 KB",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.832Z",
+      "updatedAt": "2026-07-12T09:43:42.832Z"
+    },
+    {
+      "_id": "6a5361cef8aa38c957de12f2",
+      "name": "Code workspace",
+      "fileName": "code-workspace.jpg",
+      "mimeType": "image/jpeg",
+      "type": "image",
+      "url": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80",
+      "provider": "local",
+      "folder": "Coding",
+      "alt": "Laptop showing code editor",
+      "sizeBytes": 0,
+      "size": "488 KB",
+      "__v": 0,
+      "createdAt": "2026-07-12T09:43:42.832Z",
+      "updatedAt": "2026-07-12T09:43:42.832Z"
+    }
+  ],
+  "ActivityLog": [
+    {
+      "_id": "6a53ced4b22f89a7c65fe90e",
+      "action": "category_create",
+      "description": "Created category \"Life &amp; Reflection\"",
+      "userId": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.680Z",
+      "updatedAt": "2026-07-12T17:28:52.680Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe914",
+      "action": "subcategory_create",
+      "description": "Created subcategory \"Personal Growth\"",
+      "userId": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.714Z",
+      "updatedAt": "2026-07-12T17:28:52.714Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe919",
+      "action": "tag_create",
+      "description": "Created tag \"Mindfulness\"",
+      "userId": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.726Z",
+      "updatedAt": "2026-07-12T17:28:52.726Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe91f",
+      "action": "article_create",
+      "description": "Created article \"The Art of Slow Living\"",
+      "userId": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.753Z",
+      "updatedAt": "2026-07-12T17:28:52.753Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a53ced4b22f89a7c65fe92b",
+      "action": "comment_update",
+      "description": "Updated comment status/body for ID: 6a53ced4b22f89a7c65fe927",
+      "userId": "6a53ced4b22f89a7c65fe8fa",
+      "createdAt": "2026-07-12T17:28:52.805Z",
+      "updatedAt": "2026-07-12T17:28:52.805Z",
+      "__v": 0
+    }
+  ]
+}

@@ -41,8 +41,6 @@ const readCookie = (name) => {
 };
 
 const getCsrfToken = async () => {
-  if (!AUTH_API_URL) return "";
-
   const cookieToken = readCookie("csrfToken");
   if (cookieToken) {
     csrfToken = decodeURIComponent(cookieToken);
@@ -52,7 +50,7 @@ const getCsrfToken = async () => {
   if (csrfToken) return csrfToken;
 
   if (!csrfTokenRequest) {
-    csrfTokenRequest = fetch(`${AUTH_API_URL}/api/auth/csrf-token`, {
+    csrfTokenRequest = fetch(`${AUTH_API_URL || ""}/api/auth/csrf-token`, {
       credentials: "include",
     })
       .then(async (response) => {
@@ -72,7 +70,7 @@ const getCsrfToken = async () => {
 };
 
 const apiRequest = async (path, options = {}) => {
-  if (!AUTH_API_URL) return null;
+  const baseUrl = AUTH_API_URL || "";
   const { headers: optionHeaders = {}, ...fetchOptions } = options;
   const method = String(options.method || "GET").toUpperCase();
   const headers = {
@@ -85,7 +83,7 @@ const apiRequest = async (path, options = {}) => {
     if (token) headers["x-csrf-token"] = token;
   }
 
-  const response = await fetch(`${AUTH_API_URL}${path}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     credentials: "include",
     ...fetchOptions,
     headers,
@@ -193,29 +191,46 @@ const createUserRecord = async (form) => {
 
 export const authService = {
   async getSession() {
-    let api = await apiRequest("/api/auth/me").catch(() => null);
+    try {
+      let api = await apiRequest("/api/auth/me").catch(() => null);
 
-    if (!api?.user) {
-      api = await apiRequest("/api/auth/refresh-token", { method: "POST" }).catch(
-        () => null
-      );
-    }
+      if (!api?.user) {
+        api = await apiRequest("/api/auth/refresh-token", { method: "POST" }).catch(
+          () => null
+        );
+      }
 
-    if (api?.user) {
-      return { session: api.session || { authenticated: true }, user: api.user };
+      if (api?.user) {
+        // Keep in sync with local storage for compat
+        const session = api.session || { authenticated: true };
+        writeStorage(AUTH_STORAGE_KEYS.session, {
+          userId: api.user.id || api.user._id,
+          accessToken: session.accessToken,
+          expiresAt: Date.now() + 1000 * 60 * 60 * 8,
+        });
+        return { session, user: api.user };
+      }
+    } catch (err) {
+      console.warn("Failed to get live session, checking storage:", err);
     }
 
     return getSessionWithUser();
   },
 
   async register(form) {
-    const api = await apiRequest("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(form),
-    });
+    // Attempt REST call first
+    try {
+      const api = await apiRequest("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+      if (api) return api;
+    } catch (err) {
+      // If server returned a validation error or conflict, throw it immediately
+      if (err.status) throw err;
+    }
 
-    if (api) return api;
-
+    // Storage fallback
     const users = getUsers();
     const normalizedEmail = normalizeIdentifier(form.email);
     const mobile = normalizeMobile(form.countryCode, form.mobile);
@@ -245,21 +260,26 @@ export const authService = {
   },
 
   async sendRegistrationOtp({ userId, channel }) {
+    try {
+      const dbUser = await userService.findById(userId);
+      const identifier = channel === "mobile" ? dbUser?.mobile : dbUser?.email;
+      const api = await apiRequest("/api/auth/send-otp", {
+        method: "POST",
+        body: JSON.stringify({
+          identifier,
+          channel,
+          purpose: VERIFICATION_PURPOSES.register,
+          userId,
+        }),
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
+
     const user = userService.findById(userId);
     if (!user) throw new Error("User not found.");
-
     const identifier = channel === "mobile" ? user.mobile : user.email;
-    const api = await apiRequest("/api/auth/send-otp", {
-      method: "POST",
-      body: JSON.stringify({
-        identifier,
-        channel,
-        purpose: VERIFICATION_PURPOSES.register,
-        userId,
-      }),
-    });
-
-    if (api) return api;
 
     return otpService.createChallenge({
       identifier,
@@ -270,12 +290,25 @@ export const authService = {
   },
 
   async verifyOtp({ challengeId, code, purpose }) {
-    const api = await apiRequest("/api/auth/verify-otp", {
-      method: "POST",
-      body: JSON.stringify({ challengeId, code, purpose }),
-    });
+    try {
+      const api = await apiRequest("/api/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({ challengeId, code, purpose }),
+      });
 
-    if (api) return api;
+      if (api) {
+        if (api.session) {
+          writeStorage(AUTH_STORAGE_KEYS.session, {
+            userId: api.user.id || api.user._id,
+            accessToken: api.session.accessToken,
+            expiresAt: Date.now() + 1000 * 60 * 60 * 8,
+          });
+        }
+        return api;
+      }
+    } catch (err) {
+      if (err.status) throw err;
+    }
 
     const challenge = otpService.verifyChallenge({ challengeId, code, purpose });
     const user = userService.findById(challenge.userId);
@@ -320,23 +353,39 @@ export const authService = {
   },
 
   async resendOtp({ challengeId }) {
-    const api = await apiRequest("/api/auth/resend-otp", {
-      method: "POST",
-      body: JSON.stringify({ challengeId }),
-    });
-
-    if (api) return api;
+    try {
+      const api = await apiRequest("/api/auth/resend-otp", {
+        method: "POST",
+        body: JSON.stringify({ challengeId }),
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
 
     return otpService.resendChallenge(challengeId);
   },
 
   async loginWithPassword({ identifier, password, remember }) {
-    const api = await apiRequest("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ identifier, password, remember }),
-    });
+    try {
+      const api = await apiRequest("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ identifier, password, remember }),
+      });
 
-    if (api) return api;
+      if (api) {
+        if (api.session) {
+          writeStorage(AUTH_STORAGE_KEYS.session, {
+            userId: api.user.id || api.user._id,
+            accessToken: api.session.accessToken,
+            expiresAt: Date.now() + 1000 * 60 * 60 * 8,
+          });
+        }
+        return api;
+      }
+    } catch (err) {
+      if (err.status) throw err;
+    }
 
     const user = userService.findByIdentifier(identifier);
 
@@ -350,22 +399,22 @@ export const authService = {
       throw error;
     }
 
-    const passwordHash = await hashPassword(password, user.passwordSalt);
+    const matches = user.passwordHash === (await hashPassword(password, user.passwordSalt));
 
-    if (passwordHash !== user.passwordHash) {
-      const failedLoginAttempts = Number(user.failedLoginAttempts || 0) + 1;
-      const lockUntil =
-        failedLoginAttempts >= 5 ? Date.now() + 15 * 60 * 1000 : user.lockUntil || null;
-
-      userService.replaceUser({
+    if (!matches) {
+      const updated = {
         ...user,
-        failedLoginAttempts,
-        lockUntil,
-        updatedAt: getToday(),
-      });
+        failedLoginAttempts: (user.failedLoginAttempts || 0) + 1,
+      };
+
+      if (updated.failedLoginAttempts >= 5) {
+        updated.lockUntil = Date.now() + 15 * 60 * 1000;
+      }
+
+      userService.replaceUser(updated);
 
       const error = new Error(
-        lockUntil ? "Too many failed attempts. Please try again later." : "Incorrect password."
+        updated.lockUntil ? "Too many failed attempts. Please try again later." : "Incorrect password."
       );
       error.code = "INCORRECT_PASSWORD";
       throw error;
@@ -375,39 +424,38 @@ export const authService = {
       throw new Error("Please verify your account before logging in.");
     }
 
-    const unlockedUser = {
+    const updatedUser = {
       ...user,
       failedLoginAttempts: 0,
       lockUntil: null,
-      updatedAt: getToday(),
+      lastLoginAt: getToday(),
     };
+    userService.replaceUser(updatedUser);
 
-    userService.replaceUser(unlockedUser);
-    const session = createSession(unlockedUser, remember);
+    const session = createSession(updatedUser, remember);
 
     return {
       session,
-      user: stripSensitiveUserFields(unlockedUser),
+      user: stripSensitiveUserFields(updatedUser),
       message: "Welcome back.",
     };
   },
 
   async requestLoginOtp({ identifier, channel }) {
-    const api = await apiRequest("/api/auth/login/otp/request", {
-      method: "POST",
-      body: JSON.stringify({ identifier, channel }),
-    });
-
-    if (api) return api;
+    try {
+      const api = await apiRequest("/api/auth/login/otp/request", {
+        method: "POST",
+        body: JSON.stringify({ identifier, channel }),
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
 
     const user = userService.findByIdentifier(identifier);
     if (!user) throw new Error("No account exists for this email or mobile number.");
 
     const target = channel === "mobile" ? user.mobile : user.email;
-
-    if (detectIdentifierType(target) === "unknown") {
-      throw new Error(`This account does not have a valid ${channel} contact.`);
-    }
 
     return otpService.createChallenge({
       identifier: target,
@@ -418,12 +466,15 @@ export const authService = {
   },
 
   async requestPasswordReset({ identifier, channel }) {
-    const api = await apiRequest("/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ identifier, channel }),
-    });
-
-    if (api) return api;
+    try {
+      const api = await apiRequest("/api/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ identifier, channel }),
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
 
     const user = userService.findByIdentifier(identifier);
     if (!user) throw new Error("No account exists for this email or mobile number.");
@@ -439,12 +490,15 @@ export const authService = {
   },
 
   async resetPassword({ resetToken, password }) {
-    const api = await apiRequest("/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ resetToken, password }),
-    });
-
-    if (api) return api;
+    try {
+      const api = await apiRequest("/api/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ resetToken, password }),
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
 
     const resetState = readStorage(AUTH_STORAGE_KEYS.passwordReset, null);
 
@@ -517,12 +571,15 @@ export const authService = {
   },
 
   async updateProfile(userId, updates) {
-    const api = await apiRequest("/api/users/me", {
-      method: "PUT",
-      body: JSON.stringify(updates),
-    });
-
-    if (api) return api;
+    try {
+      const api = await apiRequest("/api/users/me", {
+        method: "PUT",
+        body: JSON.stringify(updates),
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
 
     const user = userService.updateProfile(userId, updates);
     return { user, message: "Profile updated successfully." };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { FiLogOut, FiMenu, FiX } from "react-icons/fi";
+import { FiLogIn, FiLogOut, FiMenu, FiX } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
 
@@ -103,20 +103,25 @@ const Header = () => {
             </button>
           </li>
           <li>
-            <NavLink to="/cms" onClick={() => setIsOpen(false)}>
-              CMS
-            </NavLink>
-          </li>
-          <li>
             <NavLink to="/profile" onClick={() => setIsOpen(false)}>
               Profile
             </NavLink>
           </li>
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <li>
               <button className="logout-nav-btn" type="button" onClick={handleLogout}>
                 <FiLogOut /> Logout
               </button>
+            </li>
+          ) : (
+            <li>
+              <NavLink
+                to="/login"
+                className={({ isActive }) => (isActive ? "active" : "")}
+                onClick={() => setIsOpen(false)}
+              >
+                <FiLogIn /> Login
+              </NavLink>
             </li>
           )}
         </ul>

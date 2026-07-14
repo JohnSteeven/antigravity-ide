@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FiInstagram, FiLinkedin, FiMail, FiTwitter } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
+import { useAuth } from "../hooks/useAuth";
 
 const Footer = () => {
   const { data, addSubscriber } = useCms();
+  const { user, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const socials = data.site.socials;
+  const isAdmin = isAuthenticated && user?.role === "admin";
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -79,11 +82,13 @@ const Footer = () => {
                 <Link to="/#contact">Contact</Link>
               </li>
               <li>
-                <Link to="/cms">CMS</Link>
-              </li>
-              <li>
                 <Link to="/profile">Profile</Link>
               </li>
+              {isAdmin && (
+                <li>
+                  <Link to="/cms">CMS Dashboard</Link>
+                </li>
+              )}
             </ul>
           </div>
 
