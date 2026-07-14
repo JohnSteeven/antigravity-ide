@@ -24,6 +24,15 @@ import RoleModule from "./cms/RoleModule";
 import PermissionModule from "./cms/PermissionModule";
 import ProfileModule from "./cms/ProfileModule";
 import ActivityLogModule from "./cms/ActivityLogModule";
+import SiteSettingsModule from "./cms/SiteSettingsModule";
+import NavigationModule from "./cms/NavigationModule";
+import HomepageModule from "./cms/HomepageModule";
+import FooterModule from "./cms/FooterModule";
+import TestimonialModule from "./cms/TestimonialModule";
+import GalleryModule from "./cms/GalleryModule";
+import NewsletterModule from "./cms/NewsletterModule";
+import ContactModule from "./cms/ContactModule";
+import BackupModule from "./cms/BackupModule";
 import CmsLayout from "./layout/CmsLayout";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -1569,21 +1578,32 @@ const AdminDashboard = () => {
         return <ActivityLogModule />;
 
       case "hero":
-        return (
-          <HeroManager
-            data={data}
-            updateSiteSection={updateSiteSection}
-            updateStorySection={updateStorySection}
-          />
-        );
-
       case "quotes":
-        return (
-          <QuoteManager
-            data={data}
-            updateSiteSection={updateSiteSection}
-          />
-        );
+        return <HomepageModule />;
+
+      case "navigation":
+        return <NavigationModule />;
+
+      case "footer":
+        return <FooterModule />;
+
+      case "testimonials":
+        return <TestimonialModule />;
+
+      case "gallery":
+        return <GalleryModule />;
+
+      case "newsletters":
+        return <NewsletterModule />;
+
+      case "contact":
+        return <ContactModule />;
+
+      case "backups":
+        return <BackupModule />;
+
+      case "settings":
+        return <SiteSettingsModule />;
 
       case "projects":
         return (
@@ -1636,15 +1656,6 @@ const AdminDashboard = () => {
               { name: "title", label: "Title" },
               { name: "description", label: "Description", type: "textarea" },
             ]}
-          />
-        );
-
-      case "settings":
-        return (
-          <SettingsManager
-            data={data}
-            updateSiteSection={updateSiteSection}
-            resetDemoData={resetDemoData}
           />
         );
 

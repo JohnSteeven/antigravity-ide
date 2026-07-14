@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.get("/", authenticate, requireAdmin, backupController.getBackups);
 router.post("/", authenticate, requireAdmin, backupController.triggerBackup);
+router.get("/:id/download", authenticate, requireAdmin, backupController.downloadBackup);
+router.post("/:id/restore", authenticate, requireAdmin, backupController.restoreBackup);
 router.delete("/:id", authenticate, requireAdmin, backupController.deleteBackup);
 
 module.exports = router;

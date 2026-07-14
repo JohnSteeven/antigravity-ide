@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { cmsSeed } from "../data/cmsSeed";
 import { categoryBlueprints } from "../domain/knowledgeArchitecture";
-import { articleApi, statsApi, categoryApi, subCategoryApi, tagApi, mediaApi, commentApi, userApi, roleApi, permissionApi } from "../services/apiService";
+import { articleApi, statsApi, categoryApi, subCategoryApi, tagApi, mediaApi, commentApi, userApi, roleApi, permissionApi, settingApi, backupApi, testimonialApi, galleryApi, newsletterCampaignApi, contactMessageApi } from "../services/apiService";
 
 const CmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-cms-data";
@@ -1271,6 +1271,263 @@ export const CmsProvider = ({ children }) => {
           return res;
         } catch (err) {
           console.error("Failed to fetch logs:", err);
+          throw err;
+        }
+      },
+
+      async getSetting(key) {
+        try {
+          const res = await settingApi.get(key);
+          return res.value;
+        } catch (err) {
+          console.error(`Failed to fetch setting "${key}":`, err);
+          return null;
+        }
+      },
+
+      async updateSetting(key, value) {
+        try {
+          const res = await settingApi.update(key, value);
+          setData((current) => ({
+            ...current,
+            [key]: value,
+          }));
+          return res.setting;
+        } catch (err) {
+          console.error(`Failed to update setting "${key}":`, err);
+          throw err;
+        }
+      },
+
+      async fetchTestimonials(params = {}) {
+        try {
+          const res = await testimonialApi.list(params);
+          return res;
+        } catch (err) {
+          console.error("Failed to fetch testimonials:", err);
+          throw err;
+        }
+      },
+
+      async saveTestimonial(testimonial) {
+        try {
+          const isEdit = !!(testimonial.id || testimonial._id);
+          let res;
+          if (isEdit) {
+            res = await testimonialApi.update(testimonial.id || testimonial._id, testimonial);
+          } else {
+            res = await testimonialApi.create(testimonial);
+          }
+          return res.testimonial;
+        } catch (err) {
+          console.error("Failed to save testimonial:", err);
+          throw err;
+        }
+      },
+
+      async deleteTestimonial(id) {
+        try {
+          await testimonialApi.delete(id);
+        } catch (err) {
+          console.error("Failed to delete testimonial:", err);
+          throw err;
+        }
+      },
+
+      async restoreTestimonial(id) {
+        try {
+          const res = await testimonialApi.restore(id);
+          return res.testimonial;
+        } catch (err) {
+          console.error("Failed to restore testimonial:", err);
+          throw err;
+        }
+      },
+
+      async fetchGallery(params = {}) {
+        try {
+          const res = await galleryApi.list(params);
+          return res;
+        } catch (err) {
+          console.error("Failed to fetch gallery:", err);
+          throw err;
+        }
+      },
+
+      async fetchGalleryAlbums() {
+        try {
+          const res = await galleryApi.albums();
+          return res.albums || [];
+        } catch (err) {
+          console.error("Failed to fetch gallery albums:", err);
+          throw err;
+        }
+      },
+
+      async saveGalleryItem(item) {
+        try {
+          const isEdit = !!(item.id || item._id);
+          let res;
+          if (isEdit) {
+            res = await galleryApi.update(item.id || item._id, item);
+          } else {
+            res = await galleryApi.create(item);
+          }
+          return res.file;
+        } catch (err) {
+          console.error("Failed to save gallery item:", err);
+          throw err;
+        }
+      },
+
+      async deleteGalleryItem(id) {
+        try {
+          await galleryApi.delete(id);
+        } catch (err) {
+          console.error("Failed to delete gallery item:", err);
+          throw err;
+        }
+      },
+
+      async restoreGalleryItem(id) {
+        try {
+          const res = await galleryApi.restore(id);
+          return res.file;
+        } catch (err) {
+          console.error("Failed to restore gallery item:", err);
+          throw err;
+        }
+      },
+
+      async fetchCampaigns(params = {}) {
+        try {
+          const res = await newsletterCampaignApi.list(params);
+          return res;
+        } catch (err) {
+          console.error("Failed to fetch newsletter campaigns:", err);
+          throw err;
+        }
+      },
+
+      async saveCampaign(campaign) {
+        try {
+          const isEdit = !!(campaign.id || campaign._id);
+          let res;
+          if (isEdit) {
+            res = await newsletterCampaignApi.update(campaign.id || campaign._id, campaign);
+          } else {
+            res = await newsletterCampaignApi.create(campaign);
+          }
+          return res.campaign;
+        } catch (err) {
+          console.error("Failed to save campaign:", err);
+          throw err;
+        }
+      },
+
+      async sendCampaign(id) {
+        try {
+          const res = await newsletterCampaignApi.send(id);
+          return res.campaign;
+        } catch (err) {
+          console.error("Failed to send campaign:", err);
+          throw err;
+        }
+      },
+
+      async deleteCampaign(id) {
+        try {
+          await newsletterCampaignApi.delete(id);
+        } catch (err) {
+          console.error("Failed to delete campaign:", err);
+          throw err;
+        }
+      },
+
+      async restoreCampaign(id) {
+        try {
+          const res = await newsletterCampaignApi.restore(id);
+          return res.campaign;
+        } catch (err) {
+          console.error("Failed to restore campaign:", err);
+          throw err;
+        }
+      },
+
+      async fetchContactMessages(params = {}) {
+        try {
+          const res = await contactMessageApi.list(params);
+          return res;
+        } catch (err) {
+          console.error("Failed to fetch contact messages:", err);
+          throw err;
+        }
+      },
+
+      async updateContactMessage(id, updates) {
+        try {
+          const res = await contactMessageApi.update(id, updates);
+          return res.message;
+        } catch (err) {
+          console.error("Failed to update contact message:", err);
+          throw err;
+        }
+      },
+
+      async deleteContactMessage(id) {
+        try {
+          await contactMessageApi.delete(id);
+        } catch (err) {
+          console.error("Failed to delete contact message:", err);
+          throw err;
+        }
+      },
+
+      async restoreContactMessage(id) {
+        try {
+          const res = await contactMessageApi.restore(id);
+          return res.message;
+        } catch (err) {
+          console.error("Failed to restore contact message:", err);
+          throw err;
+        }
+      },
+
+      async fetchBackups() {
+        try {
+          const res = await backupApi.list();
+          return res.backups || [];
+        } catch (err) {
+          console.error("Failed to fetch backups:", err);
+          throw err;
+        }
+      },
+
+      async triggerBackup() {
+        try {
+          const res = await backupApi.create();
+          return res.backup;
+        } catch (err) {
+          console.error("Failed to trigger backup:", err);
+          throw err;
+        }
+      },
+
+      async restoreBackup(id) {
+        try {
+          const res = await backupApi.restore(id);
+          return res.backup;
+        } catch (err) {
+          console.error("Failed to restore backup:", err);
+          throw err;
+        }
+      },
+
+      async deleteBackup(id) {
+        try {
+          await backupApi.delete(id);
+        } catch (err) {
+          console.error("Failed to delete backup:", err);
           throw err;
         }
       },

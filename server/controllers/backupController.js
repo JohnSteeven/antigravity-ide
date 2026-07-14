@@ -19,6 +19,26 @@ class BackupController {
     }
   }
 
+  async downloadBackup(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { filePath, fileName } = await backupService.getBackupFilePath(id);
+      res.download(filePath, fileName);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async restoreBackup(req, res, next) {
+    try {
+      const { id } = req.params;
+      const backup = await backupService.restoreBackup(id, req.user?._id);
+      res.json({ success: true, message: "Database restored successfully.", backup });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async deleteBackup(req, res, next) {
     try {
       const { id } = req.params;

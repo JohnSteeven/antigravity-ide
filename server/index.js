@@ -26,6 +26,10 @@ const activityLogRoutes = require("./routes/activityLogRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const roleRoutes = require("./routes/roleRoutes");
 const permissionRoutes = require("./routes/permissionRoutes");
+const testimonialRoutes = require("./routes/testimonialRoutes");
+const galleryRoutes = require("./routes/galleryRoutes");
+const newsletterCampaignRoutes = require("./routes/newsletterCampaignRoutes");
+const contactMessageRoutes = require("./routes/contactMessageRoutes");
 const path = require("path");
 
 const app = express();
@@ -72,6 +76,10 @@ app.use("/api/activity-logs", activityLogRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/permissions", permissionRoutes);
+app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/gallery", galleryRoutes);
+app.use("/api/newsletter-campaigns", newsletterCampaignRoutes);
+app.use("/api/contact-messages", contactMessageRoutes);
 
 // Serve uploads statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

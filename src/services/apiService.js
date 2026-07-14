@@ -242,7 +242,67 @@ export const settingApi = {
 export const backupApi = {
   list: () => get("/api/backups"),
   create: () => post("/api/backups", {}),
+  restore: (id) => post(`/api/backups/${id}/restore`, {}),
+  downloadUrl: (id) => `${API_BASE}/api/backups/${id}/download`,
   delete: (id) => del(`/api/backups/${id}`),
+};
+
+// ─── Testimonials ─────────────────────────────────────────────────────────────
+export const testimonialApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/testimonials${qs ? `?${qs}` : ""}`);
+  },
+  create: (payload) => post("/api/testimonials", payload),
+  update: (id, payload) => put(`/api/testimonials/${id}`, payload),
+  delete: (id) => del(`/api/testimonials/${id}`),
+  restore: (id) => post(`/api/testimonials/${id}/restore`, {}),
+};
+
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+export const galleryApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/gallery${qs ? `?${qs}` : ""}`);
+  },
+  create: (payload) => post("/api/gallery", payload),
+  update: (id, payload) => put(`/api/gallery/${id}`, payload),
+  delete: (id) => del(`/api/gallery/${id}`),
+  restore: (id) => post(`/api/gallery/${id}/restore`, {}),
+  albums: () => get("/api/gallery/albums"),
+};
+
+// ─── Newsletters ──────────────────────────────────────────────────────────────
+export const newsletterCampaignApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/newsletter-campaigns${qs ? `?${qs}` : ""}`);
+  },
+  create: (payload) => post("/api/newsletter-campaigns", payload),
+  update: (id, payload) => put(`/api/newsletter-campaigns/${id}`, payload),
+  send: (id) => post(`/api/newsletter-campaigns/${id}/send`, {}),
+  delete: (id) => del(`/api/newsletter-campaigns/${id}`),
+  restore: (id) => post(`/api/newsletter-campaigns/${id}/restore`, {}),
+};
+
+// ─── Contact Messages ─────────────────────────────────────────────────────────
+export const contactMessageApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/contact-messages${qs ? `?${qs}` : ""}`);
+  },
+  create: (payload) => post("/api/contact-messages", payload),
+  update: (id, payload) => put(`/api/contact-messages/${id}`, payload),
+  delete: (id) => del(`/api/contact-messages/${id}`),
+  restore: (id) => post(`/api/contact-messages/${id}/restore`, {}),
 };
 
 // ─── Logs & Activity ──────────────────────────────────────────────────────────

@@ -15,16 +15,35 @@ class BackupService {
       fs.mkdirSync(backupDir, { recursive: true });
     }
 
-    // 1. Gather all collections
-    const collections = ["Article", "Category", "SubCategory", "Tag", "Setting", "Comment", "Subscriber", "User", "Media", "ActivityLog"];
+    // Gather all collections including Phase 4E entities
+    const collections = [
+      "Article",
+      "Category",
+      "SubCategory",
+      "Tag",
+      "Setting",
+      "Comment",
+      "Subscriber",
+      "User",
+      "Media",
+      "ActivityLog",
+      "Testimonial",
+      "Gallery",
+      "ContactMessage",
+      "NewsletterCampaign"
+    ];
     const backupData = {};
     const recordCounts = {};
 
     for (const modelName of collections) {
-      const Model = mongoose.model(modelName);
-      const docs = await Model.find({}).lean();
-      backupData[modelName] = docs;
-      recordCounts[modelName.toLowerCase()] = docs.length;
+      try {
+        const Model = mongoose.model(modelName);
+        const docs = await Model.find({}).lean();
+        backupData[modelName] = docs;
+        recordCounts[modelName.toLowerCase()] = docs.length;
+      } catch (err) {
+        console.warn(`Skipping backup for collection ${modelName}: model not initialized or empty.`);
+      }
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -47,6 +66,54 @@ class BackupService {
       action: "backup_create",
       description: `Created database backup "${fileName}" (${size})`,
       userId,
+      module: "backup",
+    });
+
+    return backup;
+  }
+
+  async getBackupFilePath(id) {
+    const backup = await backupRepository.findById(id);
+    if (!backup) throw new Error("Backup record not found.");
+
+    const filePath = path.join(__dirname, "../backups", backup.fileName);
+    if (!fs.existsSync(filePath)) {
+      throw new Error("Backup file not found on disk.");
+    }
+    return { filePath, fileName: backup.fileName };
+  }
+
+  async restoreBackup(id, userId) {
+    const backup = await backupRepository.findById(id);
+    if (!backup) throw new Error("Backup record not found.");
+
+    const filePath = path.join(__dirname, "../backups", backup.fileName);
+    if (!fs.existsSync(filePath)) {
+      throw new Error("Backup file not found on disk.");
+    }
+
+    const rawData = fs.readFileSync(filePath, "utf8");
+    const backupData = JSON.parse(rawData);
+
+    // Restore collections by dropping existing and inserting many
+    for (const modelName of Object.keys(backupData)) {
+      try {
+        const Model = mongoose.model(modelName);
+        await Model.deleteMany({});
+        if (backupData[modelName] && backupData[modelName].length > 0) {
+          await Model.insertMany(backupData[modelName]);
+        }
+      } catch (err) {
+        console.error(`Error restoring collection ${modelName}:`, err);
+        throw new Error(`Failed to restore collection ${modelName}: ${err.message}`);
+      }
+    }
+
+    await activityLogRepository.create({
+      action: "backup_restore",
+      description: `Restored database to snapshot from "${backup.fileName}"`,
+      userId,
+      module: "backup",
     });
 
     return backup;
@@ -56,10 +123,20 @@ class BackupService {
     const backup = await backupRepository.softDelete(id);
     if (!backup) throw new Error("Backup log not found.");
 
+    const filePath = path.join(__dirname, "../backups", backup.fileName);
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.warn(`Could not delete backup file ${backup.fileName} from disk:`, err);
+      }
+    }
+
     await activityLogRepository.create({
       action: "backup_delete",
       description: `Deleted database backup record "${backup.fileName}"`,
       userId,
+      module: "backup",
     });
     return backup;
   }
