@@ -28,7 +28,7 @@ async function testEndpoint() {
     const csrfData = await csrfRes.json();
     const csrfToken = csrfData.csrfToken;
     const initialCookies = getCookiesString(Object.fromEntries(csrfRes.headers.entries()), csrfRes);
-    
+
     console.log("✓ CSRF Token retrieved successfully.");
     console.log(`  Token: ${csrfToken.substring(0, 10)}...`);
     console.log(`  Cookies: ${initialCookies}`);

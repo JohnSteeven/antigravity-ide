@@ -11,6 +11,23 @@ const API_BASE =
     ? process.env.PARCEL_API_URL
     : "";
 
+const REQUEST_TIMEOUT_MS = 8000;
+
+const fetchWithTimeout = async (url, options = {}) => {
+  if (typeof AbortController === "undefined") {
+    return fetch(url, options);
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...options, signal: options.signal || controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 // ─── CSRF ─────────────────────────────────────────────────────────────────────
 
 let _csrfToken = "";
@@ -34,7 +51,7 @@ const getCsrf = async () => {
   if (cookie) { _csrfToken = decodeURIComponent(cookie); return _csrfToken; }
   if (_csrfToken) return _csrfToken;
   if (!_csrfRequest) {
-    _csrfRequest = fetch(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" })
+    _csrfRequest = fetchWithTimeout(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" })
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         _csrfToken = d.csrfToken || readCookie("csrfToken") || "";
@@ -50,7 +67,7 @@ const getCsrf = async () => {
 const request = async (path, options = {}) => {
   const method = String(options.method || "GET").toUpperCase();
   const headers = { ...(options.headers || {}) };
-  
+
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = headers["Content-Type"] || "application/json";
   }
@@ -61,7 +78,7 @@ const request = async (path, options = {}) => {
   }
 
   const url = `${API_BASE}${path}`;
-  const response = await fetch(url, { credentials: "include", ...options, headers });
+  const response = await fetchWithTimeout(url, { credentials: "include", ...options, headers });
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {

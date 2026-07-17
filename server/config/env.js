@@ -26,7 +26,7 @@ const env = {
   accessTokenTtl: process.env.ACCESS_TOKEN_TTL || "15m",
   refreshTokenTtlDays: Number(process.env.REFRESH_TOKEN_TTL_DAYS || 30),
   cookieSecure: process.env.COOKIE_SECURE === "true",
-  csrfEnabled: process.env.CSRF_ENABLED === "true",
+  csrfEnabled: process.env.CSRF_ENABLED !== undefined ? process.env.CSRF_ENABLED === "true" : (process.env.NODE_ENV !== "development"),
   smsProvider: process.env.SMS_PROVIDER || "console",
   smtp: {
     host: process.env.SMTP_HOST,

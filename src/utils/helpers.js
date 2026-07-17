@@ -110,6 +110,17 @@ export const getProfileCover = (profile = {}) => {
   return coverImage && !isLegacyPlaceholderImage(coverImage) ? coverImage : "";
 };
 
+export const decodeHtmlEntities = (str) => {
+  if (!str || typeof str !== "string") return str;
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#x27;/g, "'");
+};
+
 export const toCsv = (items) => {
   if (!items.length) return "";
   const keys = Object.keys(items[0]);

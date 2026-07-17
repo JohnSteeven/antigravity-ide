@@ -27,6 +27,8 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { cmsNavigation } from "../../domain/knowledgeArchitecture";
+import { useCms } from "../../context/CmsContext";
+import { NavLink } from "react-router-dom";
 
 const iconMap = {
   activity: <FiActivity />,
@@ -67,6 +69,7 @@ const CmsLayout = ({
   children,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { syncStatus } = useCms();
 
   return (
     <main className={`cms-page ${isCollapsed ? "sidebar-collapsed" : ""}`}>
@@ -93,16 +96,16 @@ const CmsLayout = ({
           <div className="cms-nav-group" key={group.group}>
             <span>{group.group}</span>
             {group.items.map((item) => (
-              <button
-                className={activeTab === item.id ? "active" : ""}
-                type="button"
+              <NavLink
+                to={item.id === "overview" ? "/cms" : `/cms/${item.id}`}
+                className={({ isActive }) => isActive ? "active" : ""}
                 key={item.id}
-                onClick={() => onTabChange(item.id)}
                 title={item.label}
+                end={item.id === "overview"}
               >
                 {iconMap[item.icon] || <FiGrid />}
                 <span>{item.label}</span>
-              </button>
+              </NavLink>
             ))}
           </div>
         ))}
@@ -110,6 +113,24 @@ const CmsLayout = ({
     </aside>
 
     <section className="cms-workspace">
+      {syncStatus === "stale-fallback" && (
+        <div style={{
+          background: "#fff3cd",
+          color: "#856404",
+          border: "1px solid #ffeeba",
+          padding: "0.75rem 1.25rem",
+          margin: "1rem 1.5rem 0 1.5rem",
+          borderRadius: "0.25rem",
+          fontSize: "0.9rem",
+          fontWeight: "500",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem"
+        }}>
+          ⚠️ Offline Fallback: Server sync failed. Displaying cached data.
+        </div>
+      )}
+
       <header className="cms-header">
         <div>
           <span className="section-kicker">{headerKicker}</span>

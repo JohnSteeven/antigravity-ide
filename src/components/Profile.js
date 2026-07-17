@@ -116,8 +116,8 @@ const Profile = () => {
   return (
     <main className="profile-page account-profile-page">
       <section
-        className={`profile-hero account-profile-hero ${coverImage ? "has-cover" : ""}`}
-        style={coverImage ? { backgroundImage: `url("${coverImage}")` } : undefined}
+        className={`profile-hero account-profile-hero ${coverImage?.trim() ? "has-cover" : ""}`}
+        style={coverImage?.trim() ? { backgroundImage: `url("${coverImage}")` } : undefined}
       >
         <div className="profile-hero-overlay"></div>
         <div className="profile-hero-content account-profile-hero-content">

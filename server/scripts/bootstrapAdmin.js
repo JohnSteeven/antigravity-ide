@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 
 async function run() {
   console.log("Starting Admin Bootstrap Script...");
-  
+
   await connectDb();
   console.log("Connected to MongoDB.");
 
@@ -20,7 +20,7 @@ async function run() {
       console.log(`- Email: ${existingAdmin.email}`);
       console.log(`- Role: ${existingAdmin.role}`);
       console.log(`\nYou can log in with this email and its password.`);
-      
+
       // Let's also ensure it is verified & has admin role
       let changed = false;
       if (!existingAdmin.verified.email || !existingAdmin.verified.mobile) {

@@ -1648,7 +1648,8 @@ progress::-webkit-progress-value {
   text-transform: uppercase;
 }
 
-.cms-sidebar button {
+.cms-sidebar button,
+.cms-sidebar a {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -1658,10 +1659,13 @@ progress::-webkit-progress-value {
   background: transparent;
   color: #d7dedb;
   text-align: left;
+  text-decoration: none;
 }
 
 .cms-sidebar button.active,
-.cms-sidebar button:hover {
+.cms-sidebar button:hover,
+.cms-sidebar a.active,
+.cms-sidebar a:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
@@ -4541,32 +4545,38 @@ body.theme-dark .profile-identity-row span {
   gap: 7px;
 }
 
-.cms-sidebar button:not(.cms-sidebar-toggle) {
+.cms-sidebar button:not(.cms-sidebar-toggle),
+.cms-sidebar a:not(.cms-sidebar-toggle) {
   min-height: 42px;
   padding: 0 12px;
   border: 1px solid transparent;
   border-radius: 8px;
 }
 
-.cms-sidebar button:not(.cms-sidebar-toggle) svg {
+.cms-sidebar button:not(.cms-sidebar-toggle) svg,
+.cms-sidebar a:not(.cms-sidebar-toggle) svg {
   flex: 0 0 auto;
   font-size: 1rem;
 }
 
 .cms-sidebar button.active,
-.cms-sidebar button:hover {
+.cms-sidebar button:hover,
+.cms-sidebar a.active,
+.cms-sidebar a:hover {
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.12);
 }
 
 .cms-page.sidebar-collapsed .cms-brand div,
 .cms-page.sidebar-collapsed .cms-nav-group > span,
-.cms-page.sidebar-collapsed .cms-sidebar button span {
+.cms-page.sidebar-collapsed .cms-sidebar button span,
+.cms-page.sidebar-collapsed .cms-sidebar a span {
   display: none;
 }
 
 .cms-page.sidebar-collapsed .cms-brand,
-.cms-page.sidebar-collapsed .cms-sidebar button:not(.cms-sidebar-toggle) {
+.cms-page.sidebar-collapsed .cms-sidebar button:not(.cms-sidebar-toggle),
+.cms-page.sidebar-collapsed .cms-sidebar a:not(.cms-sidebar-toggle) {
   justify-content: center;
 }
 
@@ -4893,11 +4903,13 @@ body.theme-dark .media-grid article > button:last-child {
 
   .cms-page.sidebar-collapsed .cms-brand div,
   .cms-page.sidebar-collapsed .cms-nav-group > span,
-  .cms-page.sidebar-collapsed .cms-sidebar button span {
+  .cms-page.sidebar-collapsed .cms-sidebar button span,
+  .cms-page.sidebar-collapsed .cms-sidebar a span {
     display: block;
   }
 
-  .cms-page.sidebar-collapsed .cms-sidebar button span {
+  .cms-page.sidebar-collapsed .cms-sidebar button span,
+  .cms-page.sidebar-collapsed .cms-sidebar a span {
     display: inline;
   }
 

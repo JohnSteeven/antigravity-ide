@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { getCategoryBlueprint } from "../../domain/knowledgeArchitecture";
 import { useAuth } from "../../hooks/useAuth";
+import { decodeHtmlEntities } from "../../utils/helpers";
 import ArticlesCard from "../../components/ArticlesCard";
 import LoginRequiredModal from "../../components/LoginRequiredModal";
 import Breadcrumbs from "../../components/shared/Breadcrumbs";
@@ -75,7 +76,8 @@ const CategoryLanding = ({
   const sentinelRef = useRef(null);
 
   const blueprint = getCategoryBlueprint(category.slug) || {};
-  const categoryModel = {
+  const isLive = !!(category._id || (category.id && !String(category.id).startsWith("cat-")));
+  const categoryModel = isLive ? category : {
     ...blueprint,
     ...category,
     subcategories: category.subcategories?.length
@@ -240,14 +242,14 @@ const CategoryLanding = ({
     <main className={`category-detail-page ${isDarkMode ? "dark-mode" : ""}`}>
       <section
         className="category-detail-hero"
-        style={{ backgroundImage: `url("${categoryModel.heroImage}")` }}
+        style={categoryModel.heroImage?.trim() ? { backgroundImage: `url("${categoryModel.heroImage}")` } : undefined}
       >
         <div className="category-detail-overlay"></div>
         <div className="category-detail-hero-content">
-          <Breadcrumbs items={[{ label: "Categories", to: "/#categories" }, { label: categoryModel.name }]} />
+          <Breadcrumbs items={[{ label: "Categories", to: "/#categories" }, { label: decodeHtmlEntities(categoryModel.name) }]} />
           <span className="section-kicker">Category</span>
-          <h1>{categoryModel.name}</h1>
-          <p>{categoryModel.longDescription || categoryModel.description}</p>
+          <h1>{decodeHtmlEntities(categoryModel.name)}</h1>
+          <p>{decodeHtmlEntities(categoryModel.longDescription || categoryModel.description)}</p>
           <div className="category-hero-meta">
             <span>
               <FiTag /> {categoryModel.subcategories.length} topics
@@ -328,7 +330,7 @@ const CategoryLanding = ({
 
       {featuredArticle && (
         <section className="featured-category-article">
-          <img src={featuredArticle.coverImage} alt={featuredArticle.title} />
+          <img src={featuredArticle.coverImage?.trim() || undefined} alt={featuredArticle.title} />
           <div>
             <span className="section-kicker">Featured article</span>
             <h2>{featuredArticle.title}</h2>
@@ -397,7 +399,7 @@ const CategoryLanding = ({
             <>
               <div className="article-grid">
                 {filteredArticles.slice(0, visibleCount).map((article) => (
-                  <ArticlesCard articleData={article} key={article.id} />
+                  <ArticlesCard articleData={article} key={article.id || article._id} />
                 ))}
               </div>
               <div className="infinite-sentinel" ref={sentinelRef}>
@@ -419,7 +421,7 @@ const CategoryLanding = ({
             <span className="section-kicker">Most popular</span>
             <div className="popular-list">
               {popularArticles.map((article, index) => (
-                <Link to={`/articles/${article.slug}`} key={article.id}>
+                <Link to={`/articles/${article.slug}`} key={article.id || article._id || `popular-${index}`}>
                   <strong>{String(index + 1).padStart(2, "0")}</strong>
                   <span>{article.title}</span>
                   <small>
@@ -449,8 +451,8 @@ const CategoryLanding = ({
           <div className="category-side-panel">
             <span className="section-kicker">Comments</span>
             <div className="category-comment-list">
-              {recentComments.map((comment) => (
-                <Link to={`/articles/${comment.articleSlug}`} key={comment.id}>
+              {recentComments.map((comment, index) => (
+                <Link to={`/articles/${comment.articleSlug}`} key={comment.id || comment._id || `comment-${index}`}>
                   <strong>{comment.name}</strong>
                   <p>{comment.text}</p>
                   <span>{comment.articleTitle}</span>
@@ -469,13 +471,13 @@ const CategoryLanding = ({
         <h2>Keep Exploring</h2>
         <div className="related-link-list">
           {(relatedArticles.length ? relatedArticles : allCategories.slice(0, 3)).map(
-            (item) =>
+            (item, index) =>
               item.slug && item.title ? (
-                <Link to={`/articles/${item.slug}`} key={item.id}>
+                <Link to={`/articles/${item.slug}`} key={item.id || item._id || item.slug || index}>
                   {item.title}
                 </Link>
               ) : (
-                <Link to={`/category/${item.slug}`} key={item.id}>
+                <Link to={`/category/${item.slug}`} key={item.id || item._id || item.slug || index}>
                   {item.name}
                 </Link>
               )

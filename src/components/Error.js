@@ -2,6 +2,12 @@ import {Link, useRouteError} from 'react-router-dom'
 
 const Error = () => {
   const err = useRouteError();
+  const status = err?.status || err?.statusCode;
+  const message =
+    err?.statusText ||
+    err?.message ||
+    (typeof err === "string" ? err : "") ||
+    "Something went wrong";
 
   return (
     <div className="error-page">
@@ -10,7 +16,7 @@ const Error = () => {
       <h2>Something went wrong.</h2>
 
       <p>
-        {err?.status} : {err?.statusText}
+        {status ? `${status}: ${message}` : message}
       </p>
 
       <Link to="/">

@@ -15,6 +15,11 @@ export const AuthProvider = ({ children }) => {
       setUser(result.user);
       setSession(result.session);
       return result;
+    } catch (error) {
+      console.warn("Failed to refresh session", error);
+      setUser(null);
+      setSession(null);
+      return { user: null, session: null };
     } finally {
       setLoading(false);
     }

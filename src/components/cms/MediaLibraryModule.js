@@ -131,6 +131,7 @@ export default function MediaLibraryModule() {
 
   // Action: Copy URL
   const handleCopyUrl = (item) => {
+    if (!item?.url) return;
     const absoluteUrl = item.url.startsWith("http")
       ? item.url
       : `${window.location.protocol}//${window.location.hostname}:5000${item.url}`;
@@ -263,11 +264,15 @@ export default function MediaLibraryModule() {
           <div className="media-details-block" style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: "1px solid #ccc" }}>
             <h3>Selected Asset Details</h3>
             <div className="media-preview-container" style={{ textAlign: "center", marginBottom: "1rem" }}>
-              <img
-                src={selectedItem.url.startsWith("http") ? selectedItem.url : `${window.location.protocol}//${window.location.hostname}:5000${selectedItem.url}`}
-                alt={selectedItem.name}
-                style={{ maxWidth: "100%", maxHeight: "150px", objectFit: "contain", borderRadius: "8px" }}
-              />
+              {selectedItem?.url?.trim() ? (
+                <img
+                  src={selectedItem.url.startsWith("http") ? selectedItem.url : `${window.location.protocol}//${window.location.hostname}:5000${selectedItem.url}`}
+                  alt={selectedItem.name}
+                  style={{ maxWidth: "100%", maxHeight: "150px", objectFit: "contain", borderRadius: "8px" }}
+                />
+              ) : (
+                <div style={{ padding: "1rem", background: "#eee", borderRadius: "8px" }}>No Preview Available</div>
+              )}
             </div>
             
             <div className="form-grid one" style={{ gap: "1rem" }}>
@@ -325,8 +330,8 @@ export default function MediaLibraryModule() {
                 </button>
 
                 <a
-                  href={selectedItem.url.startsWith("http") ? selectedItem.url : `${window.location.protocol}//${window.location.hostname}:5000${selectedItem.url}`}
-                  download={selectedItem.originalName || "download"}
+                  href={(selectedItem?.url && typeof selectedItem.url === "string" && selectedItem.url.startsWith("http")) ? selectedItem.url : (selectedItem?.url ? `${window.location.protocol}//${window.location.hostname}:5000${selectedItem.url}` : "#")}
+                  download={selectedItem?.originalName || "download"}
                   target="_blank"
                   rel="noreferrer"
                   className="small-outline-btn"
@@ -445,9 +450,10 @@ export default function MediaLibraryModule() {
         ) : viewMode === "grid" ? (
           <div className="media-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "1rem" }}>
             {paginatedMedia.map((item) => {
-              const fileUrl = item.url.startsWith("http")
-                ? item.url
-                : `${window.location.protocol}//${window.location.hostname}:5000${item.url}`;
+              const hasUrl = item?.url && typeof item.url === "string" && item.url.trim();
+              const fileUrl = hasUrl
+                ? (item.url.startsWith("http") ? item.url : `${window.location.protocol}//${window.location.hostname}:5000${item.url}`)
+                : undefined;
               const isSelected = selectedItem && (selectedItem._id === item._id || selectedItem.id === item.id);
               
               return (
@@ -469,7 +475,7 @@ export default function MediaLibraryModule() {
                   }}
                 >
                   <div className="thumbnail-wrapper" style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9f9f9" }}>
-                    {item.mimeType?.startsWith("image/") ? (
+                    {item.mimeType?.startsWith("image/") && fileUrl ? (
                       <img src={fileUrl} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       <FiFolder size={32} />

@@ -33,6 +33,33 @@ class UserRepository {
     return User.create(data);
   }
 
+  async toggleArticleReference(userId, field, articleId) {
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found.");
+
+    if (!user.profile) {
+      user.profile = {
+        bio: "",
+        skills: [],
+        bookmarks: [],
+        likedArticles: [],
+        savedArticles: [],
+        comments: [],
+      };
+    }
+
+    const index = user.profile[field].indexOf(articleId);
+    let isAdded = false;
+    if (index === -1) {
+      user.profile[field].push(articleId);
+      isAdded = true;
+    } else {
+      user.profile[field].splice(index, 1);
+    }
+    await user.save();
+    return { user, isAdded };
+  }
+
   async update(id, updateData) {
     return User.findByIdAndUpdate(id, { $set: updateData }, { new: true });
   }

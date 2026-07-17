@@ -1,10 +1,9 @@
-const Permission = require("../models/Permission");
-const roleService = require("../services/roleService");
+const permissionService = require("../services/permissionService");
 
 class PermissionController {
   async getPermissions(req, res, next) {
     try {
-      const permissions = await Permission.find({}).sort({ module: 1, key: 1 }).lean();
+      const permissions = await permissionService.getPermissions();
       res.json({ success: true, permissions });
     } catch (err) {
       next(err);
@@ -19,7 +18,7 @@ class PermissionController {
         return res.status(400).json({ message: "Permissions must be an array of strings." });
       }
 
-      const role = await roleService.updateRole(roleId, { permissions }, req.user?._id);
+      const role = await permissionService.updateRolePermissions(roleId, permissions, req.user?._id);
       res.json({ success: true, role, message: "Permissions assigned to role successfully." });
     } catch (err) {
       next(err);

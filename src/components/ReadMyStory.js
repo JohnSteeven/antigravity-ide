@@ -10,7 +10,7 @@ const ReadMyStory = () => {
     <main className="story-page">
       <section
         className="story-hero"
-        style={{ backgroundImage: `url("${story.hero.image}")` }}
+        style={story?.hero?.image?.trim() ? { backgroundImage: `url("${story.hero.image}")` } : undefined}
       >
         <div className="story-hero-overlay"></div>
         <div className="story-hero-content">
@@ -24,7 +24,7 @@ const ReadMyStory = () => {
 
       <section className="story-intro-grid" id="journey">
         <div className="story-image-card">
-          <img src={story.about.image} alt={story.about.title} />
+          <img src={story?.about?.image?.trim() || undefined} alt={story?.about?.title} />
         </div>
 
         <div className="story-copy">
@@ -54,10 +54,10 @@ const ReadMyStory = () => {
 
         <aside
           className="story-quote-card"
-          style={{ backgroundImage: `url("${data.site.quote.image}")` }}
+          style={data?.site?.quote?.image?.trim() ? { backgroundImage: `url("${data.site.quote.image}")` } : undefined}
         >
           <span>"</span>
-          <p>{data.site.quote.text}</p>
+          <p>{data?.site?.quote?.text}</p>
         </aside>
       </section>
 
@@ -77,7 +77,7 @@ const ReadMyStory = () => {
         <div className="project-card-row">
           {projects.map((project) => (
             <article className="project-card" key={project.id}>
-              <img src={project.image} alt={project.title} />
+              <img src={project?.image?.trim() || undefined} alt={project.title} />
               <div>
                 <span>{project.category}</span>
                 <h3>{project.title}</h3>

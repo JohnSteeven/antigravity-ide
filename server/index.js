@@ -71,7 +71,6 @@ app.use("/api/subscribers", subscriberRoutes);
 app.use("/api/subcategories", subCategoryRoutes);
 app.use("/api/settings", settingRoutes);
 app.use("/api/backups", backupRoutes);
-app.use("/api/logs", activityLogRoutes);
 app.use("/api/activity-logs", activityLogRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/roles", roleRoutes);

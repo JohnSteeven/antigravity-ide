@@ -4,6 +4,7 @@
   "description": "article",
   "scripts": {
     "start": "parcel index.html",
+    "dev": "parcel index.html",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
     "build": "parcel build index.html",

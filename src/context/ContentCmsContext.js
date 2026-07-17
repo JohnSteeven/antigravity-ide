@@ -1,0 +1,433 @@
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { cmsSeed } from "../data/cmsSeed";
+import { articleApi, categoryApi, subCategoryApi, tagApi } from "../services/apiService";
+
+const ContentCmsContext = createContext(null);
+const STORAGE_KEY = "myjourney-content-data";
+
+const slugify = (value) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const withClientId = (item) => {
+  if (!item || typeof item !== "object") return item;
+  return { ...item, id: item._id || item.id };
+};
+
+const createId = (prefix) =>
+  `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+export const ContentCmsProvider = ({ children }) => {
+  const [syncStatus, setSyncStatus] = useState("loading");
+  const [articles, setArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [tags, setTags] = useState([]);
+
+  // Portfolio & site settings slices
+  const [site, setSite] = useState(cmsSeed.site);
+  const [story, setStory] = useState(cmsSeed.story);
+  const [timeline, setTimeline] = useState(cmsSeed.timeline);
+  const [projects, setProjects] = useState(cmsSeed.projects);
+  const [skills, setSkills] = useState(cmsSeed.skills);
+  const [stats, setStats] = useState(cmsSeed.stats || []);
+
+  // Load initial fallback from localStorage
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.articles) setArticles(parsed.articles);
+        if (parsed.categories) setCategories(parsed.categories);
+        if (parsed.subcategories) setSubcategories(parsed.subcategories);
+        if (parsed.tags) setTags(parsed.tags);
+        if (parsed.site) setSite(parsed.site);
+        if (parsed.story) setStory(parsed.story);
+        if (parsed.timeline) setTimeline(parsed.timeline);
+        if (parsed.projects) setProjects(parsed.projects);
+        if (parsed.skills) setSkills(parsed.skills);
+        if (parsed.stats) setStats(parsed.stats);
+      } else {
+        // Fallback to cmsSeed
+        setArticles(cmsSeed.articles || []);
+        setCategories(cmsSeed.categories || []);
+        setSubcategories(cmsSeed.subcategories || []);
+        setTags(cmsSeed.tags || []);
+      }
+    } catch (err) {
+      console.warn("Failed to load local content cache", err);
+    }
+  }, []);
+
+  // Debounced write to localStorage
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats })
+      );
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats]);
+
+  const fetchContentData = async () => {
+    setSyncStatus("loading");
+    try {
+      const [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
+        articleApi.adminList().catch(() => articleApi.list()),
+        categoryApi.list({ includeDeleted: true }).catch(() => ({ categories: [] })),
+        subCategoryApi.list({ includeDeleted: true }).catch(() => ({ subCategories: [] })),
+        tagApi.list({ includeDeleted: true }).catch(() => ({ tags: [] })),
+      ]);
+
+      if (articlesRes && Array.isArray(articlesRes.articles)) {
+        setArticles(articlesRes.articles.map(withClientId));
+      }
+      if (categoriesRes && Array.isArray(categoriesRes.categories)) {
+        setCategories(categoriesRes.categories.map(withClientId));
+      }
+      if (subcategoriesRes && Array.isArray(subcategoriesRes.subCategories)) {
+        setSubcategories(subcategoriesRes.subCategories.map(withClientId));
+      }
+      if (tagsRes && Array.isArray(tagsRes.tags)) {
+        setTags(tagsRes.tags.map(withClientId));
+      }
+      setSyncStatus("live");
+    } catch (err) {
+      console.warn("Failed to fetch live content, using stale fallback", err);
+      setSyncStatus("stale-fallback");
+    }
+  };
+
+  useEffect(() => {
+    fetchContentData();
+  }, []);
+
+  const actions = useMemo(() => ({
+    async refreshData() {
+      await fetchContentData();
+    },
+    updateSiteSection(section, value) {
+      setSite((current) => ({
+        ...current,
+        [section]:
+          value &&
+          typeof value === "object" &&
+          !Array.isArray(value) &&
+          current[section] &&
+          typeof current[section] === "object"
+            ? { ...current[section], ...value }
+            : value,
+      }));
+    },
+    updateStorySection(section, value) {
+      setStory((current) => ({
+        ...current,
+        [section]: {
+          ...current[section],
+          ...value,
+        },
+      }));
+    },
+    saveProject(project) {
+      const id = project.id || createId("project");
+      const savedProject = {
+        id,
+        title: project.title || "New Project",
+        category: project.category || "General",
+        description: project.description || "",
+        image: project.image || "",
+        status: project.status || "Draft",
+      };
+      setProjects((prev) => {
+        const exists = prev.some((item) => item.id === id);
+        return exists ? prev.map((item) => (item.id === id ? savedProject : item)) : [...prev, savedProject];
+      });
+    },
+    deleteProject(projectId) {
+      setProjects((prev) => prev.filter((project) => project.id !== projectId));
+    },
+    saveSkill(skill) {
+      const id = skill.id || createId("skill");
+      const savedSkill = {
+        id,
+        name: skill.name || "New Skill",
+        level: Number(skill.level || 50),
+      };
+      setSkills((prev) => {
+        const exists = prev.some((item) => item.id === id);
+        return exists ? prev.map((item) => (item.id === id ? savedSkill : item)) : [...prev, savedSkill];
+      });
+    },
+    deleteSkill(skillId) {
+      setSkills((prev) => prev.filter((skill) => skill.id !== skillId));
+    },
+    saveTimelineItem(item) {
+      const id = item.id || createId("timeline");
+      const savedItem = {
+        id,
+        year: item.year || today().slice(0, 4),
+        title: item.title || "New Timeline Moment",
+        description: item.description || "",
+      };
+      setTimeline((prev) => {
+        const exists = prev.some((entry) => entry.id === id);
+        return exists ? prev.map((entry) => (entry.id === id ? savedItem : entry)) : [...prev, savedItem];
+      });
+    },
+    deleteTimelineItem(itemId) {
+      setTimeline((prev) => prev.filter((item) => item.id !== itemId));
+    },
+    async saveArticle(article) {
+      const payload = {
+        title: article.title,
+        slug: article.slug || slugify(article.title),
+        description: article.description,
+        coverImage: article.coverImage,
+        body: article.body,
+        category: article.category,
+        categoryId: article.categoryId,
+        subcategory: article.subcategory,
+        tags: article.tags,
+        status: article.status,
+        featured: article.featured,
+        mustRead: article.mustRead,
+        trending: article.trending,
+        pinned: article.pinned,
+        scheduledAt: article.scheduledAt,
+      };
+
+      const targetId = article.id || article._id;
+      let saved;
+      if (targetId && !String(targetId).startsWith("article-")) {
+        const res = await articleApi.update(targetId, payload);
+        saved = res.article;
+      } else {
+        const res = await articleApi.create(payload);
+        saved = res.article;
+      }
+      const normalized = withClientId(saved);
+      setArticles((prev) => {
+        const filtered = prev.filter((a) => a.id !== targetId && a._id !== targetId);
+        return [normalized, ...filtered];
+      });
+      return normalized;
+    },
+    async deleteArticle(id) {
+      await articleApi.delete(id);
+      setArticles((prev) => prev.filter((a) => a.id !== id && a._id !== id));
+    },
+    async restoreArticle(id) {
+      const res = await articleApi.restore(id);
+      const normalized = withClientId(res.article);
+      setArticles((prev) => {
+        const filtered = prev.filter((a) => a.id !== id && a._id !== id);
+        return [normalized, ...filtered];
+      });
+      return normalized;
+    },
+    async incrementArticle(id, metric) {
+      if (!["views", "likes", "bookmarks"].includes(metric)) return;
+
+      const applyDelta = (delta) => {
+        setArticles((prev) =>
+          prev.map((article) =>
+            article.id === id || article._id === id
+              ? { ...article, [metric]: Math.max(0, Number(article[metric] || 0) + delta) }
+              : article
+          )
+        );
+      };
+
+      applyDelta(1);
+
+      const isServerArticle = id && !String(id).startsWith("article-");
+      if (!isServerArticle || metric !== "views") return;
+
+      try {
+        await articleApi.incrementViews(id);
+      } catch (err) {
+        applyDelta(-1);
+        console.warn("Failed to increment article views", err);
+      }
+    },
+    async toggleArticleStatus(id) {
+      const prevArticles = [...articles];
+      const article = prevArticles.find((a) => a.id === id || a._id === id);
+      if (!article) return;
+      const nextStatus = article.status === "published" ? "draft" : "published";
+      try {
+        const res = await articleApi.setStatus(id, nextStatus);
+        setArticles((curr) => curr.map((a) => (a.id === id || a._id === id) ? withClientId(res.article) : a));
+      } catch (err) {
+        console.error("Failed to toggle article status", err);
+      }
+    },
+    async duplicateArticle(id) {
+      const source = articles.find((a) => a.id === id || a._id === id);
+      if (!source) throw new Error("Article not found");
+      const payload = {
+        title: `${source.title} (Copy)`,
+        slug: `${source.slug || slugify(source.title)}-copy`,
+        description: source.description,
+        coverImage: source.coverImage,
+        body: source.body,
+        category: source.category,
+        categoryId: source.categoryId,
+        subcategory: source.subcategory,
+        tags: source.tags,
+        status: "draft",
+        featured: false,
+        mustRead: false,
+        trending: false,
+        pinned: false,
+      };
+      try {
+        const res = await articleApi.create(payload);
+        setArticles((curr) => [withClientId(res.article), ...curr]);
+      } catch (err) {
+        console.error("Failed to duplicate article", err);
+      }
+    },
+    async saveCategory(category) {
+      const payload = {
+        name: category.name,
+        slug: category.slug || slugify(category.name),
+        description: category.description || "",
+        longDescription: category.longDescription || "",
+        icon: category.icon || "book",
+        heroImage: category.heroImage || "",
+        isActive: category.isActive !== undefined ? category.isActive : true,
+      };
+      const targetId = category.id || category._id;
+      let saved;
+      if (targetId) {
+        const res = await categoryApi.update(targetId, payload);
+        saved = res.category;
+      } else {
+        const res = await categoryApi.create(payload);
+        saved = res.category;
+      }
+      const normalized = withClientId(saved);
+      setCategories((prev) => {
+        const filtered = prev.filter((c) => c.id !== normalized.id);
+        return [...filtered, normalized];
+      });
+      return normalized;
+    },
+    async deleteCategory(id) {
+      await categoryApi.delete(id);
+      setCategories((prev) => prev.filter((c) => c.id !== id && c._id !== id));
+    },
+    async restoreCategory(id) {
+      const res = await categoryApi.restore(id);
+      const normalized = withClientId(res.category);
+      setCategories((prev) => {
+        const filtered = prev.filter((c) => c.id !== normalized.id);
+        return [...filtered, normalized];
+      });
+      return normalized;
+    },
+    async saveSubcategory(sub) {
+      const payload = {
+        name: sub.name,
+        slug: sub.slug || slugify(sub.name),
+        description: sub.description || "",
+        category: sub.category,
+      };
+      const targetId = sub.id || sub._id;
+      let saved;
+      if (targetId) {
+        const res = await subCategoryApi.update(targetId, payload);
+        saved = res.subCategory;
+      } else {
+        const res = await subCategoryApi.create(payload);
+        saved = res.subCategory;
+      }
+      const normalized = withClientId(saved);
+      setSubcategories((prev) => {
+        const filtered = prev.filter((s) => s.id !== normalized.id);
+        return [...filtered, normalized];
+      });
+      return normalized;
+    },
+    async deleteSubcategory(id) {
+      await subCategoryApi.delete(id);
+      setSubcategories((prev) => prev.filter((s) => s.id !== id && s._id !== id));
+    },
+    async restoreSubcategory(id) {
+      const res = await subCategoryApi.restore(id);
+      const normalized = withClientId(res.subCategory);
+      setSubcategories((prev) => {
+        const filtered = prev.filter((s) => s.id !== normalized.id);
+        return [...filtered, normalized];
+      });
+      return normalized;
+    },
+    async saveTag(tag) {
+      const payload = {
+        name: tag.name,
+        slug: tag.slug || slugify(tag.name),
+        description: tag.description || "",
+        color: tag.color || "#426c67",
+      };
+      const targetId = tag.id || tag._id;
+      let saved;
+      if (targetId && !String(targetId).startsWith("tag-")) {
+        const res = await tagApi.update(targetId, payload);
+        saved = res.tag;
+      } else {
+        const res = await tagApi.create(payload);
+        saved = res.tag;
+      }
+      const normalized = withClientId(saved);
+      setTags((prev) => {
+        const filtered = prev.filter((t) => t.id !== normalized.id);
+        return [...filtered, normalized];
+      });
+      return normalized;
+    },
+    async deleteTag(id) {
+      await tagApi.delete(id);
+      setTags((prev) => prev.filter((t) => t.id !== id && t._id !== id));
+    },
+    async restoreTag(id) {
+      const res = await tagApi.restore(id);
+      const normalized = withClientId(res.tag);
+      setTags((prev) => {
+        const filtered = prev.filter((t) => t.id !== normalized.id);
+        return [...filtered, normalized];
+      });
+      return normalized;
+    },
+  }), [articles, categories, subcategories, tags]);
+
+  const value = useMemo(() => ({
+    articles,
+    categories,
+    subcategories,
+    tags,
+    site,
+    story,
+    timeline,
+    projects,
+    skills,
+    stats,
+    syncStatus,
+    ...actions
+  }), [articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats, syncStatus, actions]);
+
+  return <ContentCmsContext.Provider value={value}>{children}</ContentCmsContext.Provider>;
+};
+
+export const useContentCms = () => {
+  const context = useContext(ContentCmsContext);
+  if (!context) throw new Error("useContentCms must be used inside ContentCmsProvider");
+  return context;
+};

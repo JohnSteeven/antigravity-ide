@@ -41,7 +41,8 @@ const calcReadingTime = (html = "") => {
 class ArticleController {
   async getArticles(req, res, next) {
     try {
-      const data = await articleService.getArticles(req.query);
+      const query = { ...req.query, status: "published" };
+      const data = await articleService.getArticles(query);
       res.json(data);
     } catch (err) {
       next(err);
@@ -71,7 +72,7 @@ class ArticleController {
 
   async likeArticle(req, res, next) {
     try {
-      const article = await articleService.incrementMetric(req.params.id, "likes");
+      const article = await articleService.incrementMetric(req.params.id, "likes", req.user._id);
       if (!article) return res.status(404).json({ message: "Article not found." });
       res.json({ likes: article.likes });
     } catch (err) {
@@ -81,7 +82,7 @@ class ArticleController {
 
   async bookmarkArticle(req, res, next) {
     try {
-      const article = await articleService.incrementMetric(req.params.id, "bookmarks");
+      const article = await articleService.incrementMetric(req.params.id, "bookmarks", req.user._id);
       if (!article) return res.status(404).json({ message: "Article not found." });
       res.json({ bookmarks: article.bookmarks });
     } catch (err) {
@@ -143,7 +144,7 @@ class ArticleController {
         gallery, videoUrl, audioUrl, pdfAttachment, category,
         subcategory, tags, status, isFeatured, isMustRead,
         isTrending, isPinned, publishedAt, scheduledAt, rating,
-        author, readingTime, seo,
+        author, readingTime, seo, categoryId,
       } = req.body;
 
       const finalSlug = slug ? slugify(slug) : slugify(title);
@@ -161,6 +162,7 @@ class ArticleController {
         pdfAttachment: pdfAttachment || "",
         category: category || "Life",
         categorySlug: slugify(category || "Life"),
+        categoryId,
         subcategory: subcategory || "",
         tags: Array.isArray(tags) ? tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean) : [],
         status: status || "draft",
@@ -190,14 +192,13 @@ class ArticleController {
         gallery, videoUrl, audioUrl, pdfAttachment, category,
         subcategory, tags, status, isFeatured, isMustRead,
         isTrending, isPinned, publishedAt, scheduledAt, rating,
-        author, readingTime, seo,
+        author, readingTime, seo, categoryId,
       } = req.body;
 
       const updateData = {};
       if (title !== undefined) updateData.title = title;
       if (slug !== undefined) updateData.slug = slugify(slug);
       if (description !== undefined) updateData.description = description;
-      
       if (bodyHtml !== undefined) {
         const rt = calcReadingTime(bodyHtml);
         updateData.body = bodyHtml;
@@ -212,6 +213,8 @@ class ArticleController {
       if (pdfAttachment !== undefined) updateData.pdfAttachment = pdfAttachment;
       if (author !== undefined) updateData.author = author;
       if (rating !== undefined) updateData.rating = Number(rating) || 4.0;
+
+      if (categoryId !== undefined) updateData.categoryId = categoryId;
 
       if (category !== undefined) {
         updateData.category = category;

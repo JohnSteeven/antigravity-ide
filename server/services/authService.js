@@ -50,7 +50,7 @@ class AuthService {
       newsletter,
     } = data;
     const normalizedMobile = `${countryCode}${String(mobile).replace(/\D/g, "")}`;
-    
+
     const exists = await User.findOne({
       $or: [
         { email },
@@ -257,8 +257,9 @@ class AuthService {
           { refreshToken: tokenRecord._id },
           { isActive: false }
         );
+      }
+      clearAuthCookies(res);
     }
-    clearAuthCookies(res);
   }
 
   async changePassword(userId, currentPassword, newPassword) {

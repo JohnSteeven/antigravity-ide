@@ -19,7 +19,7 @@ const ArticlesCard = ({ articleData }) => {
   return (
     <article className="article-card">
       <Link to={`/articles/${slug}`} className="article-image-link">
-        <img src={coverImage} alt={title} className="article-image" />
+        <img src={coverImage?.trim() || undefined} alt={title} className="article-image" />
       </Link>
 
       <div className="article-details">

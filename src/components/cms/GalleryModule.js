@@ -234,11 +234,11 @@ export default function GalleryModule() {
             </div>
           )}
 
-          {formData.url && (
+          {formData?.url?.trim() && (
             <div className="form-grid layout-2-col">
               {/* Preview image */}
               <div style={{ gridColumn: "span 2", display: "flex", gap: "1rem", alignItems: "center", background: "#edf2f7", padding: "1rem", borderRadius: "6px" }}>
-                <img src={formData.url} alt="Preview" style={{ width: "90px", height: "60px", objectFit: "cover", borderRadius: "4px" }} />
+                <img src={formData.url.trim()} alt="Preview" style={{ width: "90px", height: "60px", objectFit: "cover", borderRadius: "4px" }} />
                 <div>
                   <h4 style={{ margin: 0, fontSize: "0.95rem" }}>{formData.fileName}</h4>
                   <span style={{ fontSize: "0.8rem", color: "#718096" }}>File size: {formData.size}</span>
@@ -378,12 +378,18 @@ export default function GalleryModule() {
                 position: "relative",
               }}
             >
-              <img
-                src={item.url}
-                alt={item.alt || item.title}
-                onClick={() => setPreviewUrl(item.url)}
-                style={{ width: "100%", height: "150px", objectFit: "cover", cursor: "zoom-in" }}
-              />
+              {item?.url?.trim() ? (
+                <img
+                  src={item.url}
+                  alt={item.alt || item.title}
+                  onClick={() => setPreviewUrl(item.url)}
+                  style={{ width: "100%", height: "150px", objectFit: "cover", cursor: "zoom-in" }}
+                />
+              ) : (
+                <div style={{ width: "100%", height: "150px", background: "#edf2f7", display: "flex", alignItems: "center", justifyContent: "center", color: "#a0aec0" }}>
+                  No Image
+                </div>
+              )}
               <div style={{ padding: "0.8rem" }}>
                 <h4 style={{ margin: "0 0 0.2rem 0", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {item.title}
@@ -417,7 +423,7 @@ export default function GalleryModule() {
       )}
 
       {/* Lightbox Overlay */}
-      {previewUrl && (
+      {previewUrl?.trim() && (
         <div
           onClick={() => setPreviewUrl(null)}
           style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, cursor: "zoom-out" }}

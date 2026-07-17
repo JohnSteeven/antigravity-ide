@@ -25,6 +25,22 @@ const getUsers = () => readStorage(AUTH_STORAGE_KEYS.users, []);
 const saveUsers = (users) => writeStorage(AUTH_STORAGE_KEYS.users, users);
 let csrfToken = "";
 let csrfTokenRequest = null;
+const REQUEST_TIMEOUT_MS = 8000;
+
+const fetchWithTimeout = async (url, options = {}) => {
+  if (typeof AbortController === "undefined") {
+    return fetch(url, options);
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...options, signal: options.signal || controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
 
 const readCookie = (name) => {
   if (typeof document === "undefined") return "";
@@ -50,7 +66,7 @@ const getCsrfToken = async () => {
   if (csrfToken) return csrfToken;
 
   if (!csrfTokenRequest) {
-    csrfTokenRequest = fetch(`${AUTH_API_URL || ""}/api/auth/csrf-token`, {
+    csrfTokenRequest = fetchWithTimeout(`${AUTH_API_URL || ""}/api/auth/csrf-token`, {
       credentials: "include",
     })
       .then(async (response) => {
@@ -83,7 +99,7 @@ const apiRequest = async (path, options = {}) => {
     if (token) headers["x-csrf-token"] = token;
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await fetchWithTimeout(`${baseUrl}${path}`, {
     credentials: "include",
     ...fetchOptions,
     headers,
@@ -192,9 +208,14 @@ const createUserRecord = async (form) => {
 export const authService = {
   async getSession() {
     try {
-      let api = await apiRequest("/api/auth/me").catch(() => null);
+      const storedSession = readStorage(AUTH_STORAGE_KEYS.session, null);
+      let sessionError = null;
+      let api = await apiRequest("/api/auth/me").catch((err) => {
+        sessionError = err;
+        return null;
+      });
 
-      if (!api?.user) {
+      if (!api?.user && storedSession && (!sessionError || sessionError.status === 401)) {
         api = await apiRequest("/api/auth/refresh-token", { method: "POST" }).catch(
           () => null
         );

@@ -3,9 +3,24 @@ const mongoose = require("mongoose");
 const MediaSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    fileName: { type: String, required: true, trim: true },
+    fileName: {
+      type: String,
+      required: true,
+      trim: true,
+      validate: {
+        validator: (val) => /\.(jpe?g|png|gif|webp|svg|mp4|mp3|pdf|docx?)$/i.test(val),
+        message: "Invalid file format extension."
+      }
+    },
     originalName: { type: String, trim: true },
-    mimeType: { type: String, default: "image/jpeg" },
+    mimeType: {
+      type: String,
+      default: "image/jpeg",
+      validate: {
+        validator: (val) => /^(image|video|audio|application)\/[a-zA-Z0-9.+-]+$/.test(val),
+        message: "Invalid mime type."
+      }
+    },
     type: {
       type: String,
       enum: ["image", "video", "audio", "pdf", "document"],

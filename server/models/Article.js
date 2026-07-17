@@ -62,7 +62,8 @@ const ArticleSchema = new mongoose.Schema(
     author: { type: String, default: "Noble John Steeven", trim: true },
 
     // Taxonomy
-    category: { type: String, required: true, trim: true, index: true },
+    category: { type: String, trim: true, index: true },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", index: true },
     categorySlug: { type: String, trim: true, index: true },
     subcategory: { type: String, default: "", trim: true },
     tags: [{ type: String, trim: true }],

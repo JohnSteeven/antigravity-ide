@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import {
+  Navigate,
   Outlet,
   RouterProvider,
   createBrowserRouter,
@@ -19,8 +20,8 @@ import Footer from "./components/Footer";
 import ArticlesPage from "./components/ArticlesPage";
 import ArticleDetail from "./components/ArticleDetail";
 import CategoryPage from "./components/CategoryPage";
-import AdminDashboard from "./components/AdminDashboard";
 import Error from "./components/Error";
+const AdminDashboard = React.lazy(() => import("./components/AdminDashboard"));
 import Login from "./components/Login";
 import Register from "./components/Register";
 import VerifyOTP from "./components/VerifyOTP";
@@ -31,6 +32,8 @@ import EditProfile from "./components/EditProfile";
 import ReadMyStory from "./components/ReadMyStory.js";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
+import Contact from "./components/Contact";
+import SearchPage from "./components/SearchPage";
 
 const HomePage = () => (
   <main>
@@ -114,19 +117,37 @@ const appRouter = createBrowserRouter([
         element: <CategoryPage />,
       },
       {
+        path: "about",
+        element: <ReadMyStory />,
+      },
+      {
         path: "read-my-story",
         element: <ReadMyStory />,
       },
       {
         path: "readmystory",
-        element: <ReadMyStory />,
+        element: <Navigate to="/read-my-story" replace />,
+      },
+      {
+        path: "contact",
+        element: <Contact />,
+      },
+      {
+        path: "search",
+        element: <SearchPage />,
       },
       {
         // Admin-only: requires login + role === admin
-        path: "cms",
+        path: "cms/*",
         element: (
           <ProtectedRoute requireAdmin>
-            <AdminDashboard />
+            <React.Suspense fallback={
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#151b1a", color: "#f8f4ed" }}>
+                <div className="spin" style={{ width: "40px", height: "40px", border: "3px solid rgba(255,255,255,0.1)", borderTopColor: "#fff", borderRadius: "50%" }}></div>
+              </div>
+            }>
+              <AdminDashboard />
+            </React.Suspense>
           </ProtectedRoute>
         ),
       },
@@ -148,7 +169,11 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "verify-otp",
-        element: <VerifyOTP />,
+        element: (
+          <GuestRoute>
+            <VerifyOTP />
+          </GuestRoute>
+        ),
       },
       {
         path: "forgot-password",

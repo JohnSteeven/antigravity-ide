@@ -2,7 +2,13 @@ const mongoose = require("mongoose");
 
 const SubCategorySchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: [2, "Subcategory name must be at least 2 characters."],
+      maxlength: [50, "Subcategory name cannot exceed 50 characters."]
+    },
     slug: { type: String, required: true, lowercase: true, trim: true },
     description: { type: String, default: "" },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },

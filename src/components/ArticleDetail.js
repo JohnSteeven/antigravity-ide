@@ -131,7 +131,7 @@ const ArticleDetail = () => {
       <article>
         <header
           className="article-detail-hero"
-          style={{ backgroundImage: `url("${article.coverImage}")` }}
+          style={article?.coverImage?.trim() ? { backgroundImage: `url("${article.coverImage}")` } : undefined}
         >
           <div className="article-detail-overlay"></div>
           <div>

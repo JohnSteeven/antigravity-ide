@@ -29,9 +29,11 @@ class ArticleRepository {
   }
 
   async update(id, updateData) {
+    const isOperator = Object.keys(updateData).some((key) => key.startsWith("$"));
+    const updateObj = isOperator ? updateData : { $set: updateData };
     return Article.findOneAndUpdate(
       { _id: id, isDeleted: false },
-      { $set: updateData },
+      updateObj,
       { new: true }
     );
   }

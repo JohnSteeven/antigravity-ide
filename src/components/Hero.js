@@ -9,7 +9,7 @@ const Hero = () => {
     <section
       className="hero"
       id="hero"
-      style={{ backgroundImage: `url("${hero.image}")` }}
+      style={hero?.image?.trim() ? { backgroundImage: `url("${hero.image}")` } : undefined}
     >
       <div className="hero-overlay"></div>
 
@@ -25,7 +25,7 @@ const Hero = () => {
             {hero.primaryLabel}
           </a>
 
-          <Link className="secondary-btn" to="/read-my-story">
+          <Link className="secondary-btn" to="/about">
             {hero.secondaryLabel || "Read My Story"}
           </Link>
         </div>

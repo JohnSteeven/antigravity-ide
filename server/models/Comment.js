@@ -2,7 +2,13 @@ const mongoose = require("mongoose");
 
 const CommentSchema = new mongoose.Schema(
   {
-    body: { type: String, required: true, trim: true },
+    body: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: [3, "Comment body must be at least 3 characters."],
+      maxlength: [1000, "Comment body cannot exceed 1000 characters."]
+    },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected", "spam", "hidden"],

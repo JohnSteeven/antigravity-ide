@@ -16,7 +16,7 @@ const StoriesSection = () => {
 
         <h2 className="stories-text">{intro.text}</h2>
 
-        <Link className="stories-btn" to="/read-my-story">
+        <Link className="stories-btn" to="/about">
           {intro.cta}
         </Link>
       </div>

@@ -1,5 +1,6 @@
 const articleRepository = require("../repositories/articleRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
+const Category = require("../models/Category");
 
 class ArticleService {
   async getArticles(query = {}) {
@@ -58,6 +59,14 @@ class ArticleService {
   }
 
   async createArticle(data, userId) {
+    if (data.categoryId) {
+      const categoryDoc = await Category.findById(data.categoryId);
+      if (categoryDoc) {
+        data.category = categoryDoc.name;
+        data.categorySlug = categoryDoc.slug;
+      }
+    }
+
     // Generate unique slug
     let baseSlug = data.slug || data.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     let slug = baseSlug;
@@ -80,6 +89,14 @@ class ArticleService {
   }
 
   async updateArticle(id, data, userId) {
+    if (data.categoryId) {
+      const categoryDoc = await Category.findById(data.categoryId);
+      if (categoryDoc) {
+        data.category = categoryDoc.name;
+        data.categorySlug = categoryDoc.slug;
+      }
+    }
+
     data.updatedBy = userId;
     const article = await articleRepository.update(id, data);
     if (!article) throw new Error("Article not found.");
@@ -116,11 +133,35 @@ class ArticleService {
     return article;
   }
 
-  async incrementMetric(id, metric) {
+  async incrementMetric(id, metric, userId) {
     if (!["views", "likes", "bookmarks"].includes(metric)) {
       throw new Error("Invalid metric type.");
     }
-    return articleRepository.update(id, { $inc: { [metric]: 1 } });
+
+    if (metric === "views") {
+      return articleRepository.update(id, { $inc: { views: 1 } });
+    }
+
+    if (!userId) {
+      throw new Error("User ID is required.");
+    }
+
+    const userRepository = require("../repositories/userRepository");
+    const fieldMap = {
+      likes: "likedArticles",
+      bookmarks: "bookmarks",
+    };
+    const userField = fieldMap[metric];
+
+    const { isAdded } = await userRepository.toggleArticleReference(userId, userField, id);
+    const incValue = isAdded ? 1 : -1;
+
+    const article = await articleRepository.findById(id);
+    if (!article) return null;
+    let newValue = (article[metric] || 0) + incValue;
+    if (newValue < 0) newValue = 0;
+
+    return articleRepository.update(id, { [metric]: newValue });
   }
 }
 

@@ -84,9 +84,9 @@ const Header = () => {
           ))}
           <li>
             <NavLink
-              to="/read-my-story"
+              to="/about"
               className={({ isActive }) =>
-                isActive || location.pathname === "/readmystory" ? "active" : ""
+                isActive || location.pathname === "/read-my-story" || location.pathname === "/readmystory" ? "active" : ""
               }
               onClick={() => setIsOpen(false)}
             >
@@ -94,13 +94,22 @@ const Header = () => {
             </NavLink>
           </li>
           <li>
-            <button
-              className={isSectionActive("contact") ? "active" : ""}
-              type="button"
-              onClick={() => scrollToSection("contact")}
+            <NavLink
+              to="/search"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              onClick={() => setIsOpen(false)}
+            >
+              Search
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/contact"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              onClick={() => setIsOpen(false)}
             >
               Contact
-            </button>
+            </NavLink>
           </li>
           <li>
             <NavLink to="/profile" onClick={() => setIsOpen(false)}>

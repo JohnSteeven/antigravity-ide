@@ -29,10 +29,22 @@ const ARTICLE_HTML_OPTIONS = {
   allowedSchemes: ["http", "https", "data"],
 };
 
+const decodeHtmlEntities = (str) => {
+  if (!str || typeof str !== "string") return str;
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#x27;/g, "'");
+};
+
 const sanitizePlainText = (value) => {
   if (typeof value === "string") {
     // Only strip NoSQL injection operators; allow normal text/HTML through plain fields
-    return sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
+    const sanitized = sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
+    return decodeHtmlEntities(sanitized);
   }
   if (Array.isArray(value)) return value.map(sanitizePlainText);
   if (value && typeof value === "object") {

@@ -334,7 +334,7 @@ export default function UserModule() {
               users.map((user) => (
                 <tr key={user._id || user.id} style={{ opacity: user.isDeleted ? 0.6 : 1 }}>
                   <td>
-                    {user.profile?.avatar ? (
+                    {user.profile?.avatar?.trim() ? (
                       <img
                         src={user.profile.avatar}
                         alt={user.firstName}
@@ -494,7 +494,7 @@ export default function UserModule() {
             </div>
 
             <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1.5rem" }}>
-              {selectedUser.profile?.avatar ? (
+              {selectedUser.profile?.avatar?.trim() ? (
                 <img
                   src={selectedUser.profile.avatar}
                   alt={selectedUser.firstName}

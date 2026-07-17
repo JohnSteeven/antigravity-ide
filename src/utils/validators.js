@@ -89,6 +89,8 @@ export const validateLoginForm = (form) => {
     errors.identifier = "Enter a valid email or mobile number.";
   }
   if (!form.password) {
+  }
+  if (!form.password) {
     errors.password = "Password is required.";
   }
 
@@ -105,5 +107,49 @@ export const validateResetPasswordForm = (form) => {
     errors.confirmPassword = "Passwords do not match.";
   }
 
+  return errors;
+};
+
+export const validateCommentForm = (form) => {
+  const errors = {};
+  const body = String(form.body || "").trim();
+  if (!body) errors.body = "Comment cannot be empty.";
+  else if (body.length < 3) errors.body = "Comment must be at least 3 characters.";
+  else if (body.length > 1000) errors.body = "Comment must be under 1000 characters.";
+  return errors;
+};
+
+export const validateRoleForm = (form) => {
+  const errors = {};
+  const name = String(form.name || "").trim();
+  if (!name) errors.name = "Role name is required.";
+  else if (name.length < 3) errors.name = "Role name must be at least 3 characters.";
+  else if (name.length > 30) errors.name = "Role name must be under 30 characters.";
+  return errors;
+};
+
+export const validateTagForm = (form) => {
+  const errors = {};
+  const name = String(form.name || "").trim();
+  const color = String(form.color || "").trim();
+  if (!name) errors.name = "Tag name is required.";
+  else if (name.length < 2) errors.name = "Tag name must be at least 2 characters.";
+  else if (name.length > 30) errors.name = "Tag name must be under 30 characters.";
+  
+  if (color && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
+    errors.color = "Color must be a valid hex code (e.g., #ffffff).";
+  }
+  return errors;
+};
+
+export const validateSubcategoryForm = (form) => {
+  const errors = {};
+  const name = String(form.name || "").trim();
+  if (!name) errors.name = "Subcategory name is required.";
+  else if (name.length < 2) errors.name = "Subcategory name must be at least 2 characters.";
+  else if (name.length > 50) errors.name = "Subcategory name must be under 50 characters.";
+  if (!form.category) {
+    errors.category = "Parent category is required.";
+  }
   return errors;
 };

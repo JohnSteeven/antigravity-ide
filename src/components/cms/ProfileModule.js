@@ -193,7 +193,7 @@ export default function ProfileModule() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             <div className="card" style={{ background: "#fff", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "1.5rem", textAlign: "center" }}>
               <div style={{ position: "relative", width: "120px", height: "120px", margin: "0 auto 1rem auto" }}>
-                {avatar ? (
+                {avatar?.trim() ? (
                   <img
                     src={avatar}
                     alt="Avatar"
