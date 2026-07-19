@@ -84,6 +84,7 @@ const createArticleDraft = (categories = []) => ({
   slug: "",
   description: "",
   category: categories[0]?.name || "Uncategorized",
+  categoryId: categories[0]?._id || categories[0]?.id || null,
   subcategory: "",
   body: "<p>Write your story here...</p>",
   status: "draft",
@@ -298,6 +299,10 @@ const ArticleModule = () => {
   };
 
   const triggerManualSave = async () => {
+    if (!articleDraft.title || !articleDraft.title.trim()) {
+      alert("Please enter a title before saving the article.");
+      return;
+    }
     setSaveStatus("Saving...");
     try {
       // Auto-recalculate reading time
@@ -318,6 +323,11 @@ const ArticleModule = () => {
   useEffect(() => {
     const serialized = JSON.stringify(articleDraft);
     if (serialized === lastSavedDraftRef.current) return;
+
+    if (!articleDraft.title || !articleDraft.title.trim()) {
+      setSaveStatus("Draft");
+      return;
+    }
 
     setSaveStatus("Saving...");
     const delay = setTimeout(async () => {
@@ -438,6 +448,7 @@ const ArticleModule = () => {
                 const cat = categories.find(c => c.name === e.target.value);
                 update({
                   category: e.target.value,
+                  categoryId: cat?._id || cat?.id || null,
                   subcategory: cat?.subcategories?.[0] || ""
                 });
               }}
