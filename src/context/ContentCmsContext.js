@@ -7,7 +7,7 @@ const STORAGE_KEY = "myjourney-content-data";
 const CACHE_VERSION = "v4"; // Bump to bust stale browser cache
 
 const slugify = (value) =>
-  value
+  String(value || "")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
@@ -197,10 +197,10 @@ export const ContentCmsProvider = ({ children }) => {
         subcategory: article.subcategory,
         tags: article.tags,
         status: article.status,
-        featured: article.featured,
-        mustRead: article.mustRead,
-        trending: article.trending,
-        pinned: article.pinned,
+        isFeatured: article.featured,
+        isMustRead: article.mustRead,
+        isTrending: article.trending,
+        isPinned: article.pinned,
         scheduledAt: article.scheduledAt,
       };
 

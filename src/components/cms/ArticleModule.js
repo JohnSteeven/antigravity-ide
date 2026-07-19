@@ -28,7 +28,7 @@ import { useCms } from "../../context/CmsContext";
 const ITEMS_PER_PAGE = 8;
 
 const slugify = (value) =>
-  value
+  String(value || "")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
