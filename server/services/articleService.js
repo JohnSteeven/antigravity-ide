@@ -83,7 +83,7 @@ class ArticleService {
     let baseSlug = data.slug || data.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     let slug = baseSlug;
     let counter = 1;
-    while (await articleRepository.findBySlug(slug)) {
+    while (await articleRepository.findBySlugAny(slug)) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
