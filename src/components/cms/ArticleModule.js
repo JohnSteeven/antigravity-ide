@@ -23,6 +23,7 @@ import {
   FiCopy
 } from "react-icons/fi";
 import { mediaApi } from "../../services/apiService";
+import { useCms } from "../../context/CmsContext";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -78,18 +79,74 @@ const convertMarkdownToHtml = (markdown) => {
   return html;
 };
 
-const ArticleModule = ({
-  articleDraft,
-  categories = [],
-  onChange,
-  onNew,
-  onSave,
-  onDelete,
-  onSelectArticle,
-  onToggleStatus,
-  articles = [],
-  onRestore
-}) => {
+const createArticleDraft = (categories = []) => ({
+  title: "",
+  slug: "",
+  description: "",
+  category: categories[0]?.name || "Uncategorized",
+  subcategory: "",
+  body: "<p>Write your story here...</p>",
+  status: "draft",
+  tags: [],
+  isFeatured: false,
+  isMustRead: false,
+  isTrending: false,
+  isPinned: false,
+  readingTimeMin: 1,
+  seo: {
+    title: "",
+    description: "",
+    keywords: [],
+    metaRobots: "index,follow",
+  },
+});
+
+const ArticleModule = () => {
+  const {
+    data,
+    saveArticle,
+    deleteArticle,
+    restoreArticle,
+    toggleArticleStatus
+  } = useCms();
+
+  const categories = data?.categories || [];
+  const articles = data?.articles || [];
+
+  // Sorted articles (latest first)
+  const sortedArticles = useMemo(
+    () =>
+      [...articles].sort(
+        (a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
+      ),
+    [articles]
+  );
+
+  const defaultDraft = useMemo(() => createArticleDraft(categories), [categories]);
+
+  const [articleDraft, setArticleDraft] = useState(defaultDraft);
+
+  const onChange = setArticleDraft;
+  const onNew = () => setArticleDraft(createArticleDraft(categories));
+  const onSave = async (draft) => {
+    try {
+      const saved = await saveArticle(draft);
+      if (saved && !draft.id && !draft._id) {
+        setArticleDraft(createArticleDraft(categories));
+      } else if (saved) {
+        setArticleDraft({ ...saved, id: saved._id || saved.id });
+      }
+    } catch (err) {
+      console.error("Article save failed:", err);
+    }
+  };
+  const onDelete = deleteArticle;
+  const onRestore = restoreArticle;
+  const onSelectArticle = (article) => {
+    setArticleDraft({ ...article, id: article._id || article.id });
+  };
+  const onToggleStatus = toggleArticleStatus;
+
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
   const galleryInputRef = useRef(null);
@@ -102,7 +159,7 @@ const ArticleModule = ({
   const [editorMode, setEditorMode] = useState("edit"); // "edit" | "preview"
 
   // Undo/Redo stacks
-  const [history, setHistory] = useState([articleDraft.body || ""]);
+  const [history, setHistory] = useState([articleDraft?.body || ""]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
   // Auto save states
