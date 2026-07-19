@@ -15,7 +15,14 @@ const slugify = (value) =>
 
 const withClientId = (item) => {
   if (!item || typeof item !== "object") return item;
-  return { ...item, id: item._id || item.id };
+  return {
+    ...item,
+    id: item._id || item.id,
+    featured: item.featured !== undefined ? item.featured : item.isFeatured,
+    mustRead: item.mustRead !== undefined ? item.mustRead : item.isMustRead,
+    trending: item.trending !== undefined ? item.trending : item.isTrending,
+    pinned: item.pinned !== undefined ? item.pinned : item.isPinned,
+  };
 };
 
 const createId = (prefix) =>

@@ -39,8 +39,8 @@ const CategoryPage = () => {
     return <Navigate to="/articles" replace />;
   }
 
-  // Prefer API articles; fall back to CmsContext
-  const articles = apiArticles || data.articles;
+  // Prefer API articles; fall back to CmsContext (only published)
+  const articles = (apiArticles || data.articles).filter(a => a.status === "published");
 
   return (
     <CategoryLanding

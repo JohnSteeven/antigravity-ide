@@ -24,6 +24,7 @@ import {
 } from "react-icons/fi";
 import { mediaApi } from "../../services/apiService";
 import { useCms } from "../../context/CmsContext";
+import { useBlocker } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -126,24 +127,53 @@ const ArticleModule = () => {
 
   const [articleDraft, setArticleDraft] = useState(defaultDraft);
 
+  // Editor save/sync states (declared before use in handlers)
+  const [saveStatus, setSaveStatus] = useState("Unsaved"); // "Unsaved" | "Saving..." | "Draft Saved" | "Published Successfully" | "Saved" | "Save Failed"
+  const [lastSavedTime, setLastSavedTime] = useState("");
+  const lastSavedDraftRef = useRef(JSON.stringify(defaultDraft));
+
   const onChange = setArticleDraft;
-  const onNew = () => setArticleDraft(createArticleDraft(categories));
+  const onNew = () => {
+    const fresh = createArticleDraft(categories);
+    setArticleDraft(fresh);
+    lastSavedDraftRef.current = JSON.stringify(fresh);
+    setSaveStatus("Unsaved");
+  };
   const onSave = async (draft) => {
     try {
       const saved = await saveArticle(draft);
-      if (saved && !draft.id && !draft._id) {
-        setArticleDraft(createArticleDraft(categories));
-      } else if (saved) {
-        setArticleDraft({ ...saved, id: saved._id || saved.id });
+      if (saved) {
+        const normalized = {
+          ...saved,
+          id: saved._id || saved.id,
+          featured: saved.featured !== undefined ? saved.featured : saved.isFeatured,
+          mustRead: saved.mustRead !== undefined ? saved.mustRead : saved.isMustRead,
+          trending: saved.trending !== undefined ? saved.trending : saved.isTrending,
+          pinned: saved.pinned !== undefined ? saved.pinned : saved.isPinned,
+        };
+        setArticleDraft(normalized);
+        lastSavedDraftRef.current = JSON.stringify(normalized);
+        return normalized;
       }
     } catch (err) {
       console.error("Article save failed:", err);
+      throw err;
     }
   };
   const onDelete = deleteArticle;
   const onRestore = restoreArticle;
   const onSelectArticle = (article) => {
-    setArticleDraft({ ...article, id: article._id || article.id });
+    const normalized = {
+      ...article,
+      id: article._id || article.id,
+      featured: article.featured !== undefined ? article.featured : article.isFeatured,
+      mustRead: article.mustRead !== undefined ? article.mustRead : article.isMustRead,
+      trending: article.trending !== undefined ? article.trending : article.isTrending,
+      pinned: article.pinned !== undefined ? article.pinned : article.isPinned,
+    };
+    setArticleDraft(normalized);
+    lastSavedDraftRef.current = JSON.stringify(normalized);
+    setSaveStatus("Saved");
   };
   const onToggleStatus = toggleArticleStatus;
 
@@ -161,11 +191,6 @@ const ArticleModule = () => {
   // Undo/Redo stacks
   const [history, setHistory] = useState([articleDraft?.body || ""]);
   const [historyIndex, setHistoryIndex] = useState(0);
-
-  // Auto save states
-  const [saveStatus, setSaveStatus] = useState("Saved"); // "Saved" | "Saving..." | "Save Failed"
-  const [lastSavedTime, setLastSavedTime] = useState("");
-  const lastSavedDraftRef = useRef(JSON.stringify(articleDraft));
 
   // Word & Reading metrics
   const wordCount = useMemo(() => getWordCount(articleDraft.body), [articleDraft.body]);
@@ -298,6 +323,10 @@ const ArticleModule = () => {
   };
 
   const triggerManualSave = async () => {
+    if (!articleDraft.title || !articleDraft.title.trim()) {
+      alert("Please enter a title before saving the article.");
+      return;
+    }
     setSaveStatus("Saving...");
     try {
       // Auto-recalculate reading time
@@ -305,38 +334,58 @@ const ArticleModule = () => {
         ...articleDraft,
         readingTime: calculateReadingTime(articleDraft.body)
       };
-      await onSave(finalDraft);
-      lastSavedDraftRef.current = JSON.stringify(finalDraft);
-      setSaveStatus("Saved");
+      
+      const savedObj = await onSave(finalDraft);
+      const nextStatus = finalDraft.status === "published" ? "Published Successfully" : "Draft Saved";
+      setSaveStatus(nextStatus);
       setLastSavedTime(new Date().toLocaleTimeString());
+      
+      setTimeout(() => {
+        setSaveStatus("Saved");
+      }, 3000);
     } catch (err) {
       setSaveStatus("Save Failed");
     }
   };
 
-  // Auto-Save Effect (trigger only when content differs and status is not Saving...)
+  const isModified = useMemo(() => {
+    if (!articleDraft) return false;
+    return JSON.stringify(articleDraft) !== lastSavedDraftRef.current;
+  }, [articleDraft]);
+
+  // Prompt before reloading or closing the tab
   useEffect(() => {
-    const serialized = JSON.stringify(articleDraft);
-    if (serialized === lastSavedDraftRef.current) return;
-
-    setSaveStatus("Saving...");
-    const delay = setTimeout(async () => {
-      try {
-        const finalDraft = {
-          ...articleDraft,
-          readingTime: calculateReadingTime(articleDraft.body)
-        };
-        await onSave(finalDraft);
-        lastSavedDraftRef.current = JSON.stringify(finalDraft);
-        setSaveStatus("Saved");
-        setLastSavedTime(new Date().toLocaleTimeString());
-      } catch (err) {
-        setSaveStatus("Save Failed");
+    const handleBeforeUnload = (e) => {
+      if (isModified) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Leave without saving?";
+        return e.returnValue;
       }
-    }, 4000); // 4 seconds debounce
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isModified]);
 
-    return () => clearTimeout(delay);
-  }, [articleDraft, onSave]);
+  // Prompt before navigating away via React Router
+  const blocker = useBlocker(
+    useCallback(
+      ({ nextLocation }) => {
+        return isModified;
+      },
+      [isModified]
+    )
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      const confirmLeave = window.confirm("You have unsaved changes. Leave without saving?");
+      if (confirmLeave) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
 
   // Sync editor innerHTML on draft switch
   useEffect(() => {
@@ -383,6 +432,25 @@ const ArticleModule = () => {
     onSelectArticle(clone);
   };
 
+  const hasId = Boolean(articleDraft.id || articleDraft._id);
+  const isPublished = articleDraft.status === "published";
+  const isSaving = saveStatus === "Saving...";
+
+  let buttonText = "Save Draft";
+  if (isPublished) {
+    buttonText = hasId ? "Update Published" : "Publish";
+  } else {
+    buttonText = "Save Draft";
+  }
+
+  if (isSaving) {
+    buttonText = "Saving...";
+  } else if (saveStatus === "Draft Saved") {
+    buttonText = "✓ Draft Saved";
+  } else if (saveStatus === "Published Successfully") {
+    buttonText = "✓ Published Successfully";
+  }
+
   return (
     <div className="cms-grid-two article-editor-layout">
       {/* LEFT PANEL: Editor & Form */}
@@ -396,8 +464,20 @@ const ArticleModule = () => {
             <button className="small-outline-btn" type="button" onClick={onNew}>
               <FiPlus /> New
             </button>
-            <button className="small-solid-btn" type="button" onClick={triggerManualSave}>
-              <FiSave /> {saveStatus === "Saving..." ? "Saving..." : "Save"}
+            <button
+              className="small-solid-btn"
+              type="button"
+              onClick={triggerManualSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <FiRefreshCw className="spin-animation" style={{ marginRight: "0.25rem" }} />
+              ) : (saveStatus === "Draft Saved" || saveStatus === "Published Successfully") ? (
+                <span style={{ marginRight: "0.25rem" }}>✓</span>
+              ) : (
+                <FiSave style={{ marginRight: "0.25rem" }} />
+              )}
+              {buttonText}
             </button>
           </div>
         </div>
