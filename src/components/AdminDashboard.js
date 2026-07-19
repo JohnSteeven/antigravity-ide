@@ -58,7 +58,7 @@ const MODULE_TITLES = {
 };
 
 export default function AdminDashboard() {
-  const { data } = useCms();
+  const { data, analytics } = useCms();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -86,8 +86,8 @@ export default function AdminDashboard() {
       title={headerInfo.title}
     >
       <Routes>
-        <Route index element={<DashboardOverview />} />
-        <Route path="overview" element={<DashboardOverview />} />
+        <Route index element={<DashboardOverview analytics={analytics} articles={data?.articles} />} />
+        <Route path="overview" element={<DashboardOverview analytics={analytics} articles={data?.articles} />} />
         <Route path="articles" element={<ArticleModule />} />
         <Route path="categories" element={<CategoryModule />} />
         <Route path="subcategories" element={<SubCategoryModule />} />

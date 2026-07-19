@@ -13,6 +13,7 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { logApi } from "../../services/apiService";
+import { useCms } from "../../context/CmsContext";
 
 const MetricCard = ({ icon, label, value }) => (
   <div className="metric-card">
@@ -22,7 +23,11 @@ const MetricCard = ({ icon, label, value }) => (
   </div>
 );
 
-const DashboardOverview = ({ analytics, articles = [] }) => {
+const DashboardOverview = ({ analytics: propAnalytics, articles: propArticles }) => {
+  const { analytics: ctxAnalytics, data } = useCms();
+  const analytics = propAnalytics || ctxAnalytics || {};
+  const articles = propArticles || data?.articles || [];
+
   const [logs, setLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
 
