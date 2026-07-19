@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const articleRepository = require("../repositories/articleRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
 const Category = require("../models/Category");
+const Article = require("../models/Article");
 
 class ArticleService {
   async getArticles(query = {}) {
@@ -83,7 +84,7 @@ class ArticleService {
     let baseSlug = data.slug || data.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     let slug = baseSlug;
     let counter = 1;
-    while (await articleRepository.findBySlugAny(slug)) {
+    while (await Article.findOne({ slug })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }

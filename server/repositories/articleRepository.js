@@ -24,10 +24,6 @@ class ArticleRepository {
       .populate("authorId", "firstName lastName username email");
   }
 
-  async findBySlugAny(slug) {
-    return Article.findOne({ slug });
-  }
-
   async create(data) {
     return Article.create(data);
   }
