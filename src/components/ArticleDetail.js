@@ -138,6 +138,12 @@ const ArticleDetail = () => {
       const hasViewed = sessionStorage.getItem(viewedKey);
       if (!hasViewed) {
         sessionStorage.setItem(viewedKey, "true");
+        if (apiArticle) {
+          setApiArticle((prev) => prev ? {
+            ...prev,
+            views: (prev.views || 0) + 1
+          } : null);
+        }
         incrementArticle(articleId, "views");
       }
     }
@@ -216,6 +222,12 @@ const ArticleDetail = () => {
     if (!requireLogin()) return;
     try {
       const articleId = article.id || article._id;
+      if (apiArticle) {
+        setApiArticle((prev) => prev ? {
+          ...prev,
+          likes: Math.max(0, (prev.likes || 0) + (isLiked ? -1 : 1))
+        } : null);
+      }
       await incrementArticle(articleId, "likes");
       await refreshSession();
       setCommentMessage(isLiked ? "Article unliked." : "Article liked.");
@@ -228,6 +240,12 @@ const ArticleDetail = () => {
     if (!requireLogin()) return;
     try {
       const articleId = article.id || article._id;
+      if (apiArticle) {
+        setApiArticle((prev) => prev ? {
+          ...prev,
+          bookmarks: Math.max(0, (prev.bookmarks || 0) + (isBookmarked ? -1 : 1))
+        } : null);
+      }
       await incrementArticle(articleId, "bookmarks");
       await refreshSession();
       setCommentMessage(isBookmarked ? "Article removed from bookmarks." : "Article bookmarked.");
@@ -240,6 +258,12 @@ const ArticleDetail = () => {
     if (!requireLogin()) return;
     try {
       const articleId = article.id || article._id;
+      if (apiArticle) {
+        setApiArticle((prev) => prev ? {
+          ...prev,
+          saved: !isSaved
+        } : null);
+      }
       await incrementArticle(articleId, "saved");
       await refreshSession();
       setCommentMessage(isSaved ? "Article removed from saved articles." : "Article saved to your profile.");
