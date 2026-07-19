@@ -16,7 +16,7 @@ if (process.env.NODE_ENV === "production") {
 
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
-  port: Number(process.env.PORT || 5000),
+  port: Number(process.env.SERVER_PORT || process.env.PORT || 5000),
   clientUrl: process.env.CLIENT_URL || "http://localhost:1234",
   mongoUri: process.env.MONGO_URI || "mongodb://127.0.0.1:27017/myjourney",
   jwtAccessSecret:

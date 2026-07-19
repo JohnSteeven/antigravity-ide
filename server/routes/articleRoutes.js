@@ -18,6 +18,7 @@ router.get("/:slug", articleController.getArticleBySlug);
 router.post("/:id/views", articleController.incrementViews);
 router.post("/:id/like", authenticate, articleController.likeArticle);
 router.post("/:id/bookmark", authenticate, articleController.bookmarkArticle);
+router.post("/:id/save", authenticate, articleController.saveArticle);
 router.get("/:id/comments", articleController.getComments);
 router.post(
   "/:id/comments",
@@ -41,6 +42,7 @@ router.put("/:id", authenticate, requireAdmin, articleController.updateArticle);
 router.post("/:id/restore", authenticate, requireAdmin, articleController.restoreArticle);
 router.delete("/:id", authenticate, requireAdmin, articleController.deleteArticle);
 router.put("/:id/status", authenticate, requireAdmin, articleController.updateStatus);
-router.put("/:id/comments/:commentId", authenticate, requireAdmin, articleController.moderateComment);
+
+
 
 module.exports = router;

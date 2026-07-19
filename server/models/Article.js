@@ -72,6 +72,7 @@ const ArticleSchema = new mongoose.Schema(
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
     bookmarks: { type: Number, default: 0 },
+    saved: { type: Number, default: 0 },
     rating: { type: Number, default: 4.0 },
 
     // SEO block

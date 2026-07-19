@@ -53,7 +53,7 @@ export const MediaCmsProvider = ({ children }) => {
   }, []);
 
   const actions = useMemo(() => ({
-    async refreshData() {
+    async refreshMedia() {
       await fetchMediaData();
     },
     async uploadMedia(file, folder) {

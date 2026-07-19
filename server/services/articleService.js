@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const articleRepository = require("../repositories/articleRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
 const Category = require("../models/Category");
@@ -15,6 +16,17 @@ class ArticleService {
     if (query.author) filter.author = query.author;
     if (query.tags) {
       filter.tags = { $in: Array.isArray(query.tags) ? query.tags : [query.tags] };
+    }
+
+    if (query.ids) {
+      const idList = (Array.isArray(query.ids) ? query.ids : String(query.ids).split(","))
+        .filter(Boolean)
+        .filter(id => mongoose.Types.ObjectId.isValid(id));
+      if (idList.length > 0) {
+        filter._id = { $in: idList };
+      } else {
+        filter._id = { $in: [] };
+      }
     }
 
     if (query.search) {
@@ -134,7 +146,7 @@ class ArticleService {
   }
 
   async incrementMetric(id, metric, userId) {
-    if (!["views", "likes", "bookmarks"].includes(metric)) {
+    if (!["views", "likes", "bookmarks", "saved"].includes(metric)) {
       throw new Error("Invalid metric type.");
     }
 
@@ -150,6 +162,7 @@ class ArticleService {
     const fieldMap = {
       likes: "likedArticles",
       bookmarks: "bookmarks",
+      saved: "savedArticles",
     };
     const userField = fieldMap[metric];
 

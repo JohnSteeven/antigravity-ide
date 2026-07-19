@@ -63,8 +63,8 @@ async function testEndpoint() {
     console.log(`  User: ${loginData.user?.firstName} ${loginData.user?.lastName} (@${loginData.user?.username})`);
     console.log(`  Role: ${loginData.user?.role}`);
 
-    if (loginData.user?.role !== "admin") {
-      console.log("⚠ Warning: User is logged in, but role is not 'admin'!");
+    if (loginData.user?.role !== "Admin") {
+      console.log("⚠ Warning: User is logged in, but role is not 'Admin'!");
       passed = false;
     }
 

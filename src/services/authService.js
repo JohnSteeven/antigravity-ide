@@ -77,6 +77,11 @@ const getCsrfToken = async () => {
         csrfToken = data.csrfToken || readCookie("csrfToken") || "";
         return csrfToken;
       })
+      .catch((err) => {
+        // Suppress AbortError (timeout) — caller falls back to empty token
+        if (err && err.name === "AbortError") return "";
+        throw err;
+      })
       .finally(() => {
         csrfTokenRequest = null;
       });

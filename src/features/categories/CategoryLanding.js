@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { getCategoryBlueprint } from "../../domain/knowledgeArchitecture";
 import { useAuth } from "../../hooks/useAuth";
+import { useCms } from "../../context/CmsContext";
 import { decodeHtmlEntities } from "../../utils/helpers";
 import ArticlesCard from "../../components/ArticlesCard";
 import LoginRequiredModal from "../../components/LoginRequiredModal";
@@ -64,7 +65,8 @@ const CategoryLanding = ({
   incrementArticle,
 }) => {
   const location = useLocation();
-  const { isAuthenticated, updateProfile, user } = useAuth();
+  const { isAuthenticated, loading: authLoading, updateProfile, user, refreshSession } = useAuth();
+  const { data } = useCms();
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("all");
   const [activeSubcategory, setActiveSubcategory] = useState("all");
@@ -147,21 +149,35 @@ const CategoryLanding = ({
       .slice(0, 3);
   }, [allArticles, categoryModel.name, tags]);
 
-  const recentComments = useMemo(
-    () =>
-      categoryArticles
-        .flatMap((article) =>
-          (article.comments || [])
-            .filter((comment) => comment.status === "approved")
-            .map((comment) => ({
-              ...comment,
-              articleSlug: article.slug,
-              articleTitle: article.title,
-            }))
-        )
-        .slice(0, 4),
-    [categoryArticles]
-  );
+  const recentComments = useMemo(() => {
+    const categoryArticleIds = new Set(
+      categoryArticles.map((a) => a.id || (a._id && a._id.toString()))
+    );
+    return (data.comments || [])
+      .filter(
+        (c) =>
+          !c.isDeleted &&
+          c.status === "approved" &&
+          categoryArticleIds.has(
+            c.articleId?._id?.toString() ||
+            c.articleId?.id ||
+            (typeof c.articleId === "string" ? c.articleId : null)
+          )
+      )
+      .map((c) => {
+        const matchArticle = categoryArticles.find(
+          (a) =>
+            (a.id || (a._id && a._id.toString())) ===
+            (c.articleId?._id?.toString() || c.articleId?.id || c.articleId)
+        );
+        return {
+          ...c,
+          articleSlug: matchArticle?.slug || "",
+          articleTitle: matchArticle?.title || c.articleId?.title || "Unknown",
+        };
+      })
+      .slice(0, 4);
+  }, [categoryArticles, data.comments]);
 
   useEffect(() => {
     setVisibleCount(6);
@@ -185,33 +201,34 @@ const CategoryLanding = ({
   }, [filteredArticles.length, visibleCount]);
 
   const requireLogin = () => {
+    if (authLoading) return false;   // session check still in-flight, don't show modal
     if (isAuthenticated) return true;
     setShowLoginModal(true);
     return false;
   };
 
-  const handleProfileAction = async ({ article, metric, profileField, success }) => {
+  const isLiked = user?.profile?.likedArticles?.some(id => String(id) === String(featuredArticle?.id || featuredArticle?._id));
+  const isBookmarked = user?.profile?.bookmarks?.some(id => String(id) === String(featuredArticle?.id || featuredArticle?._id));
+
+  const handleLikeToggle = async () => {
     if (!requireLogin()) return;
-
-    const profile = user?.profile || {};
-    const currentItems = Array.isArray(profile[profileField])
-      ? profile[profileField]
-      : [];
-
-    if (currentItems.includes(article.id)) {
-      setMessage("This article is already saved in your profile.");
-      return;
-    }
-
     try {
-      await updateProfile({
-        profile: {
-          ...profile,
-          [profileField]: [article.id, ...currentItems],
-        },
-      });
-      if (metric) incrementArticle(article.id, metric);
-      setMessage(success);
+      const articleId = featuredArticle.id || featuredArticle._id;
+      await incrementArticle(articleId, "likes");
+      await refreshSession();
+      setMessage(isLiked ? "Article unliked." : "Article liked.");
+    } catch (error) {
+      setMessage(error.message || "Please try again.");
+    }
+  };
+
+  const handleBookmarkToggle = async () => {
+    if (!requireLogin()) return;
+    try {
+      const articleId = featuredArticle.id || featuredArticle._id;
+      await incrementArticle(articleId, "bookmarks");
+      await refreshSession();
+      setMessage(isBookmarked ? "Article removed from bookmarks." : "Article bookmarked.");
     } catch (error) {
       setMessage(error.message || "Please try again.");
     }
@@ -349,32 +366,18 @@ const CategoryLanding = ({
                 Read Article
               </Link>
               <button
-                className="small-outline-btn"
+                className={`small-outline-btn ${isLiked ? "active like-btn" : ""}`}
                 type="button"
-                onClick={() =>
-                  handleProfileAction({
-                    article: featuredArticle,
-                    metric: "likes",
-                    profileField: "likedArticles",
-                    success: "Article liked.",
-                  })
-                }
+                onClick={handleLikeToggle}
               >
-                <FiHeart /> {formatNumber(featuredArticle.likes)}
+                <FiHeart style={isLiked ? { fill: "#ff4d4f", stroke: "#ff4d4f" } : undefined} /> {formatNumber(featuredArticle.likes)}
               </button>
               <button
-                className="small-outline-btn"
+                className={`small-outline-btn ${isBookmarked ? "active bookmark-btn" : ""}`}
                 type="button"
-                onClick={() =>
-                  handleProfileAction({
-                    article: featuredArticle,
-                    metric: "bookmarks",
-                    profileField: "bookmarks",
-                    success: "Article bookmarked.",
-                  })
-                }
+                onClick={handleBookmarkToggle}
               >
-                <FiBookmark /> {formatNumber(featuredArticle.bookmarks)}
+                <FiBookmark style={isBookmarked ? { fill: "currentColor" } : undefined} /> {formatNumber(featuredArticle.bookmarks)}
               </button>
               <button
                 className="small-outline-btn"

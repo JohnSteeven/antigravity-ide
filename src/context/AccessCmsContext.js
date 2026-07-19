@@ -62,7 +62,7 @@ export const AccessCmsProvider = ({ children }) => {
   }, []);
 
   const actions = useMemo(() => ({
-    async refreshData() {
+    async refreshAccess() {
       await fetchAccessData();
     },
     async fetchUsers(params = {}) {
@@ -101,14 +101,6 @@ export const AccessCmsProvider = ({ children }) => {
     },
     async resetUserPassword(id, password) {
       return userApi.resetPassword(id, password);
-    },
-    async updateProfile(payload) {
-      const res = await userApi.updateProfile(payload);
-      return res.user;
-    },
-    async getMe() {
-      const res = await userApi.getMe();
-      return res.user;
     },
     async fetchRoles(params = {}) {
       const res = await roleApi.list(params);

@@ -48,7 +48,7 @@ class UserRepository {
       };
     }
 
-    const index = user.profile[field].indexOf(articleId);
+    const index = user.profile[field].findIndex(id => String(id) === String(articleId));
     let isAdded = false;
     if (index === -1) {
       user.profile[field].push(articleId);

@@ -26,7 +26,10 @@ const ARTICLE_HTML_OPTIONS = {
     audio: ["src", "controls"],
     source: ["src", "type"],
   },
-  allowedSchemes: ["http", "https", "data"],
+  allowedSchemes: ["http", "https"],
+  allowedSchemesByTag: {
+    img: ["http", "https", "data"]
+  }
 };
 
 const decodeHtmlEntities = (str) => {

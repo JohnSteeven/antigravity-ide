@@ -57,6 +57,11 @@ const getCsrf = async () => {
         _csrfToken = d.csrfToken || readCookie("csrfToken") || "";
         return _csrfToken;
       })
+      .catch((err) => {
+        // Suppress AbortError (timeout) — callers fall back to empty token
+        if (err && err.name === "AbortError") return "";
+        throw err;
+      })
       .finally(() => { _csrfRequest = null; });
   }
   return _csrfRequest;
@@ -78,7 +83,19 @@ const request = async (path, options = {}) => {
   }
 
   const url = `${API_BASE}${path}`;
-  const response = await fetchWithTimeout(url, { credentials: "include", ...options, headers });
+  let response;
+  try {
+    response = await fetchWithTimeout(url, { credentials: "include", ...options, headers });
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      const timeout = new Error("Request timed out. Please check your connection and try again.");
+      timeout.isTimeout = true;
+      timeout.name = "TimeoutError";
+      throw timeout;
+    }
+    throw err;
+  }
+
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -142,15 +159,15 @@ export const articleApi = {
   /** Bookmark */
   bookmark: (id) => post(`/api/articles/${id}/bookmark`, {}),
 
+  /** Save */
+  save: (id) => post(`/api/articles/${id}/save`, {}),
+
   /** Get comments for an article */
   getComments: (id) => get(`/api/articles/${id}/comments`),
 
   /** Submit a comment */
   addComment: (id, body) => post(`/api/articles/${id}/comments`, { body }),
 
-  /** Moderate a comment (admin) */
-  moderateComment: (articleId, commentId, status) =>
-    put(`/api/articles/${articleId}/comments/${commentId}`, { status }),
 };
 
 // ─── Categories ───────────────────────────────────────────────────────────────

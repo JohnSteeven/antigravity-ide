@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "article",
   "scripts": {
-    "start": "parcel index.html",
-    "dev": "parcel index.html",
+    "start": "parcel index.html --port 1234",
+    "dev": "parcel index.html --port 1234",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
     "build": "parcel build index.html",
+    "seed:articles": "node server/scripts/seedArticles.js",
     "test": "jest"
   },
   "repository": {

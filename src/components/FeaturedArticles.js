@@ -27,7 +27,7 @@ const FeaturedArticles = () => {
     let cancelled = false;
 
     articleApi
-      .list({ status: "published", featured: "true", limit: 20 })
+      .list({ status: "published", isFeatured: "true", limit: 20 })
       .then((res) => {
         if (!cancelled && Array.isArray(res.articles)) {
           setApiArticles(res.articles);
@@ -43,13 +43,15 @@ const FeaturedArticles = () => {
   // Prefer API articles; fall back to CmsContext
   const featuredArticles = useMemo(() => {
     if (apiArticles) {
+      // API already pre-filtered by isFeatured=true; just apply rating gate
       return apiArticles.filter((a) => (a.rating || 0) >= 3.5);
     }
+    // Fallback: filter CMS context articles by isFeatured OR featured flag
     return data.articles.filter(
       (article) =>
         article.status === "published" &&
         (article.isFeatured || article.featured) &&
-        article.rating >= 3.5
+        (article.rating || 0) >= 3.5
     );
   }, [apiArticles, data.articles]);
 

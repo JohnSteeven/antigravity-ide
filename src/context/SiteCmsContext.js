@@ -59,7 +59,7 @@ export const SiteCmsProvider = ({ children }) => {
   }, []);
 
   const actions = useMemo(() => ({
-    async refreshData() {
+    async refreshSite() {
       await fetchSiteData();
     },
     async getSetting(key) {

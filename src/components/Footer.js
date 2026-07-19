@@ -10,7 +10,7 @@ const Footer = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const socials = data.site.socials;
-  const isAdmin = isAuthenticated && user?.role === "admin";
+  const isAdmin = isAuthenticated && user?.role === "Admin";
 
   const handleSubmit = (event) => {
     event.preventDefault();

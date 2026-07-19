@@ -4,10 +4,11 @@ import { categoryBlueprintBySlug } from "../domain/knowledgeArchitecture";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";
 import CategoryLanding from "../features/categories/CategoryLanding";
+import LoadingScreen from "./LoadingScreen";
 
 const CategoryPage = () => {
   const { slug } = useParams();
-  const { data, incrementArticle } = useCms();
+  const { data, syncStatus, incrementArticle } = useCms();
   const [apiArticles, setApiArticles] = useState(null);
 
   const category =
@@ -32,6 +33,9 @@ const CategoryPage = () => {
   }, []);
 
   if (!category) {
+    if (syncStatus === "loading") {
+      return <LoadingScreen message="Loading category..." />;
+    }
     return <Navigate to="/articles" replace />;
   }
 

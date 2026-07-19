@@ -4,6 +4,7 @@ import { articleApi, categoryApi, subCategoryApi, tagApi } from "../services/api
 
 const ContentCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-content-data";
+const CACHE_VERSION = "v4"; // Bump to bust stale browser cache
 
 const slugify = (value) =>
   value
@@ -24,10 +25,11 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export const ContentCmsProvider = ({ children }) => {
   const [syncStatus, setSyncStatus] = useState("loading");
-  const [articles, setArticles] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  const [tags, setTags] = useState([]);
+  // Pre-populate with cmsSeed so the homepage is never blank on first render
+  const [articles, setArticles] = useState(cmsSeed.articles || []);
+  const [categories, setCategories] = useState(cmsSeed.categories || []);
+  const [subcategories, setSubcategories] = useState(cmsSeed.subcategories || []);
+  const [tags, setTags] = useState(cmsSeed.tags || []);
 
   // Portfolio & site settings slices
   const [site, setSite] = useState(cmsSeed.site);
@@ -37,40 +39,39 @@ export const ContentCmsProvider = ({ children }) => {
   const [skills, setSkills] = useState(cmsSeed.skills);
   const [stats, setStats] = useState(cmsSeed.stats || []);
 
-  // Load initial fallback from localStorage
+  // Restore from localStorage only if cache version matches
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.articles) setArticles(parsed.articles);
-        if (parsed.categories) setCategories(parsed.categories);
-        if (parsed.subcategories) setSubcategories(parsed.subcategories);
-        if (parsed.tags) setTags(parsed.tags);
-        if (parsed.site) setSite(parsed.site);
-        if (parsed.story) setStory(parsed.story);
-        if (parsed.timeline) setTimeline(parsed.timeline);
-        if (parsed.projects) setProjects(parsed.projects);
-        if (parsed.skills) setSkills(parsed.skills);
-        if (parsed.stats) setStats(parsed.stats);
-      } else {
-        // Fallback to cmsSeed
-        setArticles(cmsSeed.articles || []);
-        setCategories(cmsSeed.categories || []);
-        setSubcategories(cmsSeed.subcategories || []);
-        setTags(cmsSeed.tags || []);
+        // Discard stale cache — fetchContentData will populate fresh
+        if (parsed.__version !== CACHE_VERSION) {
+          window.localStorage.removeItem(STORAGE_KEY);
+        } else {
+          if (parsed.articles?.length) setArticles(parsed.articles);
+          if (parsed.categories?.length) setCategories(parsed.categories);
+          if (parsed.subcategories?.length) setSubcategories(parsed.subcategories);
+          if (parsed.tags?.length) setTags(parsed.tags);
+          if (parsed.site) setSite(parsed.site);
+          if (parsed.story) setStory(parsed.story);
+          if (parsed.timeline) setTimeline(parsed.timeline);
+          if (parsed.projects) setProjects(parsed.projects);
+          if (parsed.skills) setSkills(parsed.skills);
+          if (parsed.stats) setStats(parsed.stats);
+        }
       }
     } catch (err) {
       console.warn("Failed to load local content cache", err);
     }
   }, []);
 
-  // Debounced write to localStorage
+  // Debounced write to localStorage (with version stamp)
   useEffect(() => {
     const timer = setTimeout(() => {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats })
+        JSON.stringify({ __version: CACHE_VERSION, articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats })
       );
     }, 1000);
     return () => clearTimeout(timer);
@@ -110,7 +111,7 @@ export const ContentCmsProvider = ({ children }) => {
   }, []);
 
   const actions = useMemo(() => ({
-    async refreshData() {
+    async refreshContent() {
       await fetchContentData();
     },
     updateSiteSection(section, value) {
@@ -118,10 +119,10 @@ export const ContentCmsProvider = ({ children }) => {
         ...current,
         [section]:
           value &&
-          typeof value === "object" &&
-          !Array.isArray(value) &&
-          current[section] &&
-          typeof current[section] === "object"
+            typeof value === "object" &&
+            !Array.isArray(value) &&
+            current[section] &&
+            typeof current[section] === "object"
             ? { ...current[section], ...value }
             : value,
       }));
@@ -233,7 +234,17 @@ export const ContentCmsProvider = ({ children }) => {
       return normalized;
     },
     async incrementArticle(id, metric) {
-      if (!["views", "likes", "bookmarks"].includes(metric)) return;
+      if (!["views", "likes", "bookmarks", "saved"].includes(metric)) return;
+
+      const applyUpdate = (newValue) => {
+        setArticles((prev) =>
+          prev.map((article) =>
+            article.id === id || article._id === id
+              ? { ...article, [metric]: Math.max(0, Number(newValue)) }
+              : article
+          )
+        );
+      };
 
       const applyDelta = (delta) => {
         setArticles((prev) =>
@@ -245,16 +256,56 @@ export const ContentCmsProvider = ({ children }) => {
         );
       };
 
-      applyDelta(1);
+      const isServerArticle = id && !String(id).startsWith("article-") && syncStatus === "live";
 
-      const isServerArticle = id && !String(id).startsWith("article-");
-      if (!isServerArticle || metric !== "views") return;
+      if (metric === "views") {
+        applyDelta(1);
+        if (!isServerArticle) return;
+        try {
+          await articleApi.incrementViews(id);
+        } catch (err) {
+          applyDelta(-1);
+          console.warn("Failed to increment article views", err);
+        }
+        return;
+      }
 
-      try {
-        await articleApi.incrementViews(id);
-      } catch (err) {
-        applyDelta(-1);
-        console.warn("Failed to increment article views", err);
+      if (metric === "likes") {
+        applyDelta(1);
+        if (!isServerArticle) return;
+        try {
+          const res = await articleApi.like(id);
+          if (res && res.likes !== undefined) applyUpdate(res.likes);
+        } catch (err) {
+          applyDelta(-1);
+          console.warn("Failed to persist article like", err);
+        }
+        return;
+      }
+
+      if (metric === "bookmarks") {
+        applyDelta(1);
+        if (!isServerArticle) return;
+        try {
+          const res = await articleApi.bookmark(id);
+          if (res && res.bookmarks !== undefined) applyUpdate(res.bookmarks);
+        } catch (err) {
+          applyDelta(-1);
+          console.warn("Failed to persist article bookmark", err);
+        }
+        return;
+      }
+
+      if (metric === "saved") {
+        applyDelta(1);
+        if (!isServerArticle) return;
+        try {
+          const res = await articleApi.save(id);
+          if (res && res.saved !== undefined) applyUpdate(res.saved);
+        } catch (err) {
+          applyDelta(-1);
+          console.warn("Failed to persist article save", err);
+        }
       }
     },
     async toggleArticleStatus(id) {
@@ -406,7 +457,7 @@ export const ContentCmsProvider = ({ children }) => {
       });
       return normalized;
     },
-  }), [articles, categories, subcategories, tags]);
+  }), [articles, categories, subcategories, tags, syncStatus]);
 
   const value = useMemo(() => ({
     articles,

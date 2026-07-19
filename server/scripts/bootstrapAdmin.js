@@ -28,13 +28,13 @@ async function run() {
         existingAdmin.verified.mobile = true;
         changed = true;
       }
-      if (existingAdmin.role !== "admin") {
-        existingAdmin.role = "admin";
+      if (existingAdmin.role !== "Admin") {
+        existingAdmin.role = "Admin";
         changed = true;
       }
       if (changed) {
         await existingAdmin.save();
-        console.log("[Update] Ensured admin account is fully verified and has admin role.");
+        console.log("[Update] Ensured admin account is fully verified and has Admin role.");
       }
       process.exit(0);
     }
@@ -49,7 +49,7 @@ async function run() {
       countryCode: "+91",
       mobile: "+919999999999",
       passwordHash,
-      role: "admin",
+      role: "Admin",
       verified: {
         email: true,
         mobile: true,

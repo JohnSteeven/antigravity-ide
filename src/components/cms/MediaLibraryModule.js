@@ -18,7 +18,7 @@ import {
 import { useCms } from "../../context/CmsContext";
 
 export default function MediaLibraryModule() {
-  const { data, uploadMedia, renameMedia, moveMedia, deleteMedia, restoreMedia, actions } = useCms();
+  const { data, uploadMedia, renameMedia, moveMedia, deleteMedia, restoreMedia, refreshMedia } = useCms();
   const { media = [] } = data;
 
   // UI State
@@ -50,8 +50,8 @@ export default function MediaLibraryModule() {
 
   // Re-fetch media on mount to make sure we are live
   useEffect(() => {
-    if (actions && typeof actions.refreshData === "function") {
-      actions.refreshData();
+    if (typeof refreshMedia === "function") {
+      refreshMedia();
     }
   }, []);
 

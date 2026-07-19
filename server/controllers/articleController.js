@@ -41,7 +41,13 @@ const calcReadingTime = (html = "") => {
 class ArticleController {
   async getArticles(req, res, next) {
     try {
-      const query = { ...req.query, status: "published" };
+      // When fetching by specific IDs (Profile bookmark/like/saved lookup),
+      // don't force status=published — the article may not be published but
+      // the user still owns the reference. For all other public browse paths,
+      // force status=published so drafts are never exposed.
+      const query = req.query.ids
+        ? { ...req.query }
+        : { ...req.query, status: "published" };
       const data = await articleService.getArticles(query);
       res.json(data);
     } catch (err) {
@@ -85,6 +91,16 @@ class ArticleController {
       const article = await articleService.incrementMetric(req.params.id, "bookmarks", req.user._id);
       if (!article) return res.status(404).json({ message: "Article not found." });
       res.json({ bookmarks: article.bookmarks });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async saveArticle(req, res, next) {
+    try {
+      const article = await articleService.incrementMetric(req.params.id, "saved", req.user._id);
+      if (!article) return res.status(404).json({ message: "Article not found." });
+      res.json({ saved: article.saved });
     } catch (err) {
       next(err);
     }
@@ -287,15 +303,6 @@ class ArticleController {
     }
   }
 
-  async moderateComment(req, res, next) {
-    try {
-      const { status } = req.body;
-      const comment = await commentService.updateComment(req.params.commentId, { status }, req.user._id);
-      res.json({ comment, message: `Comment ${status}.` });
-    } catch (err) {
-      next(err);
-    }
-  }
 }
 
 module.exports = new ArticleController();

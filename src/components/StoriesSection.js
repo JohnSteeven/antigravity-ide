@@ -8,9 +8,6 @@ const StoriesSection = () => {
   return (
     <section className="stories-section" id="about">
       <div className="stories-container">
-        <div className="stories-icon" aria-hidden="true">
-          <span>+</span>
-        </div>
 
         <p className="stories-subtitle">{intro.subtitle}</p>
 

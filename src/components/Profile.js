@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   FiBell,
   FiBookmark,
+  FiBookOpen,
   FiEdit3,
   FiGlobe,
   FiHeart,
@@ -18,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { useCms } from "../context/CmsContext";
+import { articleApi } from "../services/apiService";
 import { getFullName, getProfileCover } from "../utils/helpers";
 import UserAvatar from "./shared/UserAvatar";
 
@@ -52,6 +54,9 @@ const Profile = () => {
   const [settingsMessage, setSettingsMessage] = useState("");
 
   const fullName = getFullName(user);
+  const [bookmarked, setBookmarked] = useState([]);
+  const [liked, setLiked] = useState([]);
+  const [saved, setSaved] = useState([]);
   const authoredArticles = useMemo(
     () =>
       data.articles.filter(
@@ -61,13 +66,42 @@ const Profile = () => {
       ),
     [data.articles, fullName]
   );
-  const bookmarked = data.articles.filter((article) =>
-    (profile.bookmarks || []).includes(article.id)
-  );
-  const liked = data.articles.filter((article) =>
-    (profile.likedArticles || []).includes(article.id)
-  );
   const notifications = profile.notifications || [];
+
+  // Fetch bookmarked / liked / saved articles from server by ID to avoid
+  // pagination gaps in the general article list.
+  useEffect(() => {
+    const bookmarkIds = profile.bookmarks || [];
+    if (bookmarkIds.length === 0) { setBookmarked([]); return; }
+    articleApi.list({ ids: bookmarkIds.join(","), limit: bookmarkIds.length })
+      .then((res) => setBookmarked(res.articles || []))
+      .catch(() => {
+        const local = data.articles.filter(a => bookmarkIds.includes(a.id) || bookmarkIds.includes(a._id));
+        setBookmarked(local);
+      });
+  }, [profile.bookmarks, data.articles]);
+
+  useEffect(() => {
+    const likedIds = profile.likedArticles || [];
+    if (likedIds.length === 0) { setLiked([]); return; }
+    articleApi.list({ ids: likedIds.join(","), limit: likedIds.length })
+      .then((res) => setLiked(res.articles || []))
+      .catch(() => {
+        const local = data.articles.filter(a => likedIds.includes(a.id) || likedIds.includes(a._id));
+        setLiked(local);
+      });
+  }, [profile.likedArticles, data.articles]);
+
+  useEffect(() => {
+    const savedIds = profile.savedArticles || [];
+    if (savedIds.length === 0) { setSaved([]); return; }
+    articleApi.list({ ids: savedIds.join(","), limit: savedIds.length })
+      .then((res) => setSaved(res.articles || []))
+      .catch(() => {
+        const local = data.articles.filter(a => savedIds.includes(a.id) || savedIds.includes(a._id));
+        setSaved(local);
+      });
+  }, [profile.savedArticles, data.articles]);
 
   useEffect(() => {
     document.body.classList.toggle("theme-dark", settings.darkMode);
@@ -94,7 +128,7 @@ const Profile = () => {
   const renderArticleList = (items, emptyText) =>
     items.length ? (
       items.map((article) => (
-        <Link className="profile-article-row" to={`/articles/${article.slug}`} key={article.id}>
+        <Link className="profile-article-row" to={`/articles/${article.slug}`} key={article.id || article._id}>
           <strong>{article.title}</strong>
           <span>{article.category}</span>
         </Link>
@@ -283,10 +317,15 @@ const Profile = () => {
         </section>
 
         <section className="profile-panel profile-list-panel">
+          <h2><FiBookOpen /> Saved Articles</h2>
+          {renderArticleList(saved, "No saved articles yet.")}
+        </section>
+
+        <section className="profile-panel profile-list-panel">
           <h2>Comments</h2>
           {(profile.comments || []).length ? (
             profile.comments.map((comment) => (
-              <article className="profile-comment" key={comment.id}>
+              <article className="profile-comment" key={comment.id || comment._id}>
                 <strong>{comment.articleTitle}</strong>
                 <p>{comment.text}</p>
               </article>
@@ -302,7 +341,7 @@ const Profile = () => {
           </h2>
           {notifications.length ? (
             notifications.map((item) => (
-              <article className="notification-row" key={item.id}>
+              <article className="notification-row" key={item.id || item._id}>
                 <strong>{item.title}</strong>
                 <p>{item.message}</p>
                 <span>{item.createdAt}</span>

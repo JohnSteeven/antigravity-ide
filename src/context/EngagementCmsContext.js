@@ -68,7 +68,7 @@ export const EngagementCmsProvider = ({ children }) => {
   }, []);
 
   const actions = useMemo(() => ({
-    async refreshData() {
+    async refreshComments() {
       await fetchEngagementData();
     },
     async addComment(articleId, comment) {
