@@ -28,7 +28,7 @@ import { useCms } from "../../context/CmsContext";
 const ITEMS_PER_PAGE = 8;
 
 const slugify = (value) =>
-  String(value || "")
+  value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
@@ -49,25 +49,25 @@ const getWordCount = (html) => {
 // Markdown simple converter for pasting
 const convertMarkdownToHtml = (markdown) => {
   let html = markdown;
-  
+
   // Headers
   html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>");
   html = html.replace(/^## (.*$)/gim, "<h2>$1</h2>");
   html = html.replace(/^# (.*$)/gim, "<h1>$1</h1>");
-  
+
   // Bold & Italic
   html = html.replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>");
   html = html.replace(/\*(.*)\*/gim, "<em>$1</em>");
-  
+
   // Blockquotes
   html = html.replace(/^\> (.*$)/gim, "<blockquote>$1</blockquote>");
-  
+
   // Horizontal Rules
   html = html.replace(/^---$/gim, "<hr />");
-  
+
   // Links
   html = html.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2">$1</a>');
-  
+
   // Convert newlines to paragraphs
   html = html.split(/\n\n+/).map(p => {
     if (p.trim().startsWith("<h") || p.trim().startsWith("<bl") || p.trim().startsWith("<hr")) {
@@ -84,7 +84,6 @@ const createArticleDraft = (categories = []) => ({
   slug: "",
   description: "",
   category: categories[0]?.name || "Uncategorized",
-  categoryId: categories[0]?._id || categories[0]?.id || null,
   subcategory: "",
   body: "<p>Write your story here...</p>",
   status: "draft",
@@ -234,13 +233,13 @@ const ArticleModule = () => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", "Uploads");
-      
+
       const res = await fetch("/api/media", {
         method: "POST",
         body: formData
       });
       const data = await res.json();
-      
+
       if (data.media && data.media.url) {
         const nextBody = `${editorRef.current.innerHTML}<p><img src="${data.media.url}" alt="${data.media.name}" /></p>`;
         editorRef.current.innerHTML = nextBody;
@@ -299,10 +298,6 @@ const ArticleModule = () => {
   };
 
   const triggerManualSave = async () => {
-    if (!articleDraft.title || !articleDraft.title.trim()) {
-      alert("Please enter a title before saving the article.");
-      return;
-    }
     setSaveStatus("Saving...");
     try {
       // Auto-recalculate reading time
@@ -324,14 +319,8 @@ const ArticleModule = () => {
     const serialized = JSON.stringify(articleDraft);
     if (serialized === lastSavedDraftRef.current) return;
 
-    if (!articleDraft.title || !articleDraft.title.trim()) {
-      setSaveStatus("Draft");
-      return;
-    }
-
-    setSaveStatus("Unsaved");
+    setSaveStatus("Saving...");
     const delay = setTimeout(async () => {
-      setSaveStatus("Saving...");
       try {
         const finalDraft = {
           ...articleDraft,
@@ -440,7 +429,7 @@ const ArticleModule = () => {
               placeholder="Excerpt or summary..."
             ></textarea>
           </label>
-          
+
           <label>
             Category
             <select
@@ -449,7 +438,6 @@ const ArticleModule = () => {
                 const cat = categories.find(c => c.name === e.target.value);
                 update({
                   category: e.target.value,
-                  categoryId: cat?._id || cat?.id || null,
                   subcategory: cat?.subcategories?.[0] || ""
                 });
               }}
@@ -488,7 +476,7 @@ const ArticleModule = () => {
           <button type="button" onClick={() => imageInputRef.current?.click()} title="Insert Image"><FiImage /></button>
           <button type="button" onClick={handleUndo} title="Undo">Undo</button>
           <button type="button" onClick={handleRedo} title="Redo">Redo</button>
-          
+
           <span style={{ marginLeft: "auto", fontSize: "0.8rem", color: "#666" }}>
             {saveStatus === "Saving..." && <span style={{ color: "orange" }}>Saving...</span>}
             {saveStatus === "Saved" && <span style={{ color: "green" }}>Saved {lastSavedTime && `at ${lastSavedTime}`}</span>}
@@ -588,7 +576,7 @@ const ArticleModule = () => {
 
       {/* RIGHT PANEL: Sidebar Settings & Articles Registry */}
       <div className="cms-sidebar-control" style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-        
+
         {/* Settings Panel */}
         <div className="cms-panel">
           <div className="cms-panel-heading">

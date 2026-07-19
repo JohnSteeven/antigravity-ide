@@ -13,7 +13,7 @@ import {
 import { useCms } from "../../context/CmsContext";
 
 const slugify = (value) =>
-  String(value || "")
+  value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")

@@ -67,6 +67,31 @@ const ArticleDetail = () => {
     return () => { cancelled = true; };
   }, [slug]);
 
+  // Keep local apiArticle state synchronized with context data.articles updates
+  useEffect(() => {
+    if (apiArticle) {
+      const match = data.articles.find(
+        (item) => item.id === apiArticle.id || item._id === apiArticle._id
+      );
+      if (match) {
+        if (
+          match.likes !== apiArticle.likes ||
+          match.bookmarks !== apiArticle.bookmarks ||
+          match.views !== apiArticle.views ||
+          match.saved !== apiArticle.saved
+        ) {
+          setApiArticle((prev) => prev ? {
+            ...prev,
+            likes: match.likes,
+            bookmarks: match.bookmarks,
+            views: match.views,
+            saved: match.saved,
+          } : null);
+        }
+      }
+    }
+  }, [data.articles, apiArticle]);
+
   // Use whichever source resolves first
   const article = contextArticle || apiArticle;
 

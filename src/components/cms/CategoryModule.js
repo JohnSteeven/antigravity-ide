@@ -15,7 +15,7 @@ import {
 import { useCms } from "../../context/CmsContext";
 
 const slugify = (value) =>
-  String(value || "")
+  value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
@@ -64,7 +64,7 @@ export default function CategoryModule() {
       setError("Slug is required.");
       return false;
     }
-    
+
     // Check for duplicate name/slug (excluding current editing category)
     const normalizedName = name.trim().toLowerCase();
     const isDuplicateName = categories.some(
