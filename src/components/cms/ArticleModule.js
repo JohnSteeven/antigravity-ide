@@ -329,8 +329,9 @@ const ArticleModule = () => {
       return;
     }
 
-    setSaveStatus("Saving...");
+    setSaveStatus("Unsaved");
     const delay = setTimeout(async () => {
+      setSaveStatus("Saving...");
       try {
         const finalDraft = {
           ...articleDraft,
