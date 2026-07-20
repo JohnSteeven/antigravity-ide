@@ -5790,3 +5790,80 @@ code {
 .spin-animation {
   animation: spin 1s linear infinite;
 }
+
+/* Premium Article Images and Layout */
+.article-image-container {
+  position: relative;
+  display: inline-block;
+  margin: 1.5rem auto;
+  text-align: center;
+  transition: transform 0.2s ease-in-out;
+  width: 100%;
+}
+
+.article-image-container img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  display: block;
+}
+
+/* Left Align (Text Wrap) */
+.article-image-left {
+  float: left;
+  margin: 0.5rem 1.5rem 1.25rem 0;
+  max-width: 45%;
+  width: auto;
+}
+
+/* Right Align (Text Wrap) */
+.article-image-right {
+  float: right;
+  margin: 0.5rem 0 1.25rem 1.5rem;
+  max-width: 45%;
+  width: auto;
+}
+
+/* Center Align */
+.article-image-center {
+  display: block;
+  margin: 2rem auto;
+  max-width: 100%;
+  text-align: center;
+}
+.article-image-center img {
+  margin: 0 auto;
+  max-height: 500px;
+}
+
+/* Remove button inside the CMS editor */
+.remove-image-btn {
+  display: none; /* Hidden on public page */
+}
+
+/* Show only inside the editor */
+.rich-text-editor-workspace .article-image-container:hover .remove-image-btn,
+.rich-text-editor-workspace .remove-image-btn {
+  display: flex !important;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+.rich-text-editor-workspace .remove-image-btn:hover {
+  opacity: 1;
+  background-color: #ff4d4f !important;
+}
+
+/* Clearfix for paragraphs in premium article prose */
+.premium-article-prose::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.premium-article-prose p {
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+

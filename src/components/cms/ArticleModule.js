@@ -187,6 +187,7 @@ const ArticleModule = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [editorMode, setEditorMode] = useState("edit"); // "edit" | "preview"
+  const [imageAlign, setImageAlign] = useState("center");
 
   // Undo/Redo stacks
   const [history, setHistory] = useState([articleDraft?.body || ""]);
@@ -291,7 +292,20 @@ const ArticleModule = () => {
       const data = await res.json();
 
       if (data.media && data.media.url) {
-        const nextBody = `${editorRef.current.innerHTML}<p><img src="${data.media.url}" alt="${data.media.name}" /></p>`;
+        const alignClass = imageAlign === "left" ? "article-image-left" : imageAlign === "right" ? "article-image-right" : "article-image-center";
+        
+        let styleStr = "";
+        if (imageAlign === "left") {
+          styleStr = "float: left; margin: 0.5rem 1.5rem 1.25rem 0; max-width: 45%; position: relative; text-align: center; display: inline-block;";
+        } else if (imageAlign === "right") {
+          styleStr = "float: right; margin: 0.5rem 0 1.25rem 1.5rem; max-width: 45%; position: relative; text-align: center; display: inline-block;";
+        } else {
+          styleStr = "display: block; margin: 1.5rem auto; text-align: center; max-width: 100%; position: relative;";
+        }
+
+        const figHtml = `<figure class="article-image-container ${alignClass}" contenteditable="false" style="${styleStr}"><img src="${data.media.url}" alt="${data.media.name}" style="${imageAlign === 'center' ? 'max-width: 100%; max-height: 500px; height: auto;' : 'width: 100%; height: auto;'} border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #eaeaea;" /><button class="remove-image-btn" onclick="const ws = this.closest('.rich-text-editor-workspace'); this.parentElement.remove(); if (ws) { ws.dispatchEvent(new Event('input', { bubbles: true })); }" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; line-height: 1; pointer-events: auto;">×</button></figure>`;
+
+        const nextBody = `${editorRef.current.innerHTML}${figHtml}`;
         editorRef.current.innerHTML = nextBody;
         const nextDraft = { ...articleDraft, body: nextBody };
         onChange(nextDraft);
@@ -580,6 +594,25 @@ const ArticleModule = () => {
           <button type="button" onClick={() => runCommand("insertUnorderedList")} title="Bullet List"><FiList /></button>
           <button type="button" onClick={insertLink} title="Insert Link"><FiLink /></button>
           <button type="button" onClick={() => imageInputRef.current?.click()} title="Insert Image"><FiImage /></button>
+          <select
+            value={imageAlign}
+            onChange={(e) => setImageAlign(e.target.value)}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              fontSize: "0.85rem",
+              marginLeft: "0.25rem",
+              marginRight: "0.5rem",
+              cursor: "pointer",
+              verticalAlign: "middle"
+            }}
+            title="Image Layout Style"
+          >
+            <option value="center">Center</option>
+            <option value="left">Float Left</option>
+            <option value="right">Float Right</option>
+          </select>
           <button type="button" onClick={handleUndo} title="Undo">Undo</button>
           <button type="button" onClick={handleRedo} title="Redo">Redo</button>
 

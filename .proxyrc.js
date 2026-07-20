@@ -18,4 +18,11 @@ module.exports = function (app) {
       pathFilter: "/api",
     })
   );
+  app.use(
+    createProxyMiddleware({
+      target,
+      changeOrigin: true,
+      pathFilter: "/uploads",
+    })
+  );
 };
