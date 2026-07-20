@@ -19,7 +19,7 @@ const CategoryPage = () => {
     let cancelled = false;
 
     articleApi
-      .list({ status: "published", limit: 50 })
+      .list({ status: "published", limit: 1000 })
       .then((res) => {
         if (!cancelled && Array.isArray(res.articles)) {
           setApiArticles(res.articles);

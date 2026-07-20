@@ -44,7 +44,7 @@ class ArticleService {
     }
 
     const page = Math.max(1, parseInt(query.page) || 1);
-    const limit = Math.min(100, parseInt(query.limit) || 20);
+    const limit = Math.min(1000, parseInt(query.limit) || 1000);
     const skip = (page - 1) * limit;
 
     const [articles, total] = await Promise.all([
@@ -72,7 +72,13 @@ class ArticleService {
   }
 
   async createArticle(data, userId) {
-    if (data.categoryId) {
+    if (!data.categoryId && data.category) {
+      const categoryDoc = await Category.findOne({ name: data.category });
+      if (categoryDoc) {
+        data.categoryId = categoryDoc._id;
+        data.categorySlug = categoryDoc.slug;
+      }
+    } else if (data.categoryId) {
       const categoryDoc = await Category.findById(data.categoryId);
       if (categoryDoc) {
         data.category = categoryDoc.name;
@@ -102,7 +108,13 @@ class ArticleService {
   }
 
   async updateArticle(id, data, userId) {
-    if (data.categoryId) {
+    if (!data.categoryId && data.category) {
+      const categoryDoc = await Category.findOne({ name: data.category });
+      if (categoryDoc) {
+        data.categoryId = categoryDoc._id;
+        data.categorySlug = categoryDoc.slug;
+      }
+    } else if (data.categoryId) {
       const categoryDoc = await Category.findById(data.categoryId);
       if (categoryDoc) {
         data.category = categoryDoc.name;

@@ -543,6 +543,7 @@ const ArticleModule = () => {
                 const cat = categories.find(c => c.name === e.target.value);
                 update({
                   category: e.target.value,
+                  categoryId: cat?.id || cat?._id || "",
                   subcategory: cat?.subcategories?.[0] || ""
                 });
               }}

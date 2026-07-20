@@ -88,7 +88,7 @@ export const ContentCmsProvider = ({ children }) => {
     setSyncStatus("loading");
     try {
       const [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
-        articleApi.adminList().catch(() => articleApi.list()),
+        articleApi.adminList({ limit: 1000 }).catch(() => articleApi.list({ limit: 1000 })),
         categoryApi.list({ includeDeleted: true }).catch(() => ({ categories: [] })),
         subCategoryApi.list({ includeDeleted: true }).catch(() => ({ subCategories: [] })),
         tagApi.list({ includeDeleted: true }).catch(() => ({ tags: [] })),

@@ -43,7 +43,7 @@ const ArticlesPage = () => {
   const fetchArticles = useCallback(() => {
     setLoading(true);
 
-    const params = { status: "published", limit: 50 };
+    const params = { status: "published", limit: 1000 };
     if (showFeatured) params.featured = "true";
 
     articleApi
