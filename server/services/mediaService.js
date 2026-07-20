@@ -75,7 +75,10 @@ class MediaService {
       uploadedData = file;
     } else if (file.filename) {
       // Multer file object
-      const url = `/uploads/${folder ? folder + "/" : ""}${file.filename}`;
+      const cleanFolder = folder ? folder.toLowerCase() : "misc";
+      const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "uploads", "misc"];
+      const targetFolder = allowedFolders.includes(cleanFolder) ? cleanFolder : "misc";
+      const url = `/uploads/${targetFolder}/${file.filename}`;
       uploadedData = {
         fileName: file.filename,
         originalName: file.originalname,

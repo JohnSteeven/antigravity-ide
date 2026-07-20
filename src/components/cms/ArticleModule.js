@@ -191,6 +191,7 @@ const ArticleModule = () => {
   // Undo/Redo stacks
   const [history, setHistory] = useState([articleDraft?.body || ""]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const typingTimeoutRef = useRef(null);
 
   // Word & Reading metrics
   const wordCount = useMemo(() => getWordCount(articleDraft.body), [articleDraft.body]);
@@ -241,6 +242,30 @@ const ArticleModule = () => {
       e.preventDefault();
       handleRedo();
     }
+    // Space or Enter: push history immediately
+    if (e.key === " " || e.key === "Enter") {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      const html = editorRef.current?.innerHTML || "";
+      if (history[historyIndex] !== html) {
+        pushHistory(html);
+      }
+    }
+  };
+
+  const handleEditorInput = (e) => {
+    const html = e.target.innerHTML;
+    onChange({ ...articleDraft, body: html });
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = setTimeout(() => {
+      if (history[historyIndex] !== html) {
+        pushHistory(html);
+      }
+    }, 800);
   };
 
   // Drag & drop file uploads helper
@@ -585,9 +610,7 @@ const ArticleModule = () => {
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onPaste={handlePaste}
-          onInput={(e) => {
-            onChange({ ...articleDraft, body: e.target.innerHTML });
-          }}
+          onInput={handleEditorInput}
           style={{
             minHeight: "350px",
             border: "1px solid #ccc",

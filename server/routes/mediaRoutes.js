@@ -11,10 +11,13 @@ const router = express.Router();
 // Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const folder = req.body.folder || req.query.folder || "misc";
-    const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "misc"];
+    const folder = (req.body.folder || req.query.folder || "misc").toLowerCase();
+    const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "uploads", "misc"];
     const targetFolder = allowedFolders.includes(folder) ? folder : "misc";
     const dest = path.resolve(__dirname, "../../uploads", targetFolder);
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
     cb(null, dest);
   },
   filename: function (req, file, cb) {
