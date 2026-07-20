@@ -99,7 +99,7 @@ const Footer = () => {
             <h4>Let's Connect</h4>
 
             <div className="social-icons">
-              <a href={socials.instagram} aria-label="Instagram">
+              <a href={socials.instagram || "https://www.instagram.com/j.steeven_?igsh=MWh6aHFyNmIxZTV6Mg=="} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <FiInstagram />
               </a>
 

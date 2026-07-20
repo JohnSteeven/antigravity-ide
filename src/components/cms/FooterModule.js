@@ -20,7 +20,7 @@ export default function FooterModule() {
       email: "hello@myjourney.com",
     },
     socialLinks: {
-      instagram: "https://instagram.com",
+      instagram: "https://www.instagram.com/j.steeven_?igsh=MWh6aHFyNmIxZTV6Mg==",
       linkedin: "https://www.linkedin.com/in/noblejohnsteeven/",
       twitter: "https://twitter.com",
       github: "https://github.com",
