@@ -1,4 +1,6 @@
 const authService = require("../services/authService");
+const Comment = require("../models/Comment");
+const Notification = require("../models/Notification");
 
 const safeUser = (user) => {
   const safe = user.toSafeJSON ? user.toSafeJSON() : user;
@@ -11,9 +13,34 @@ const safeUser = (user) => {
 class AuthController {
   async me(req, res, next) {
     try {
+      const [notifications, comments] = await Promise.all([
+        Notification.find({ user: req.user._id })
+          .sort({ createdAt: -1 })
+          .limit(20),
+        Comment.find({ authorId: req.user._id, isDeleted: false })
+          .populate("articleId", "title slug")
+          .sort({ createdAt: -1 }),
+      ]);
+
+      const safe = safeUser(req.user);
+      const userComments = comments.map(c => ({
+        id: c._id.toString(),
+        _id: c._id.toString(),
+        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
+        articleTitle: c.articleId?.title || "Unknown Article",
+        text: c.body,
+        createdAt: c.createdAt,
+      }));
+
+      safe.profile = {
+        ...(safe.profile || {}),
+        notifications,
+        comments: userComments,
+      };
+
       res.json({
         session: { authenticated: true },
-        user: safeUser(req.user),
+        user: safe,
       });
     } catch (err) {
       next(err);
@@ -68,9 +95,34 @@ class AuthController {
         });
       }
 
+      const [notifications, comments] = await Promise.all([
+        Notification.find({ user: result.user._id })
+          .sort({ createdAt: -1 })
+          .limit(20),
+        Comment.find({ authorId: result.user._id, isDeleted: false })
+          .populate("articleId", "title slug")
+          .sort({ createdAt: -1 }),
+      ]);
+
+      const safe = safeUser(result.user);
+      const userComments = comments.map(c => ({
+        id: c._id.toString(),
+        _id: c._id.toString(),
+        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
+        articleTitle: c.articleId?.title || "Unknown Article",
+        text: c.body,
+        createdAt: c.createdAt,
+      }));
+
+      safe.profile = {
+        ...(safe.profile || {}),
+        notifications,
+        comments: userComments,
+      };
+
       res.json({
         session: result.session,
-        user: safeUser(result.user),
+        user: safe,
         message:
           req.body.purpose === "login-otp"
             ? "Logged in successfully."
@@ -85,9 +137,35 @@ class AuthController {
     try {
       const { identifier, password, remember } = req.body;
       const { session, user } = await authService.login(identifier, password, remember, req, res);
+
+      const [notifications, comments] = await Promise.all([
+        Notification.find({ user: user._id })
+          .sort({ createdAt: -1 })
+          .limit(20),
+        Comment.find({ authorId: user._id, isDeleted: false })
+          .populate("articleId", "title slug")
+          .sort({ createdAt: -1 }),
+      ]);
+
+      const safe = safeUser(user);
+      const userComments = comments.map(c => ({
+        id: c._id.toString(),
+        _id: c._id.toString(),
+        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
+        articleTitle: c.articleId?.title || "Unknown Article",
+        text: c.body,
+        createdAt: c.createdAt,
+      }));
+
+      safe.profile = {
+        ...(safe.profile || {}),
+        notifications,
+        comments: userComments,
+      };
+
       res.json({
         session,
-        user: safeUser(user),
+        user: safe,
         message: "Welcome back.",
       });
     } catch (err) {
@@ -135,11 +213,37 @@ class AuthController {
     try {
       const token = req.cookies.refreshToken || req.body.refreshToken;
       if (!token) return res.status(401).json({ message: "Refresh token required." });
-      
+
       const { session, user } = await authService.refreshToken(token, req, res);
+
+      const [notifications, comments] = await Promise.all([
+        Notification.find({ user: user._id })
+          .sort({ createdAt: -1 })
+          .limit(20),
+        Comment.find({ authorId: user._id, isDeleted: false })
+          .populate("articleId", "title slug")
+          .sort({ createdAt: -1 }),
+      ]);
+
+      const safe = safeUser(user);
+      const userComments = comments.map(c => ({
+        id: c._id.toString(),
+        _id: c._id.toString(),
+        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
+        articleTitle: c.articleId?.title || "Unknown Article",
+        text: c.body,
+        createdAt: c.createdAt,
+      }));
+
+      safe.profile = {
+        ...(safe.profile || {}),
+        notifications,
+        comments: userComments,
+      };
+
       res.json({
         session,
-        user: safeUser(user),
+        user: safe,
         message: "Session refreshed.",
       });
     } catch (err) {

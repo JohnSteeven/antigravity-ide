@@ -15,14 +15,29 @@ const safeUser = (user) => {
 class UserController {
   async getMe(req, res, next) {
     try {
-      const notifications = await Notification.find({ user: req.user._id })
-        .sort({ createdAt: -1 })
-        .limit(20);
+      const [notifications, comments] = await Promise.all([
+        Notification.find({ user: req.user._id })
+          .sort({ createdAt: -1 })
+          .limit(20),
+        Comment.find({ authorId: req.user._id, isDeleted: false })
+          .populate("articleId", "title slug")
+          .sort({ createdAt: -1 }),
+      ]);
 
       const user = safeUser(req.user);
+      const userComments = comments.map(c => ({
+        id: c._id.toString(),
+        _id: c._id.toString(),
+        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
+        articleTitle: c.articleId?.title || "Unknown Article",
+        text: c.body,
+        createdAt: c.createdAt,
+      }));
+
       user.profile = {
         ...(user.profile || {}),
         notifications,
+        comments: userComments,
       };
 
       res.json({ user });
@@ -55,8 +70,34 @@ class UserController {
       }
 
       const updated = await userService.updateUserProfile(req.user._id, updateData, req.user._id);
+
+      const [notifications, comments] = await Promise.all([
+        Notification.find({ user: req.user._id })
+          .sort({ createdAt: -1 })
+          .limit(20),
+        Comment.find({ authorId: req.user._id, isDeleted: false })
+          .populate("articleId", "title slug")
+          .sort({ createdAt: -1 }),
+      ]);
+
+      const safe = safeUser(updated);
+      const userComments = comments.map(c => ({
+        id: c._id.toString(),
+        _id: c._id.toString(),
+        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
+        articleTitle: c.articleId?.title || "Unknown Article",
+        text: c.body,
+        createdAt: c.createdAt,
+      }));
+
+      safe.profile = {
+        ...(safe.profile || {}),
+        notifications,
+        comments: userComments,
+      };
+
       res.json({
-        user: safeUser(updated),
+        user: safe,
         message: "Profile updated successfully.",
       });
     } catch (err) {
