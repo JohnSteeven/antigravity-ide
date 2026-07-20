@@ -103,7 +103,7 @@ const Footer = () => {
                 <FiInstagram />
               </a>
 
-              <a href={socials.linkedin} aria-label="LinkedIn">
+              <a href={socials.linkedin || "https://www.linkedin.com/in/noblejohnsteeven/"} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
                 <FiLinkedin />
               </a>
 

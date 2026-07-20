@@ -31,7 +31,7 @@ export const cmsSeed = {
       "Thank you for being a part of my journey. Let's grow, learn, and build meaningful things together.",
     socials: {
       instagram: "https://instagram.com",
-      linkedin: "https://linkedin.com",
+      linkedin: "https://www.linkedin.com/in/noblejohnsteeven/",
       twitter: "https://twitter.com",
       email: "mailto:hello@myjourney.com",
     },

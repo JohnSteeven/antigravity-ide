@@ -21,7 +21,7 @@ export default function FooterModule() {
     },
     socialLinks: {
       instagram: "https://instagram.com",
-      linkedin: "https://linkedin.com",
+      linkedin: "https://www.linkedin.com/in/noblejohnsteeven/",
       twitter: "https://twitter.com",
       github: "https://github.com",
     },

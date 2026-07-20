@@ -533,7 +533,7 @@ const ArticleDetail = () => {
               </p>
               <div className="author-socials">
                 <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><FiTwitter /></a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"><FiLinkedin /></a>
+                <a href="https://www.linkedin.com/in/noblejohnsteeven/" target="_blank" rel="noopener noreferrer"><FiLinkedin /></a>
                 <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><FiFacebook /></a>
               </div>
             </div>
