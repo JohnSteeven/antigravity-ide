@@ -652,7 +652,8 @@ const ArticleModule = () => {
             marginTop: "0.5rem",
             outline: "none",
             borderRadius: "4px",
-            backgroundColor: "#fff"
+            backgroundColor: "#fff",
+            display: "flow-root"
           }}
         ></div>
 

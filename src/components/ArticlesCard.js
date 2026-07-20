@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FiBookmark, FiEye, FiHeart, FiStar } from "react-icons/fi";
+import { resolveImageUrl } from "../utils/helpers";
 
 const ArticlesCard = ({ articleData }) => {
   const {
@@ -19,7 +20,7 @@ const ArticlesCard = ({ articleData }) => {
   return (
     <article className="article-card">
       <Link to={`/articles/${slug}`} className="article-image-link">
-        <img src={coverImage?.trim() || undefined} alt={title} className="article-image" />
+        <img src={resolveImageUrl(coverImage) || undefined} alt={title} className="article-image" />
       </Link>
 
       <div className="article-details">

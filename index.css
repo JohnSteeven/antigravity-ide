@@ -5867,3 +5867,7 @@ code {
   margin-bottom: 1.5rem;
 }
 
+.rich-text-editor-workspace {
+  display: flow-root !important;
+}
+

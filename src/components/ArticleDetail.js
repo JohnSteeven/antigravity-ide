@@ -19,7 +19,7 @@ import {
 } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
-import { getFullName } from "../utils/helpers";
+import { getFullName, resolveImageUrl } from "../utils/helpers";
 import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
 import Breadcrumbs from "./shared/Breadcrumbs";
@@ -119,11 +119,12 @@ const ArticleDetail = () => {
     });
   }, [article]);
 
-  // Inject IDs to headers in article body
+  // Inject IDs to headers in article body & rewrite uploads paths to absolute URL
   const processedBody = useMemo(() => {
     if (!article || !article.body) return "";
     let index = 0;
-    return article.body.replace(/<h2([^>]*)>/g, (match, attrs) => {
+    const bodyWithAbsoluteImages = article.body.replace(/(src|href)="\/uploads/g, '$1="http://localhost:5000/uploads');
+    return bodyWithAbsoluteImages.replace(/<h2([^>]*)>/g, (match, attrs) => {
       const replacement = `<h2 id="heading-${index}"${attrs}>`;
       index++;
       return replacement;
@@ -323,7 +324,7 @@ const ArticleDetail = () => {
     <main className="premium-article-page">
       <header
         className="premium-article-hero"
-        style={article.coverImage?.trim() ? { backgroundImage: `url("${article.coverImage}")` } : undefined}
+        style={article.coverImage?.trim() ? { backgroundImage: `url("${resolveImageUrl(article.coverImage)}")` } : undefined}
       >
         <div className="premium-article-hero-overlay"></div>
         <div className="premium-article-hero-content">
