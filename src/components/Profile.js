@@ -482,10 +482,42 @@ const Profile = () => {
           </div>
           {notifications.length ? (
             notifications.map((item) => (
-              <article className="notification-row" key={item.id || item._id}>
-                <strong>{item.title}</strong>
-                <p>{item.message}</p>
-                <span>{item.createdAt}</span>
+              <article
+                className="notification-row"
+                key={item.id || item._id}
+                style={{
+                  padding: "12px",
+                  borderRadius: "6px",
+                  background: "rgba(255,255,255,0.02)",
+                  marginBottom: "10px",
+                  borderLeft: item.status === "unread" ? "3px solid #a5855f" : "3px solid transparent",
+                  opacity: item.status === "read" ? 0.6 : 1,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}
+              >
+                <div>
+                  <strong style={{ display: "block" }}>{item.title}</strong>
+                  <p style={{ margin: "5px 0", fontSize: "0.95rem" }}>{item.message}</p>
+                  <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>{formatDate(item.createdAt)}</span>
+                </div>
+                {item.status !== "read" && (
+                  <button
+                    className="compact-btn"
+                    onClick={() => handleMarkAsRead(item._id || item.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#a5855f",
+                      cursor: "pointer",
+                      fontSize: "0.85rem",
+                      padding: "5px"
+                    }}
+                  >
+                    Mark as read
+                  </button>
+                )}
               </article>
             ))
           ) : (
