@@ -384,7 +384,28 @@ const Profile = () => {
               </article>
             ))
           ) : (
-            <p className="empty-state compact">No profile comments yet.</p>
+            <div className="empty-state-container" style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "40px 20px",
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px dashed rgba(255, 255, 255, 0.1)",
+              borderRadius: "8px",
+              marginTop: "10px",
+              minHeight: "220px"
+            }}>
+              <span style={{ fontSize: "2.5rem", marginBottom: "15px" }} role="img" aria-label="comments">💬</span>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: "600", marginBottom: "8px", color: "var(--color-primary-light, #a5855f)" }}>No comments yet</h3>
+              <p style={{ fontSize: "0.95rem", opacity: 0.7, maxWidth: "260px", lineHeight: "1.4", marginBottom: "20px" }}>
+                Once readers start engaging with your stories, their comments will appear here.
+              </p>
+              <Link to="/articles" className="primary-btn" style={{ fontSize: "0.9rem", padding: "8px 16px" }}>
+                Explore Articles
+              </Link>
+            </div>
           )}
         </section>
 
