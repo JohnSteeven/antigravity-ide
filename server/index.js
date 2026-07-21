@@ -90,12 +90,6 @@ connectDb()
   .then(() => {
     app.listen(env.port, () => {
       console.log(`Auth API running on port ${env.port}`);
-      try {
-        const { startScheduler } = require("./cron");
-        startScheduler();
-      } catch (err) {
-        console.error("Failed to start scheduler:", err);
-      }
     });
   })
   .catch((error) => {

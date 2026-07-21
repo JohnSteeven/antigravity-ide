@@ -12,7 +12,6 @@ const validate = handleValidation(validationResult);
 // Personal Profile routes
 router.get("/me", authenticate, userController.getMe);
 router.put("/me", authenticate, updateProfileValidator, validate, userController.updateProfile);
-router.patch("/notifications/:id", authenticate, userController.markNotificationAsRead);
 
 // Admin User management routes (requires dynamic checkPermission RBAC middleware)
 router.get("/", authenticate, checkPermission("users.manage"), userController.getUsers);

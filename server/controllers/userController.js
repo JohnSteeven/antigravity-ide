@@ -15,16 +15,6 @@ const safeUser = (user) => {
 class UserController {
   async getMe(req, res, next) {
     try {
-      const lastActive = req.user.notificationPreferences?.lastActiveAt;
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-      if (!lastActive || lastActive < fifteenMinutesAgo) {
-        req.user.notificationPreferences = {
-          ...(req.user.notificationPreferences || {}),
-          lastActiveAt: new Date(),
-        };
-        await req.user.save();
-      }
-
       const [notifications, comments] = await Promise.all([
         Notification.find({ user: req.user._id })
           .sort({ createdAt: -1 })
@@ -58,16 +48,6 @@ class UserController {
 
   async updateProfile(req, res, next) {
     try {
-      const lastActive = req.user.notificationPreferences?.lastActiveAt;
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-      if (!lastActive || lastActive < fifteenMinutesAgo) {
-        req.user.notificationPreferences = {
-          ...(req.user.notificationPreferences || {}),
-          lastActiveAt: new Date(),
-        };
-        await req.user.save();
-      }
-
       const allowedRoot = [
         "firstName",
         "lastName",
@@ -86,31 +66,6 @@ class UserController {
         updateData.profile = {
           ...(req.user.profile || {}),
           ...req.body.profile,
-        };
-      }
-
-      if (req.body.notificationPreferences) {
-        const currentPrefs = req.user.notificationPreferences || {};
-        const incomingPrefs = req.body.notificationPreferences;
-        updateData.notificationPreferences = {
-          ...currentPrefs,
-          ...incomingPrefs,
-          dailyQuote: {
-            enabled: incomingPrefs.dailyQuote?.enabled !== undefined ? incomingPrefs.dailyQuote.enabled : currentPrefs.dailyQuote?.enabled ?? true,
-            time: {
-              hour: incomingPrefs.dailyQuote?.time?.hour !== undefined ? incomingPrefs.dailyQuote.time.hour : currentPrefs.dailyQuote?.time?.hour ?? 9,
-              minute: incomingPrefs.dailyQuote?.time?.minute !== undefined ? incomingPrefs.dailyQuote.time.minute : currentPrefs.dailyQuote?.time?.minute ?? 0
-            }
-          },
-          newArticles: {
-            enabled: incomingPrefs.newArticles?.enabled !== undefined ? incomingPrefs.newArticles.enabled : currentPrefs.newArticles?.enabled ?? false
-          },
-          readingReminders: {
-            enabled: incomingPrefs.readingReminders?.enabled !== undefined ? incomingPrefs.readingReminders.enabled : currentPrefs.readingReminders?.enabled ?? false
-          },
-          weeklySummary: {
-            enabled: incomingPrefs.weeklySummary?.enabled !== undefined ? incomingPrefs.weeklySummary.enabled : currentPrefs.weeklySummary?.enabled ?? false
-          }
         };
       }
 
@@ -260,23 +215,6 @@ class UserController {
       }
       const user = await userService.resetPassword(id, password, req.user._id);
       res.json({ success: true, user: safeUser(user), message: "Password reset completed." });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async markNotificationAsRead(req, res, next) {
-    try {
-      const { id } = req.params;
-      const notification = await Notification.findOneAndUpdate(
-        { _id: id, user: req.user._id },
-        { $set: { status: "read", readAt: new Date() } },
-        { new: true }
-      );
-      if (!notification) {
-        return res.status(404).json({ message: "Notification not found." });
-      }
-      res.json({ success: true, notification });
     } catch (err) {
       next(err);
     }
