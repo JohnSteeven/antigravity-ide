@@ -111,6 +111,7 @@ const get = (path) => request(path);
 const post = (path, body) => request(path, { method: "POST", body: JSON.stringify(body) });
 const postFormData = (path, formData) => request(path, { method: "POST", body: formData });
 const put = (path, body) => request(path, { method: "PUT", body: JSON.stringify(body) });
+const patch = (path, body) => request(path, { method: "PATCH", body: JSON.stringify(body) });
 const del = (path) => request(path, { method: "DELETE" });
 
 // ─── Articles ─────────────────────────────────────────────────────────────────
@@ -368,6 +369,7 @@ export const userApi = {
   resetPassword: (id, password) => post(`/api/users/${id}/reset-password`, { password }),
   getMe: () => get("/api/users/me"),
   updateProfile: (payload) => put("/api/users/me", payload),
+  markNotificationAsRead: (id) => patch(`/api/users/notifications/${id}`, {}),
 };
 
 // ─── Roles ───────────────────────────────────────────────────────────────────

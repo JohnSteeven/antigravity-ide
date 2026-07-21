@@ -19,7 +19,7 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { useCms } from "../context/CmsContext";
-import { articleApi } from "../services/apiService";
+import { articleApi, userApi } from "../services/apiService";
 import { getFullName, getProfileCover } from "../utils/helpers";
 import UserAvatar from "./shared/UserAvatar";
 
@@ -42,7 +42,7 @@ const getThemePreference = (profile) => {
 
 const Profile = () => {
   const location = useLocation();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshSession } = useAuth();
   const { data } = useCms();
   const profile = user.profile || {};
   const coverImage = getProfileCover(profile);
@@ -52,6 +52,24 @@ const Profile = () => {
     privateProfile: Boolean(profile.privateProfile),
   });
   const [settingsMessage, setSettingsMessage] = useState("");
+
+  const [prefDailyQuote, setPrefDailyQuote] = useState(user.notificationPreferences?.dailyQuote?.enabled ?? true);
+  const [prefDailyHour, setPrefDailyHour] = useState(user.notificationPreferences?.dailyQuote?.time?.hour ?? 9);
+  const [prefNewArticles, setPrefNewArticles] = useState(user.notificationPreferences?.newArticles?.enabled ?? false);
+  const [prefReadingReminders, setPrefReadingReminders] = useState(user.notificationPreferences?.readingReminders?.enabled ?? false);
+  const [prefWeeklySummary, setPrefWeeklySummary] = useState(user.notificationPreferences?.weeklySummary?.enabled ?? false);
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState("");
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (user?.notificationPreferences) {
+      setPrefDailyQuote(user.notificationPreferences.dailyQuote?.enabled ?? true);
+      setPrefDailyHour(user.notificationPreferences.dailyQuote?.time?.hour ?? 9);
+      setPrefNewArticles(user.notificationPreferences.newArticles?.enabled ?? false);
+      setPrefReadingReminders(user.notificationPreferences.readingReminders?.enabled ?? false);
+      setPrefWeeklySummary(user.notificationPreferences.weeklySummary?.enabled ?? false);
+    }
+  }, [user]);
 
   const fullName = getFullName(user);
   const [bookmarked, setBookmarked] = useState([]);
@@ -122,6 +140,41 @@ const Profile = () => {
     } catch (error) {
       setSettings((current) => ({ ...current, [field]: !nextValue }));
       setSettingsMessage(error.message || "Setting could not be updated.");
+    }
+  };
+
+  const handleSavePreferences = async (e) => {
+    e.preventDefault();
+    setSaveSuccessMessage("");
+    setSaveErrorMessage("");
+    try {
+      await updateProfile({
+        notificationPreferences: {
+          dailyQuote: {
+            enabled: prefDailyQuote,
+            time: {
+              hour: Number(prefDailyHour),
+              minute: 0
+            }
+          },
+          newArticles: { enabled: prefNewArticles },
+          readingReminders: { enabled: prefReadingReminders },
+          weeklySummary: { enabled: prefWeeklySummary }
+        }
+      });
+      setSaveSuccessMessage("✓ Notification preferences updated successfully.");
+      setTimeout(() => setSaveSuccessMessage(""), 4000);
+    } catch (err) {
+      setSaveErrorMessage(err.message || "Failed to update notification preferences.");
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await userApi.markNotificationAsRead(id);
+      await refreshSession();
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
     }
   };
 
@@ -339,12 +392,134 @@ const Profile = () => {
           <h2>
             <FiBell /> Notifications
           </h2>
+
+          {/* Preferences Section */}
+          <div className="notification-preferences-block" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "25px", marginBottom: "25px" }}>
+            <h3 style={{ fontSize: "1.1rem", marginBottom: "15px", color: "var(--color-primary-light, #a5855f)" }}>Preferences</h3>
+            
+            <form onSubmit={handleSavePreferences} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+              <div className="pref-row" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
+                  <input
+                    type="checkbox"
+                    checked={prefDailyQuote}
+                    onChange={(e) => setPrefDailyQuote(e.target.checked)}
+                  />
+                  Daily Inspirational Quotes (Recommended)
+                </label>
+                {prefDailyQuote && (
+                  <div style={{ marginLeft: "25px", display: "flex", alignItems: "center", gap: "10px", marginTop: "5px" }}>
+                    <span style={{ fontSize: "0.9rem", opacity: 0.8 }}>Preferred Time:</span>
+                    <select
+                      value={prefDailyHour}
+                      onChange={(e) => setPrefDailyHour(Number(e.target.value))}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        color: "inherit",
+                        outline: "none"
+                      }}
+                    >
+                      <option value="8">08:00 AM</option>
+                      <option value="9">09:00 AM</option>
+                      <option value="18">06:00 PM</option>
+                      <option value="21">09:00 PM</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
+                <input
+                  type="checkbox"
+                  checked={prefNewArticles}
+                  onChange={(e) => setPrefNewArticles(e.target.checked)}
+                />
+                New Articles Published
+              </label>
+
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
+                <input
+                  type="checkbox"
+                  checked={prefReadingReminders}
+                  onChange={(e) => setPrefReadingReminders(e.target.checked)}
+                />
+                Reading Reminders
+              </label>
+
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
+                <input
+                  type="checkbox"
+                  checked={prefWeeklySummary}
+                  onChange={(e) => setPrefWeeklySummary(e.target.checked)}
+                />
+                Weekly Reading Summary
+              </label>
+
+              <div style={{ marginTop: "5px" }}>
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+                >
+                  Save Preferences
+                </button>
+              </div>
+            </form>
+
+            {saveSuccessMessage && (
+              <div className="success-toast" style={{ marginTop: "15px", color: "#2e7d32", fontWeight: "bold" }}>
+                {saveSuccessMessage}
+              </div>
+            )}
+            {saveErrorMessage && (
+              <div className="error-toast" style={{ marginTop: "15px", color: "#c62828", fontWeight: "bold" }}>
+                {saveErrorMessage}
+              </div>
+            )}
+          </div>
+
+          <h3 style={{ fontSize: "1.1rem", marginBottom: "15px" }}>Recent Activity</h3>
           {notifications.length ? (
             notifications.map((item) => (
-              <article className="notification-row" key={item.id || item._id}>
-                <strong>{item.title}</strong>
-                <p>{item.message}</p>
-                <span>{item.createdAt}</span>
+              <article
+                className="notification-row"
+                key={item.id || item._id}
+                style={{
+                  padding: "12px",
+                  borderRadius: "6px",
+                  background: "rgba(255,255,255,0.02)",
+                  marginBottom: "10px",
+                  borderLeft: item.status === "unread" ? "3px solid #a5855f" : "3px solid transparent",
+                  opacity: item.status === "read" ? 0.6 : 1,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}
+              >
+                <div>
+                  <strong style={{ display: "block" }}>{item.title}</strong>
+                  <p style={{ margin: "5px 0", fontSize: "0.95rem" }}>{item.message}</p>
+                  <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>{formatDate(item.createdAt)}</span>
+                </div>
+                {item.status !== "read" && (
+                  <button
+                    className="compact-btn"
+                    onClick={() => handleMarkAsRead(item._id || item.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#a5855f",
+                      cursor: "pointer",
+                      fontSize: "0.85rem",
+                      padding: "5px"
+                    }}
+                  >
+                    Mark as read
+                  </button>
+                )}
               </article>
             ))
           ) : (

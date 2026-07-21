@@ -63,6 +63,23 @@ const UserSchema = new mongoose.Schema(
       }),
     },
     lastLoginAt: Date,
+    notificationPreferences: {
+      dailyQuote: {
+        enabled: { type: Boolean, default: true },
+        time: {
+          hour: { type: Number, default: 9, min: 0, max: 23 },
+          minute: { type: Number, default: 0 }
+        }
+      },
+      newArticles: { enabled: { type: Boolean, default: false } },
+      readingReminders: { enabled: { type: Boolean, default: false } },
+      weeklySummary: { enabled: { type: Boolean, default: false } },
+      sentQuotes: { type: [String], default: [] },
+      lastQuoteSentAt: { type: Date, default: null },
+      lastActiveAt: { type: Date, default: null },
+      lastReadingReminderSentAt: { type: Date, default: null },
+      lastWeeklySummarySentAt: { type: Date, default: null }
+    }
   },
   { timestamps: true }
 );

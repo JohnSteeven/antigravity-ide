@@ -6,6 +6,8 @@ const NotificationSchema = new mongoose.Schema(
     title: { type: String, required: true },
     message: { type: String, required: true },
     readAt: Date,
+    type: { type: String, enum: ["daily_quote", "article", "summary", "reminder"] },
+    status: { type: String, enum: ["unread", "read"], default: "unread" },
   },
   { timestamps: true }
 );
