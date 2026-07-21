@@ -16,6 +16,7 @@ import {
   FiCheck,
 } from "react-icons/fi";
 import { useCms } from "../../context/CmsContext";
+import { copyToClipboard } from "../../utils/helpers";
 
 export default function MediaLibraryModule() {
   const { data, uploadMedia, renameMedia, moveMedia, deleteMedia, restoreMedia, refreshMedia } = useCms();
@@ -130,15 +131,19 @@ export default function MediaLibraryModule() {
   };
 
   // Action: Copy URL
-  const handleCopyUrl = (item) => {
+  const handleCopyUrl = async (item) => {
     if (!item?.url) return;
     const absoluteUrl = item.url.startsWith("http")
       ? item.url
       : `${window.location.protocol}//${window.location.hostname}:5000${item.url}`;
-    navigator.clipboard.writeText(absoluteUrl);
-    setCopiedId(item._id || item.id);
-    setSuccess("URL copied to clipboard.");
-    setTimeout(() => setCopiedId(null), 2000);
+    const success = await copyToClipboard(absoluteUrl);
+    if (success) {
+      setCopiedId(item._id || item.id);
+      setSuccess("URL copied to clipboard.");
+      setTimeout(() => setCopiedId(null), 2000);
+    } else {
+      setError("Failed to copy URL.");
+    }
   };
 
   // Action: Rename

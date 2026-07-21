@@ -19,7 +19,7 @@ import {
 } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
-import { getFullName, resolveImageUrl } from "../utils/helpers";
+import { getFullName, resolveImageUrl, copyToClipboard } from "../utils/helpers";
 import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
 import Breadcrumbs from "./shared/Breadcrumbs";
@@ -315,9 +315,13 @@ const ArticleDetail = () => {
     setNewsletterEmail("");
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCommentMessage("Article link copied to clipboard!");
+  const handleCopyLink = async () => {
+    const success = await copyToClipboard(window.location.href);
+    if (success) {
+      setCommentMessage("Article link copied to clipboard!");
+    } else {
+      setCommentMessage("Failed to copy link.");
+    }
   };
 
   return (

@@ -16,7 +16,7 @@ import {
 import { getCategoryBlueprint } from "../../domain/knowledgeArchitecture";
 import { useAuth } from "../../hooks/useAuth";
 import { useCms } from "../../context/CmsContext";
-import { decodeHtmlEntities, resolveImageUrl } from "../../utils/helpers";
+import { decodeHtmlEntities, resolveImageUrl, copyToClipboard } from "../../utils/helpers";
 import ArticlesCard from "../../components/ArticlesCard";
 import LoginRequiredModal from "../../components/LoginRequiredModal";
 import Breadcrumbs from "../../components/shared/Breadcrumbs";
@@ -247,8 +247,12 @@ const CategoryLanding = ({
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(shareData.url);
-        setMessage("Article link copied.");
+        const success = await copyToClipboard(shareData.url);
+        if (success) {
+          setMessage("Article link copied.");
+        } else {
+          setMessage("Failed to copy link.");
+        }
       }
     } catch {
       setMessage("Sharing was cancelled.");

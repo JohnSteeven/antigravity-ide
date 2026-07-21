@@ -64,10 +64,23 @@ const ArticlesPage = () => {
     fetchArticles();
   }, [fetchArticles]);
 
-  // Source data: prefer API, fall back to CmsContext
+  // Source data: prefer API, fall back to CmsContext, synced with live CmsContext metrics
   const sourceArticles = useMemo(() => {
-    if (allArticles) return allArticles;
-    return data.articles.filter((a) => a.status === "published");
+    const list = allArticles || data.articles;
+    return list
+      .filter((a) => a.status === "published")
+      .map((a) => {
+        const synced = data.articles.find((x) => x.id === a.id || x._id === a.id || x.id === a._id || x._id === a._id);
+        if (synced) {
+          return {
+            ...a,
+            likes: synced.likes,
+            bookmarks: synced.bookmarks,
+            views: synced.views,
+          };
+        }
+        return a;
+      });
   }, [allArticles, data.articles]);
 
   // Collect unique tags from available articles

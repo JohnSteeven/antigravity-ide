@@ -39,8 +39,21 @@ const CategoryPage = () => {
     return <Navigate to="/articles" replace />;
   }
 
-  // Prefer API articles; fall back to CmsContext (only published)
-  const articles = (apiArticles || data.articles).filter(a => a.status === "published");
+  // Prefer API articles; fall back to CmsContext (only published), synced with live CmsContext metrics
+  const articles = (apiArticles || data.articles)
+    .filter(a => a.status === "published")
+    .map(a => {
+      const synced = data.articles.find(x => x.id === a.id || x._id === a.id || x.id === a._id || x._id === a._id);
+      if (synced) {
+        return {
+          ...a,
+          likes: synced.likes,
+          bookmarks: synced.bookmarks,
+          views: synced.views
+        };
+      }
+      return a;
+    });
 
   return (
     <CategoryLanding
