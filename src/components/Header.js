@@ -93,15 +93,7 @@ const Header = () => {
               About
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/search"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              onClick={() => setIsOpen(false)}
-            >
-              Search
-            </NavLink>
-          </li>
+
           <li>
             <NavLink
               to="/contact"

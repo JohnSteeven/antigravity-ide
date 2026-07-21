@@ -33,7 +33,6 @@ import ReadMyStory from "./components/ReadMyStory.js";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import Contact from "./components/Contact";
-import SearchPage from "./components/SearchPage";
 
 const HomePage = () => (
   <main>
@@ -131,10 +130,6 @@ const appRouter = createBrowserRouter([
       {
         path: "contact",
         element: <Contact />,
-      },
-      {
-        path: "search",
-        element: <SearchPage />,
       },
       {
         // Admin-only: requires login + role === admin
