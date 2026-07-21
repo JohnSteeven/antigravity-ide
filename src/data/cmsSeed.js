@@ -30,7 +30,7 @@ export const cmsSeed = {
     footer:
       "Thank you for being a part of my journey. Let's grow, learn, and build meaningful things together.",
     socials: {
-      instagram: "https://www.instagram.com/j.steeven_?igsh=MWh6aHFyNmIxZTV6Mg==",
+      instagram: "https://www.instagram.com/j.steeven_?utm_source=qr&igsh=MWh6aHFyNmIxZTV6Mg%3D%3D",
       linkedin: "https://www.linkedin.com/in/noblejohnsteeven/",
       twitter: "https://twitter.com",
       email: "mailto:hello@myjourney.com",
