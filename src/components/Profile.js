@@ -53,6 +53,10 @@ const Profile = () => {
   });
   const [settingsMessage, setSettingsMessage] = useState("");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [expandedBookmarks, setExpandedBookmarks] = useState(false);
+  const [expandedLiked, setExpandedLiked] = useState(false);
+  const [expandedSaved, setExpandedSaved] = useState(false);
+  const [expandedComments, setExpandedComments] = useState(false);
 
   const [prefDailyQuote, setPrefDailyQuote] = useState(user.notificationPreferences?.dailyQuote?.enabled ?? true);
   const [prefDailyHour, setPrefDailyHour] = useState(user.notificationPreferences?.dailyQuote?.time?.hour ?? 9);
@@ -179,17 +183,46 @@ const Profile = () => {
     }
   };
 
-  const renderArticleList = (items, emptyText) =>
-    items.length ? (
-      items.map((article) => (
-        <Link className="profile-article-row" to={`/articles/${article.slug}`} key={article.id || article._id}>
-          <strong>{article.title}</strong>
-          <span>{article.category}</span>
-        </Link>
-      ))
-    ) : (
-      <p className="empty-state compact">{emptyText}</p>
+  const renderArticleList = (items, emptyText, isExpanded, setIsExpanded) => {
+    if (!items.length) {
+      return <p className="empty-state compact">{emptyText}</p>;
+    }
+
+    const visibleItems = isExpanded ? items : items.slice(0, 3);
+
+    return (
+      <>
+        {visibleItems.map((article) => (
+          <Link className="profile-article-row" to={`/articles/${article.slug}`} key={article.id || article._id}>
+            <strong>{article.title}</strong>
+            <span>{article.category}</span>
+          </Link>
+        ))}
+        {items.length > 3 && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--color-primary-light, #a5855f)",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              marginTop: "10px",
+              padding: "5px 0",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              textDecoration: "underline"
+            }}
+          >
+            {isExpanded ? "Show Less" : `Show More (${items.length - 3} more)`}
+          </button>
+        )}
+      </>
     );
+  };
 
   const profileFacts = [
     { label: "First Name", value: user.firstName || "Not provided" },
@@ -361,28 +394,52 @@ const Profile = () => {
 
         <section className="profile-panel profile-list-panel">
           <h2>Bookmarks</h2>
-          {renderArticleList(bookmarked, "No bookmarks yet.")}
+          {renderArticleList(bookmarked, "No bookmarks yet.", expandedBookmarks, setExpandedBookmarks)}
         </section>
 
         <section className="profile-panel profile-list-panel">
           <h2>Liked Articles</h2>
-          {renderArticleList(liked, "No liked articles yet.")}
+          {renderArticleList(liked, "No liked articles yet.", expandedLiked, setExpandedLiked)}
         </section>
 
         <section className="profile-panel profile-list-panel">
           <h2><FiBookOpen /> Saved Articles</h2>
-          {renderArticleList(saved, "No saved articles yet.")}
+          {renderArticleList(saved, "No saved articles yet.", expandedSaved, setExpandedSaved)}
         </section>
 
         <section className="profile-panel profile-list-panel">
           <h2>Comments</h2>
           {(profile.comments || []).length ? (
-            profile.comments.map((comment) => (
-              <article className="profile-comment" key={comment.id || comment._id}>
-                <strong>{comment.articleTitle}</strong>
-                <p>{comment.text}</p>
-              </article>
-            ))
+            <>
+              {(expandedComments ? profile.comments : profile.comments.slice(0, 3)).map((comment) => (
+                <article className="profile-comment" key={comment.id || comment._id}>
+                  <strong>{comment.articleTitle}</strong>
+                  <p>{comment.text}</p>
+                </article>
+              ))}
+              {(profile.comments || []).length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setExpandedComments(!expandedComments)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--color-primary-light, #a5855f)",
+                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                    fontWeight: "600",
+                    marginTop: "10px",
+                    padding: "5px 0",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    textDecoration: "underline"
+                  }}
+                >
+                  {expandedComments ? "Show Less" : `Show More (${profile.comments.length - 3} more)`}
+                </button>
+              )}
+            </>
           ) : (
             <div className="empty-state-container" style={{
               display: "flex",
