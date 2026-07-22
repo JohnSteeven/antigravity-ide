@@ -21,7 +21,7 @@ import ArticlesPage from "./components/ArticlesPage";
 import ArticleDetail from "./components/ArticleDetail";
 import CategoryPage from "./components/CategoryPage";
 import Error from "./components/Error";
-const AdminDashboard = React.lazy(() => import("./components/AdminDashboard"));
+import AdminDashboard from "./components/AdminDashboard";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import VerifyOTP from "./components/VerifyOTP";
@@ -136,13 +136,7 @@ const appRouter = createBrowserRouter([
         path: "cms/*",
         element: (
           <ProtectedRoute requireAdmin>
-            <React.Suspense fallback={
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#151b1a", color: "#f8f4ed" }}>
-                <div className="spin" style={{ width: "40px", height: "40px", border: "3px solid rgba(255,255,255,0.1)", borderTopColor: "#fff", borderRadius: "50%" }}></div>
-              </div>
-            }>
-              <AdminDashboard />
-            </React.Suspense>
+            <AdminDashboard />
           </ProtectedRoute>
         ),
       },
