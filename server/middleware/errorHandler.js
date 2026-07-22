@@ -2,9 +2,10 @@ const handleValidation = (validationResult) => (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
+    const errorList = errors.array();
     return res.status(422).json({
-      message: "Please correct the highlighted fields.",
-      errors: errors.array(),
+      message: errorList[0].msg || "Please correct the highlighted fields.",
+      errors: errorList,
     });
   }
 
