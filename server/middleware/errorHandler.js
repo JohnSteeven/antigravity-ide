@@ -16,8 +16,16 @@ const notFound = (req, res) => {
 };
 
 const errorHandler = (error, req, res, next) => {
-  const status = error.status || 500;
-  
+  let status = error.status || 500;
+  let message = error.message;
+
+  if (error.name === "ValidationError") {
+    status = 400;
+    message = Object.values(error.errors || {})
+      .map((err) => err.message)
+      .join(" ");
+  }
+
   if (status === 500) {
     console.error(`[ERROR] Internal Server Error:`, error.stack || error);
   }
@@ -26,7 +34,7 @@ const errorHandler = (error, req, res, next) => {
     message:
       status === 500
         ? "Something went wrong. Please try again."
-        : error.message,
+        : message,
     errors: error.errors || [],
   });
 };

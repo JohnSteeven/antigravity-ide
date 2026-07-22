@@ -108,14 +108,17 @@ const ArticleDetail = () => {
       .slice(0, 4);
   }, [article, data.articles]);
 
-  // Extract headings for Table of Contents
+  // Extract headings for Table of Contents (supports both H2 and H3)
   const headings = useMemo(() => {
     if (!article || !article.body) return [];
-    const matches = [...article.body.matchAll(/<h2[^>]*>(.*?)<\/h2>/g)];
-    return matches.map((m, index) => {
-      const text = m[1].replace(/<[^>]+>/g, "");
+    const matches = [...article.body.matchAll(/<(h2|h3)[^>]*>(.*?)<\/ \1>/gi)];
+    // Fallback if formatting has spaces in closing tag or attributes
+    const cleanMatches = matches.length ? matches : [...article.body.matchAll(/<(h2|h3)[^>]*>(.*?)<\/\1>/gi)];
+    return cleanMatches.map((m, index) => {
+      const tag = m[1].toLowerCase();
+      const text = m[2].replace(/<[^>]+>/g, "");
       const id = `heading-${index}`;
-      return { id, text };
+      return { id, text, level: tag === "h2" ? 2 : 3 };
     });
   }, [article]);
 
@@ -124,8 +127,8 @@ const ArticleDetail = () => {
     if (!article || !article.body) return "";
     let index = 0;
     const bodyWithAbsoluteImages = article.body.replace(/(src|href)="\/uploads/g, '$1="http://localhost:5000/uploads');
-    return bodyWithAbsoluteImages.replace(/<h2([^>]*)>/g, (match, attrs) => {
-      const replacement = `<h2 id="heading-${index}"${attrs}>`;
+    return bodyWithAbsoluteImages.replace(/<(h2|h3)([^>]*)>/gi, (match, tag, attrs) => {
+      const replacement = `<${tag} id="heading-${index}"${attrs}>`;
       index++;
       return replacement;
     });
@@ -399,35 +402,38 @@ const ArticleDetail = () => {
       <div className="premium-article-layout">
         {/* Left Sidebar - Table of Contents */}
         <aside className="premium-left-sidebar">
-          {headings.length > 0 && (
-            <div className="sticky-sidebar-box">
-              <h3>Table of Contents</h3>
-              <nav className="toc-nav">
-                {headings.map((h) => (
-                  <a
-                    key={h.id}
-                    href={`#${h.id}`}
-                    className={`toc-link ${activeHeading === h.id ? "active" : ""}`}
-                  >
-                    {h.text}
-                  </a>
-                ))}
-              </nav>
+          <div className="sticky-sidebar-box">
+            {headings.length > 0 && (
+              <>
+                <h3>Table of Contents</h3>
+                <nav className="toc-nav">
+                  {headings.map((h) => (
+                    <a
+                      key={h.id}
+                      href={`#${h.id}`}
+                      className={`toc-link ${activeHeading === h.id ? "active" : ""}`}
+                      style={h.level === 3 ? { paddingLeft: "35px", fontSize: "0.85rem", opacity: 0.8 } : undefined}
+                    >
+                      {h.text}
+                    </a>
+                  ))}
+                </nav>
+              </>
+            )}
 
-              <div className="reading-progress-box">
-                <div className="progress-labels">
-                  <span>Reading Progress</span>
-                  <span>{Math.round(scrollProgress)}%</span>
-                </div>
-                <div className="progress-bar-track">
-                  <div className="progress-bar-fill" style={{ width: `${scrollProgress}%` }}></div>
-                </div>
-                <span className="time-remaining-label">
-                  {Math.max(1, Math.round(((100 - scrollProgress) / 100) * parseInt(article.readingTime || "5")))} min remaining
-                </span>
+            <div className="reading-progress-box">
+              <div className="progress-labels">
+                <span>Reading Progress</span>
+                <span>{Math.round(scrollProgress)}%</span>
               </div>
+              <div className="progress-bar-track">
+                <div className="progress-bar-fill" style={{ width: `${scrollProgress}%` }}></div>
+              </div>
+              <span className="time-remaining-label">
+                {Math.max(1, Math.round(((100 - scrollProgress) / 100) * parseInt(article.readingTime || "5")))} min remaining
+              </span>
             </div>
-          )}
+          </div>
         </aside>
 
         {/* Center Column - Article Body */}
