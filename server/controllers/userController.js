@@ -18,10 +18,10 @@ class UserController {
       const lastActive = req.user.notificationPreferences?.lastActiveAt;
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
       if (!lastActive || lastActive < fifteenMinutesAgo) {
-        req.user.notificationPreferences = {
-          ...(req.user.notificationPreferences || {}),
-          lastActiveAt: new Date(),
-        };
+        if (!req.user.notificationPreferences) {
+          req.user.notificationPreferences = {};
+        }
+        req.user.notificationPreferences.lastActiveAt = new Date();
         await req.user.save();
       }
 
@@ -61,10 +61,10 @@ class UserController {
       const lastActive = req.user.notificationPreferences?.lastActiveAt;
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
       if (!lastActive || lastActive < fifteenMinutesAgo) {
-        req.user.notificationPreferences = {
-          ...(req.user.notificationPreferences || {}),
-          lastActiveAt: new Date(),
-        };
+        if (!req.user.notificationPreferences) {
+          req.user.notificationPreferences = {};
+        }
+        req.user.notificationPreferences.lastActiveAt = new Date();
         await req.user.save();
       }
 
@@ -83,14 +83,19 @@ class UserController {
       });
 
       if (req.body.profile) {
+        const currentProfile = req.user.profile
+          ? (typeof req.user.profile.toObject === "function" ? req.user.profile.toObject() : req.user.profile)
+          : {};
         updateData.profile = {
-          ...(req.user.profile || {}),
+          ...currentProfile,
           ...req.body.profile,
         };
       }
 
       if (req.body.notificationPreferences) {
-        const currentPrefs = req.user.notificationPreferences || {};
+        const currentPrefs = req.user.notificationPreferences
+          ? req.user.notificationPreferences.toObject()
+          : {};
         const incomingPrefs = req.body.notificationPreferences;
         updateData.notificationPreferences = {
           ...currentPrefs,
