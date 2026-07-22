@@ -413,7 +413,10 @@ const Profile = () => {
             <>
               {(expandedComments ? profile.comments : profile.comments.slice(0, 3)).map((comment) => (
                 <article className="profile-comment" key={comment.id || comment._id}>
-                  <strong>{comment.articleTitle}</strong>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                    <strong>{comment.articleTitle}</strong>
+                    <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>{formatDate(comment.createdAt)}</span>
+                  </div>
                   <p>{comment.text}</p>
                 </article>
               ))}
