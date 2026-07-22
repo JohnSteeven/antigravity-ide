@@ -52,6 +52,7 @@ const Profile = () => {
     privateProfile: Boolean(profile.privateProfile),
   });
   const [settingsMessage, setSettingsMessage] = useState("");
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   const [prefDailyQuote, setPrefDailyQuote] = useState(user.notificationPreferences?.dailyQuote?.enabled ?? true);
   const [prefDailyHour, setPrefDailyHour] = useState(user.notificationPreferences?.dailyQuote?.time?.hour ?? 9);
@@ -320,17 +321,16 @@ const Profile = () => {
               />
             </label>
 
-            <label className="settings-toggle">
+            <button
+              className="settings-action"
+              type="button"
+              onClick={() => setShowNotificationModal(true)}
+            >
               <span>
                 <FiBell />
-                Notifications
+                Notification Settings
               </span>
-              <input
-                type="checkbox"
-                checked={settings.notificationsEnabled}
-                onChange={() => updateSetting("notificationsEnabled")}
-              />
-            </label>
+            </button>
 
             <label className="settings-toggle">
               <span>
@@ -409,143 +409,183 @@ const Profile = () => {
           )}
         </section>
 
-        <section className="profile-panel profile-list-panel" id="notifications">
-          <h2>
-            <FiBell /> Notifications
-          </h2>
+      </section>
 
-          {/* Preferences Section */}
-          <div className="notification-preferences-block" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "25px", marginBottom: "25px" }}>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: "15px", color: "var(--color-primary-light, #a5855f)" }}>Preferences</h3>
-            
-            <form onSubmit={handleSavePreferences} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-              <div className="pref-row" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+      {showNotificationModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.75)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "20px"
+        }}>
+          <div style={{
+            backgroundColor: "var(--color-bg-panel, #151b1a)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "12px",
+            width: "100%",
+            maxWidth: "460px",
+            padding: "25px 30px",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)",
+            position: "relative",
+            color: "var(--color-text-main, #f8f4ed)"
+          }}>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              paddingBottom: "15px"
+            }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "600", margin: 0, color: "var(--color-primary-light, #a5855f)", display: "flex", alignItems: "center", gap: "10px" }}>
+                <FiBell /> Notification Preferences
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNotificationModal(false);
+                  setSaveSuccessMessage("");
+                  setSaveErrorMessage("");
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "inherit",
+                  opacity: 0.6,
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "4px"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "600", marginBottom: "15px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "12px" }}>
+                <input
+                  type="checkbox"
+                  checked={settings.notificationsEnabled}
+                  onChange={() => updateSetting("notificationsEnabled")}
+                />
+                Enable System Notifications
+              </label>
+
+              <form onSubmit={handleSavePreferences} style={{ display: "flex", flexDirection: "column", gap: "15px", opacity: settings.notificationsEnabled ? 1 : 0.5, pointerEvents: settings.notificationsEnabled ? "auto" : "none" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
+                    <input
+                      type="checkbox"
+                      checked={prefDailyQuote}
+                      onChange={(e) => setPrefDailyQuote(e.target.checked)}
+                      disabled={!settings.notificationsEnabled}
+                    />
+                    Daily Inspirational Quotes (Recommended)
+                  </label>
+                  {prefDailyQuote && (
+                    <div style={{ marginLeft: "25px", display: "flex", alignItems: "center", gap: "10px", marginTop: "5px" }}>
+                      <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>Preferred Time:</span>
+                      <select
+                        value={prefDailyHour}
+                        onChange={(e) => setPrefDailyHour(Number(e.target.value))}
+                        disabled={!settings.notificationsEnabled}
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          color: "inherit",
+                          outline: "none"
+                        }}
+                      >
+                        <option value="8">08:00 AM</option>
+                        <option value="9">09:00 AM</option>
+                        <option value="18">06:00 PM</option>
+                        <option value="21">09:00 PM</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
                 <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
                   <input
                     type="checkbox"
-                    checked={prefDailyQuote}
-                    onChange={(e) => setPrefDailyQuote(e.target.checked)}
+                    checked={prefNewArticles}
+                    onChange={(e) => setPrefNewArticles(e.target.checked)}
+                    disabled={!settings.notificationsEnabled}
                   />
-                  Daily Inspirational Quotes (Recommended)
+                  New Articles Published
                 </label>
-                {prefDailyQuote && (
-                  <div style={{ marginLeft: "25px", display: "flex", alignItems: "center", gap: "10px", marginTop: "5px" }}>
-                    <span style={{ fontSize: "0.9rem", opacity: 0.8 }}>Preferred Time:</span>
-                    <select
-                      value={prefDailyHour}
-                      onChange={(e) => setPrefDailyHour(Number(e.target.value))}
-                      style={{
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        color: "inherit",
-                        outline: "none"
-                      }}
-                    >
-                      <option value="8">08:00 AM</option>
-                      <option value="9">09:00 AM</option>
-                      <option value="18">06:00 PM</option>
-                      <option value="21">09:00 PM</option>
-                    </select>
-                  </div>
-                )}
-              </div>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
-                <input
-                  type="checkbox"
-                  checked={prefNewArticles}
-                  onChange={(e) => setPrefNewArticles(e.target.checked)}
-                />
-                New Articles Published
-              </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
+                  <input
+                    type="checkbox"
+                    checked={prefReadingReminders}
+                    onChange={(e) => setPrefReadingReminders(e.target.checked)}
+                    disabled={!settings.notificationsEnabled}
+                  />
+                  Reading Reminders
+                </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
-                <input
-                  type="checkbox"
-                  checked={prefReadingReminders}
-                  onChange={(e) => setPrefReadingReminders(e.target.checked)}
-                />
-                Reading Reminders
-              </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
+                  <input
+                    type="checkbox"
+                    checked={prefWeeklySummary}
+                    onChange={(e) => setPrefWeeklySummary(e.target.checked)}
+                    disabled={!settings.notificationsEnabled}
+                  />
+                  Weekly Reading Summary
+                </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "500" }}>
-                <input
-                  type="checkbox"
-                  checked={prefWeeklySummary}
-                  onChange={(e) => setPrefWeeklySummary(e.target.checked)}
-                />
-                Weekly Reading Summary
-              </label>
-
-              <div style={{ marginTop: "5px" }}>
-                <button
-                  type="submit"
-                  className="primary-btn"
-                  style={{ padding: "8px 16px", fontSize: "0.9rem" }}
-                >
-                  Save Preferences
-                </button>
-              </div>
-            </form>
+                <div style={{ marginTop: "15px", display: "flex", gap: "10px" }}>
+                  <button
+                    type="submit"
+                    className="primary-btn"
+                    disabled={!settings.notificationsEnabled}
+                    style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+                  >
+                    Save Preferences
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => {
+                      setShowNotificationModal(false);
+                      setSaveSuccessMessage("");
+                      setSaveErrorMessage("");
+                    }}
+                    style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
 
             {saveSuccessMessage && (
-              <div className="success-toast" style={{ marginTop: "15px", color: "#2e7d32", fontWeight: "bold" }}>
+              <div className="success-toast" style={{ marginTop: "15px", color: "#2e7d32", fontWeight: "bold", fontSize: "0.9rem" }}>
                 {saveSuccessMessage}
               </div>
             )}
             {saveErrorMessage && (
-              <div className="error-toast" style={{ marginTop: "15px", color: "#c62828", fontWeight: "bold" }}>
+              <div className="error-toast" style={{ marginTop: "15px", color: "#c62828", fontWeight: "bold", fontSize: "0.9rem" }}>
                 {saveErrorMessage}
               </div>
             )}
           </div>
-          {notifications.length ? (
-            notifications.map((item) => (
-              <article
-                className="notification-row"
-                key={item.id || item._id}
-                style={{
-                  padding: "12px",
-                  borderRadius: "6px",
-                  background: "rgba(255,255,255,0.02)",
-                  marginBottom: "10px",
-                  borderLeft: item.status === "unread" ? "3px solid #a5855f" : "3px solid transparent",
-                  opacity: item.status === "read" ? 0.6 : 1,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center"
-                }}
-              >
-                <div>
-                  <strong style={{ display: "block" }}>{item.title}</strong>
-                  <p style={{ margin: "5px 0", fontSize: "0.95rem" }}>{item.message}</p>
-                  <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>{formatDate(item.createdAt)}</span>
-                </div>
-                {item.status !== "read" && (
-                  <button
-                    className="compact-btn"
-                    onClick={() => handleMarkAsRead(item._id || item.id)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#a5855f",
-                      cursor: "pointer",
-                      fontSize: "0.85rem",
-                      padding: "5px"
-                    }}
-                  >
-                    Mark as read
-                  </button>
-                )}
-              </article>
-            ))
-          ) : (
-            <p className="empty-state compact">No notifications yet.</p>
-          )}
-        </section>
-      </section>
+        </div>
+      )}
     </main>
   );
 };
