@@ -369,6 +369,7 @@ export const userApi = {
   resetPassword: (id, password) => post(`/api/users/${id}/reset-password`, { password }),
   getMe: () => get("/api/users/me"),
   updateProfile: (payload) => put("/api/users/me", payload),
+  markNotificationAsRead: (id) => patch(`/api/users/notifications/${id}`, {}),
 };
 
 // ─── Roles ───────────────────────────────────────────────────────────────────

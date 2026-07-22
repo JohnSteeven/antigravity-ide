@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
 const PasswordReset = require("../models/PasswordReset");
 const RefreshToken = require("../models/RefreshToken");
 const Session = require("../models/Session");
@@ -83,6 +84,12 @@ class AuthService {
         savedArticles: [],
         comments: [],
       },
+    });
+
+    await Notification.create({
+      user: user._id,
+      title: "Welcome to MyJourney",
+      message: "Verify your account to unlock your profile.",
     });
 
     return user;

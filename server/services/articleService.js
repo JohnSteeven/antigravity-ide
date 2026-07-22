@@ -105,6 +105,13 @@ class ArticleService {
       userId,
     });
 
+    if (article.status === "published") {
+      const notificationSchedulerService = require("./notificationSchedulerService");
+      notificationSchedulerService.handleNewArticle(article).catch((err) => {
+        console.error("Failed to trigger new article notifications:", err);
+      });
+    }
+
     return article;
   }
 
@@ -135,6 +142,13 @@ class ArticleService {
       description: `Updated article "${article.title}"`,
       userId,
     });
+
+    if (article.status === "published" && !wasPublished) {
+      const notificationSchedulerService = require("./notificationSchedulerService");
+      notificationSchedulerService.handleNewArticle(article).catch((err) => {
+        console.error("Failed to trigger new article notifications:", err);
+      });
+    }
 
     return article;
   }
