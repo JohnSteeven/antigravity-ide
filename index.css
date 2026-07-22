@@ -5871,3 +5871,341 @@ code {
   display: flow-root !important;
 }
 
+/* ===============================
+   UI AUDIT IMPROVEMENTS
+   =============================== */
+
+/* 1. CMS Sticky Sidebar & Layout Containment (Fixes Sidebar Double Scroll & Black Space Overflow) */
+.cms-page {
+  display: grid !important;
+  grid-template-columns: 260px minmax(0, 1fr) !important;
+  min-height: calc(100vh - 74px) !important;
+  margin-top: 74px !important;
+  align-items: start !important;
+  background: var(--cms-bg) !important;
+}
+
+.cms-sidebar {
+  position: sticky !important;
+  top: 74px !important;
+  height: calc(100vh - 74px) !important;
+  max-height: calc(100vh - 74px) !important;
+  overflow-y: auto !important;
+  align-self: start !important;
+  background: var(--cms-sidebar) !important;
+  color: var(--cms-sidebar-strong) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 18px 14px !important;
+  box-sizing: border-box !important;
+  z-index: 90 !important;
+}
+
+.cms-workspace {
+  min-width: 0 !important;
+  padding: 1.75rem !important;
+  background: var(--cms-bg) !important;
+}
+
+/* 2. Metric Grid & Metric Cards Alignment (Fixes Dashboard Metric Boxes Layout) */
+.metric-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+}
+
+.metric-card {
+  display: grid !important;
+  grid-template-columns: 42px 1fr !important;
+  grid-template-rows: auto auto !important;
+  gap: 10px 14px !important;
+  align-items: center !important;
+  padding: 1.25rem !important;
+  min-height: 110px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background: var(--surface) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  box-sizing: border-box !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+.metric-card svg {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 9px !important;
+  border-radius: 8px !important;
+  background: rgba(66, 108, 103, 0.1) !important;
+  color: var(--teal) !important;
+  box-sizing: border-box !important;
+}
+
+.metric-card span {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: var(--muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+  align-self: center !important;
+}
+
+.metric-card strong {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  font-size: 1.8rem !important;
+  font-weight: 800 !important;
+  color: var(--ink) !important;
+  line-height: 1 !important;
+  margin-top: 2px !important;
+}
+
+/* 3. Checkbox & Radio Universal Sizing (Fixes Article Flags Checkboxes) */
+input[type="checkbox"],
+input[type="radio"],
+.cms-panel input[type="checkbox"],
+.cms-panel input[type="radio"],
+.form-grid input[type="checkbox"],
+.form-grid input[type="radio"],
+label input[type="checkbox"],
+label input[type="radio"] {
+  appearance: checkbox !important;
+  -webkit-appearance: checkbox !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  flex: 0 0 18px !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  accent-color: var(--teal) !important;
+  vertical-align: middle !important;
+  display: inline-block !important;
+}
+
+.checkbox-row,
+label.checkbox-row,
+.form-grid label.checkbox-row,
+.cms-panel label.checkbox-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.65rem !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  margin: 0.35rem 0 !important;
+  cursor: pointer !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+  white-space: nowrap !important;
+}
+
+.form-grid.one .checkbox-row,
+.form-grid .checkbox-row {
+  grid-column: span 1 !important;
+}
+
+/* 4. WYSIWYG Rich Editor & Toolbar Styling */
+.rich-editor-toolbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  padding: 0.6rem 0.8rem !important;
+  border: 1px solid var(--control-border) !important;
+  border-bottom: none !important;
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
+  background: var(--panel-muted) !important;
+}
+
+.rich-editor-toolbar button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  padding: 0 10px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--control-border) !important;
+  border-radius: 5px !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.rich-editor-toolbar button:hover {
+  background: var(--soft) !important;
+  border-color: var(--teal) !important;
+  color: var(--teal) !important;
+}
+
+.rich-editor-toolbar select {
+  height: 32px !important;
+  padding: 0 24px 0 8px !important;
+  font-size: 0.82rem !important;
+  border-radius: 5px !important;
+  border: 1px solid var(--control-border) !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  cursor: pointer !important;
+}
+
+.rich-text-editor-workspace {
+  border: 1px solid var(--control-border) !important;
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  padding: 1rem !important;
+  line-height: 1.7 !important;
+  min-height: 350px !important;
+  outline: none !important;
+}
+
+.rich-text-editor-workspace:focus-visible {
+  border-color: var(--teal) !important;
+  box-shadow: var(--focus-ring) !important;
+}
+
+/* 5. Toolbars & Filters Row Layout */
+.media-filter-grid,
+.category-toolbar,
+.article-controls {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-end !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.media-filter-grid > *,
+.category-toolbar > *,
+.article-controls > * {
+  min-width: 0 !important;
+}
+
+.cms-search-control {
+  flex: 1 1 220px !important;
+  min-width: 180px !important;
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+.cms-search-control input {
+  width: 100% !important;
+  padding-left: 2.2rem !important;
+}
+
+.cms-search-control svg {
+  position: absolute !important;
+  left: 0.75rem !important;
+  color: var(--muted) !important;
+  pointer-events: none !important;
+}
+
+/* 6. CMS Panel & Layout Responsiveness */
+.cms-grid-two {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)) !important;
+  gap: 1.5rem !important;
+  align-items: start !important;
+  width: 100% !important;
+}
+
+.cms-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cms-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.cms-panel-heading h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+
+/* 7. Responsive Breakpoint Fixes (320px, 375px, 768px, 1024px, 1440px, 1920px) */
+@media (max-width: 768px) {
+  .cms-page {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cms-sidebar {
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .cms-grid-two {
+    grid-template-columns: 1fr !important;
+  }
+
+  .media-filter-grid,
+  .category-toolbar,
+  .article-controls {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .cms-search-control {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .cms-panel {
+    padding: 1rem !important;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 1440px) {
+  .app-container,
+  .cms-workspace {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+
+
