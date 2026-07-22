@@ -188,7 +188,7 @@ const Profile = () => {
       return <p className="empty-state compact">{emptyText}</p>;
     }
 
-    const visibleItems = isExpanded ? items : items.slice(0, 3);
+    const visibleItems = isExpanded ? items : items.slice(0, 2);
 
     return (
       <>
@@ -198,7 +198,7 @@ const Profile = () => {
             <span>{article.category}</span>
           </Link>
         ))}
-        {items.length > 3 && (
+        {items.length > 2 && (
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
@@ -217,7 +217,7 @@ const Profile = () => {
               textDecoration: "underline"
             }}
           >
-            {isExpanded ? "Show Less" : `Show More (${items.length - 3} more)`}
+            {isExpanded ? "Show Less" : `Show More (${items.length - 2} more)`}
           </button>
         )}
       </>
@@ -411,7 +411,7 @@ const Profile = () => {
           <h2>Comments</h2>
           {(profile.comments || []).length ? (
             <>
-              {(expandedComments ? profile.comments : profile.comments.slice(0, 3)).map((comment) => (
+              {(expandedComments ? profile.comments : profile.comments.slice(0, 2)).map((comment) => (
                 <article className="profile-comment" key={comment.id || comment._id}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
                     <strong>{comment.articleTitle}</strong>
@@ -420,7 +420,7 @@ const Profile = () => {
                   <p>{comment.text}</p>
                 </article>
               ))}
-              {(profile.comments || []).length > 3 && (
+              {(profile.comments || []).length > 2 && (
                 <button
                   type="button"
                   onClick={() => setExpandedComments(!expandedComments)}
@@ -439,7 +439,7 @@ const Profile = () => {
                     textDecoration: "underline"
                   }}
                 >
-                  {expandedComments ? "Show Less" : `Show More (${profile.comments.length - 3} more)`}
+                  {expandedComments ? "Show Less" : `Show More (${profile.comments.length - 2} more)`}
                 </button>
               )}
             </>
