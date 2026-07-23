@@ -79,6 +79,7 @@ app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/newsletter-campaigns", newsletterCampaignRoutes);
 app.use("/api/contact-messages", contactMessageRoutes);
+app.use("/api/contact", contactMessageRoutes);
 
 // Serve uploads statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

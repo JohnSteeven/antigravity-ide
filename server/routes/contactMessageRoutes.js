@@ -18,6 +18,7 @@ router.post(
 );
 
 // Admin routes
+router.get("/stats", authenticate, requireAdmin, contactMessageController.getStats);
 router.get("/", authenticate, requireAdmin, contactMessageController.getMessages);
 router.get("/:id", authenticate, requireAdmin, contactMessageController.getMessageById);
 router.put("/:id", authenticate, requireAdmin, contactMessageController.updateMessage);

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiTrash2, FiRotateCcw, FiMail, FiMessageSquare, FiArchive, FiAlertOctagon, FiUser, FiEdit3 } from "react-icons/fi";
+import { FiSearch, FiTrash2, FiRotateCcw, FiMail, FiMessageSquare, FiArchive, FiUser, FiEdit3, FiDownload, FiCheckCircle, FiClock, FiList, FiAlertCircle } from "react-icons/fi";
 import { useCms } from "../../context/CmsContext";
+import { contactMessageApi } from "../../services/apiService";
 
 export default function ContactModule() {
   const { fetchContactMessages, updateContactMessage, deleteContactMessage, restoreContactMessage } = useCms();
 
   const [messages, setMessages] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+  const [stats, setStats] = useState({ total: 0, unread: 0, resolved: 0, pending: 0, today: 0 });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -15,6 +17,8 @@ export default function ContactModule() {
   // Filters
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [inquiryType, setInquiryType] = useState("all");
+  const [priority, setPriority] = useState("all");
   const [showDeleted, setShowDeleted] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -22,21 +26,32 @@ export default function ContactModule() {
   const [activeMessage, setActiveMessage] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
   const [statusDraft, setStatusDraft] = useState("read");
+  const [priorityDraft, setPriorityDraft] = useState("Medium");
+  const [repliedDraft, setRepliedDraft] = useState(false);
 
   const loadMessages = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetchContactMessages({
-        page,
-        limit: 10,
-        search,
-        status: status === "all" ? undefined : status,
-        includeDeleted: showDeleted,
-      });
+      const [res, statsRes] = await Promise.all([
+        fetchContactMessages({
+          page,
+          limit: 10,
+          search,
+          status: status === "all" ? undefined : status,
+          inquiryType: inquiryType === "all" ? undefined : inquiryType,
+          priority: priority === "all" ? undefined : priority,
+          includeDeleted: showDeleted,
+        }),
+        contactMessageApi.getStats().catch(() => ({ stats: null })),
+      ]);
+
       if (res && res.messages) {
         setMessages(res.messages);
         setPagination(res.pagination);
+      }
+      if (statsRes && statsRes.stats) {
+        setStats(statsRes.stats);
       }
     } catch (err) {
       setError(err.message || "Failed to load messages.");
@@ -47,7 +62,7 @@ export default function ContactModule() {
 
   useEffect(() => {
     loadMessages();
-  }, [page, status, showDeleted]);
+  }, [page, status, inquiryType, priority, showDeleted]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -59,6 +74,8 @@ export default function ContactModule() {
     setActiveMessage(msg);
     setNotesDraft(msg.notes || "");
     setStatusDraft(msg.status || "read");
+    setPriorityDraft(msg.priority || "Medium");
+    setRepliedDraft(Boolean(msg.replied));
 
     // Automatically mark as read if it is unread
     if (msg.status === "unread") {
@@ -84,10 +101,15 @@ export default function ContactModule() {
     setSaving(true);
     try {
       const id = activeMessage._id || activeMessage.id;
-      const updated = await updateContactMessage(id, { notes: notesDraft, status: statusDraft });
+      const updated = await updateContactMessage(id, {
+        notes: notesDraft,
+        status: statusDraft,
+        priority: priorityDraft,
+        replied: repliedDraft,
+      });
       setMessages((prev) => prev.map((m) => (m._id === id || m.id === id ? updated : m)));
       setActiveMessage(updated);
-      setSuccess("Internal notes saved.");
+      setSuccess("Internal notes & operational status saved.");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("Failed to save notes.");
@@ -125,12 +147,63 @@ export default function ContactModule() {
     }
   };
 
+  const exportCSV = () => {
+    if (!messages.length) return;
+    const headers = ["ID", "Name", "Email", "Inquiry Type", "Subject", "Status", "Priority", "Created At"];
+    const rows = messages.map((m) => [
+      m._id || m.id,
+      `"${m.name.replace(/"/g, '""')}"`,
+      `"${m.email}"`,
+      `"${m.inquiryType || "General Question"}"`,
+      `"${m.subject.replace(/"/g, '""')}"`,
+      m.status,
+      m.priority || "Medium",
+      new Date(m.createdAt).toISOString(),
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `contact_messages_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="cms-panel">
-      <div className="cms-panel-header">
+      <div className="cms-panel-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h2 style={{ margin: 0 }}>Contact Form Submissions</h2>
-          <p className="kicker">Read and moderate messages submitted by readers or partners</p>
+          <p className="kicker">Read, manage, and moderate support inquiries and reader messages</p>
+        </div>
+        <button onClick={exportCSV} className="btn btn-secondary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <FiDownload /> Export CSV
+        </button>
+      </div>
+
+      {/* Top Statistics Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginTop: "1rem" }}>
+        <div className="cms-card" style={{ padding: "1rem", textAlign: "center", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+          <FiList style={{ fontSize: "1.5rem", color: "#3182ce" }} />
+          <div style={{ fontSize: "1.4rem", fontWeight: "bold", marginTop: "0.3rem" }}>{stats.total || pagination.total || 0}</div>
+          <div style={{ fontSize: "0.8rem", color: "#64748b" }}>Total Messages</div>
+        </div>
+        <div className="cms-card" style={{ padding: "1rem", textAlign: "center", background: "#fef2f2", borderRadius: "8px", border: "1px solid #fecaca" }}>
+          <FiAlertCircle style={{ fontSize: "1.5rem", color: "#ef4444" }} />
+          <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: "#991b1b", marginTop: "0.3rem" }}>{stats.unread || 0}</div>
+          <div style={{ fontSize: "0.8rem", color: "#991b1b" }}>Unread</div>
+        </div>
+        <div className="cms-card" style={{ padding: "1rem", textAlign: "center", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
+          <FiCheckCircle style={{ fontSize: "1.5rem", color: "#22c55e" }} />
+          <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: "#166534", marginTop: "0.3rem" }}>{stats.resolved || 0}</div>
+          <div style={{ fontSize: "0.8rem", color: "#166534" }}>Resolved</div>
+        </div>
+        <div className="cms-card" style={{ padding: "1rem", textAlign: "center", background: "#eff6ff", borderRadius: "8px", border: "1px solid #bfdbfe" }}>
+          <FiClock style={{ fontSize: "1.5rem", color: "#3b82f6" }} />
+          <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: "#1e40af", marginTop: "0.3rem" }}>{stats.today || 0}</div>
+          <div style={{ fontSize: "0.8rem", color: "#1e40af" }}>Today</div>
         </div>
       </div>
 
@@ -143,21 +216,34 @@ export default function ContactModule() {
         {/* Inbox Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {/* Filter Bar */}
-          <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+          <form onSubmit={handleSearchSubmit} style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.5rem" }}>
             <input
               type="text"
               placeholder="Search sender / message..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="form-input"
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: "150px" }}
             />
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="form-input" style={{ width: "130px" }}>
-              <option value="all">All status</option>
+            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="form-input" style={{ width: "120px" }}>
+              <option value="all">All Status</option>
               <option value="unread">Unread</option>
               <option value="read">Read</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
               <option value="archived">Archived</option>
               <option value="spam">Spam</option>
+            </select>
+            <select value={inquiryType} onChange={(e) => { setInquiryType(e.target.value); setPage(1); }} className="form-input" style={{ width: "140px" }}>
+              <option value="all">All Types</option>
+              <option value="General Question">General Question</option>
+              <option value="Feedback">Feedback</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="Bug Report">Bug Report</option>
+              <option value="Collaboration">Collaboration</option>
+              <option value="Business Inquiry">Business Inquiry</option>
+              <option value="Report Content">Report Content</option>
+              <option value="Other">Other</option>
             </select>
             <button type="submit" className="btn btn-primary" style={{ padding: "0.5rem" }}><FiSearch /></button>
           </form>
@@ -179,7 +265,7 @@ export default function ContactModule() {
                 <p>Loading messages...</p>
               </div>
             ) : messages.length === 0 ? (
-              <p className="empty-state">No messages in inbox.</p>
+              <p className="empty-state">No messages match filters.</p>
             ) : (
               messages.map((item) => (
                 <div
@@ -197,16 +283,24 @@ export default function ContactModule() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <strong style={{ color: "#2d3748" }}>{item.name}</strong>
-                    <span className={`badge ${
-                      item.status === "unread" ? "badge-danger" :
-                      item.status === "read" ? "badge-success" :
-                      item.status === "archived" ? "badge-secondary" : "badge-warning"
-                    }`}>
-                      {item.status}
-                    </span>
+                    <div style={{ display: "flex", gap: "0.3rem" }}>
+                      <span className={`badge ${
+                        item.priority === "High" ? "badge-danger" :
+                        item.priority === "Medium" ? "badge-warning" : "badge-secondary"
+                      }`}>
+                        {item.priority || "Medium"}
+                      </span>
+                      <span className={`badge ${
+                        item.status === "unread" ? "badge-danger" :
+                        item.status === "resolved" ? "badge-success" :
+                        item.status === "read" ? "badge-info" : "badge-secondary"
+                      }`}>
+                        {item.status}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ fontSize: "0.85rem", color: "#4a5568", marginTop: "0.2rem" }}>
-                    {item.email}
+                  <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.2rem" }}>
+                    {item.email} &bull; <span style={{ fontWeight: 600 }}>{item.inquiryType || "General Question"}</span>
                   </div>
                   <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#1a202c", marginTop: "0.4rem" }}>
                     {item.subject}
@@ -244,9 +338,14 @@ export default function ContactModule() {
                   <div style={{ fontSize: "0.9rem", color: "#4a5568", marginTop: "0.4rem" }}>
                     From: <strong>{activeMessage.name}</strong> &lt;{activeMessage.email}&gt;
                   </div>
-                  <div style={{ fontSize: "0.8rem", color: "#718096" }}>
-                    Received: {new Date(activeMessage.createdAt).toLocaleString()}
+                  <div style={{ fontSize: "0.8rem", color: "#718096", marginTop: "0.2rem" }}>
+                    Inquiry Type: <strong>{activeMessage.inquiryType || "General Question"}</strong> &bull; Received: {new Date(activeMessage.createdAt).toLocaleString()}
                   </div>
+                  {activeMessage.resolvedAt && (
+                    <div style={{ fontSize: "0.75rem", color: "#166534", marginTop: "0.2rem" }}>
+                      ✓ Resolved on {new Date(activeMessage.resolvedAt).toLocaleString()}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: "0.25rem" }}>
                   {activeMessage.isDeleted ? (
@@ -273,20 +372,30 @@ export default function ContactModule() {
               <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "1rem" }}>
                 <h4 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem" }}><FiEdit3 style={{ display: "inline", marginRight: "0.25rem" }} /> Administrative Actions</h4>
                 <div className="form-grid one" style={{ margin: 0 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
                     <label>
-                      Status Label
+                      Status
                       <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value)} className="form-input">
                         <option value="read">Read</option>
                         <option value="unread">Unread</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
                         <option value="archived">Archived</option>
                         <option value="spam">Spam</option>
+                      </select>
+                    </label>
+                    <label>
+                      Priority
+                      <select value={priorityDraft} onChange={(e) => setPriorityDraft(e.target.value)} className="form-input">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
                       </select>
                     </label>
                     <label style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
                       &nbsp;
                       <button onClick={handleSaveNotes} className="btn btn-primary" disabled={saving}>
-                        {saving ? "Saving..." : "Save Status & Notes"}
+                        {saving ? "Saving..." : "Save Actions"}
                       </button>
                     </label>
                   </div>
@@ -307,7 +416,7 @@ export default function ContactModule() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: "3rem", color: "#a0aec0", textAlign: "center" }}>
               <FiMail style={{ fontSize: "3rem", marginBottom: "1rem" }} />
-              <p>Select a message from the list to view details and add notes.</p>
+              <p>Select a message from the list to view details and update administrative status.</p>
             </div>
           )}
         </div>

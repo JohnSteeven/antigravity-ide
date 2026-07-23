@@ -13,11 +13,18 @@ const contactMessageValidator = [
   body("subject")
     .trim()
     .notEmpty()
-    .withMessage("Subject is required."),
+    .withMessage("Subject is required.")
+    .isLength({ max: 200 })
+    .withMessage("Subject cannot exceed 200 characters."),
+  body("inquiryType")
+    .optional({ checkFalsy: true })
+    .trim(),
   body("message")
     .trim()
     .notEmpty()
-    .withMessage("Message is required."),
+    .withMessage("Message is required.")
+    .isLength({ max: 2000 })
+    .withMessage("Message cannot exceed 2000 characters."),
 ];
 
 module.exports = {

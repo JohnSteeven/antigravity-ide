@@ -1,18 +1,46 @@
-import { useState } from "react";
-import { FiMail, FiSend, FiUser, FiEdit3, FiCheckCircle, FiAlertTriangle } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiMail, FiSend, FiUser, FiEdit3, FiHelpCircle, FiCheckCircle, FiAlertTriangle } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { contactMessageApi } from "../services/apiService";
+import { useAuthContext } from "../context/AuthContext";
+
+const INQUIRY_TYPES = [
+  "General Question",
+  "Feedback",
+  "Feature Request",
+  "Bug Report",
+  "Collaboration",
+  "Business Inquiry",
+  "Report Content",
+  "Other",
+];
+
+const MAX_MESSAGE_LENGTH = 2000;
 
 const Contact = () => {
+  const { user } = useAuthContext();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     subject: "",
+    inquiryType: "General Question",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+
+  // Auto-fill form details if user is logged in
+  useEffect(() => {
+    if (user) {
+      setForm((current) => ({
+        ...current,
+        name: current.name || [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "",
+        email: current.email || user.email || "",
+      }));
+    }
+  }, [user]);
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -20,17 +48,29 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.subject || !form.message) {
-      setError("Please fill out all fields.");
+    if (!form.name.trim() || !form.email.trim() || !form.subject.trim() || !form.message.trim()) {
+      setError("Please fill out all required fields.");
       return;
     }
+
+    if (form.message.length > MAX_MESSAGE_LENGTH) {
+      setError(`Message exceeds maximum limit of ${MAX_MESSAGE_LENGTH} characters.`);
+      return;
+    }
+
     setIsSubmitting(true);
     setSuccess("");
     setError("");
     try {
       await contactMessageApi.create(form);
-      setSuccess("Your message has been sent successfully. Thank you!");
-      setForm({ name: "", email: "", subject: "", message: "" });
+      setSuccess("Your message has been sent successfully. Thank you for getting in touch!");
+      setForm({
+        name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "" : "",
+        email: user ? user.email || "" : "",
+        subject: "",
+        inquiryType: "General Question",
+        message: "",
+      });
     } catch (err) {
       setError(err.message || "Failed to send your message. Please try again.");
     } finally {
@@ -75,7 +115,7 @@ const Contact = () => {
 
           <form onSubmit={handleSubmit} className="form-grid one" style={{ gap: "20px" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
-              Full Name
+              Full Name *
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <FiUser style={{ position: "absolute", left: "12px", color: "var(--text-secondary)" }} />
                 <input
@@ -90,7 +130,7 @@ const Contact = () => {
             </label>
 
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
-              Email Address
+              Email Address *
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <FiMail style={{ position: "absolute", left: "12px", color: "var(--text-secondary)" }} />
                 <input
@@ -105,7 +145,23 @@ const Contact = () => {
             </label>
 
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
-              Subject
+              Inquiry Type *
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <FiHelpCircle style={{ position: "absolute", left: "12px", color: "var(--text-secondary)", pointerEvents: "none" }} />
+                <select
+                  value={form.inquiryType}
+                  onChange={(e) => updateField("inquiryType", e.target.value)}
+                  style={{ paddingLeft: "38px", width: "100%", height: "44px", borderRadius: "6px", border: "1px solid var(--border)", background: "var(--surface)" }}
+                >
+                  {INQUIRY_TYPES.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
+              Subject *
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <FiEdit3 style={{ position: "absolute", left: "12px", color: "var(--text-secondary)" }} />
                 <input
@@ -120,12 +176,18 @@ const Contact = () => {
             </label>
 
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
-              Message
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Message *</span>
+                <span style={{ fontSize: "0.8rem", color: form.message.length > MAX_MESSAGE_LENGTH ? "var(--error)" : "var(--text-secondary)", fontWeight: "normal" }}>
+                  {form.message.length} / {MAX_MESSAGE_LENGTH}
+                </span>
+              </div>
               <textarea
                 rows="6"
                 value={form.message}
                 onChange={(e) => updateField("message", e.target.value)}
                 placeholder="Type your message here..."
+                maxLength={MAX_MESSAGE_LENGTH}
                 style={{ padding: "12px", width: "100%", borderRadius: "6px", border: "1px solid var(--border)", resize: "vertical" }}
                 required
               />
