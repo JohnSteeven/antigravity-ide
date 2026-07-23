@@ -52,6 +52,9 @@ const MODULE_TITLES = {
   contact: { kicker: "Engagement", title: "Contact Form Submissions" },
   backups: { kicker: "Database", title: "System Snapshots" },
   settings: { kicker: "Site settings", title: "General Configuration Options" },
+  analytics: { kicker: "Experience", title: "Analytics & Traffic Insights" },
+  seo: { kicker: "Experience", title: "Search Engine Optimization (SEO)" },
+  homepage: { kicker: "Experience", title: "Homepage Layout & Content" },
   projects: { kicker: "Portfolio", title: "Projects List" },
   skills: { kicker: "Expertise", title: "Skills List" },
   timeline: { kicker: "Read My Story", title: "Timeline Moments" },
@@ -109,6 +112,9 @@ export default function AdminDashboard() {
         <Route path="contact" element={<ContactModule />} />
         <Route path="backups" element={<BackupModule />} />
         <Route path="settings" element={<SiteSettingsModule />} />
+        <Route path="analytics" element={<DashboardOverview analytics={analytics} articles={data?.articles} />} />
+        <Route path="seo" element={<SiteSettingsModule />} />
+        <Route path="homepage" element={<HomepageModule />} />
         <Route path="projects" element={<ProjectModule />} />
         <Route path="skills" element={<SkillModule />} />
         <Route path="timeline" element={<TimelineModule />} />
