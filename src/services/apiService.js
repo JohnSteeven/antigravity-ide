@@ -69,6 +69,28 @@ const getCsrf = async () => {
 
 // ─── Core fetch ───────────────────────────────────────────────────────────────
 
+const sanitizeError = (error, status) => {
+  if (status === 401) {
+    return "Your session has expired or is invalid. Please log in again.";
+  }
+  if (status === 403) {
+    return error.message || "You do not have permission to perform this action.";
+  }
+  if (status === 404) {
+    return "The requested resource could not be found.";
+  }
+  if (status === 429) {
+    return "Too many requests. Please try again later.";
+  }
+  if (status >= 500) {
+    return "Our servers are experiencing issues. Please try again later.";
+  }
+  if (error.name === "TimeoutError" || error.isTimeout) {
+    return "The request timed out. Please check your connection and try again.";
+  }
+  return error.message || "An unexpected error occurred. Please try again.";
+};
+
 const request = async (path, options = {}) => {
   const method = String(options.method || "GET").toUpperCase();
   const headers = { ...(options.headers || {}) };
@@ -88,19 +110,26 @@ const request = async (path, options = {}) => {
     response = await fetchWithTimeout(url, { credentials: "include", ...options, headers });
   } catch (err) {
     if (err && err.name === "AbortError") {
-      const timeout = new Error("Request timed out. Please check your connection and try again.");
+      const timeout = new Error("The request timed out. Please check your connection and try again.");
       timeout.isTimeout = true;
       timeout.name = "TimeoutError";
+      timeout.status = 408;
       throw timeout;
     }
-    throw err;
+    const netErr = new Error("Unable to connect to the server. Please check your internet connection.");
+    netErr.status = 0;
+    throw netErr;
   }
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const err = new Error(data.message || "API request failed.");
-    err.status = response.status;
+    const rawMsg = data.message || "API request failed.";
+    const status = response.status;
+    const friendlyMsg = sanitizeError(new Error(rawMsg), status);
+    const err = new Error(friendlyMsg);
+    err.status = status;
+    err.code = data.code;
     throw err;
   }
 

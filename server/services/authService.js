@@ -283,6 +283,10 @@ class AuthService {
     user.lastPasswordChange = new Date();
     await user.save();
 
+    // Revoke all existing refresh tokens and sessions
+    await RefreshToken.updateMany({ user: user._id }, { revokedAt: new Date() });
+    await Session.updateMany({ user: user._id }, { isActive: false });
+
     await activityLogRepository.create({
       userId,
       action: "user_password_change",

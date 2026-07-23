@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { settingApi, backupApi, activityLogApi } from "../services/apiService";
+import { useAuth } from "../hooks/useAuth";
 
 const SiteCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-site-data";
@@ -54,9 +55,14 @@ export const SiteCmsProvider = ({ children }) => {
     }
   };
 
+  const { isAuthenticated, user } = useAuth();
+  const isAdminOrEditor = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
+
   useEffect(() => {
-    fetchSiteData();
-  }, []);
+    if (isAdminOrEditor) {
+      fetchSiteData();
+    }
+  }, [isAdminOrEditor]);
 
   const actions = useMemo(() => ({
     async refreshSite() {

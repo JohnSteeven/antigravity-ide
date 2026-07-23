@@ -90,6 +90,28 @@ const getCsrfToken = async () => {
   return csrfTokenRequest;
 };
 
+const sanitizeError = (error, status) => {
+  if (status === 401) {
+    return "Your session has expired or is invalid. Please log in again.";
+  }
+  if (status === 403) {
+    return error.message || "You do not have permission to perform this action.";
+  }
+  if (status === 404) {
+    return "The requested resource could not be found.";
+  }
+  if (status === 429) {
+    return "Too many requests. Please try again later.";
+  }
+  if (status >= 500) {
+    return "Our servers are experiencing issues. Please try again later.";
+  }
+  if (error.name === "TimeoutError" || error.isTimeout) {
+    return "The request timed out. Please check your connection and try again.";
+  }
+  return error.message || "An unexpected error occurred. Please try again.";
+};
+
 const apiRequest = async (path, options = {}) => {
   const baseUrl = AUTH_API_URL || "";
   const { headers: optionHeaders = {}, ...fetchOptions } = options;
@@ -104,18 +126,35 @@ const apiRequest = async (path, options = {}) => {
     if (token) headers["x-csrf-token"] = token;
   }
 
-  const response = await fetchWithTimeout(`${baseUrl}${path}`, {
-    credentials: "include",
-    ...fetchOptions,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetchWithTimeout(`${baseUrl}${path}`, {
+      credentials: "include",
+      ...fetchOptions,
+      headers,
+    });
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      const timeout = new Error("The request timed out. Please check your connection and try again.");
+      timeout.isTimeout = true;
+      timeout.name = "TimeoutError";
+      timeout.status = 408;
+      throw timeout;
+    }
+    const netErr = new Error("Unable to connect to the server. Please check your internet connection.");
+    netErr.status = 0;
+    throw netErr;
+  }
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const error = new Error(data.message || "Authentication request failed.");
+    const rawMsg = data.message || "Authentication request failed.";
+    const status = response.status;
+    const friendlyMsg = sanitizeError(new Error(rawMsg), status);
+    const error = new Error(friendlyMsg);
     error.code = data.code;
-    error.status = response.status;
+    error.status = status;
     throw error;
   }
 
@@ -193,7 +232,7 @@ const createUserRecord = async (form) => {
     mobile,
     passwordSalt: salt,
     passwordHash,
-    role: "reader",
+    role: "Reader",
     verified: {
       email: false,
       mobile: false,
@@ -574,7 +613,7 @@ export const authService = {
         mobile: `+91000000${provider === "google" ? "100" : "200"}`,
         passwordSalt: "",
         passwordHash: "",
-        role: "reader",
+        role: "Reader",
         verified: { email: true, mobile: true },
         newsletter: false,
         provider,
@@ -620,6 +659,9 @@ export const authService = {
     removeStorage(AUTH_STORAGE_KEYS.session);
     removeStorage(AUTH_STORAGE_KEYS.currentChallenge);
     removeStorage(AUTH_STORAGE_KEYS.passwordReset);
+    removeStorage("myjourney-access-data");
+    removeStorage("myjourney-site-data");
+    removeStorage("myjourney-engagement-data");
     clearAuthCookies();
     return { message: "Logged out." };
   },

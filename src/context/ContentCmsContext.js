@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { cmsSeed } from "../data/cmsSeed";
 import { articleApi, categoryApi, subCategoryApi, tagApi } from "../services/apiService";
+import { useAuth } from "../hooks/useAuth";
 
 const ContentCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-content-data";
@@ -84,15 +85,25 @@ export const ContentCmsProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats]);
 
-  const fetchContentData = async () => {
+  const fetchContentData = async (isAdminOrEditor = false) => {
     setSyncStatus("loading");
     try {
-      const [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
-        articleApi.adminList({ limit: 1000 }).catch(() => articleApi.list({ limit: 1000 })),
-        categoryApi.list({ includeDeleted: true }).catch(() => ({ categories: [] })),
-        subCategoryApi.list({ includeDeleted: true }).catch(() => ({ subCategories: [] })),
-        tagApi.list({ includeDeleted: true }).catch(() => ({ tags: [] })),
-      ]);
+      let articlesRes, categoriesRes, subcategoriesRes, tagsRes;
+      if (isAdminOrEditor) {
+        [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
+          articleApi.adminList({ limit: 1000 }).catch(() => articleApi.list({ limit: 1000 })),
+          categoryApi.list({ includeDeleted: true }).catch(() => ({ categories: [] })),
+          subCategoryApi.list({ includeDeleted: true }).catch(() => ({ subCategories: [] })),
+          tagApi.list({ includeDeleted: true }).catch(() => ({ tags: [] })),
+        ]);
+      } else {
+        [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
+          articleApi.list({ limit: 1000 }).catch(() => ({ articles: [] })),
+          categoryApi.list({ includeDeleted: false }).catch(() => ({ categories: [] })),
+          subCategoryApi.list({ includeDeleted: false }).catch(() => ({ subCategories: [] })),
+          tagApi.list({ includeDeleted: false }).catch(() => ({ tags: [] })),
+        ]);
+      }
 
       if (articlesRes && Array.isArray(articlesRes.articles)) {
         setArticles(articlesRes.articles.map(withClientId));
@@ -113,13 +124,16 @@ export const ContentCmsProvider = ({ children }) => {
     }
   };
 
+  const { isAuthenticated, user } = useAuth();
+  const isAdminOrEditor = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
+
   useEffect(() => {
-    fetchContentData();
-  }, []);
+    fetchContentData(isAdminOrEditor);
+  }, [isAdminOrEditor]);
 
   const actions = useMemo(() => ({
     async refreshContent() {
-      await fetchContentData();
+      await fetchContentData(isAdminOrEditor);
     },
     updateSiteSection(section, value) {
       setSite((current) => ({
@@ -464,7 +478,7 @@ export const ContentCmsProvider = ({ children }) => {
       });
       return normalized;
     },
-  }), [articles, categories, subcategories, tags, syncStatus]);
+  }), [articles, categories, subcategories, tags, syncStatus, isAdminOrEditor]);
 
   const value = useMemo(() => ({
     articles,

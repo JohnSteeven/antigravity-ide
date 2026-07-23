@@ -61,7 +61,7 @@ class UserRepository {
   }
 
   async update(id, updateData) {
-    return User.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+    return User.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true });
   }
 
   async softDelete(id) {

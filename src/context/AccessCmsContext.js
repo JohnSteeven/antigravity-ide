@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { userApi, roleApi, permissionApi } from "../services/apiService";
+import { useAuth } from "../hooks/useAuth";
 
 const AccessCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-access-data";
@@ -57,9 +58,14 @@ export const AccessCmsProvider = ({ children }) => {
     }
   };
 
+  const { isAuthenticated, user } = useAuth();
+  const isAdminOrEditor = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
+
   useEffect(() => {
-    fetchAccessData();
-  }, []);
+    if (isAdminOrEditor) {
+      fetchAccessData();
+    }
+  }, [isAdminOrEditor]);
 
   const actions = useMemo(() => ({
     async refreshAccess() {

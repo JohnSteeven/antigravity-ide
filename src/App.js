@@ -86,11 +86,11 @@ const AppShell = () => {
 };
 
 const Root = () => (
-  <CmsProvider>
-    <AuthProvider>
+  <AuthProvider>
+    <CmsProvider>
       <AppShell />
-    </AuthProvider>
-  </CmsProvider>
+    </CmsProvider>
+  </AuthProvider>
 );
 
 const appRouter = createBrowserRouter([

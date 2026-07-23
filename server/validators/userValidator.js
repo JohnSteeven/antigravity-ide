@@ -110,6 +110,23 @@ const updateProfileValidator = [
     }),
 ];
 
+const updateUserValidator = [
+  body("firstName").optional().trim().notEmpty().withMessage("First name cannot be empty."),
+  body("lastName").optional().trim().notEmpty().withMessage("Last name cannot be empty."),
+  body("username").optional().trim().isLength({ min: 3 }).withMessage("Username must be at least 3 characters."),
+  body("email").optional().trim().isEmail().normalizeEmail().withMessage("Must be a valid email address."),
+  body("mobile").optional().trim().isLength({ min: 8, max: 18 }).withMessage("Must be a valid mobile number."),
+  body("role")
+    .optional()
+    .isIn(["Admin", "Editor", "Reader"])
+    .withMessage("Invalid role name. Must be Admin, Editor, or Reader."),
+  body("status")
+    .optional()
+    .isIn(["ACTIVE", "SUSPENDED", "PENDING_VERIFICATION", "DISABLED"])
+    .withMessage("Invalid status name. Must be ACTIVE, SUSPENDED, PENDING_VERIFICATION, or DISABLED."),
+];
+
 module.exports = {
   updateProfileValidator,
+  updateUserValidator,
 };

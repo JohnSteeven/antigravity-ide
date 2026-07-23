@@ -22,21 +22,19 @@ const errorHandler = (error, req, res, next) => {
 
   if (error.name === "ValidationError") {
     status = 400;
-    message = Object.values(error.errors || {})
-      .map((err) => err.message)
-      .join(" ");
-  }
-
-  if (status === 500) {
+    console.error("[Mongoose ValidationError]", error);
+    message = "We couldn't process your request. Please check your inputs and try again.";
+  } else if (error.name === "MongoServerError" || error.code === 11000) {
+    status = 409;
+    console.error("[MongoServerError]", error);
+    message = "A database conflict occurred. The resource may already exist.";
+  } else if (status === 500) {
     console.error(`[ERROR] Internal Server Error:`, error.stack || error);
+    message = "Something went wrong. Please try again.";
   }
 
   res.status(status).json({
-    message:
-      status === 500
-        ? "Something went wrong. Please try again."
-        : message,
-    errors: error.errors || [],
+    message,
   });
 };
 

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { articleApi, commentApi, testimonialApi, newsletterCampaignApi, contactMessageApi, subscriberApi } from "../services/apiService";
+import { useAuth } from "../hooks/useAuth";
 
 const EngagementCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-engagement-data";
@@ -63,9 +64,14 @@ export const EngagementCmsProvider = ({ children }) => {
     }
   };
 
+  const { isAuthenticated, user } = useAuth();
+  const isAdminOrEditor = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
+
   useEffect(() => {
-    fetchEngagementData();
-  }, []);
+    if (isAdminOrEditor) {
+      fetchEngagementData();
+    }
+  }, [isAdminOrEditor]);
 
   const actions = useMemo(() => ({
     async refreshComments() {
