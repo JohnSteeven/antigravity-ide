@@ -47,11 +47,11 @@ const ArticlesBody = () => {
   }, []);
 
   // Prefer API articles; fall back to CmsContext if the API isn't available
-  const articles = apiArticles
+  const articles = (apiArticles && Array.isArray(apiArticles) && apiArticles.length > 0)
     ? apiArticles.slice(0, visibleCount)
-    : data.articles
-        .filter((a) => a.status === "published")
-        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+    : (data.articles || [])
+        .filter((a) => String(a.status || "published").toLowerCase() === "published")
+        .sort((a, b) => new Date(b.publishedAt || b.createdAt || 0) - new Date(a.publishedAt || a.createdAt || 0))
         .slice(0, visibleCount);
 
   return (

@@ -9,6 +9,8 @@ import {
 } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 
+import { cmsSeed } from "../data/cmsSeed";
+
 const iconMap = {
   award: <FiAward />,
   book: <FiBookOpen />,
@@ -20,6 +22,8 @@ const iconMap = {
 
 const ExploreCategories = () => {
   const { data } = useCms();
+  const rawCategories = (data?.categories && data.categories.length > 0) ? data.categories : cmsSeed.categories;
+  const categoriesList = rawCategories.filter((c) => !c.isDeleted && c.isActive !== false);
 
   return (
     <section className="categories-section" id="categories">
@@ -27,10 +31,10 @@ const ExploreCategories = () => {
       <h2 className="categories-heading">Explore by Category</h2>
 
       <div className="categories-grid">
-        {data.categories.filter((c) => !c.isDeleted && c.isActive !== false).map((category) => (
+        {categoriesList.map((category) => (
           <Link
             className="category-item"
-            key={category.id}
+            key={category.id || category._id}
             to={`/category/${category.slug}`}
           >
             <div className="category-icon">

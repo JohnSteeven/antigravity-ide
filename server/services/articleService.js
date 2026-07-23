@@ -7,7 +7,7 @@ const Article = require("../models/Article");
 class ArticleService {
   async getArticles(query = {}) {
     const filter = {};
-    if (query.status) filter.status = query.status;
+    if (query.status) filter.status = { $regex: new RegExp(`^${query.status}$`, "i") };
     if (query.category) filter.category = query.category;
     if (query.subcategory) filter.subcategory = query.subcategory;
     if (query.isFeatured) filter.isFeatured = query.isFeatured === "true";

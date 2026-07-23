@@ -95,7 +95,7 @@ const ArticlesPage = () => {
 
     const filtered = sourceArticles.filter((article) => {
       const matchesFeatured =
-        !showFeatured || ((article.isFeatured || article.featured) && (article.rating || 0) >= 3.5);
+        !showFeatured || article.isFeatured || article.featured;
 
       const articleCategory = (article.category || "").toLowerCase();
       const matchesCategory = category === "all" || articleCategory === category;

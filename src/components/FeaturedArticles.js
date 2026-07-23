@@ -42,17 +42,22 @@ const FeaturedArticles = () => {
 
   // Prefer API articles; fall back to CmsContext
   const featuredArticles = useMemo(() => {
-    if (apiArticles) {
-      // API already pre-filtered by isFeatured=true; just apply rating gate
-      return apiArticles.filter((a) => (a.rating || 0) >= 3.5);
+    let list = (apiArticles && Array.isArray(apiArticles) && apiArticles.length > 0)
+      ? apiArticles
+      : (data.articles || []);
+
+    const filtered = list.filter((article) => {
+      const isPub = String(article.status || "published").toLowerCase() === "published";
+      const isFeat = article.isFeatured || article.featured;
+      return isPub && isFeat;
+    });
+
+    // If no specific articles are flagged as featured yet, fall back to top published articles
+    if (!filtered.length) {
+      return list.filter((article) => String(article.status || "published").toLowerCase() === "published");
     }
-    // Fallback: filter CMS context articles by isFeatured OR featured flag
-    return data.articles.filter(
-      (article) =>
-        article.status === "published" &&
-        (article.isFeatured || article.featured) &&
-        (article.rating || 0) >= 3.5
-    );
+
+    return filtered;
   }, [apiArticles, data.articles]);
 
   useEffect(() => {

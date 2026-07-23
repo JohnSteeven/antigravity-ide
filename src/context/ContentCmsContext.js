@@ -105,16 +105,16 @@ export const ContentCmsProvider = ({ children }) => {
         ]);
       }
 
-      if (articlesRes && Array.isArray(articlesRes.articles)) {
+      if (articlesRes && Array.isArray(articlesRes.articles) && articlesRes.articles.length > 0) {
         setArticles(articlesRes.articles.map(withClientId));
       }
-      if (categoriesRes && Array.isArray(categoriesRes.categories)) {
+      if (categoriesRes && Array.isArray(categoriesRes.categories) && categoriesRes.categories.length > 0) {
         setCategories(categoriesRes.categories.map(withClientId));
       }
-      if (subcategoriesRes && Array.isArray(subcategoriesRes.subCategories)) {
+      if (subcategoriesRes && Array.isArray(subcategoriesRes.subCategories) && subcategoriesRes.subCategories.length > 0) {
         setSubcategories(subcategoriesRes.subCategories.map(withClientId));
       }
-      if (tagsRes && Array.isArray(tagsRes.tags)) {
+      if (tagsRes && Array.isArray(tagsRes.tags) && tagsRes.tags.length > 0) {
         setTags(tagsRes.tags.map(withClientId));
       }
       setSyncStatus("live");
