@@ -6009,6 +6009,141 @@ textarea:disabled {
   border-bottom: 1px solid var(--line);
 }
 
+/* ─── Checkbox & Radio Alignment Fixes ─────────────────────────────────── */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  cursor: pointer;
+  accent-color: var(--teal);
+  margin: 0 !important;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.check-card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  border: 1px solid #dfe6e2 !important;
+  border-radius: 8px !important;
+  background: #f8faf8 !important;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.check-card label,
+.check-card span,
+.check-card strong {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline-block !important;
+  text-align: left !important;
+  width: auto !important;
+  flex: 0 1 auto !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+}
+
+.check-card:hover {
+  background: #ffffff !important;
+  border-color: var(--control-border) !important;
+}
+
+.toggle-grid,
+.flags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+/* ─── CMS Filter Controls & Header Overflow Fixes ───────────────────────── */
+.cms-search-control,
+.cms-filter-row,
+.cms-panel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.cms-panel-heading > div,
+.cms-search-control > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.cms-panel,
+.cms-workspace {
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* ─── Rich Text Editor Toolbar Polish ───────────────────────────────────── */
+.editor-toolbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 12px !important;
+  border: 1px solid #dfe6e2 !important;
+  border-bottom: 0 !important;
+  border-radius: 8px 8px 0 0 !important;
+  background: #f8faf8 !important;
+}
+
+.editor-toolbar button {
+  min-width: 34px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border: 1px solid #d5ded9 !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+
+.editor-toolbar button:hover {
+  background: #eef3f1 !important;
+  border-color: var(--teal) !important;
+  color: var(--teal) !important;
+}
+
+.editor-toolbar span:last-child,
+.editor-toolbar .saved-indicator {
+  margin-left: auto !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  color: var(--teal) !important;
+  padding-left: 12px !important;
+}
+
+
 /* Modal & Dialog Backdrop Polish */
 .dialog-overlay,
 .modal-overlay {
