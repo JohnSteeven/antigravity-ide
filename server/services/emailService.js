@@ -33,7 +33,11 @@ const getOtpHtml = ({ code, purpose }) => `
 
 const sendOtpEmail = async ({ to, code, purpose }) => {
   if (!hasSmtpConfig()) {
-    console.log(`[email:dev] OTP for ${to}: ${code}`);
+    console.log(`\n📧 [EMAIL DEV LOG] ----------------------------------------`);
+    console.log(`To: ${to}`);
+    console.log(`Subject: Your MyJourney verification code`);
+    console.log(`OTP Code: ${code} (${purpose})`);
+    console.log(`-----------------------------------------------------------\n`);
     return;
   }
 
@@ -68,7 +72,12 @@ const getWelcomeSubscriberHtml = (email) => `
 
 const sendWelcomeSubscriberEmail = async ({ to, email }) => {
   if (!hasSmtpConfig()) {
-    console.log(`[email:dev] Welcome subscriber email dispatched to ${to}`);
+    console.log(`\n📧 [EMAIL DEV LOG] ----------------------------------------`);
+    console.log(`Type: Subscriber Welcome Email`);
+    console.log(`To: ${to}`);
+    console.log(`Subject: Welcome to MyJourney — Subscription Confirmed`);
+    console.log(`Status: Sent in Development Mode (Configure SMTP in .env for live inbox delivery)`);
+    console.log(`-----------------------------------------------------------\n`);
     return;
   }
 
@@ -120,7 +129,13 @@ const getNewArticleNotificationHtml = (article) => {
 
 const sendNewArticleNotificationEmail = async ({ to, article }) => {
   if (!hasSmtpConfig()) {
-    console.log(`[email:dev] New Article notification "${article.title}" dispatched to ${to}`);
+    console.log(`\n📧 [EMAIL DEV LOG] ----------------------------------------`);
+    console.log(`Type: New Article Email Alert`);
+    console.log(`To: ${to}`);
+    console.log(`Article: ${article.title}`);
+    console.log(`Subject: New Post on MyJourney: ${article.title}`);
+    console.log(`Status: Sent in Development Mode (Configure SMTP in .env for live inbox delivery)`);
+    console.log(`-----------------------------------------------------------\n`);
     return;
   }
 
@@ -139,7 +154,13 @@ const sendNewArticleNotificationEmail = async ({ to, article }) => {
 
 const sendCampaignEmail = async ({ to, campaign }) => {
   if (!hasSmtpConfig()) {
-    console.log(`[email:dev] Newsletter campaign "${campaign.title}" dispatched to ${to}`);
+    console.log(`\n📧 [EMAIL DEV LOG] ----------------------------------------`);
+    console.log(`Type: Newsletter Campaign Broadcast`);
+    console.log(`To: ${to}`);
+    console.log(`Campaign Title: ${campaign.title}`);
+    console.log(`Subject: ${campaign.subject || campaign.title}`);
+    console.log(`Status: Sent in Development Mode (Configure SMTP in .env for live inbox delivery)`);
+    console.log(`-----------------------------------------------------------\n`);
     return;
   }
 
