@@ -81,19 +81,23 @@ class NotificationSchedulerService {
 
   /**
    * New Article Handler — triggered synchronously or fire-and-forget on publish.
-   * Notifies users with newArticles enabled.
+   * Notifies users with in-app alerts and sends email notifications to subscribers.
    */
   async handleNewArticle(article) {
     try {
       if (!article || article.status !== "published") return;
 
-      const users = await User.find({
-        "notificationPreferences.newArticles.enabled": true,
-        isDeleted: false,
-        status: "ACTIVE"
-      });
+      const [users, subscribers] = await Promise.all([
+        User.find({
+          "notificationPreferences.newArticles.enabled": true,
+          isDeleted: false,
+          status: "ACTIVE"
+        }),
+        require("../models/Subscriber").find({ active: true, isDeleted: false }).lean(),
+      ]);
 
-      const promises = users.map(user =>
+      // 1. In-app notifications
+      const userNotifications = users.map(user =>
         createNotification(
           user._id,
           "New Story Available",
@@ -102,7 +106,15 @@ class NotificationSchedulerService {
         )
       );
 
-      await Promise.all(promises);
+      // 2. Subscriber Email notifications
+      const emailService = require("./emailService");
+      const emailDispatches = subscribers.map(sub =>
+        emailService.sendNewArticleNotificationEmail({ to: sub.email, article }).catch(err => {
+          console.warn(`Failed sending new article email to ${sub.email}:`, err.message);
+        })
+      );
+
+      await Promise.all([...userNotifications, ...emailDispatches]);
     } catch (err) {
       console.error("Error in handleNewArticle:", err);
     }

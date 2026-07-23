@@ -1,5 +1,6 @@
 const subscriberRepository = require("../repositories/subscriberRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
+const emailService = require("./emailService");
 
 class SubscriberService {
   async getSubscribers(query = {}) {
@@ -33,10 +34,18 @@ class SubscriberService {
         return { message: "You are already subscribed.", alreadySubscribed: true };
       }
       await subscriberRepository.update(existing._id, { active: true, updatedBy: userId });
+      // Dispatch welcome back email
+      emailService.sendWelcomeSubscriberEmail({ to: email, email }).catch((err) => {
+        console.warn("Failed to dispatch welcome back email:", err.message);
+      });
       return { message: "Welcome back! You are subscribed." };
     }
 
     const subscriber = await subscriberRepository.create({ email, createdBy: userId, updatedBy: userId });
+    // Dispatch welcome subscriber email
+    emailService.sendWelcomeSubscriberEmail({ to: email, email }).catch((err) => {
+      console.warn("Failed to dispatch welcome subscriber email:", err.message);
+    });
     return { subscriber, message: "You are subscribed. Thank you!" };
   }
 

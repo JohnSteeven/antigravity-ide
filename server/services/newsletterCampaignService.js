@@ -86,9 +86,18 @@ class NewsletterCampaignService {
     if (!campaign) throw new Error("Campaign not found.");
     if (campaign.status === "sent") throw new Error("Campaign already sent.");
 
-    // Retrieve active subscribers
+    // Retrieve active subscribers & dispatch emails
     const subscribers = await Subscriber.find({ active: true, isDeleted: false }).lean();
+    const emailService = require("./emailService");
     
+    await Promise.all(
+      subscribers.map((sub) =>
+        emailService.sendCampaignEmail({ to: sub.email, campaign }).catch((err) => {
+          console.warn(`Failed sending newsletter campaign email to ${sub.email}:`, err.message);
+        })
+      )
+    );
+
     const deliveryHistory = subscribers.map((sub) => ({
       email: sub.email,
       sentAt: new Date(),
