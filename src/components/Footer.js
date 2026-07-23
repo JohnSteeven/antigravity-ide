@@ -9,14 +9,29 @@ const Footer = () => {
   const { user, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const socials = data.site.socials;
   const isAdmin = isAuthenticated && user?.role === "Admin";
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    addSubscriber(email);
-    setMessage("You are subscribed.");
-    setEmail("");
+    if (!email || !email.includes("@")) {
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+    setIsSubmitting(true);
+    setMessage("");
+    try {
+      if (addSubscriber) {
+        await addSubscriber(email);
+      }
+      setMessage("If this email can receive newsletters, we've sent the appropriate next step to your inbox.");
+      setEmail("");
+    } catch (err) {
+      setMessage("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -35,19 +50,23 @@ const Footer = () => {
           </div>
 
           <div className="subscribe-right">
-            <form className="subscribe-form" onSubmit={handleSubmit}>
+            <form className="subscribe-form" onSubmit={handleSubmit} aria-label="Newsletter Subscription Form">
               <input
                 type="email"
                 placeholder="Your email address"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
+                disabled={isSubmitting}
+                aria-label="Your email address"
               />
 
-              <button type="submit">Subscribe</button>
+              <button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Subscribe"}
+              </button>
             </form>
 
-            <span className="subscribe-note">
+            <span className="subscribe-note" role="status" aria-live="polite">
               {message || "No spam. Unsubscribe anytime."}
             </span>
           </div>

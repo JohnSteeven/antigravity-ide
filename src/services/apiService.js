@@ -271,7 +271,13 @@ export const statsApi = {
 // ─── Subscribers ──────────────────────────────────────────────────────────────
 
 export const subscriberApi = {
-  subscribe: (email) => post("/api/subscribers", { email }),
+  subscribe: (email, source = "website_footer") => post("/api/subscribers/subscribe", { email, source }),
+  verify: (token) => get(`/api/subscribers/verify/${token}`),
+  getPreferences: (token) => get(`/api/subscribers/preferences/${token}`),
+  updatePreferences: (token, preferences) => post(`/api/subscribers/preferences/${token}`, { preferences }),
+  unsubscribeByToken: (token) => post(`/api/subscribers/unsubscribe/${token}`, {}),
+  getStats: () => get("/api/subscribers/stats"),
+  resendVerification: (id) => post(`/api/subscribers/${id}/resend-verification`, {}),
   list: (params = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params).filter(([, v]) => v !== undefined && v !== "")

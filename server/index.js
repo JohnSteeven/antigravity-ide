@@ -68,6 +68,7 @@ app.use("/api/tags", tagRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/subscribers", subscriberRoutes);
+app.use("/api/newsletter", subscriberRoutes);
 app.use("/api/subcategories", subCategoryRoutes);
 app.use("/api/settings", settingRoutes);
 app.use("/api/backups", backupRoutes);

@@ -35,6 +35,8 @@ const env = {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
     from: process.env.MAIL_FROM || "MyJourney <hello@myjourney.com>",
+    maxRetries: Number(process.env.MAX_EMAIL_RETRIES || 3),
+    verificationTokenTtlHours: Number(process.env.VERIFICATION_TOKEN_TTL_HOURS || 24),
   },
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,

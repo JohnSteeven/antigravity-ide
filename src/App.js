@@ -33,6 +33,8 @@ import ReadMyStory from "./components/ReadMyStory.js";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import Contact from "./components/Contact";
+import NewsletterVerificationPage from "./components/NewsletterVerificationPage";
+import NewsletterPreferencesPage from "./components/NewsletterPreferencesPage";
 
 const HomePage = () => (
   <main>
@@ -130,6 +132,14 @@ const appRouter = createBrowserRouter([
       {
         path: "contact",
         element: <Contact />,
+      },
+      {
+        path: "newsletter/verify",
+        element: <NewsletterVerificationPage />,
+      },
+      {
+        path: "newsletter/preferences",
+        element: <NewsletterPreferencesPage />,
       },
       {
         // Admin-only: requires login + role === admin
