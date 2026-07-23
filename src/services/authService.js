@@ -275,6 +275,13 @@ export const authService = {
         });
         return { session, user: api.user };
       }
+
+      // If server explicitly rejected authentication with 401, purge stale local storage
+      if (sessionError && sessionError.status === 401) {
+        removeStorage(AUTH_STORAGE_KEYS.session);
+        clearAuthCookies();
+        return { session: null, user: null };
+      }
     } catch (err) {
       console.warn("Failed to get live session, checking storage:", err);
     }

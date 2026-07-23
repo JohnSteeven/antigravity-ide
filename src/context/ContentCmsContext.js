@@ -16,13 +16,22 @@ const slugify = (value) =>
 
 const withClientId = (item) => {
   if (!item || typeof item !== "object") return item;
+  const isFeat = Boolean(item.isFeatured !== undefined ? item.isFeatured : item.featured);
+  const isMust = Boolean(item.isMustRead !== undefined ? item.isMustRead : item.mustRead);
+  const isTrend = Boolean(item.isTrending !== undefined ? item.isTrending : item.trending);
+  const isPin = Boolean(item.isPinned !== undefined ? item.isPinned : item.pinned);
+
   return {
     ...item,
     id: item._id || item.id,
-    featured: item.featured !== undefined ? item.featured : item.isFeatured,
-    mustRead: item.mustRead !== undefined ? item.mustRead : item.isMustRead,
-    trending: item.trending !== undefined ? item.trending : item.isTrending,
-    pinned: item.pinned !== undefined ? item.pinned : item.isPinned,
+    isFeatured: isFeat,
+    featured: isFeat,
+    isMustRead: isMust,
+    mustRead: isMust,
+    isTrending: isTrend,
+    trending: isTrend,
+    isPinned: isPin,
+    pinned: isPin,
   };
 };
 
