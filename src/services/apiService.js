@@ -363,6 +363,7 @@ export const contactMessageApi = {
     ).toString();
     return get(`/api/contact-messages${qs ? `?${qs}` : ""}`);
   },
+  getStats: () => get("/api/contact-messages/stats"),
   create: (payload) => post("/api/contact-messages", payload),
   update: (id, payload) => put(`/api/contact-messages/${id}`, payload),
   delete: (id) => del(`/api/contact-messages/${id}`),
