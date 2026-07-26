@@ -7,6 +7,7 @@ export const isMobile = (value) =>
 export const detectIdentifierType = (value) => {
   if (isEmail(value)) return "email";
   if (isMobile(value)) return "mobile";
+  if (String(value || "").trim().length >= 3) return "username";
   return "unknown";
 };
 

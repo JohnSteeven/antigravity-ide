@@ -84,6 +84,7 @@ const createArticleDraft = (categories = []) => ({
   title: "",
   slug: "",
   description: "",
+  coverImage: "",
   category: categories[0]?.name || "Uncategorized",
   subcategory: "",
   body: "<p>Write your story here...</p>",
@@ -108,7 +109,8 @@ const ArticleModule = () => {
     saveArticle,
     deleteArticle,
     restoreArticle,
-    toggleArticleStatus
+    toggleArticleStatus,
+    uploadMedia
   } = useCms();
 
   const categories = data?.categories || [];
@@ -180,6 +182,7 @@ const ArticleModule = () => {
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const coverImageInputRef = useRef(null);
 
   // Pagination, search, and filtering states
   const [query, setQuery] = useState("");
@@ -193,6 +196,53 @@ const ArticleModule = () => {
   const [history, setHistory] = useState([articleDraft?.body || ""]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const typingTimeoutRef = useRef(null);
+  const savedSelectionRangeRef = useRef(null);
+
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+        savedSelectionRangeRef.current = range.cloneRange();
+      }
+    }
+  };
+
+  const insertHtmlAtSavedCursor = (html) => {
+    let range = savedSelectionRangeRef.current;
+    const sel = window.getSelection();
+    if (range) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else if (sel.rangeCount > 0) {
+      range = sel.getRangeAt(0);
+    }
+
+    if (range) {
+      if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+        range.deleteContents();
+        const el = document.createElement("div");
+        el.innerHTML = html;
+        const frag = document.createDocumentFragment();
+        let node;
+        let lastNode;
+        while ((node = el.firstChild)) {
+          lastNode = frag.appendChild(node);
+        }
+        range.insertNode(frag);
+        if (lastNode) {
+          range = range.cloneRange();
+          range.setStartAfter(lastNode);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          savedSelectionRangeRef.current = range.cloneRange();
+        }
+        return true;
+      }
+    }
+    return false;
+  };
 
   // Word & Reading metrics
   const wordCount = useMemo(() => getWordCount(articleDraft.body), [articleDraft.body]);
@@ -281,17 +331,9 @@ const ArticleModule = () => {
   const uploadAndInsertImage = async (file) => {
     try {
       setSaveStatus("Saving...");
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "Uploads");
+      const media = await uploadMedia(file, "articles");
 
-      const res = await fetch("/api/media", {
-        method: "POST",
-        body: formData
-      });
-      const data = await res.json();
-
-      if (data.media && data.media.url) {
+      if (media && media.url) {
         const alignClass = imageAlign === "left" ? "article-image-left" : imageAlign === "right" ? "article-image-right" : "article-image-center";
         
         let styleStr = "";
@@ -303,10 +345,14 @@ const ArticleModule = () => {
           styleStr = "display: block; margin: 1.5rem auto; text-align: center; max-width: 100%; position: relative;";
         }
 
-        const figHtml = `<figure class="article-image-container ${alignClass}" contenteditable="false" style="${styleStr}"><img src="${data.media.url}" alt="${data.media.name}" style="${imageAlign === 'center' ? 'max-width: 100%; max-height: 500px; height: auto;' : 'width: 100%; height: auto;'} border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #eaeaea;" /><button class="remove-image-btn" onclick="const ws = this.closest('.rich-text-editor-workspace'); this.parentElement.remove(); if (ws) { ws.dispatchEvent(new Event('input', { bubbles: true })); }" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; line-height: 1; pointer-events: auto;">×</button></figure>`;
+        const figHtml = `<figure class="article-image-container ${alignClass}" contenteditable="false" style="${styleStr}"><img src="${media.url}" alt="${media.name}" style="${imageAlign === 'center' ? 'max-width: 100%; max-height: 500px; height: auto;' : 'width: 100%; height: auto;'} border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #eaeaea;" /><button class="remove-image-btn" onclick="const ws = this.closest('.rich-text-editor-workspace'); this.parentElement.remove(); if (ws) { ws.dispatchEvent(new Event('input', { bubbles: true })); }" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; line-height: 1; pointer-events: auto;">×</button></figure>`;
 
-        const nextBody = `${editorRef.current.innerHTML}${figHtml}`;
-        editorRef.current.innerHTML = nextBody;
+        const inserted = insertHtmlAtSavedCursor(figHtml);
+        if (!inserted && editorRef.current) {
+          editorRef.current.innerHTML = `${editorRef.current.innerHTML}${figHtml}`;
+        }
+        
+        const nextBody = editorRef.current.innerHTML;
         const nextDraft = { ...articleDraft, body: nextBody };
         onChange(nextDraft);
         pushHistory(nextBody);
@@ -316,6 +362,23 @@ const ArticleModule = () => {
       }
     } catch (err) {
       console.error("Image upload failed:", err);
+      setSaveStatus("Save Failed");
+    }
+  };
+
+  const handleCoverImageUpload = async (file) => {
+    try {
+      setSaveStatus("Saving...");
+      const media = await uploadMedia(file, "covers");
+
+      if (media && media.url) {
+        update({ coverImage: media.url });
+        setSaveStatus("Saved");
+      } else {
+        setSaveStatus("Save Failed");
+      }
+    } catch (err) {
+      console.error("Cover image upload failed:", err);
       setSaveStatus("Save Failed");
     }
   };
@@ -549,6 +612,47 @@ const ArticleModule = () => {
             ></textarea>
           </label>
 
+          <label className="span-two">
+            Cover Image (Banner Image)
+            <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginTop: "0.25rem" }}>
+              <input
+                type="text"
+                value={articleDraft.coverImage || ""}
+                onChange={(e) => update({ coverImage: e.target.value })}
+                placeholder="https://images.unsplash.com/... or upload an image"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className="small-outline-btn"
+                onClick={() => coverImageInputRef.current?.click()}
+                style={{ height: "38px", whiteSpace: "nowrap" }}
+              >
+                Upload File
+              </button>
+              <input
+                ref={coverImageInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={async (e) => {
+                  if (e.target.files?.length) {
+                    await handleCoverImageUpload(e.target.files[0]);
+                  }
+                }}
+              />
+            </div>
+            {articleDraft.coverImage && (
+              <div style={{ marginTop: "0.5rem" }}>
+                <img
+                  src={articleDraft.coverImage.startsWith("http") || articleDraft.coverImage.startsWith("data:") ? articleDraft.coverImage : `http://localhost:5000${articleDraft.coverImage.startsWith("/") ? "" : "/"}${articleDraft.coverImage}`}
+                  alt="Cover Preview"
+                  style={{ maxHeight: "120px", borderRadius: "8px", border: "1px solid #ddd" }}
+                />
+              </div>
+            )}
+          </label>
+
           <label>
             Category
             <select
@@ -641,6 +745,9 @@ const ArticleModule = () => {
           className="rich-text-editor-workspace"
           contentEditable
           onKeyDown={handleKeyDown}
+          onKeyUp={saveSelection}
+          onMouseUp={saveSelection}
+          onBlur={saveSelection}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onPaste={handlePaste}

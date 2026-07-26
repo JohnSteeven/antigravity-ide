@@ -7,6 +7,7 @@ export const categoryBlueprints = [
     longDescription:
       "Daily journals, growth notes, goals, habits, health, relationships, productivity, faith, and memories gathered into one calm personal archive.",
     icon: "heart",
+    sortOrder: 1,
     heroImage:
       "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -22,6 +23,26 @@ export const categoryBlueprints = [
     ],
   },
   {
+    id: "cat-reflections",
+    name: "Reflections",
+    slug: "reflections",
+    description: "Slower essays about meaning, change, and self-awareness.",
+    longDescription:
+      "Thoughts, meditations, Bible reflections, life reflections, career reflections, and daily reflection entries for deeper review.",
+    icon: "feather",
+    sortOrder: 2,
+    heroImage:
+      "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=85",
+    subcategories: [
+      "Thoughts",
+      "Meditations",
+      "Bible Reflections",
+      "Life Reflections",
+      "Career Reflections",
+      "Daily Reflection",
+    ],
+  },
+  {
     id: "cat-incidents",
     name: "Incidents",
     slug: "incidents",
@@ -29,6 +50,7 @@ export const categoryBlueprints = [
     longDescription:
       "Real life events, work experiences, failures, success stories, office incidents, funny moments, and learning experiences preserved with context.",
     icon: "book",
+    sortOrder: 3,
     heroImage:
       "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -42,25 +64,6 @@ export const categoryBlueprints = [
     ],
   },
   {
-    id: "cat-reflections",
-    name: "Reflections",
-    slug: "reflections",
-    description: "Slower essays about meaning, change, and self-awareness.",
-    longDescription:
-      "Thoughts, meditations, Bible reflections, life reflections, career reflections, and daily reflection entries for deeper review.",
-    icon: "feather",
-    heroImage:
-      "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=85",
-    subcategories: [
-      "Thoughts",
-      "Meditations",
-      "Bible Reflections",
-      "Life Reflections",
-      "Career Reflections",
-      "Daily Reflection",
-    ],
-  },
-  {
     id: "cat-lessons",
     name: "Lessons",
     slug: "lessons",
@@ -68,6 +71,7 @@ export const categoryBlueprints = [
     longDescription:
       "Life lessons, books, leadership, business, technology, spiritual lessons, and career advice shaped into reusable knowledge.",
     icon: "award",
+    sortOrder: 4,
     heroImage:
       "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -88,6 +92,7 @@ export const categoryBlueprints = [
     longDescription:
       "Countries, cities, trips, travel guides, budgets, food, hotels, and photography notes from journeys worth remembering.",
     icon: "send",
+    sortOrder: 5,
     heroImage:
       "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -102,6 +107,25 @@ export const categoryBlueprints = [
     ],
   },
   {
+    id: "cat-news",
+    name: "News",
+    slug: "news",
+    description: "Live world news and global updates.",
+    longDescription:
+      "Real-time updates and breaking news coverage from reputable international sources covering world events, culture, science, and technology.",
+    icon: "globe",
+    sortOrder: 6,
+    heroImage:
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1800&q=85",
+    subcategories: [
+      "World News",
+      "Technology",
+      "Science",
+      "Business",
+      "Culture",
+    ],
+  },
+  {
     id: "cat-coding",
     name: "Coding",
     slug: "coding",
@@ -109,6 +133,7 @@ export const categoryBlueprints = [
     longDescription:
       "JavaScript, TypeScript, React, NextJS, NodeJS, Java, Python, SAP, SQL, system design, interview questions, DevOps, cloud, AI, coding tips, and projects.",
     icon: "code",
+    sortOrder: 7,
     heroImage:
       "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -227,6 +252,7 @@ export const cmsNavigation = [
       { id: "analytics", label: "Analytics", icon: "analytics" },
       { id: "seo", label: "SEO", icon: "search" },
       { id: "settings", label: "Settings", icon: "settings" },
+      { id: "news-settings", label: "News Settings", icon: "globe" },
       { id: "navigation", label: "Navigation Menu", icon: "navigation" },
       { id: "footer", label: "Footer", icon: "footer" },
       { id: "hero", label: "Homepage", icon: "home" },

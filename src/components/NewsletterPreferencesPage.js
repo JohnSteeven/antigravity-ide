@@ -66,14 +66,17 @@ export default function NewsletterPreferencesPage() {
   };
 
   const handleUnsubscribe = async () => {
-    if (!window.confirm("Are you sure you want to unsubscribe from all MyJourney newsletter emails?")) {
-      return;
-    }
+    const reason = window.prompt(
+      "Optional: Please let us know why you are unsubscribing:\n1. Too many emails\n2. Content is not relevant\n3. I never signed up\n4. Other",
+      "Too many emails"
+    );
+    if (reason === null) return; // User cancelled
+
     setSaving(true);
     setMessage("");
     setError("");
     try {
-      await subscriberApi.unsubscribeByToken(token);
+      await subscriberApi.unsubscribeByToken(token, reason || "No reason specified");
       setStatus("unsubscribed");
       setMessage("You have been unsubscribed successfully.");
     } catch (err) {

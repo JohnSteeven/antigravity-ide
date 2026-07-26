@@ -76,14 +76,24 @@ const sendVerificationEmail = async ({ to, token }) => {
     return;
   }
 
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: env.smtp.from,
-    to,
-    subject: "Confirm your MyJourney newsletter subscription",
-    html,
-    text,
-  });
+  try {
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: env.smtp.from,
+      to,
+      subject: "Confirm your MyJourney newsletter subscription",
+      html,
+      text,
+    });
+    console.log(`[emailService] Real verification email successfully sent to ${to}`);
+  } catch (err) {
+    console.error(`[emailService] SMTP dispatch to ${to} failed: ${err.message}`);
+    console.log(`\n📧 [EMAIL DEV LOG FALLBACK] ----------------------------------------`);
+    console.log(`Type: Verification Email (SMTP Fallback)`);
+    console.log(`To: ${to}`);
+    console.log(`Verify URL: ${verifyUrl}`);
+    console.log(`-----------------------------------------------------------\n`);
+  }
 };
 
 // ─── Already Subscribed Email ─────────────────────────────────────────────────

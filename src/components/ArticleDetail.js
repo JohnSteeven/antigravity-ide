@@ -20,6 +20,7 @@ import {
 import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
 import { getFullName, resolveImageUrl, copyToClipboard } from "../utils/helpers";
+import { getImageUrl } from "../utils/imageUrlHelper";
 import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
 import Breadcrumbs from "./shared/Breadcrumbs";
@@ -125,14 +126,36 @@ const ArticleDetail = () => {
   // Inject IDs to headers in article body & rewrite uploads paths to absolute URL
   const processedBody = useMemo(() => {
     if (!article || !article.body) return "";
+    let cleanBody = article.body.replace(/<button[^>]*class=["']?remove-image-btn["']?[^>]*>[\s\S]*?<\/button>/gi, "");
+    cleanBody = cleanBody.replace(/(<(figure|div|p)[^>]*>[\s\S]*?)(?:x|×|\s)*(<\/\2>)/gi, "$1$3");
+    const bodyWithAbsoluteImages = cleanBody
+      .replace(/(src|href)="\/uploads/g, '$1="http://localhost:5000/uploads')
+      .replace(/(src|href)="uploads/g, '$1="http://localhost:5000/uploads');
     let index = 0;
-    const bodyWithAbsoluteImages = article.body.replace(/(src|href)="\/uploads/g, '$1="http://localhost:5000/uploads');
     return bodyWithAbsoluteImages.replace(/<(h2|h3)([^>]*)>/gi, (match, tag, attrs) => {
       const replacement = `<${tag} id="heading-${index}"${attrs}>`;
       index++;
       return replacement;
     });
   }, [article]);
+
+  // Handle image loading errors inside dangerouslySetInnerHTML using event capturing
+  useEffect(() => {
+    const container = document.querySelector(".premium-article-prose");
+    if (!container || !article) return;
+
+    const handleError = (e) => {
+      if (e.target.tagName === "IMG") {
+        console.warn("Inline body image failed to load, applying fallback:", e.target.src);
+        e.target.src = getImageUrl("", article.category || "");
+      }
+    };
+
+    container.addEventListener("error", handleError, true);
+    return () => {
+      container.removeEventListener("error", handleError, true);
+    };
+  }, [processedBody, article?.category]);
 
   // Track viewed articles in sessionStorage to avoid duplicate view increments
   useEffect(() => {
@@ -331,7 +354,7 @@ const ArticleDetail = () => {
     <main className="premium-article-page">
       <header
         className="premium-article-hero"
-        style={article.coverImage?.trim() ? { backgroundImage: `url("${resolveImageUrl(article.coverImage)}")` } : undefined}
+        style={{ backgroundImage: `url("${getImageUrl(article.coverImage, article.category)}")` }}
       >
         <div className="premium-article-hero-overlay"></div>
         <div className="premium-article-hero-content">

@@ -5,14 +5,15 @@ import { articleApi } from "../services/apiService";
 import ArticlesCard from "./ArticlesCard";
 
 /** Configurable: how many articles to show at each breakpoint */
-const HOMEPAGE_LIMIT = 4;
+const HOMEPAGE_LIMIT = 5;
 
 const getVisibleCount = () => {
   if (typeof window === "undefined") return HOMEPAGE_LIMIT;
-  if (window.innerWidth < 640) return 1;
-  if (window.innerWidth < 900) return 2;
-  if (window.innerWidth < 1200) return 3;
-  return HOMEPAGE_LIMIT;
+  if (window.innerWidth <= 550) return 1;
+  if (window.innerWidth <= 1023) return 2;
+  if (window.innerWidth <= 1279) return 3;
+  if (window.innerWidth <= 1599) return 4;
+  return HOMEPAGE_LIMIT; // 5 on wide screens
 };
 
 const ArticlesBody = () => {
@@ -25,7 +26,7 @@ const ArticlesBody = () => {
     let cancelled = false;
 
     articleApi
-      .list({ status: "published", sort: "latest", limit: HOMEPAGE_LIMIT })
+      .list({ status: "published", sort: "latest", limit: 20 })
       .then((res) => {
         if (!cancelled && Array.isArray(res.articles)) {
           setApiArticles(res.articles);

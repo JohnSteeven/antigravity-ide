@@ -25,6 +25,7 @@ import {
   FiStar,
   FiTag,
   FiUsers,
+  FiGlobe,
 } from "react-icons/fi";
 import { cmsNavigation } from "../../domain/knowledgeArchitecture";
 import { useCms } from "../../context/CmsContext";
@@ -57,6 +58,7 @@ const iconMap = {
   star: <FiStar />,
   tag: <FiTag />,
   users: <FiUsers />,
+  globe: <FiGlobe />,
 };
 
 const CmsLayout = ({

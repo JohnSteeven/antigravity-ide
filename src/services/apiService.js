@@ -275,7 +275,7 @@ export const subscriberApi = {
   verify: (token) => get(`/api/subscribers/verify/${token}`),
   getPreferences: (token) => get(`/api/subscribers/preferences/${token}`),
   updatePreferences: (token, preferences) => post(`/api/subscribers/preferences/${token}`, { preferences }),
-  unsubscribeByToken: (token) => post(`/api/subscribers/unsubscribe/${token}`, {}),
+  unsubscribeByToken: (token, reason = "") => post(`/api/subscribers/unsubscribe/${token}`, { reason }),
   getStats: () => get("/api/subscribers/stats"),
   resendVerification: (id) => post(`/api/subscribers/${id}/resend-verification`, {}),
   list: (params = {}) => {
@@ -306,6 +306,7 @@ export const subCategoryApi = {
 export const settingApi = {
   get: (key) => get(`/api/settings/${key}`),
   update: (key, value) => put(`/api/settings/${key}`, { value }),
+  testSmtp: (testEmail) => post("/api/settings/test-smtp", { testEmail }),
 };
 
 // ─── Backups ──────────────────────────────────────────────────────────────────
@@ -426,5 +427,18 @@ export const roleApi = {
 export const permissionApi = {
   list: () => get("/api/permissions"),
   update: (roleId, permissions) => put(`/api/permissions/${roleId}`, { permissions }),
+};
+
+// ─── News & Analytics ────────────────────────────────────────────────────────
+export const newsApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/news${qs ? `?${qs}` : ""}`);
+  },
+  trackClick: (payload) => post("/api/news/analytics/click", payload),
+  trackImpression: (payload) => post("/api/news/analytics/impression", payload),
+  getStats: () => get("/api/news/analytics/stats"),
 };
 

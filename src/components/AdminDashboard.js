@@ -28,6 +28,7 @@ import SiteSettingsModule from "./cms/SiteSettingsModule";
 import ProjectModule from "./cms/ProjectModule";
 import SkillModule from "./cms/SkillModule";
 import TimelineModule from "./cms/TimelineModule";
+import NewsSettingsModule from "./cms/NewsSettingsModule";
 
 const MODULE_TITLES = {
   overview: { kicker: "Dashboard", title: "Overview & Analytics" },
@@ -52,6 +53,7 @@ const MODULE_TITLES = {
   contact: { kicker: "Engagement", title: "Contact Form Submissions" },
   backups: { kicker: "Database", title: "System Snapshots" },
   settings: { kicker: "Site settings", title: "General Configuration Options" },
+  "news-settings": { kicker: "Global News", title: "News Integration & Analytics Dashboard" },
   analytics: { kicker: "Experience", title: "Analytics & Traffic Insights" },
   seo: { kicker: "Experience", title: "Search Engine Optimization (SEO)" },
   homepage: { kicker: "Experience", title: "Homepage Layout & Content" },
@@ -112,6 +114,7 @@ export default function AdminDashboard() {
         <Route path="contact" element={<ContactModule />} />
         <Route path="backups" element={<BackupModule />} />
         <Route path="settings" element={<SiteSettingsModule />} />
+        <Route path="news-settings" element={<NewsSettingsModule />} />
         <Route path="analytics" element={<DashboardOverview analytics={analytics} articles={data?.articles} />} />
         <Route path="seo" element={<SiteSettingsModule />} />
         <Route path="homepage" element={<HomepageModule />} />

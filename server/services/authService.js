@@ -28,7 +28,7 @@ const findUserByIdentifier = (identifier) => {
   const value = rawValue.toLowerCase();
   const compactMobile = rawValue.replace(/\s+/g, "");
   const mobileDigits = rawValue.replace(/\D/g, "");
-  const conditions = [{ email: value }, { mobile: compactMobile }];
+  const conditions = [{ email: value }, { username: value }, { mobile: compactMobile }];
 
   if (mobileDigits.length >= 10) {
     conditions.push({ mobile: { $regex: `${mobileDigits}$` } });

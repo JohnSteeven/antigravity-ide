@@ -149,11 +149,22 @@ const ArticlesPage = () => {
             }}
           >
             <option value="all">All categories</option>
-            {data.categories.map((item) => (
-              <option value={item.name.toLowerCase()} key={item.id}>
-                {item.name}
-              </option>
-            ))}
+            {(() => {
+              const order = ["life", "reflections", "incidents", "lessons", "travel", "news", "coding"];
+              const sortedCategories = [...data.categories].sort((a, b) => {
+                const indexA = order.indexOf(a.slug?.toLowerCase() || a.name?.toLowerCase());
+                const indexB = order.indexOf(b.slug?.toLowerCase() || b.name?.toLowerCase());
+                if (indexA === -1 && indexB === -1) return 0;
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+              });
+              return sortedCategories.map((item) => (
+                <option value={item.name.toLowerCase()} key={item.id}>
+                  {item.name}
+                </option>
+              ));
+            })()}
           </select>
         </label>
 

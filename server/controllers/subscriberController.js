@@ -45,10 +45,40 @@ class SubscriberController {
   async unsubscribeByToken(req, res, next) {
     try {
       const { token } = req.params;
-      const result = await subscriberService.unsubscribeByToken(token);
+      const { reason } = req.body || {};
+      const result = await subscriberService.unsubscribeByToken(token, reason);
       res.json(result);
     } catch (err) {
       next(err);
+    }
+  }
+
+  async trackOpen(req, res) {
+    try {
+      const { token } = req.params;
+      await subscriberService.trackOpen(token);
+    } catch (_) {}
+    // Return 1x1 transparent GIF
+    const imgBuffer = Buffer.from(
+      "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+      "base64"
+    );
+    res.writeHead(200, {
+      "Content-Type": "image/gif",
+      "Content-Length": imgBuffer.length,
+      "Cache-Control": "no-store, no-cache, must-revalidate, private",
+    });
+    res.end(imgBuffer);
+  }
+
+  async trackClick(req, res) {
+    try {
+      const { token } = req.params;
+      const targetUrl = req.query.url || "/";
+      await subscriberService.trackClick(token);
+      res.redirect(targetUrl);
+    } catch (_) {
+      res.redirect("/");
     }
   }
 

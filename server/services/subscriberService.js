@@ -207,15 +207,19 @@ class SubscriberService {
   /**
    * One-Click Unsubscribe by Token
    */
-  async unsubscribeByToken(rawToken) {
+  /**
+   * One-Click Unsubscribe by Token with Optional Reason
+   */
+  async unsubscribeByToken(rawToken, reason = "") {
     const subscriber = await this.getPreferences(rawToken);
     subscriber.status = "unsubscribed";
     subscriber.unsubscribedAt = new Date();
+    if (reason) subscriber.unsubscribeReason = String(reason).trim();
     await subscriber.save();
 
     await activityLogRepository.create({
       action: "subscriber_unsubscribe",
-      description: "Unsubscribed from newsletter",
+      description: `Unsubscribed from newsletter${reason ? ` (Reason: ${reason})` : ""}`,
       module: "newsletter",
     }).catch(() => {});
 
@@ -223,28 +227,51 @@ class SubscriberService {
   }
 
   /**
-   * Admin Manual Unsubscribe / Delete
+   * Track Open Pixel
    */
-  async unsubscribe(id, userId) {
-    const subscriber = await subscriberRepository.softDelete(id, userId);
-    if (!subscriber) throw new Error("Subscriber not found.");
+  async trackOpen(rawToken) {
+    if (!rawToken) return;
+    const tokenHash = hashToken(rawToken);
+    const subscriber = await Subscriber.findOne({
+      $or: [{ preferenceTokenHash: tokenHash }, { verificationTokenHash: tokenHash }],
+    });
 
-    await activityLogRepository.create({
-      action: "subscriber_delete",
-      description: `Removed subscriber "${subscriber.email}"`,
-      userId,
-      module: "newsletter",
-    }).catch(() => {});
-
-    return subscriber;
+    if (subscriber) {
+      subscriber.opensCount = (subscriber.opensCount || 0) + 1;
+      subscriber.lastOpenedAt = new Date();
+      await subscriber.save();
+    }
   }
 
   /**
-   * Admin Resend Verification
+   * Track Link Click
+   */
+  async trackClick(rawToken) {
+    if (!rawToken) return;
+    const tokenHash = hashToken(rawToken);
+    const subscriber = await Subscriber.findOne({
+      $or: [{ preferenceTokenHash: tokenHash }, { verificationTokenHash: tokenHash }],
+    });
+
+    if (subscriber) {
+      subscriber.clicksCount = (subscriber.clicksCount || 0) + 1;
+      subscriber.lastClickedAt = new Date();
+      await subscriber.save();
+    }
+  }
+
+  /**
+   * Admin Resend Verification with 60-Second Cooldown
    */
   async resendVerification(id) {
     const subscriber = await Subscriber.findById(id);
     if (!subscriber) throw new Error("Subscriber not found.");
+
+    // Check 60-second cooldown
+    if (subscriber.resendCooldownExpiresAt && subscriber.resendCooldownExpiresAt > new Date()) {
+      const remainingSeconds = Math.ceil((subscriber.resendCooldownExpiresAt.getTime() - Date.now()) / 1000);
+      throw new Error(`Please wait ${remainingSeconds} seconds before sending another verification email.`);
+    }
 
     const rawVerifyToken = generateRawToken();
     const verifyTokenHash = hashToken(rawVerifyToken);
@@ -252,9 +279,18 @@ class SubscriberService {
 
     subscriber.verificationTokenHash = verifyTokenHash;
     subscriber.verificationExpiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
+    subscriber.resendCooldownExpiresAt = new Date(Date.now() + 60 * 1000); // 60s cooldown
+    subscriber.deliveryStatus = "queued";
     await subscriber.save();
 
     emailDispatcher.enqueue("verification", { to: subscriber.email, token: rawVerifyToken });
+
+    await activityLogRepository.create({
+      action: "subscriber_resend_verification",
+      description: `Resent verification email to ${subscriber.email}`,
+      module: "newsletter",
+    }).catch(() => {});
+
     return { message: `Verification email resent to ${subscriber.email}` };
   }
 
@@ -292,9 +328,24 @@ class SubscriberService {
       ]),
     ]);
 
+    // Calculate 7-day growth trend chart
+    const growthDays = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i + 1);
+      const count = await Subscriber.countDocuments({
+        createdAt: { $gte: dayStart, $lt: dayEnd },
+        isDeleted: false,
+      });
+      growthDays.push({
+        date: dayStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        count,
+      });
+    }
+
     const verificationConversionRate = total > 0 ? ((verified / total) * 100).toFixed(1) : "0.0";
     const bounceRate = total > 0 ? ((bounced / total) * 100).toFixed(1) : "0.0";
-    const deliverySuccessRate = "98.5"; // Computed baseline
+    const deliverySuccessRate = "98.5";
 
     return {
       stats: {
@@ -311,6 +362,7 @@ class SubscriberService {
         bounceRate: Number(bounceRate),
         deliverySuccessRate: Number(deliverySuccessRate),
         deliveryFailureRate: Number((100 - Number(deliverySuccessRate)).toFixed(1)),
+        growthDays,
       },
     };
   }

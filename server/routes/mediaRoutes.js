@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
     const folder = (req.body.folder || req.query.folder || "misc").toLowerCase();
     const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "uploads", "misc"];
     const targetFolder = allowedFolders.includes(folder) ? folder : "misc";
-    const dest = path.resolve(__dirname, "../../uploads", targetFolder);
+    const dest = path.join(__dirname, "../../uploads", targetFolder);
     if (!fs.existsSync(dest)) {
       fs.mkdirSync(dest, { recursive: true });
     }

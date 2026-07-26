@@ -17,6 +17,7 @@ import { getCategoryBlueprint } from "../../domain/knowledgeArchitecture";
 import { useAuth } from "../../hooks/useAuth";
 import { useCms } from "../../context/CmsContext";
 import { decodeHtmlEntities, resolveImageUrl, copyToClipboard } from "../../utils/helpers";
+import { getImageUrl, handleImageError } from "../../utils/imageUrlHelper";
 import ArticlesCard from "../../components/ArticlesCard";
 import LoginRequiredModal from "../../components/LoginRequiredModal";
 import Breadcrumbs from "../../components/shared/Breadcrumbs";
@@ -263,7 +264,7 @@ const CategoryLanding = ({
     <main className={`category-detail-page ${isDarkMode ? "dark-mode" : ""}`}>
       <section
         className="category-detail-hero"
-        style={categoryModel.heroImage?.trim() ? { backgroundImage: `url("${resolveImageUrl(categoryModel.heroImage)}")` } : undefined}
+        style={{ backgroundImage: `url("${getImageUrl(categoryModel.heroImage, categoryModel.name)}")` }}
       >
         <div className="category-detail-overlay"></div>
         <div className="category-detail-hero-content">
@@ -351,7 +352,12 @@ const CategoryLanding = ({
 
       {featuredArticle && (
         <section className="featured-category-article">
-          <img src={resolveImageUrl(featuredArticle.coverImage) || undefined} alt={featuredArticle.title} />
+          <img
+            src={getImageUrl(featuredArticle.coverImage, categoryModel.name)}
+            alt={featuredArticle.title}
+            loading="lazy"
+            onError={(e) => handleImageError(e, categoryModel.name)}
+          />
           <div>
             <span className="section-kicker">Featured article</span>
             <h2>{featuredArticle.title}</h2>

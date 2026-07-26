@@ -127,6 +127,9 @@ export const EngagementCmsProvider = ({ children }) => {
       setTestimonials((prev) => [normalized, ...prev.filter((t) => t.id !== id && t._id !== id)]);
       return res.testimonial;
     },
+    async fetchTestimonials(params = {}) {
+      return testimonialApi.list(params);
+    },
     async addSubscriber(email) {
       const normalized = email.trim().toLowerCase();
       if (!normalized) return;

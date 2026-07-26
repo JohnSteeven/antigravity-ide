@@ -61,11 +61,15 @@ const createAuthSession = async ({ user, req, res, remember = false }) => {
     expiresAt: refreshExpiresAt,
   });
 
+  const userAgent = typeof req.get === "function"
+    ? req.get("user-agent")
+    : (req.headers?.["user-agent"] || req.headers?.["User-Agent"] || "unknown");
+
   await Session.create({
     user: user._id,
     refreshToken: refreshRecord._id,
-    ip: req.ip,
-    userAgent: req.get("user-agent"),
+    ip: req.ip || "127.0.0.1",
+    userAgent,
     expiresAt: refreshExpiresAt,
   });
 

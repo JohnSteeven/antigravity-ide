@@ -47,13 +47,17 @@ class ArticleService {
     const limit = Math.min(1000, parseInt(query.limit) || 1000);
     const skip = (page - 1) * limit;
 
+    const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
+
     const [articles, total] = await Promise.all([
       articleRepository.find(filter, sort, limit, skip),
       articleRepository.count(filter),
     ]);
 
+    const formattedArticles = articles.map(formatArticleImageUrls);
+
     return {
-      articles,
+      articles: formattedArticles,
       pagination: {
         page,
         limit,
@@ -64,11 +68,15 @@ class ArticleService {
   }
 
   async getArticleBySlug(slug) {
-    return articleRepository.findBySlug(slug);
+    const article = await articleRepository.findBySlug(slug);
+    const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
+    return article ? formatArticleImageUrls(article) : null;
   }
 
   async getArticleById(id) {
-    return articleRepository.findById(id);
+    const article = await articleRepository.findById(id);
+    const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
+    return article ? formatArticleImageUrls(article) : null;
   }
 
   async createArticle(data, userId) {

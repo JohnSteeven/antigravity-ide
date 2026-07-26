@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "article",
   "scripts": {
-    "start": "parcel index.html --port 1234",
-    "dev": "parcel index.html --port 1234",
+    "start": "concurrently \"node server/index.js\" \"parcel index.html --port 1234\"",
+    "dev": "concurrently \"node server/index.js\" \"parcel index.html --port 1234\"",
+    "client": "parcel index.html --port 1234",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
     "build": "parcel build index.html",
@@ -27,6 +28,7 @@
   },
   "homepage": "https://github.com/JohnSteeven/STEEVENWRITES#readme",
   "devDependencies": {
+    "concurrently": "^10.0.4",
     "http-proxy-middleware": "^4.2.0",
     "parcel": "^2.16.4"
   },

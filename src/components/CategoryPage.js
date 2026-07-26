@@ -5,6 +5,7 @@ import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";
 import CategoryLanding from "../features/categories/CategoryLanding";
 import LoadingScreen from "./LoadingScreen";
+import NewsPage from "./NewsPage";
 
 const CategoryPage = () => {
   const { slug } = useParams();
@@ -13,6 +14,10 @@ const CategoryPage = () => {
 
   const category =
     data.categories.find((item) => item.slug === slug && !item.isDeleted && item.isActive !== false) || categoryBlueprintBySlug[slug];
+
+  if (slug === "news") {
+    return <NewsPage category={category} />;
+  }
 
   // Fetch published articles from the API for use in the category landing
   useEffect(() => {

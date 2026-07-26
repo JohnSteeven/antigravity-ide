@@ -132,12 +132,10 @@ export const toCsv = (items) => {
   return [keys.join(","), ...rows].join("\n");
 };
 
-export const resolveImageUrl = (url) => {
-  if (!url || typeof url !== "string") return "";
-  if (url.startsWith("/uploads")) {
-    return `http://localhost:5000${url}`;
-  }
-  return url;
+import { getImageUrl } from "./imageUrlHelper";
+
+export const resolveImageUrl = (url, category = "") => {
+  return getImageUrl(url, category);
 };
 
 export const copyToClipboard = async (text) => {

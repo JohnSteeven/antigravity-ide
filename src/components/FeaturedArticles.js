@@ -7,13 +7,14 @@ import ArticlesCard from "./ArticlesCard";
 
 const getVisibleCount = () => {
   if (typeof window === "undefined") {
-    return 4;
+    return 5;
   }
 
-  if (window.innerWidth < 640) return 1;
-  if (window.innerWidth < 900) return 2;
-  if (window.innerWidth < 1200) return 3;
-  return 4;
+  if (window.innerWidth <= 550) return 1;
+  if (window.innerWidth <= 1023) return 2;
+  if (window.innerWidth <= 1279) return 3;
+  if (window.innerWidth <= 1599) return 4;
+  return 5;
 };
 
 const FeaturedArticles = () => {
@@ -73,10 +74,12 @@ const FeaturedArticles = () => {
     );
   };
 
-  const visibleArticles = Array.from(
-    { length: Math.min(visibleCount, featuredArticles.length) },
-    (_, offset) => featuredArticles[(currentIndex + offset) % featuredArticles.length]
-  );
+  const visibleArticles = featuredArticles.length > 0
+    ? Array.from(
+        { length: visibleCount },
+        (_, offset) => featuredArticles[(currentIndex + offset) % featuredArticles.length]
+      )
+    : [];
 
   return (
     <section className="featured" id="featured">

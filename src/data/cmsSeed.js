@@ -12,7 +12,7 @@ export const cmsSeed = {
       primaryLabel: "Start Reading",
       secondaryLabel: "Read My Story",
       image:
-        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80",
+        "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=1800&q=80",
     },
     storyIntro: {
       subtitle: "A place for stories",

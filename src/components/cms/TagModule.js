@@ -19,6 +19,17 @@ const slugify = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const getContrastColor = (hex) => {
+  if (!hex) return "#ffffff";
+  const cleanHex = hex.replace("#", "");
+  if (cleanHex.length !== 6) return "#ffffff";
+  const r = parseInt(cleanHex.substr(0, 2), 16);
+  const g = parseInt(cleanHex.substr(2, 2), 16);
+  const b = parseInt(cleanHex.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#1e293b" : "#ffffff";
+};
+
 export default function TagModule() {
   const { data, saveTag, deleteTag, restoreTag } = useCms();
   const { tags = [], articles = [] } = data;
@@ -299,15 +310,15 @@ export default function TagModule() {
                 }}
               />
               <span
-                className="tag-color-preview"
+                className="tag-preview-badge"
                 style={{
                   backgroundColor: color,
                   padding: "0.3rem 0.8rem",
                   borderRadius: "999px",
-                  color: "#fff",
+                  color: getContrastColor(color),
                   fontSize: "0.8rem",
                   fontWeight: "600",
-                  textShadow: "1px 1px 2px rgba(0,0,0,0.2)",
+                  textShadow: "1px 1px 2px rgba(0,0,0,0.1)",
                 }}
               >
                 {name || "Preview"}

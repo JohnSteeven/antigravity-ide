@@ -16,6 +16,8 @@ router.get("/verify/:token", subscriberController.verify);
 router.get("/preferences/:token", subscriberController.getPreferences);
 router.post("/preferences/:token", subscriberController.updatePreferences);
 router.post("/unsubscribe/:token", subscriberController.unsubscribeByToken);
+router.get("/track/open/:token", subscriberController.trackOpen);
+router.get("/track/click/:token", subscriberController.trackClick);
 
 // Protected Admin Routes (Reusing existing Auth & Admin middleware)
 router.get("/stats", authenticate, requireAdmin, subscriberController.getStats);

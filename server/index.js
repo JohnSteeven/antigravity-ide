@@ -30,6 +30,7 @@ const testimonialRoutes = require("./routes/testimonialRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const newsletterCampaignRoutes = require("./routes/newsletterCampaignRoutes");
 const contactMessageRoutes = require("./routes/contactMessageRoutes");
+const newsRoutes = require("./routes/newsRoutes");
 const path = require("path");
 
 const app = express();
@@ -81,6 +82,7 @@ app.use("/api/gallery", galleryRoutes);
 app.use("/api/newsletter-campaigns", newsletterCampaignRoutes);
 app.use("/api/contact-messages", contactMessageRoutes);
 app.use("/api/contact", contactMessageRoutes);
+app.use("/api/news", newsRoutes);
 
 // Serve uploads statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

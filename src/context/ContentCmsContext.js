@@ -5,7 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 
 const ContentCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-content-data";
-const CACHE_VERSION = "v4"; // Bump to bust stale browser cache
+const CACHE_VERSION = "v5"; // Bump to bust stale browser cache
 
 const slugify = (value) =>
   String(value || "")

@@ -229,6 +229,27 @@ export default function NewsletterModule() {
     }
   };
 
+  // SMTP Tester Modal
+  const [smtpModalOpen, setSmtpModalOpen] = useState(false);
+  const [testEmailInput, setTestEmailInput] = useState("");
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const [smtpResult, setSmtpResult] = useState(null);
+
+  const handleTestSmtp = async (e) => {
+    e.preventDefault();
+    setTestingSmtp(true);
+    setSmtpResult(null);
+    try {
+      const { settingApi } = require("../../services/apiService");
+      const res = await settingApi.testSmtp(testEmailInput);
+      setSmtpResult({ success: true, message: res.message });
+    } catch (err) {
+      setSmtpResult({ success: false, message: err.message });
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
+
   const handleResendVerification = async (subId, email) => {
     setError("");
     setSuccess("");
@@ -288,6 +309,14 @@ export default function NewsletterModule() {
         </div>
         
         <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            onClick={() => setSmtpModalOpen(true)}
+            className="btn btn-secondary"
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <FiMail /> Test SMTP Connection
+          </button>
+
           {activeTab === "campaigns" && (
             <button
               onClick={() => {
@@ -608,6 +637,37 @@ export default function NewsletterModule() {
             </div>
           </div>
 
+          {/* 7-Day Subscriber Growth Trend */}
+          {subStats.growthDays && subStats.growthDays.length > 0 && (
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "1.25rem", marginBottom: "1.5rem" }}>
+              <h4 style={{ margin: "0 0 1rem 0", display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.95rem" }}>
+                <FiTrendingUp style={{ color: "#3182ce" }} /> 7-Day Subscriber Growth Trend
+              </h4>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "1rem", height: "100px", paddingTop: "1rem" }}>
+                {subStats.growthDays.map((day, idx) => {
+                  const maxCount = Math.max(...subStats.growthDays.map((d) => d.count), 1);
+                  const barHeight = Math.max((day.count / maxCount) * 70, 8);
+                  return (
+                    <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#3182ce" }}>{day.count}</span>
+                      <div
+                        style={{
+                          width: "100%",
+                          maxWidth: "32px",
+                          height: `${barHeight}px`,
+                          background: "#3182ce",
+                          borderRadius: "4px 4px 0 0",
+                          margin: "0.25rem 0",
+                        }}
+                      ></div>
+                      <span style={{ fontSize: "0.7rem", color: "#64748b" }}>{day.date}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Search & Status Filters Bar */}
           <form onSubmit={handleSubSearchSubmit} style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
             <input
@@ -730,6 +790,60 @@ export default function NewsletterModule() {
             <button className="btn btn-secondary" style={{ marginTop: "1.5rem" }} onClick={() => setHistoryItem(null)}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* SMTP Test Modal */}
+      {smtpModalOpen && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#fff", padding: "2rem", borderRadius: "10px", maxWidth: "500px", width: "90%" }}>
+            <h3 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <FiMail /> Test SMTP Configuration
+            </h3>
+            <p style={{ fontSize: "0.88rem", color: "#64748b" }}>
+              Send a real test email to verify server host, port, authentication, and SSL settings.
+            </p>
+
+            <form onSubmit={handleTestSmtp} style={{ marginTop: "1rem" }}>
+              <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.85rem" }}>
+                Recipient Test Email:
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="Enter test recipient email"
+                value={testEmailInput}
+                onChange={(e) => setTestEmailInput(e.target.value)}
+                className="form-input"
+                style={{ width: "100%", padding: "0.6rem", marginBottom: "1rem" }}
+              />
+
+              {smtpResult && (
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    borderRadius: "6px",
+                    marginBottom: "1rem",
+                    fontSize: "0.85rem",
+                    background: smtpResult.success ? "#f0fdf4" : "#fef2f2",
+                    color: smtpResult.success ? "#166534" : "#991b1b",
+                    border: `1px solid ${smtpResult.success ? "#bbf7d0" : "#fecaca"}`,
+                  }}
+                >
+                  {smtpResult.message}
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setSmtpModalOpen(false); setSmtpResult(null); }}>
+                  Close
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={testingSmtp}>
+                  {testingSmtp ? "Testing..." : "Send Test Email"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

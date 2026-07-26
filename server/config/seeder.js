@@ -84,6 +84,59 @@ const seedCmsPermissionsAndRoles = async () => {
       );
     }
     console.log("CMS Roles seeded.");
+
+    // 3. Seed Default Administrator User if missing
+    const User = require("../models/User");
+    const bcrypt = require("bcrypt");
+    const adminEmail = "admin@myjourney.com";
+    const existingAdmin = await User.findOne({ $or: [{ email: adminEmail }, { username: "admin" }] });
+
+    if (!existingAdmin) {
+      const passwordHash = await bcrypt.hash("Password123!", 12);
+      await User.create({
+        firstName: "Default",
+        lastName: "Administrator",
+        username: "admin",
+        email: adminEmail,
+        countryCode: "+91",
+        mobile: "+919999999999",
+        passwordHash,
+        role: "Admin",
+        verified: {
+          email: true,
+          mobile: true,
+        },
+        profile: {
+          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+          bio: "Default administrator account for MyJourney platform management.",
+        },
+      });
+      console.log("Default Admin user seeded: admin@myjourney.com / Password123!");
+    } else {
+      const isPasswordValid = await bcrypt.compare("Password123!", existingAdmin.passwordHash);
+      let updated = false;
+      if (!isPasswordValid) {
+        existingAdmin.passwordHash = await bcrypt.hash("Password123!", 12);
+        updated = true;
+      }
+      if (existingAdmin.role !== "Admin") {
+        existingAdmin.role = "Admin";
+        updated = true;
+      }
+      if (!existingAdmin.verified?.email || !existingAdmin.verified?.mobile) {
+        existingAdmin.verified = { email: true, mobile: true };
+        updated = true;
+      }
+      if (existingAdmin.failedLoginAttempts > 0 || existingAdmin.lockUntil) {
+        existingAdmin.failedLoginAttempts = 0;
+        existingAdmin.lockUntil = null;
+        updated = true;
+      }
+      if (updated) {
+        await existingAdmin.save();
+        console.log("Updated default Admin user password, verification, role, and unlocked account.");
+      }
+    }
   } catch (error) {
     console.error("CMS seeding failed:", error);
   }
