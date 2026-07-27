@@ -23,7 +23,7 @@ import { getFullName, resolveImageUrl, copyToClipboard } from "../utils/helpers"
 import { getImageUrl } from "../utils/imageUrlHelper";
 import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
-import Breadcrumbs from "./shared/Breadcrumbs";
+import ExperienceResolver from "../experiences/ExperienceResolver";
 
 const ArticleDetail = () => {
   const { slug } = useParams();
@@ -138,25 +138,6 @@ const ArticleDetail = () => {
       return replacement;
     });
   }, [article]);
-
-  // Handle image loading errors inside dangerouslySetInnerHTML using event capturing
-  useEffect(() => {
-    const container = document.querySelector(".premium-article-prose");
-    if (!container || !article) return;
-
-    const handleError = (e) => {
-      if (e.target.tagName === "IMG") {
-        console.warn("Inline body image failed to load, applying fallback:", e.target.src);
-        e.target.src = getImageUrl("", article.category || "");
-      }
-    };
-
-    container.addEventListener("error", handleError, true);
-    return () => {
-      container.removeEventListener("error", handleError, true);
-    };
-  }, [processedBody, article?.category]);
-
   // Track viewed articles in sessionStorage to avoid duplicate view increments
   useEffect(() => {
     const articleId = article?.id || article?._id;
@@ -351,287 +332,37 @@ const ArticleDetail = () => {
   };
 
   return (
-    <main className="premium-article-page">
-      <header
-        className="premium-article-hero"
-        style={{ backgroundImage: `url("${getImageUrl(article.coverImage, article.category)}")` }}
-      >
-        <div className="premium-article-hero-overlay"></div>
-        <div className="premium-article-hero-content">
-          <Breadcrumbs
-            items={[
-              { label: "Home", to: "/" },
-              { label: article.category, to: `/category/${article.category.toLowerCase()}` },
-              { label: article.title },
-            ]}
-          />
-          <div className="premium-article-tags-row">
-            <span className="premium-badge category-badge">{article.category}</span>
-            {article.difficulty && (
-              <span className="premium-badge difficulty-badge">{article.difficulty}</span>
-            )}
-          </div>
-          <h1 className="premium-article-title">{article.title}</h1>
-          <p className="premium-article-subtitle">{article.description}</p>
-
-          <div className="premium-author-block">
-            <div className="author-avatar-placeholder">
-              {article.author ? article.author.charAt(0) : "A"}
-            </div>
-            <div className="author-info">
-              <span className="author-name">
-                {article.author} <FiCheckCircle className="verified-badge-icon" title="Verified Author" />
-              </span>
-              <span className="publish-dates">
-                Published {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "Recently"}
-                {article.updatedAt && ` • Updated ${new Date(article.updatedAt).toLocaleDateString(undefined, { year: "numeric", month: "long" })}`}
-                {` • ${article.readingTime || "5 min read"}`}
-              </span>
-            </div>
-          </div>
-
-          <div className="premium-stats-bar">
-            <button
-              className={`stat-btn ${isLiked ? "active like-btn" : ""}`}
-              type="button"
-              onClick={handleLikeToggle}
-            >
-              <FiHeart style={isLiked ? { fill: "#ff4d4f", stroke: "#ff4d4f" } : undefined} /> {article.likes}
-            </button>
-            <button
-              className={`stat-btn ${isBookmarked ? "active bookmark-btn" : ""}`}
-              type="button"
-              onClick={handleBookmarkToggle}
-            >
-              <FiBookmark style={isBookmarked ? { fill: "currentColor" } : undefined} /> {article.bookmarks}
-            </button>
-            <button
-              className={`stat-btn ${isSaved ? "active save-btn" : ""}`}
-              type="button"
-              onClick={handleSaveToggle}
-            >
-              <FiBookOpen /> {isSaved ? "Saved ✓" : "Save"}
-            </button>
-            <span className="stat-span">
-              <FiEye /> {article.views} Views
-            </span>
-            <button className="stat-btn" type="button" onClick={handleCopyLink}>
-              <FiLink /> Share
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="premium-article-layout">
-        {/* Left Sidebar - Table of Contents */}
-        <aside className="premium-left-sidebar">
-          <div className="sticky-sidebar-box">
-            {headings.length > 0 && (
-              <>
-                <h3>Table of Contents</h3>
-                <nav className="toc-nav">
-                  {headings.map((h) => (
-                    <a
-                      key={h.id}
-                      href={`#${h.id}`}
-                      className={`toc-link ${activeHeading === h.id ? "active" : ""}`}
-                      style={h.level === 3 ? { paddingLeft: "35px", fontSize: "0.85rem", opacity: 0.8 } : undefined}
-                    >
-                      {h.text}
-                    </a>
-                  ))}
-                </nav>
-              </>
-            )}
-
-            <div className="reading-progress-box">
-              <div className="progress-labels">
-                <span>Reading Progress</span>
-                <span>{Math.round(scrollProgress)}%</span>
-              </div>
-              <div className="progress-bar-track">
-                <div className="progress-bar-fill" style={{ width: `${scrollProgress}%` }}></div>
-              </div>
-              <span className="time-remaining-label">
-                {Math.max(1, Math.round(((100 - scrollProgress) / 100) * parseInt(article.readingTime || "5")))} min remaining
-              </span>
-            </div>
-          </div>
-        </aside>
-
-        {/* Center Column - Article Body */}
-        <article className="premium-center-content">
-          <div
-            className="premium-article-prose"
-            dangerouslySetInnerHTML={{ __html: processedBody }}
-          ></div>
-
-          {/* Travel specific metadata cards (rendered if location/weather fields exist) */}
-          {(article.location || article.budget || article.weather) && (
-            <section className="travel-details-section">
-              <h3>Travel Quick Facts</h3>
-              <div className="travel-meta-grid">
-                {article.location && (
-                  <div className="meta-card">
-                    <FiCompass />
-                    <strong>Location</strong>
-                    <span>{article.location}</span>
-                  </div>
-                )}
-                {article.weather && (
-                  <div className="meta-card">
-                    <FiActivity />
-                    <strong>Weather</strong>
-                    <span>{article.weather}</span>
-                  </div>
-                )}
-                {article.budget && (
-                  <div className="meta-card">
-                    <FiStar />
-                    <strong>Est. Budget</strong>
-                    <span>{article.budget}</span>
-                  </div>
-                )}
-                {article.bestTime && (
-                  <div className="meta-card">
-                    <FiCalendar />
-                    <strong>Best Time to Visit</strong>
-                    <span>{article.bestTime}</span>
-                  </div>
-                )}
-              </div>
-              {article.tips && (
-                <div className="travel-tips-box">
-                  <strong>Local Tips:</strong>
-                  <p>{article.tips}</p>
-                </div>
-              )}
-            </section>
-          )}
-
-          {/* Comments section integrated within flow */}
-          <section className="premium-comments-section">
-            <div className="section-heading-row">
-              <h2>Comments ({approvedComments.length})</h2>
-              <span>
-                <FiMessageCircle />
-              </span>
-            </div>
-
-            <div className="comment-list">
-              {approvedComments.map((item) => (
-                <article className="premium-comment-card" key={item.id}>
-                  <div className="comment-header">
-                    <strong>{item.name}</strong>
-                    <span>{item.createdAt}</span>
-                  </div>
-                  <p>{item.text}</p>
-                </article>
-              ))}
-              {approvedComments.length === 0 && (
-                <p className="empty-state-comments">No approved comments yet. Be the first to share your thoughts!</p>
-              )}
-            </div>
-
-            <form className="comment-form" onSubmit={handleCommentSubmit}>
-              <textarea
-                value={comment.text}
-                onChange={(event) =>
-                  setComment((current) => ({ ...current, text: event.target.value }))
-                }
-                placeholder="Write a thoughtful comment"
-                required
-              ></textarea>
-              <button className="primary-btn" type="submit">
-                Submit Comment
-              </button>
-              {commentMessage && <span className="form-note">{commentMessage}</span>}
-            </form>
-          </section>
-        </article>
-
-        {/* Right Sidebar - Author Bio & Related Stories */}
-        <aside className="premium-right-sidebar">
-          <div className="sticky-sidebar-box">
-            <div className="author-card">
-              <div className="author-card-header">
-                <div className="avatar-letter">{article.author ? article.author.charAt(0) : "A"}</div>
-                <div>
-                  <h4>{article.author}</h4>
-                  <span>Writer & Storyteller</span>
-                </div>
-              </div>
-              <p className="author-bio">
-                Passionate developer, traveller, and compiler of meaningful stories on life, reflections, coding, and everything in between.
-              </p>
-              <div className="author-socials">
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><FiTwitter /></a>
-                <a href="https://www.linkedin.com/in/noblejohnsteeven/" target="_blank" rel="noopener noreferrer"><FiLinkedin /></a>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><FiFacebook /></a>
-              </div>
-            </div>
-
-            <div className="right-sidebar-panel">
-              <h3>Share this Story</h3>
-              <div className="share-buttons-grid">
-                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer" className="share-grid-btn twitter">
-                  <FiTwitter /> Twitter
-                </a>
-                <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="share-grid-btn linkedin">
-                  <FiLinkedin /> LinkedIn
-                </a>
-                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="share-grid-btn facebook">
-                  <FiFacebook /> Facebook
-                </a>
-                <button type="button" onClick={handleCopyLink} className="share-grid-btn copylink">
-                  <FiLink /> Copy Link
-                </button>
-              </div>
-            </div>
-
-            {relatedArticles.length > 0 && (
-              <div className="right-sidebar-panel">
-                <h3>Related Stories</h3>
-                <div className="related-stories-list">
-                  {relatedArticles.map((item) => (
-                    <Link to={`/articles/${item.slug}`} className="related-story-row" key={item.id}>
-                      <div className="related-story-meta">
-                        <span>{item.category}</span>
-                        <span>•</span>
-                        <span>{item.readingTime || "5 min read"}</span>
-                      </div>
-                      <strong>{item.title}</strong>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="right-sidebar-panel newsletter-panel">
-              <h3>Newsletter</h3>
-              <p>Get the latest stories, incident reports, and lessons in your inbox weekly.</p>
-              <form onSubmit={handleNewsletterSubmit}>
-                <input
-                  type="email"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                />
-                <button type="submit" className="primary-btn newsletter-btn">Subscribe</button>
-              </form>
-              {newsletterMsg && <span className="newsletter-msg">{newsletterMsg}</span>}
-            </div>
-          </div>
-        </aside>
-      </div>
-
+    <>
+      <ExperienceResolver
+        article={article}
+        processedBody={processedBody}
+        headings={headings}
+        activeHeading={activeHeading}
+        scrollProgress={scrollProgress}
+        approvedComments={approvedComments}
+        comment={comment}
+        setComment={setComment}
+        handleCommentSubmit={handleCommentSubmit}
+        commentMessage={commentMessage}
+        isLiked={isLiked}
+        handleLikeToggle={handleLikeToggle}
+        isBookmarked={isBookmarked}
+        handleBookmarkToggle={handleBookmarkToggle}
+        isSaved={isSaved}
+        handleSaveToggle={handleSaveToggle}
+        handleCopyLink={handleCopyLink}
+        relatedArticles={relatedArticles}
+        newsletterEmail={newsletterEmail}
+        setNewsletterEmail={setNewsletterEmail}
+        handleNewsletterSubmit={handleNewsletterSubmit}
+        newsletterMsg={newsletterMsg}
+      />
       <LoginRequiredModal
         open={showLoginModal}
         returnTo={location}
         onClose={() => setShowLoginModal(false)}
       />
-    </main>
+    </>
   );
 };
 

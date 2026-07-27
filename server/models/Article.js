@@ -33,6 +33,33 @@ const ArticleSchema = new mongoose.Schema(
     audioUrl: { type: String, default: "" },
     pdfAttachment: { type: String, default: "" },
 
+    // Category-specific Experience Metadata
+    mood: { type: String, default: "" },
+    heroQuote: { type: String, default: "" },
+    favoriteQuote: { type: String, default: "" },
+    reflectionQuestions: [{ type: String }],
+    takeaways: [{ type: String }],
+    difficulty: { type: String, enum: ["", "beginner", "intermediate", "advanced"], default: "" },
+    programmingLanguage: { type: String, default: "" },
+    framework: { type: String, default: "" },
+    version: { type: String, default: "" },
+    githubUrl: { type: String, default: "" },
+    npmPackage: { type: String, default: "" },
+    objectives: [{ type: String }],
+    prerequisites: [{ type: String }],
+    estimatedTime: { type: String, default: "" },
+    location: { type: String, default: "" },
+    budget: { type: String, default: "" },
+    weather: { type: String, default: "" },
+    duration: { type: String, default: "" },
+    season: { type: String, default: "" },
+    bestTime: { type: String, default: "" },
+    tips: { type: String, default: "" },
+    reporter: { type: String, default: "" },
+    source: { type: String, default: "" },
+    isBreaking: { type: Boolean, default: false },
+    isLive: { type: Boolean, default: false },
+
     // Status
     status: {
       type: String,
