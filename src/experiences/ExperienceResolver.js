@@ -1,16 +1,14 @@
 import React from "react";
 import DefaultExperience from "./default/DefaultExperience";
 import LifeExperience from "./life/LifeExperience";
+import CodingExperience from "./coding/CodingExperience";
 
 const EXPERIENCE_MAP = {
   life: LifeExperience,
-  // To be populated in subsequent phases:
-  // coding: CodingExperience,
-  // travel: TravelExperience,
-  // reflections: ReflectionsExperience,
-  // news: NewsExperience,
-  // lessons: LessonsExperience,
-  // incidents: IncidentsExperience,
+  coding: CodingExperience,
+  development: CodingExperience,
+  technology: CodingExperience,
+  tech: CodingExperience,
 };
 
 const ExperienceResolver = (props) => {
