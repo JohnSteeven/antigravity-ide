@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --paper: #fbfaf7;
   --surface: #ffffff;
   --soft: #f1eee8;
@@ -576,7 +576,7 @@ img {
 .listing-results,
 .comments-section,
 .related-articles {
-  padding: 76px clamp(20px, 5vw, 90px);
+  padding: 36px clamp(20px, 5vw, 90px);
 }
 
 .categories-section {
@@ -668,7 +668,7 @@ img {
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .icon-btn {
