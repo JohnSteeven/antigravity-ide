@@ -29,6 +29,9 @@ export default function MediaLibraryModule() {
   const [viewMode, setViewMode] = useState("grid"); // grid or list
   const [selectedItem, setSelectedItem] = useState(null);
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
   // Filters & Pagination
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFolder, setSelectedFolder] = useState("all");
@@ -209,6 +212,48 @@ export default function MediaLibraryModule() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Bulk selection helpers
+  const toggleSelect = (e, id) => {
+    e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginatedMedia.length && paginatedMedia.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginatedMedia.map((m) => m._id || m.id)));
+    }
+  };
+
+  // Bulk delete handler
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.size} selected item(s)? This cannot be undone.`)) return;
+    setLoading(true);
+    setError("");
+    let failed = 0;
+    for (const id of selectedIds) {
+      try {
+        await deleteMedia(id);
+      } catch {
+        failed++;
+      }
+    }
+    setSelectedIds(new Set());
+    setSelectedItem(null);
+    setSuccess(
+      failed === 0
+        ? `${selectedIds.size} item(s) deleted successfully.`
+        : `Deleted with ${failed} error(s).`
+    );
+    setLoading(false);
   };
 
   return (
@@ -398,7 +443,7 @@ export default function MediaLibraryModule() {
         {success && <div className="alert-message success">{success}</div>}
 
         {/* Toolbar Filter Filters */}
-        <div className="toolbar-search-filter" style={{ marginBottom: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div className="toolbar-search-filter" style={{ marginBottom: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
           <div className="search-input-wrapper" style={{ flexGrow: 1, position: "relative" }}>
             <FiSearch className="search-icon" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
             <input
@@ -449,36 +494,102 @@ export default function MediaLibraryModule() {
           </label>
         </div>
 
+        {/* Bulk Selection Toolbar */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.6rem 0.875rem", background: selectedIds.size > 0 ? "#fff4e6" : "#f8faf8", border: `1px solid ${selectedIds.size > 0 ? "#e6a817" : "#dfe6e2"}`, borderRadius: "8px", transition: "all 0.2s ease" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.84rem", fontWeight: 700, color: "#4a5350", userSelect: "none" }}>
+            <input
+              type="checkbox"
+              checked={paginatedMedia.length > 0 && selectedIds.size === paginatedMedia.length}
+              ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < paginatedMedia.length; }}
+              onChange={toggleSelectAll}
+              style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "var(--teal)" }}
+            />
+            Select All
+          </label>
+
+          {selectedIds.size > 0 && (
+            <span style={{ fontSize: "0.82rem", color: "#7a6200", fontWeight: 700 }}>
+              {selectedIds.size} selected
+            </span>
+          )}
+
+          <div style={{ marginLeft: "auto" }}>
+            {selectedIds.size > 0 ? (
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={loading}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                  padding: "0.45rem 1rem", background: "#c5221f", color: "#fff",
+                  border: "none", borderRadius: "6px", fontWeight: 700,
+                  fontSize: "0.84rem", cursor: "pointer", transition: "background 0.2s"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#a31c1a"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#c5221f"}
+              >
+                <FiTrash2 size={14} />
+                Delete Selected ({selectedIds.size})
+              </button>
+            ) : (
+              <span style={{ fontSize: "0.8rem", color: "#9aa8a5" }}>Select images to bulk delete</span>
+            )}
+          </div>
+        </div>
+
         {/* Media Browser Body */}
         {paginatedMedia.length === 0 ? (
           <p className="empty-state">No assets match your search/filter parameters.</p>
         ) : viewMode === "grid" ? (
           <div className="media-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "1rem" }}>
             {paginatedMedia.map((item) => {
+              const id = item._id || item.id;
               const hasUrl = item?.url && typeof item.url === "string" && item.url.trim();
               const fileUrl = hasUrl
                 ? (item.url.startsWith("http") ? item.url : `${window.location.protocol}//${window.location.hostname}:5000${item.url}`)
                 : undefined;
-              const isSelected = selectedItem && (selectedItem._id === item._id || selectedItem.id === item.id);
-              
+              const isDetailSelected = selectedItem && (selectedItem._id === id || selectedItem.id === id);
+              const isBulkSelected = selectedIds.has(id);
+
               return (
                 <div
-                  key={item._id || item.id}
+                  key={id}
                   onClick={() => {
                     setSelectedItem(item);
                     setRenameText(item.name || "");
                     setMoveFolderTarget(item.folder || "misc");
                   }}
-                  className={`media-card-grid ${isSelected ? "selected" : ""}`}
+                  className={`media-card-grid ${isDetailSelected ? "selected" : ""}`}
                   style={{
-                    border: isSelected ? "2px solid var(--accent-color, #426c67)" : "1px solid #ddd",
+                    position: "relative",
+                    border: isBulkSelected
+                      ? "2px solid #e6a817"
+                      : isDetailSelected
+                      ? "2px solid var(--accent-color, #426c67)"
+                      : "1px solid #ddd",
                     borderRadius: "8px",
                     overflow: "hidden",
                     cursor: "pointer",
-                    backgroundColor: isSelected ? "#eef5f4" : "transparent",
+                    backgroundColor: isBulkSelected ? "#fff8e6" : isDetailSelected ? "#eef5f4" : "transparent",
                     transition: "all 0.2s ease"
                   }}
                 >
+                  {/* Bulk-select checkbox */}
+                  <div
+                    onClick={(e) => toggleSelect(e, id)}
+                    style={{
+                      position: "absolute", top: "6px", left: "6px", zIndex: 2,
+                      width: "20px", height: "20px",
+                      background: isBulkSelected ? "#e6a817" : "rgba(255,255,255,0.9)",
+                      border: isBulkSelected ? "2px solid #b8860b" : "2px solid #ccc",
+                      borderRadius: "4px",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.15s ease", cursor: "pointer"
+                    }}
+                  >
+                    {isBulkSelected && <FiCheck size={12} color="#fff" strokeWidth={3} />}
+                  </div>
+
                   <div className="thumbnail-wrapper" style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9f9f9" }}>
                     {item.mimeType?.startsWith("image/") && fileUrl ? (
                       <img src={fileUrl} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -496,10 +607,12 @@ export default function MediaLibraryModule() {
         ) : (
           <div className="media-list" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {paginatedMedia.map((item) => {
-              const isSelected = selectedItem && (selectedItem._id === item._id || selectedItem.id === item.id);
+              const id = item._id || item.id;
+              const isDetailSelected = selectedItem && (selectedItem._id === id || selectedItem.id === id);
+              const isBulkSelected = selectedIds.has(id);
               return (
                 <div
-                  key={item._id || item.id}
+                  key={id}
                   onClick={() => {
                     setSelectedItem(item);
                     setRenameText(item.name || "");
@@ -511,13 +624,32 @@ export default function MediaLibraryModule() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "0.5rem 1rem",
-                    border: isSelected ? "2px solid var(--accent-color, #426c67)" : "1px solid #ddd",
+                    border: isBulkSelected
+                      ? "2px solid #e6a817"
+                      : isDetailSelected
+                      ? "2px solid var(--accent-color, #426c67)"
+                      : "1px solid #ddd",
                     borderRadius: "8px",
                     cursor: "pointer",
-                    backgroundColor: isSelected ? "#eef5f4" : "transparent"
+                    backgroundColor: isBulkSelected ? "#fff8e6" : isDetailSelected ? "#eef5f4" : "transparent"
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                  {/* Bulk checkbox */}
+                  <div
+                    onClick={(e) => toggleSelect(e, id)}
+                    style={{
+                      width: "18px", height: "18px", flexShrink: 0, marginRight: "0.75rem",
+                      background: isBulkSelected ? "#e6a817" : "rgba(255,255,255,0.9)",
+                      border: isBulkSelected ? "2px solid #b8860b" : "2px solid #ccc",
+                      borderRadius: "4px",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", transition: "all 0.15s ease"
+                    }}
+                  >
+                    {isBulkSelected && <FiCheck size={10} color="#fff" strokeWidth={3} />}
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1 }}>
                     <FiFolder size={20} />
                     <div>
                       <span style={{ fontWeight: "600" }}>{item.name}</span>
@@ -534,7 +666,7 @@ export default function MediaLibraryModule() {
                     }}
                     className="small-icon-btn"
                   >
-                    {copiedId === (item._id || item.id) ? <FiCheck /> : <FiCopy />}
+                    {copiedId === id ? <FiCheck /> : <FiCopy />}
                   </button>
                 </div>
               );

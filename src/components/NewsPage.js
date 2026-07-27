@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { FiSearch, FiRefreshCw, FiAlertCircle, FiExternalLink, FiGlobe, FiBookmark } from "react-icons/fi";
 import { newsApi } from "../services/apiService";
 import ArticlesCard from "./ArticlesCard";
@@ -23,6 +23,15 @@ export default function NewsPage({ category }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+
+  // Responsive initial count: mobile=2, tablet=4, desktop=4
+  const getInitialCount = () => {
+    const w = window.innerWidth;
+    if (w <= 600) return 2;
+    if (w <= 900) return 4;
+    return 4;
+  };
+  const [visibleCount, setVisibleCount] = useState(getInitialCount);
 
   // Debounce search query
   useEffect(() => {
@@ -197,6 +206,7 @@ export default function NewsPage({ category }) {
                   setActiveCategory(cat.id);
                   setArticles([]);
                   setSelectedSource("all"); // Reset source filter on category change
+                  setVisibleCount(getInitialCount()); // Reset pagination
                 }}
                 className={`news-filter-btn ${activeCategory === cat.id ? "active" : ""}`}
               >
@@ -326,13 +336,49 @@ export default function NewsPage({ category }) {
                 <h3>No News Found</h3>
                 <p>Try resetting filters or checking your search query.</p>
               </div>
-            ) : (
-              <section className="article-grid" style={{ marginTop: "20px" }}>
-                {(searchQuery || selectedSource !== "all" ? filteredAndSortedArticles : gridArticles).map((art) => (
-                  <ArticlesCard key={art.id || art._id} articleData={art} />
-                ))}
-              </section>
-            )}
+            ) : (() => {
+              const displayList = searchQuery || selectedSource !== "all"
+                ? filteredAndSortedArticles
+                : gridArticles;
+              const visibleArticles = displayList.slice(0, visibleCount);
+              const hasMore = visibleCount < displayList.length;
+              const remaining = displayList.length - visibleCount;
+
+              return (
+                <>
+                  <section className="article-grid" style={{ marginTop: "20px" }}>
+                    {visibleArticles.map((art) => (
+                      <ArticlesCard key={art.id || art._id} articleData={art} />
+                    ))}
+                  </section>
+
+                  {hasMore && (
+                    <div className="news-view-more-row">
+                      <button
+                        type="button"
+                        className="news-view-more-btn"
+                        onClick={() => setVisibleCount((c) => c + 4)}
+                      >
+                        View More News
+                        <span className="news-view-more-count">+{remaining} article{remaining !== 1 ? "s" : ""}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {!hasMore && displayList.length > getInitialCount() && (
+                    <div className="news-view-more-row">
+                      <button
+                        type="button"
+                        className="news-view-more-btn news-view-more-btn--collapse"
+                        onClick={() => setVisibleCount(getInitialCount())}
+                      >
+                        Show Less
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </>
         )}
       </div>
