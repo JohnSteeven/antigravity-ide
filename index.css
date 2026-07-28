@@ -9092,6 +9092,13 @@ html:has([data-experience="travel"]) {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
+body:has([data-experience="incidents"]),
+html:has([data-experience="incidents"]) {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    🌱 LIFE EXPERIENCE STYLING (PREMIUM MAGAZINE DESIGN)
    ────────────────────────────────────────────────────────────────────────── */
@@ -11310,5 +11317,665 @@ body:has([data-experience="travel"]) .travel-hero,
   align-items: center !important;
   gap: 6px !important;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   ⚠️ INCIDENTS / POST-MORTEM EXPERIENCE STYLING (ENGINEERING OPS DESIGN)
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="incidents"] {
+  --incidents-bg: #0f172a !important;
+  --incidents-card-bg: #1e293b !important;
+  --incidents-card-hover: #334155 !important;
+  --incidents-border: #334155 !important;
+  --incidents-text: #f8fafc !important;
+  --incidents-muted: #94a3b8 !important;
+  --incidents-red: #ef4444 !important;
+  --incidents-amber: #f59e0b !important;
+  --incidents-green: #10b981 !important;
+  --incidents-blue: #3b82f6 !important;
+  --incidents-font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace !important;
+  --incidents-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+
+  background-color: var(--incidents-bg) !important;
+  color: var(--incidents-text) !important;
+  font-family: var(--incidents-font-sans) !important;
+  min-height: 100vh !important;
+}
+
+[data-experience="incidents"].incidents-experience-page,
+[data-experience="incidents"] .incidents-experience-page {
+  animation: life-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* ── Incident Status Shell Hero ── */
+[data-experience="incidents"] .incidents-hero {
+  background-color: #020617 !important;
+  border-bottom: 1px solid var(--incidents-border) !important;
+  padding: 50px 24px 60px 24px !important;
+  margin-top: 20px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+[data-experience="incidents"] .incidents-hero-container {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  background: var(--incidents-card-bg) !important;
+  border: 1px solid var(--incidents-border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+  overflow: hidden !important;
+}
+
+[data-experience="incidents"] .incidents-status-bar {
+  background: #020617 !important;
+  padding: 14px 24px !important;
+  border-bottom: 1px solid var(--incidents-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+[data-experience="incidents"] .status-badge-pulse {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-experience="incidents"] .pulse-dot {
+  width: 12px !important;
+  height: 12px !important;
+  background: var(--incidents-green) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 12px var(--incidents-green) !important;
+  animation: pulse-glow 2s infinite !important;
+}
+
+@keyframes pulse-glow {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+[data-experience="incidents"] .status-text {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: var(--incidents-green) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+[data-experience="incidents"] .severity-badge {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: var(--incidents-red) !important;
+  padding: 4px 14px !important;
+  border-radius: 6px !important;
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+}
+
+[data-experience="incidents"] .incidents-hero-body {
+  padding: 36px 40px !important;
+}
+
+/* Breadcrumbs */
+[data-experience="incidents"] .incidents-hero-body .breadcrumbs a,
+[data-experience="incidents"] .incidents-hero-body .breadcrumbs span,
+[data-experience="incidents"] .incidents-hero-body .breadcrumbs strong {
+  color: var(--incidents-muted) !important;
+  font-size: 0.88rem !important;
+  font-family: var(--incidents-font-mono) !important;
+}
+
+[data-experience="incidents"] .incidents-title {
+  font-family: var(--incidents-font-sans) !important;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem) !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.25 !important;
+  margin: 18px 0 12px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+[data-experience="incidents"] .incidents-title .title-icon {
+  color: var(--incidents-red) !important;
+  flex-shrink: 0 !important;
+}
+
+[data-experience="incidents"] .incidents-subtitle {
+  font-size: 1.1rem !important;
+  color: var(--incidents-muted) !important;
+  line-height: 1.6 !important;
+  margin: 0 0 28px 0 !important;
+  max-width: 800px !important;
+}
+
+/* Metrics Strip */
+[data-experience="incidents"] .incidents-metrics-strip {
+  background: #020617 !important;
+  border: 1px solid var(--incidents-border) !important;
+  border-radius: 10px !important;
+  padding: 16px 24px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 20px !important;
+  margin-bottom: 28px !important;
+}
+
+@media (max-width: 768px) {
+  [data-experience="incidents"] .incidents-metrics-strip {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+    padding: 14px !important;
+  }
+}
+
+[data-experience="incidents"] .metric-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+[data-experience="incidents"] .metric-label {
+  font-size: 0.76rem !important;
+  color: var(--incidents-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  font-family: var(--incidents-font-mono) !important;
+}
+
+[data-experience="incidents"] .metric-val {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.98rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+[data-experience="incidents"] .metric-val.text-red { color: var(--incidents-red) !important; }
+[data-experience="incidents"] .metric-val.text-green { color: var(--incidents-green) !important; }
+[data-experience="incidents"] .metric-val.text-amber { color: var(--incidents-amber) !important; }
+
+/* Author Commander Row */
+[data-experience="incidents"] .incidents-author-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding-bottom: 24px !important;
+  border-bottom: 1px solid var(--incidents-border) !important;
+  margin-bottom: 24px !important;
+  flex-wrap: wrap !important;
+}
+
+[data-experience="incidents"] .commander-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 8px !important;
+  background: var(--incidents-red) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.3rem !important;
+}
+
+[data-experience="incidents"] .incidents-author-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+[data-experience="incidents"] .incidents-author-name {
+  font-weight: 700 !important;
+  font-size: 1.02rem !important;
+  color: #ffffff !important;
+}
+
+[data-experience="incidents"] .incidents-dates {
+  font-size: 0.84rem !important;
+  color: var(--incidents-muted) !important;
+  font-family: var(--incidents-font-mono) !important;
+}
+
+[data-experience="incidents"] .copy-timeline-btn {
+  margin-left: auto !important;
+  background: #334155 !important;
+  border: 1px solid var(--incidents-border) !important;
+  color: #ffffff !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 0.86rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--incidents-font-mono) !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-experience="incidents"] .copy-timeline-btn:hover {
+  background: #475569 !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   INCIDENTS LAYOUT GRID (3-COLUMN RESPONSIVE)
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="incidents"] .incidents-article-layout {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr) 320px !important;
+  gap: 36px !important;
+  max-width: 1440px !important;
+  margin: 40px auto !important;
+  padding: 0 clamp(20px, 4vw, 60px) !important;
+  align-items: start !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1200px) {
+  [data-experience="incidents"] .incidents-article-layout {
+    grid-template-columns: minmax(0, 1fr) 300px !important;
+    gap: 28px !important;
+  }
+  [data-experience="incidents"] .incidents-left-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  [data-experience="incidents"] .incidents-article-layout {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+    padding: 0 16px !important;
+  }
+  [data-experience="incidents"] .incidents-left-sidebar {
+    display: none !important;
+  }
+}
+
+[data-experience="incidents"] .incidents-sticky-box {
+  position: sticky !important;
+  top: 90px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+/* ── Left Sidebar Components ── */
+[data-experience="incidents"] .incidents-left-sidebar {
+  display: block !important;
+  width: 100% !important;
+}
+
+[data-experience="incidents"] .incidents-sidebar-panel {
+  background: var(--incidents-card-bg) !important;
+  border: 1px solid var(--incidents-border) !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+}
+
+[data-experience="incidents"] .incidents-sidebar-panel h3 {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.95rem !important;
+  color: #ffffff !important;
+  margin: 0 0 14px 0 !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border-bottom: 1px solid var(--incidents-border) !important;
+  padding-bottom: 10px !important;
+}
+
+[data-experience="incidents"] .incidents-sidebar-panel h3 .icon {
+  color: var(--incidents-red) !important;
+}
+
+/* Chronology Timeline */
+[data-experience="incidents"] .chronology-timeline {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  font-family: var(--incidents-font-mono) !important;
+}
+
+[data-experience="incidents"] .chrono-item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  border-left: 2px solid var(--incidents-border) !important;
+  padding-left: 12px !important;
+  position: relative !important;
+}
+
+[data-experience="incidents"] .chrono-item::before {
+  content: "" !important;
+  position: absolute !important;
+  left: -5px !important;
+  top: 4px !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: var(--incidents-red) !important;
+}
+
+[data-experience="incidents"] .chrono-time {
+  font-size: 0.76rem !important;
+  color: var(--incidents-red) !important;
+  font-weight: 700 !important;
+}
+
+[data-experience="incidents"] .chrono-desc {
+  font-size: 0.84rem !important;
+  color: var(--incidents-text) !important;
+  line-height: 1.4 !important;
+}
+
+/* Affected Systems */
+[data-experience="incidents"] .systems-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.84rem !important;
+}
+
+[data-experience="incidents"] .system-badge {
+  background: #020617 !important;
+  border: 1px solid var(--incidents-border) !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--incidents-text) !important;
+}
+
+[data-experience="incidents"] .system-badge .dot.red {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: var(--incidents-red) !important;
+}
+
+/* TOC Links */
+[data-experience="incidents"] .incidents-toc-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+[data-experience="incidents"] .incidents-toc-link {
+  color: var(--incidents-muted) !important;
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.85rem !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-experience="incidents"] .incidents-toc-link:hover,
+[data-experience="incidents"] .incidents-toc-link.active {
+  color: var(--incidents-red) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CENTER CONTENT & PROSE
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="incidents"] .incidents-center-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 40px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+[data-experience="incidents"] .incidents-center-content .premium-article-prose {
+  font-family: var(--incidents-font-sans) !important;
+  font-size: 1.12rem !important;
+  line-height: 1.8 !important;
+  color: var(--incidents-text) !important;
+}
+
+[data-experience="incidents"] .incidents-center-content .premium-article-prose p {
+  margin-bottom: 1.6em !important;
+}
+
+[data-experience="incidents"] .incidents-center-content .premium-article-prose h2,
+[data-experience="incidents"] .incidents-center-content .premium-article-prose h3 {
+  font-family: var(--incidents-font-mono) !important;
+  color: #ffffff !important;
+  margin: 2em 0 0.8em 0 !important;
+  font-weight: 700 !important;
+}
+
+[data-experience="incidents"] .incidents-center-content .premium-article-prose h2 {
+  font-size: 1.75rem !important;
+  border-bottom: 1px solid var(--incidents-border) !important;
+  padding-bottom: 10px !important;
+}
+
+/* Code & Pre Blocks */
+[data-experience="incidents"] .incidents-center-content .premium-article-prose pre {
+  background: #020617 !important;
+  border: 1px solid var(--incidents-border) !important;
+  border-radius: 10px !important;
+  padding: 20px !important;
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.92rem !important;
+  color: #f8fafc !important;
+  overflow-x: auto !important;
+}
+
+[data-experience="incidents"] .incidents-center-content .premium-article-prose blockquote {
+  border-left: 4px solid var(--incidents-red) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+  padding: 16px 24px !important;
+  margin: 1.8em 0 !important;
+  border-radius: 0 8px 8px 0 !important;
+  color: var(--incidents-text) !important;
+}
+
+/* ── Right Sidebar Components ── */
+[data-experience="incidents"] .incidents-right-sidebar {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Action Items Checklist */
+[data-experience="incidents"] .action-items-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+[data-experience="incidents"] .action-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  font-size: 0.88rem !important;
+  color: var(--incidents-text) !important;
+}
+
+[data-experience="incidents"] .action-item .check-icon {
+  color: var(--incidents-green) !important;
+  font-size: 1.05rem !important;
+  flex-shrink: 0 !important;
+  margin-top: 2px !important;
+}
+
+/* Impact Specs */
+[data-experience="incidents"] .impact-specs {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.84rem !important;
+}
+
+[data-experience="incidents"] .spec-row {
+  display: flex !important;
+  justify-content: space-between !important;
+}
+
+[data-experience="incidents"] .spec-row .label {
+  color: var(--incidents-muted) !important;
+}
+
+[data-experience="incidents"] .spec-row .val {
+  font-weight: 600 !important;
+  color: #ffffff !important;
+}
+
+/* ── Bottom Section ── */
+[data-experience="incidents"] .incidents-bottom-section {
+  border-top: 1px solid var(--incidents-border) !important;
+  padding-top: 40px !important;
+  margin-top: 40px !important;
+  width: 100% !important;
+}
+
+[data-experience="incidents"] .incidents-summary-card {
+  background: var(--incidents-card-bg) !important;
+  border: 1px solid var(--incidents-border) !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+  margin-bottom: 40px !important;
+}
+
+[data-experience="incidents"] .incidents-summary-card h3 {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 1.1rem !important;
+  color: #ffffff !important;
+  margin: 0 0 18px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-experience="incidents"] .summary-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+[data-experience="incidents"] .summary-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  background: #020617 !important;
+  border: 1px solid var(--incidents-border) !important;
+  padding: 12px 18px !important;
+  border-radius: 8px !important;
+}
+
+[data-experience="incidents"] .summary-row .step-badge {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.78rem !important;
+  color: var(--incidents-red) !important;
+  font-weight: 700 !important;
+}
+
+[data-experience="incidents"] .summary-row p {
+  margin: 0 !important;
+  font-size: 0.9rem !important;
+  color: var(--incidents-text) !important;
+}
+
+/* Suggested Reports Grid */
+[data-experience="incidents"] .incidents-suggested-reports {
+  margin: 40px 0 !important;
+}
+
+[data-experience="incidents"] .incidents-suggested-reports h3 {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 1.4rem !important;
+  color: #ffffff !important;
+  margin-bottom: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-experience="incidents"] .incidents-reports-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 20px !important;
+}
+
+[data-experience="incidents"] .incidents-report-card {
+  background: var(--incidents-card-bg) !important;
+  border: 1px solid var(--incidents-border) !important;
+  border-radius: 12px !important;
+  padding: 22px !important;
+  text-decoration: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-experience="incidents"] .incidents-report-card:hover {
+  border-color: var(--incidents-red) !important;
+  transform: translateY(-4px) !important;
+}
+
+[data-experience="incidents"] .incidents-report-card .card-header-bar {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.78rem !important;
+}
+
+[data-experience="incidents"] .incidents-report-card .card-sev {
+  color: var(--incidents-red) !important;
+  font-weight: 700 !important;
+}
+
+[data-experience="incidents"] .incidents-report-card .card-time {
+  color: var(--incidents-muted) !important;
+}
+
+[data-experience="incidents"] .incidents-report-card h4 {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 1.08rem !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+[data-experience="incidents"] .incidents-report-card p {
+  font-size: 0.88rem !important;
+  color: var(--incidents-muted) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+[data-experience="incidents"] .incidents-report-card .read-report-btn {
+  font-family: var(--incidents-font-mono) !important;
+  font-size: 0.84rem !important;
+  color: var(--incidents-red) !important;
+  font-weight: 600 !important;
+  margin-top: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
 
 

@@ -3,6 +3,7 @@ import DefaultExperience from "./default/DefaultExperience";
 import LifeExperience from "./life/LifeExperience";
 import CodingExperience from "./coding/CodingExperience";
 import TravelExperience from "./travel/TravelExperience";
+import IncidentsExperience from "./incidents/IncidentsExperience";
 
 const EXPERIENCE_MAP = {
   life: LifeExperience,
@@ -15,6 +16,11 @@ const EXPERIENCE_MAP = {
   journeys: TravelExperience,
   destinations: TravelExperience,
   trips: TravelExperience,
+  incidents: IncidentsExperience,
+  postmortems: IncidentsExperience,
+  outages: IncidentsExperience,
+  "post-mortems": IncidentsExperience,
+  systemfailures: IncidentsExperience,
 };
 
 const ExperienceResolver = (props) => {
