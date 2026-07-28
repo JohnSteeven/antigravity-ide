@@ -2,6 +2,7 @@ import React from "react";
 import DefaultExperience from "./default/DefaultExperience";
 import LifeExperience from "./life/LifeExperience";
 import CodingExperience from "./coding/CodingExperience";
+import TravelExperience from "./travel/TravelExperience";
 
 const EXPERIENCE_MAP = {
   life: LifeExperience,
@@ -9,6 +10,11 @@ const EXPERIENCE_MAP = {
   development: CodingExperience,
   technology: CodingExperience,
   tech: CodingExperience,
+  travel: TravelExperience,
+  adventures: TravelExperience,
+  journeys: TravelExperience,
+  destinations: TravelExperience,
+  trips: TravelExperience,
 };
 
 const ExperienceResolver = (props) => {

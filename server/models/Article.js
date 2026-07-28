@@ -59,6 +59,8 @@ const ArticleSchema = new mongoose.Schema(
     season: { type: String, default: "" },
     bestTime: { type: String, default: "" },
     tips: { type: String, default: "" },
+    itinerary: [{ type: String }],
+    gearList: [{ type: String }],
     reporter: { type: String, default: "" },
     source: { type: String, default: "" },
     isBreaking: { type: Boolean, default: false },

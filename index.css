@@ -9085,6 +9085,13 @@ html:has([data-experience="coding"]) {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
+body:has([data-experience="travel"]),
+html:has([data-experience="travel"]) {
+  background-color: #faf7f2 !important;
+  color: #1c1917 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    🌱 LIFE EXPERIENCE STYLING (PREMIUM MAGAZINE DESIGN)
    ────────────────────────────────────────────────────────────────────────── */
@@ -9893,14 +9900,15 @@ body:has([data-experience="life"]) .life-hero,
 [data-experience="coding"] .coding-hero {
   background-color: #010409 !important;
   border-bottom: 1px solid var(--coding-border) !important;
-  padding: 40px 24px 50px 24px !important;
+  padding: 60px 24px 60px 24px !important;
+  margin-top: 20px !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
 
 [data-experience="coding"] .coding-hero-container {
   max-width: 1200px !important;
-  margin: 0 auto !important;
+  margin: 24px auto 0 auto !important;
   background: var(--coding-card-bg) !important;
   border: 1px solid var(--coding-border) !important;
   border-radius: 12px !important;
@@ -10681,4 +10689,626 @@ body:has([data-experience="life"]) .life-hero,
   align-items: center !important;
   gap: 6px !important;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   ✈️ TRAVEL EXPERIENCE STYLING (SUN-DRENCHED EXPEDITION DESIGN)
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="travel"] {
+  --travel-bg: #faf7f2 !important;
+  --travel-card-bg: #ffffff !important;
+  --travel-card-hover: #fffdfa !important;
+  --travel-border: #e8ded2 !important;
+  --travel-text: #1c1917 !important;
+  --travel-muted: #78716c !important;
+  --travel-accent: #d97706 !important;
+  --travel-accent-hover: #b45309 !important;
+  --travel-amber: #f59e0b !important;
+  --travel-font-heading: "Oswald", "Playfair Display", Georgia, serif !important;
+  --travel-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+
+  background-color: var(--travel-bg) !important;
+  color: var(--travel-text) !important;
+  font-family: var(--travel-font-body) !important;
+  min-height: 100vh !important;
+}
+
+[data-experience="travel"].travel-experience-page,
+[data-experience="travel"] .travel-experience-page {
+  animation: life-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* ── Full-Bleed Destination Hero Banner ── */
+body:has([data-experience="travel"]) .travel-hero,
+[data-experience="travel"] .travel-hero,
+.travel-hero {
+  position: relative !important;
+  min-height: 72vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: scroll !important;
+  color: #ffffff !important;
+  padding: 100px 24px 80px 24px !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+[data-experience="travel"] .travel-hero-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(
+    180deg,
+    rgba(28, 25, 23, 0.55) 0%,
+    rgba(28, 25, 23, 0.78) 50%,
+    rgba(28, 25, 23, 0.92) 100%
+  ) !important;
+  z-index: 1 !important;
+}
+
+[data-experience="travel"] .travel-hero-content {
+  position: relative !important;
+  z-index: 2 !important;
+  max-width: 960px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Breadcrumbs in Travel Hero */
+[data-experience="travel"] .travel-hero-content .breadcrumbs a,
+[data-experience="travel"] .travel-hero-content .breadcrumbs span,
+[data-experience="travel"] .travel-hero-content .breadcrumbs strong {
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-size: 0.9rem !important;
+}
+
+/* Badges */
+[data-experience="travel"] .travel-badge-row {
+  display: flex !important;
+  gap: 12px !important;
+  margin: 20px 0 !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+}
+
+[data-experience="travel"] .travel-badge {
+  font-size: 0.84rem !important;
+  padding: 6px 16px !important;
+  border-radius: 30px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+[data-experience="travel"] .travel-badge.location {
+  background: rgba(217, 119, 6, 0.3) !important;
+  color: #fef3c7 !important;
+  border: 1px solid rgba(245, 158, 11, 0.5) !important;
+}
+
+[data-experience="travel"] .travel-badge.season {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-experience="travel"] .travel-badge.duration {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-experience="travel"] .travel-title {
+  font-family: var(--travel-font-heading) !important;
+  font-size: clamp(2.2rem, 4vw, 3.4rem) !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.2 !important;
+  margin: 0 0 16px 0 !important;
+  letter-spacing: 0.5px !important;
+}
+
+[data-experience="travel"] .travel-subtitle {
+  font-size: 1.18rem !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  line-height: 1.6 !important;
+  margin: 0 0 32px 0 !important;
+  max-width: 800px !important;
+}
+
+/* Travel Stats Strip */
+[data-experience="travel"] .travel-stats-strip {
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 14px !important;
+  padding: 16px 28px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 24px !important;
+  width: 100% !important;
+  margin-bottom: 32px !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  [data-experience="travel"] .travel-stats-strip {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+    padding: 16px !important;
+  }
+}
+
+[data-experience="travel"] .stat-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+[data-experience="travel"] .stat-icon {
+  font-size: 1.4rem !important;
+  color: var(--travel-amber) !important;
+}
+
+[data-experience="travel"] .stat-info {
+  display: flex !important;
+  flex-direction: column !important;
+  text-align: left !important;
+}
+
+[data-experience="travel"] .stat-label {
+  font-size: 0.76rem !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+[data-experience="travel"] .stat-val {
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+/* Author Row */
+[data-experience="travel"] .travel-author-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-bottom: 24px !important;
+}
+
+[data-experience="travel"] .travel-avatar {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid var(--travel-amber) !important;
+}
+
+[data-experience="travel"] .travel-author-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+[data-experience="travel"] .travel-author-name {
+  font-weight: 700 !important;
+  font-size: 1.02rem !important;
+  color: #ffffff !important;
+}
+
+[data-experience="travel"] .travel-dates {
+  font-size: 0.84rem !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   TRAVEL LAYOUT GRID (3-COLUMN RESPONSIVE)
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="travel"] .travel-article-layout {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr) 320px !important;
+  gap: 40px !important;
+  max-width: 1440px !important;
+  margin: 50px auto !important;
+  padding: 0 clamp(20px, 4vw, 60px) !important;
+  align-items: start !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1200px) {
+  [data-experience="travel"] .travel-article-layout {
+    grid-template-columns: minmax(0, 1fr) 300px !important;
+    gap: 32px !important;
+  }
+  [data-experience="travel"] .travel-left-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  [data-experience="travel"] .travel-article-layout {
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
+    padding: 0 16px !important;
+  }
+  [data-experience="travel"] .travel-left-sidebar {
+    display: none !important;
+  }
+}
+
+[data-experience="travel"] .travel-sticky-box {
+  position: sticky !important;
+  top: 90px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+/* ── Left Sidebar Components ── */
+[data-experience="travel"] .travel-left-sidebar {
+  display: block !important;
+  width: 100% !important;
+}
+
+[data-experience="travel"] .travel-sidebar-panel {
+  background: var(--travel-card-bg) !important;
+  border: 1px solid var(--travel-border) !important;
+  border-radius: 14px !important;
+  padding: 20px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-experience="travel"] .travel-sidebar-panel h3 {
+  font-family: var(--travel-font-heading) !important;
+  font-size: 1.1rem !important;
+  color: var(--travel-text) !important;
+  margin: 0 0 16px 0 !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border-bottom: 1px solid var(--travel-border) !important;
+  padding-bottom: 10px !important;
+}
+
+[data-experience="travel"] .travel-sidebar-panel h3 .icon {
+  color: var(--travel-accent) !important;
+}
+
+/* Itinerary Timeline */
+[data-experience="travel"] .itinerary-timeline {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+[data-experience="travel"] .timeline-node {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+}
+
+[data-experience="travel"] .timeline-node .node-dot {
+  background: var(--travel-accent) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  flex-shrink: 0 !important;
+}
+
+[data-experience="travel"] .timeline-node .node-text {
+  font-size: 0.88rem !important;
+  color: var(--travel-text) !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
+}
+
+/* Quick Facts List */
+[data-experience="travel"] .quick-facts-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  font-size: 0.88rem !important;
+}
+
+[data-experience="travel"] .fact-item {
+  display: flex !important;
+  justify-content: space-between !important;
+}
+
+[data-experience="travel"] .fact-label {
+  color: var(--travel-muted) !important;
+}
+
+[data-experience="travel"] .fact-val {
+  font-weight: 600 !important;
+  color: var(--travel-text) !important;
+}
+
+/* Tips Panel */
+[data-experience="travel"] .tips-panel {
+  background: #fffdf5 !important;
+  border-color: #fef08a !important;
+}
+
+[data-experience="travel"] .tips-text {
+  font-size: 0.9rem !important;
+  color: #854d0e !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CENTER CONTENT & PROSE
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="travel"] .travel-center-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 40px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+[data-experience="travel"] .travel-center-content .premium-article-prose {
+  font-family: var(--travel-font-body) !important;
+  font-size: 1.14rem !important;
+  line-height: 1.85 !important;
+  color: var(--travel-text) !important;
+}
+
+[data-experience="travel"] .travel-center-content .premium-article-prose p {
+  margin-bottom: 1.6em !important;
+}
+
+[data-experience="travel"] .travel-center-content .premium-article-prose h2,
+[data-experience="travel"] .travel-center-content .premium-article-prose h3 {
+  font-family: var(--travel-font-heading) !important;
+  color: var(--travel-text) !important;
+  margin: 2em 0 0.8em 0 !important;
+  font-weight: 700 !important;
+}
+
+[data-experience="travel"] .travel-center-content .premium-article-prose h2 {
+  font-size: 1.85rem !important;
+  border-bottom: 2px solid var(--travel-border) !important;
+  padding-bottom: 10px !important;
+}
+
+[data-experience="travel"] .travel-center-content .premium-article-prose h3 {
+  font-size: 1.4rem !important;
+}
+
+/* Blockquote location callouts */
+[data-experience="travel"] .travel-center-content .premium-article-prose blockquote {
+  border-left: 4px solid var(--travel-accent) !important;
+  background: #fffbeebf !important;
+  padding: 20px 28px !important;
+  margin: 2em 0 !important;
+  border-radius: 0 12px 12px 0 !important;
+  font-style: italic !important;
+  font-size: 1.15rem !important;
+  color: #78350f !important;
+}
+
+/* ── Right Sidebar Components ── */
+[data-experience="travel"] .travel-right-sidebar {
+  display: block !important;
+  width: 100% !important;
+}
+
+[data-experience="travel"] .weather-val {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: var(--travel-accent) !important;
+}
+
+[data-experience="travel"] .weather-note {
+  font-size: 0.86rem !important;
+  color: var(--travel-muted) !important;
+  margin: 8px 0 0 0 !important;
+}
+
+/* Packing Gear List */
+[data-experience="travel"] .gear-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+[data-experience="travel"] .gear-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 0.88rem !important;
+  color: var(--travel-text) !important;
+}
+
+[data-experience="travel"] .gear-item .check-icon {
+  color: var(--travel-accent) !important;
+  font-size: 1rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* ── Bottom Section ── */
+[data-experience="travel"] .travel-bottom-section {
+  border-top: 1px solid var(--travel-border) !important;
+  padding-top: 40px !important;
+  margin-top: 40px !important;
+  width: 100% !important;
+}
+
+[data-experience="travel"] .travel-summary-card {
+  background: var(--travel-card-bg) !important;
+  border: 1px solid var(--travel-border) !important;
+  border-radius: 14px !important;
+  padding: 28px !important;
+  margin-bottom: 40px !important;
+}
+
+[data-experience="travel"] .travel-summary-card h3 {
+  font-family: var(--travel-font-heading) !important;
+  font-size: 1.3rem !important;
+  color: var(--travel-text) !important;
+  margin: 0 0 20px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-experience="travel"] .summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+[data-experience="travel"] .summary-item {
+  background: var(--travel-bg) !important;
+  border: 1px solid var(--travel-border) !important;
+  padding: 16px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  gap: 12px !important;
+  align-items: flex-start !important;
+}
+
+[data-experience="travel"] .summary-item .item-num {
+  font-family: var(--travel-font-heading) !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  color: var(--travel-accent) !important;
+}
+
+[data-experience="travel"] .summary-item p {
+  margin: 0 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.4 !important;
+  color: var(--travel-text) !important;
+}
+
+/* Suggested Reads Grid */
+[data-experience="travel"] .travel-suggested-reads {
+  margin: 40px 0 !important;
+}
+
+[data-experience="travel"] .travel-suggested-reads h3 {
+  font-family: var(--travel-font-heading) !important;
+  font-size: 1.5rem !important;
+  color: var(--travel-text) !important;
+  margin-bottom: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-experience="travel"] .travel-reads-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 24px !important;
+}
+
+[data-experience="travel"] .travel-read-card {
+  background: var(--travel-card-bg) !important;
+  border: 1px solid var(--travel-border) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  text-decoration: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transition: all 0.25s ease !important;
+}
+
+[data-experience="travel"] .travel-read-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 30px rgba(217, 119, 6, 0.12) !important;
+}
+
+[data-experience="travel"] .travel-read-card .card-image-wrap {
+  position: relative !important;
+  height: 180px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+[data-experience="travel"] .travel-read-card .card-image-wrap img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transition: transform 0.4s ease !important;
+}
+
+[data-experience="travel"] .travel-read-card:hover .card-image-wrap img {
+  transform: scale(1.05) !important;
+}
+
+[data-experience="travel"] .travel-read-card .card-badge {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  background: rgba(28, 25, 23, 0.75) !important;
+  color: #ffffff !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+}
+
+[data-experience="travel"] .travel-read-card .card-body {
+  padding: 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  flex-grow: 1 !important;
+}
+
+[data-experience="travel"] .travel-read-card h4 {
+  font-family: var(--travel-font-heading) !important;
+  font-size: 1.15rem !important;
+  color: var(--travel-text) !important;
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+
+[data-experience="travel"] .travel-read-card p {
+  font-size: 0.88rem !important;
+  color: var(--travel-muted) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+[data-experience="travel"] .travel-read-card .read-more-btn {
+  font-size: 0.86rem !important;
+  color: var(--travel-accent) !important;
+  font-weight: 700 !important;
+  margin-top: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
 
