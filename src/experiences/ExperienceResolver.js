@@ -4,6 +4,7 @@ import LifeExperience from "./life/LifeExperience";
 import CodingExperience from "./coding/CodingExperience";
 import TravelExperience from "./travel/TravelExperience";
 import IncidentsExperience from "./incidents/IncidentsExperience";
+import LessonsExperience from "./lessons/LessonsExperience";
 
 const EXPERIENCE_MAP = {
   life: LifeExperience,
@@ -21,6 +22,12 @@ const EXPERIENCE_MAP = {
   outages: IncidentsExperience,
   "post-mortems": IncidentsExperience,
   systemfailures: IncidentsExperience,
+  lessons: LessonsExperience,
+  reflections: LessonsExperience,
+  growth: LessonsExperience,
+  philosophy: LessonsExperience,
+  mindset: LessonsExperience,
+  wisdom: LessonsExperience,
 };
 
 const ExperienceResolver = (props) => {

@@ -9099,6 +9099,15 @@ html:has([data-experience="incidents"]) {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
+body:has([data-experience="lessons"]),
+html:has([data-experience="lessons"]),
+body:has([data-experience="reflections"]),
+html:has([data-experience="reflections"]) {
+  background-color: #fcfbf9 !important;
+  color: #1e1b4b !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    🌱 LIFE EXPERIENCE STYLING (PREMIUM MAGAZINE DESIGN)
    ────────────────────────────────────────────────────────────────────────── */
@@ -11976,6 +11985,649 @@ body:has([data-experience="travel"]) .travel-hero,
   align-items: center !important;
   gap: 6px !important;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   💡 LESSONS & REFLECTIONS EXPERIENCE STYLING (CONTEMPLATIVE WISDOM DESIGN)
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="lessons"],
+[data-experience="reflections"] {
+  --lessons-bg: #fcfbf9 !important;
+  --lessons-card-bg: #ffffff !important;
+  --lessons-card-hover: #faf9f5 !important;
+  --lessons-border: #ede8e1 !important;
+  --lessons-text: #1e1b4b !important;
+  --lessons-muted: #64748b !important;
+  --lessons-accent: #7c3aed !important;
+  --lessons-purple: #8b5cf6 !important;
+  --lessons-font-heading: "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  --lessons-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+
+  background-color: var(--lessons-bg) !important;
+  color: var(--lessons-text) !important;
+  font-family: var(--lessons-font-body) !important;
+  min-height: 100vh !important;
+}
+
+[data-experience="lessons"].lessons-experience-page,
+[data-experience="lessons"] .lessons-experience-page,
+[data-experience="reflections"].lessons-experience-page,
+[data-experience="reflections"] .lessons-experience-page {
+  animation: life-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* ── Contemplative Reader Hero Banner ── */
+[data-experience="lessons"] .lessons-hero,
+[data-experience="reflections"] .lessons-hero {
+  background: linear-gradient(180deg, #f7f4ef 0%, #fcfbf9 100%) !important;
+  border-bottom: 1px solid var(--lessons-border) !important;
+  padding: 50px 24px 60px 24px !important;
+  margin-top: 20px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+[data-experience="lessons"] .lessons-hero-container,
+[data-experience="reflections"] .lessons-hero-container {
+  max-width: 1000px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* Breadcrumbs */
+[data-experience="lessons"] .lessons-hero-container .breadcrumbs a,
+[data-experience="lessons"] .lessons-hero-container .breadcrumbs span,
+[data-experience="lessons"] .lessons-hero-container .breadcrumbs strong,
+[data-experience="reflections"] .lessons-hero-container .breadcrumbs a,
+[data-experience="reflections"] .lessons-hero-container .breadcrumbs span,
+[data-experience="reflections"] .lessons-hero-container .breadcrumbs strong {
+  color: var(--lessons-muted) !important;
+  font-size: 0.9rem !important;
+}
+
+/* Badges */
+[data-experience="lessons"] .lessons-badge-row,
+[data-experience="reflections"] .lessons-badge-row {
+  display: flex !important;
+  gap: 12px !important;
+  margin: 20px 0 !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+}
+
+[data-experience="lessons"] .lessons-badge,
+[data-experience="reflections"] .lessons-badge {
+  font-size: 0.84rem !important;
+  padding: 5px 16px !important;
+  border-radius: 20px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+[data-experience="lessons"] .lessons-badge.category,
+[data-experience="reflections"] .lessons-badge.category {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: var(--lessons-accent) !important;
+  border: 1px solid rgba(124, 58, 237, 0.3) !important;
+}
+
+[data-experience="lessons"] .lessons-badge.subcategory,
+[data-experience="reflections"] .lessons-badge.subcategory {
+  background: rgba(30, 27, 75, 0.08) !important;
+  color: var(--lessons-text) !important;
+  border: 1px solid var(--lessons-border) !important;
+}
+
+[data-experience="lessons"] .lessons-badge.time,
+[data-experience="reflections"] .lessons-badge.time {
+  background: rgba(30, 27, 75, 0.08) !important;
+  color: var(--lessons-muted) !important;
+  border: 1px solid var(--lessons-border) !important;
+}
+
+[data-experience="lessons"] .lessons-title,
+[data-experience="reflections"] .lessons-title {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: clamp(2.4rem, 4.5vw, 3.6rem) !important;
+  font-weight: 700 !important;
+  color: var(--lessons-text) !important;
+  line-height: 1.2 !important;
+  margin: 0 0 16px 0 !important;
+}
+
+[data-experience="lessons"] .lessons-subtitle,
+[data-experience="reflections"] .lessons-subtitle {
+  font-size: 1.18rem !important;
+  color: var(--lessons-muted) !important;
+  line-height: 1.6 !important;
+  margin: 0 0 32px 0 !important;
+  max-width: 780px !important;
+}
+
+/* Quote Card */
+[data-experience="lessons"] .lessons-quote-card,
+[data-experience="reflections"] .lessons-quote-card {
+  background: #ffffff !important;
+  border: 1px solid var(--lessons-border) !important;
+  border-left: 4px solid var(--lessons-accent) !important;
+  border-radius: 12px !important;
+  padding: 24px 32px !important;
+  margin-bottom: 32px !important;
+  position: relative !important;
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.06) !important;
+  max-width: 760px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+[data-experience="lessons"] .lessons-quote-card .quote-mark,
+[data-experience="reflections"] .lessons-quote-card .quote-mark {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: 3rem !important;
+  color: var(--lessons-accent) !important;
+  line-height: 1 !important;
+  position: absolute !important;
+  top: 10px !important;
+  left: 14px !important;
+  opacity: 0.25 !important;
+}
+
+[data-experience="lessons"] .lessons-quote-card .quote-text,
+[data-experience="reflections"] .lessons-quote-card .quote-text {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: 1.35rem !important;
+  font-style: italic !important;
+  color: var(--lessons-text) !important;
+  line-height: 1.5 !important;
+  margin: 0 0 8px 0 !important;
+}
+
+[data-experience="lessons"] .lessons-quote-card .quote-author,
+[data-experience="reflections"] .lessons-quote-card .quote-author {
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: var(--lessons-accent) !important;
+}
+
+/* Author Row */
+[data-experience="lessons"] .lessons-author-row,
+[data-experience="reflections"] .lessons-author-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-bottom: 24px !important;
+}
+
+[data-experience="lessons"] .lessons-avatar,
+[data-experience="reflections"] .lessons-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid var(--lessons-accent) !important;
+}
+
+[data-experience="lessons"] .lessons-author-meta,
+[data-experience="reflections"] .lessons-author-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+[data-experience="lessons"] .lessons-author-name,
+[data-experience="reflections"] .lessons-author-name {
+  font-weight: 700 !important;
+  font-size: 1.02rem !important;
+  color: var(--lessons-text) !important;
+}
+
+[data-experience="lessons"] .lessons-dates,
+[data-experience="reflections"] .lessons-dates {
+  font-size: 0.84rem !important;
+  color: var(--lessons-muted) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   LESSONS LAYOUT GRID (3-COLUMN RESPONSIVE)
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="lessons"] .lessons-article-layout,
+[data-experience="reflections"] .lessons-article-layout {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr) 320px !important;
+  gap: 40px !important;
+  max-width: 1440px !important;
+  margin: 50px auto !important;
+  padding: 0 clamp(20px, 4vw, 60px) !important;
+  align-items: start !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1200px) {
+  [data-experience="lessons"] .lessons-article-layout,
+  [data-experience="reflections"] .lessons-article-layout {
+    grid-template-columns: minmax(0, 1fr) 300px !important;
+    gap: 32px !important;
+  }
+  [data-experience="lessons"] .lessons-left-sidebar,
+  [data-experience="reflections"] .lessons-left-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  [data-experience="lessons"] .lessons-article-layout,
+  [data-experience="reflections"] .lessons-article-layout {
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
+    padding: 0 16px !important;
+  }
+  [data-experience="lessons"] .lessons-left-sidebar,
+  [data-experience="reflections"] .lessons-left-sidebar {
+    display: none !important;
+  }
+}
+
+[data-experience="lessons"] .lessons-sticky-box,
+[data-experience="reflections"] .lessons-sticky-box {
+  position: sticky !important;
+  top: 90px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+/* ── Left Sidebar Components ── */
+[data-experience="lessons"] .lessons-left-sidebar,
+[data-experience="reflections"] .lessons-left-sidebar {
+  display: block !important;
+  width: 100% !important;
+}
+
+[data-experience="lessons"] .lessons-sidebar-panel,
+[data-experience="reflections"] .lessons-sidebar-panel {
+  background: var(--lessons-card-bg) !important;
+  border: 1px solid var(--lessons-border) !important;
+  border-radius: 14px !important;
+  padding: 20px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-experience="lessons"] .lessons-sidebar-panel h3,
+[data-experience="reflections"] .lessons-sidebar-panel h3 {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: 1.1rem !important;
+  color: var(--lessons-text) !important;
+  margin: 0 0 16px 0 !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border-bottom: 1px solid var(--lessons-border) !important;
+  padding-bottom: 10px !important;
+}
+
+[data-experience="lessons"] .lessons-sidebar-panel h3 .icon,
+[data-experience="reflections"] .lessons-sidebar-panel h3 .icon {
+  color: var(--lessons-accent) !important;
+}
+
+/* Principles Index */
+[data-experience="lessons"] .principles-index,
+[data-experience="reflections"] .principles-index {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+[data-experience="lessons"] .principle-node,
+[data-experience="reflections"] .principle-node {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+
+[data-experience="lessons"] .principle-node .node-num,
+[data-experience="reflections"] .principle-node .node-num {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: var(--lessons-accent) !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  flex-shrink: 0 !important;
+}
+
+[data-experience="lessons"] .principle-node .node-title,
+[data-experience="reflections"] .principle-node .node-title {
+  font-size: 0.88rem !important;
+  color: var(--lessons-text) !important;
+  line-height: 1.4 !important;
+}
+
+/* Mindset Habits */
+[data-experience="lessons"] .habits-list,
+[data-experience="reflections"] .habits-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+[data-experience="lessons"] .habit-item,
+[data-experience="reflections"] .habit-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 0.88rem !important;
+  color: var(--lessons-text) !important;
+}
+
+[data-experience="lessons"] .habit-item .check-icon,
+[data-experience="reflections"] .habit-item .check-icon {
+  color: var(--lessons-accent) !important;
+  font-size: 1rem !important;
+}
+
+/* TOC Links */
+[data-experience="lessons"] .lessons-toc-nav,
+[data-experience="reflections"] .lessons-toc-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+[data-experience="lessons"] .lessons-toc-link,
+[data-experience="reflections"] .lessons-toc-link {
+  color: var(--lessons-muted) !important;
+  font-size: 0.88rem !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-experience="lessons"] .lessons-toc-link:hover,
+[data-experience="lessons"] .lessons-toc-link.active,
+[data-experience="reflections"] .lessons-toc-link:hover,
+[data-experience="reflections"] .lessons-toc-link.active {
+  color: var(--lessons-accent) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CENTER CONTENT & PROSE
+   ────────────────────────────────────────────────────────────────────────── */
+
+[data-experience="lessons"] .lessons-center-content,
+[data-experience="reflections"] .lessons-center-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 40px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+[data-experience="lessons"] .lessons-center-content .premium-article-prose,
+[data-experience="reflections"] .lessons-center-content .premium-article-prose {
+  font-family: var(--lessons-font-body) !important;
+  font-size: 1.14rem !important;
+  line-height: 1.85 !important;
+  color: var(--lessons-text) !important;
+}
+
+[data-experience="lessons"] .lessons-center-content .premium-article-prose p,
+[data-experience="reflections"] .lessons-center-content .premium-article-prose p {
+  margin-bottom: 1.6em !important;
+}
+
+[data-experience="lessons"] .lessons-center-content .premium-article-prose h2,
+[data-experience="lessons"] .lessons-center-content .premium-article-prose h3,
+[data-experience="reflections"] .lessons-center-content .premium-article-prose h2,
+[data-experience="reflections"] .lessons-center-content .premium-article-prose h3 {
+  font-family: var(--lessons-font-heading) !important;
+  color: var(--lessons-text) !important;
+  margin: 2em 0 0.8em 0 !important;
+  font-weight: 700 !important;
+}
+
+[data-experience="lessons"] .lessons-center-content .premium-article-prose h2,
+[data-experience="reflections"] .lessons-center-content .premium-article-prose h2 {
+  font-size: 1.85rem !important;
+  border-bottom: 2px solid var(--lessons-border) !important;
+  padding-bottom: 10px !important;
+}
+
+/* Blockquote */
+[data-experience="lessons"] .lessons-center-content .premium-article-prose blockquote,
+[data-experience="reflections"] .lessons-center-content .premium-article-prose blockquote {
+  border-left: 4px solid var(--lessons-accent) !important;
+  background: rgba(124, 58, 237, 0.05) !important;
+  padding: 20px 28px !important;
+  margin: 2em 0 !important;
+  border-radius: 0 12px 12px 0 !important;
+  font-family: var(--lessons-font-heading) !important;
+  font-style: italic !important;
+  font-size: 1.25rem !important;
+  color: var(--lessons-text) !important;
+}
+
+/* ── Right Sidebar Components ── */
+[data-experience="lessons"] .lessons-right-sidebar,
+[data-experience="reflections"] .lessons-right-sidebar {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Recommended Books */
+[data-experience="lessons"] .books-list,
+[data-experience="reflections"] .books-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+[data-experience="lessons"] .book-item,
+[data-experience="reflections"] .book-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  font-size: 0.88rem !important;
+  color: var(--lessons-text) !important;
+}
+
+[data-experience="lessons"] .book-item .book-icon,
+[data-experience="reflections"] .book-item .book-icon {
+  color: var(--lessons-accent) !important;
+  margin-top: 2px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Reader Prompts */
+[data-experience="lessons"] .prompts-list,
+[data-experience="reflections"] .prompts-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+[data-experience="lessons"] .prompt-q,
+[data-experience="reflections"] .prompt-q {
+  font-family: var(--lessons-font-heading) !important;
+  font-style: italic !important;
+  font-size: 0.98rem !important;
+  color: var(--lessons-accent) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  background: rgba(124, 58, 237, 0.06) !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+}
+
+/* ── Bottom Section ── */
+[data-experience="lessons"] .lessons-bottom-section,
+[data-experience="reflections"] .lessons-bottom-section {
+  border-top: 1px solid var(--lessons-border) !important;
+  padding-top: 40px !important;
+  margin-top: 40px !important;
+  width: 100% !important;
+}
+
+[data-experience="lessons"] .lessons-summary-card,
+[data-experience="reflections"] .lessons-summary-card {
+  background: var(--lessons-card-bg) !important;
+  border: 1px solid var(--lessons-border) !important;
+  border-radius: 14px !important;
+  padding: 28px !important;
+  margin-bottom: 40px !important;
+}
+
+[data-experience="lessons"] .lessons-summary-card h3,
+[data-experience="reflections"] .lessons-summary-card h3 {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: 1.3rem !important;
+  color: var(--lessons-text) !important;
+  margin: 0 0 20px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-experience="lessons"] .takeaways-list,
+[data-experience="reflections"] .takeaways-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+[data-experience="lessons"] .takeaway-row,
+[data-experience="reflections"] .takeaway-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  background: var(--lessons-bg) !important;
+  border: 1px solid var(--lessons-border) !important;
+  padding: 12px 18px !important;
+  border-radius: 10px !important;
+}
+
+[data-experience="lessons"] .takeaway-row .takeaway-num,
+[data-experience="reflections"] .takeaway-row .takeaway-num {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: var(--lessons-accent) !important;
+}
+
+[data-experience="lessons"] .takeaway-row p,
+[data-experience="reflections"] .takeaway-row p {
+  margin: 0 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.4 !important;
+  color: var(--lessons-text) !important;
+}
+
+/* Suggested Reads Grid */
+[data-experience="lessons"] .lessons-suggested-reads,
+[data-experience="reflections"] .lessons-suggested-reads {
+  margin: 40px 0 !important;
+}
+
+[data-experience="lessons"] .lessons-suggested-reads h3,
+[data-experience="reflections"] .lessons-suggested-reads h3 {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: 1.5rem !important;
+  color: var(--lessons-text) !important;
+  margin-bottom: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-experience="lessons"] .lessons-reads-grid,
+[data-experience="reflections"] .lessons-reads-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 24px !important;
+}
+
+[data-experience="lessons"] .lessons-read-card,
+[data-experience="reflections"] .lessons-read-card {
+  background: var(--lessons-card-bg) !important;
+  border: 1px solid var(--lessons-border) !important;
+  border-radius: 14px !important;
+  padding: 22px !important;
+  text-decoration: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  transition: all 0.25s ease !important;
+}
+
+[data-experience="lessons"] .lessons-read-card:hover,
+[data-experience="reflections"] .lessons-read-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 30px rgba(124, 58, 237, 0.1) !important;
+  border-color: var(--lessons-accent) !important;
+}
+
+[data-experience="lessons"] .lessons-read-card .card-top,
+[data-experience="reflections"] .lessons-read-card .card-top {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 0.8rem !important;
+}
+
+[data-experience="lessons"] .lessons-read-card .card-cat,
+[data-experience="reflections"] .lessons-read-card .card-cat {
+  color: var(--lessons-accent) !important;
+  font-weight: 700 !important;
+}
+
+[data-experience="lessons"] .lessons-read-card .card-time,
+[data-experience="reflections"] .lessons-read-card .card-time {
+  color: var(--lessons-muted) !important;
+}
+
+[data-experience="lessons"] .lessons-read-card h4,
+[data-experience="reflections"] .lessons-read-card h4 {
+  font-family: var(--lessons-font-heading) !important;
+  font-size: 1.18rem !important;
+  color: var(--lessons-text) !important;
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+
+[data-experience="lessons"] .lessons-read-card p,
+[data-experience="reflections"] .lessons-read-card p {
+  font-size: 0.88rem !important;
+  color: var(--lessons-muted) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+[data-experience="lessons"] .lessons-read-card .read-more-btn,
+[data-experience="reflections"] .lessons-read-card .read-more-btn {
+  font-size: 0.86rem !important;
+  color: var(--lessons-accent) !important;
+  font-weight: 700 !important;
+  margin-top: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
 
 
 
