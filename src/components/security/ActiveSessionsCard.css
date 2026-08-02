@@ -1,71 +1,104 @@
 .sec-sessions-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
 .sec-sessions-title {
-  fontSize: 0.98rem;
-  fontWeight: 700;
-  color: var(--ink, #1e293b);
+  font-size: 0.98rem;
+  font-weight: 700;
   margin: 0 0 2px;
+  color: #1e293b;
 }
 
 .sec-session-item {
-  padding: 14px 16px;
-  background: rgba(248, 250, 252, 0.7);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 8px;
-  margin-bottom: 10px;
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.sec-session-item:last-of-type {
+  border-bottom: none;
 }
 
 .sec-session-info {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .sec-session-icon {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
-  background: rgba(66, 108, 103, 0.1);
-  color: var(--teal, #426c67);
-  display: grid;
-  place-items: center;
-  font-size: 1.15rem;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #64748b;
   flex-shrink: 0;
+}
+
+.sec-session-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.sec-session-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
 }
 
 .sec-session-device-name {
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--ink, #1e293b);
-  margin: 0 0 2px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sec-current-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  padding: 2px 8px;
-  border-radius: 12px;
+  margin: 0;
+  color: #1e293b;
 }
 
 .sec-session-meta {
   font-size: 0.78rem;
-  color: var(--muted, #64748b);
+  color: #64748b;
   margin: 0;
+}
+
+.sec-session-login {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+/* Risk badges */
+.sec-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.sec-current-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }

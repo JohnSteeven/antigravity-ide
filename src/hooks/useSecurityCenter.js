@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { securityService } from "../services/securityService";
 
 export const useSecurityCenter = (user) => {
@@ -34,16 +34,19 @@ export const useSecurityCenter = (user) => {
     }
   }, []);
 
-  const fetchHistory = useCallback(async (params = historyParams) => {
+  const historyParamsRef = useRef(historyParams);
+  historyParamsRef.current = historyParams;
+
+  const fetchHistory = useCallback(async (params) => {
     try {
-      const res = await securityService.getLoginHistory(params);
+      const res = await securityService.getLoginHistory(params ?? historyParamsRef.current);
       if (res?.logs) {
         setHistoryData({ logs: res.logs, pagination: res.pagination });
       }
     } catch (err) {
       console.warn("Could not fetch login history from API:", err?.message || err);
     }
-  }, [historyParams]);
+  }, []);
 
   const fetchDevices = useCallback(async () => {
     try {
@@ -66,9 +69,7 @@ export const useSecurityCenter = (user) => {
     }
   }, [fetchOverview, fetchSessions, fetchHistory, fetchDevices]);
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+  useEffect(() => { loadAll(); }, []);
 
   const revokeSession = async (sessionId) => {
     await securityService.revokeSession(sessionId);
@@ -92,6 +93,26 @@ export const useSecurityCenter = (user) => {
     await fetchDevices();
   };
 
+  const setup2FA = async (password) => {
+    return await securityService.setup2FA(password);
+  };
+
+  const verify2FA = async (code) => {
+    const res = await securityService.verify2FA(code);
+    await fetchOverview();
+    return res;
+  };
+
+  const disable2FA = async () => {
+    const res = await securityService.disable2FA();
+    await fetchOverview();
+    return res;
+  };
+
+  const deleteAccount = async (password, confirmation) => {
+    return await securityService.deleteAccount(password, confirmation);
+  };
+
   const updateHistoryParams = (newParams) => {
     setHistoryParams((prev) => {
       const next = { ...prev, ...newParams };
@@ -113,6 +134,10 @@ export const useSecurityCenter = (user) => {
     revokeAllOtherSessions,
     renameDevice,
     removeDevice,
+    setup2FA,
+    verify2FA,
+    disable2FA,
+    deleteAccount,
     refreshAll: loadAll,
   };
 };

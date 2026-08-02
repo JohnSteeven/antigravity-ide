@@ -1,29 +1,123 @@
 .sec-device-item {
-  padding: 14px 16px;
-  background: rgba(248, 250, 252, 0.7);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 8px;
-  margin-bottom: 10px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
 }
 
-.sec-device-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.sec-device-item:last-of-type {
+  border-bottom: none;
 }
 
 .sec-device-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  background: rgba(100, 116, 139, 0.1);
-  color: #475569;
-  display: grid;
-  place-items: center;
-  font-size: 1.15rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #64748b;
   flex-shrink: 0;
+}
+
+.sec-device-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Name row */
+.sec-device-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+
+.sec-device-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.sec-device-rename-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  font-size: 0.78rem;
+  transition: color 0.15s;
+}
+.sec-device-rename-btn:hover { color: #475569; }
+
+/* Device badges */
+.sec-device-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+.sec-device-badge.current {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.sec-device-badge.trusted {
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.15);
+}
+
+/* Spec line */
+.sec-device-spec {
+  font-size: 0.82rem;
+  color: #475569;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+
+/* Meta row */
+.sec-device-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sec-device-location,
+.sec-device-lastseen,
+.sec-device-trusted-since {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Edit row */
+.sec-device-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.sec-device-edit-input {
+  padding: 4px 8px;
+  font-size: 0.84rem;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+  flex: 1;
+  max-width: 240px;
+}
+.sec-device-edit-input:focus {
+  border-color: #426c67;
 }

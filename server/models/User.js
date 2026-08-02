@@ -41,6 +41,25 @@ const UserSchema = new mongoose.Schema(
     tokenVersion: { type: Number, default: 0 },
     isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
+    // ── Two-Factor Authentication ─────────────────────────────────────────────
+    twoFactor: {
+      enabled: { type: Boolean, default: false },
+      secret: { type: String, default: null, select: false },
+      verifiedAt: { type: Date, default: null },
+      backupCodes: {
+        type: [{
+          codeHash: { type: String },
+          usedAt: { type: Date, default: null },
+        }],
+        default: [],
+        select: false,
+      },
+    },
+    // ── Pending Account Deletion (7-day recovery window) ──────────────────────
+    pendingDeletion: { type: Boolean, default: false, index: true },
+    pendingDeletionAt: { type: Date, default: null },
+    scheduledDeletionAt: { type: Date, default: null },
+    deletedBy: { type: String, default: null }, // 'self' | 'admin' | 'system'
     lastLogin: { type: Date },
     lastPasswordChange: { type: Date },
     passwordResetToken: { type: String, default: null, select: false },

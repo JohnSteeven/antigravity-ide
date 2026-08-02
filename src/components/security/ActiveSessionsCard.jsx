@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiLogOut, FiMonitor, FiSmartphone, FiTablet } from "react-icons/fi";
+import { FiAlertTriangle, FiCheckCircle, FiLogOut, FiMonitor, FiSmartphone, FiTablet, FiWifi } from "react-icons/fi";
 import SecurityCard from "./SecurityCard";
 import ConfirmationModal from "./ConfirmationModal";
 import SecurityEmptyState from "./SecurityEmptyState";
@@ -9,15 +9,32 @@ const formatRelativeTime = (dateInput) => {
   if (!dateInput) return "Recently";
   const date = new Date(dateInput);
   if (Number.isNaN(date.getTime())) return "Recently";
-
-  const diffMs = Date.now() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffMins = Math.floor((Date.now() - date.getTime()) / 60000);
   if (diffMins < 2) return "Just now";
   if (diffMins < 60) return `${diffMins} minutes ago`;
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return `${diffHours} hours ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} days ago`;
+  return `${Math.floor(diffHours / 24)} days ago`;
+};
+
+const RISK_CONFIG = {
+  CURRENT:    { label: "Current Device",  color: "#059669", bg: "rgba(5,150,105,0.08)",   icon: FiCheckCircle },
+  TRUSTED:    { label: "Trusted",          color: "#0284c7", bg: "rgba(2,132,199,0.08)",   icon: FiCheckCircle },
+  NEW_DEVICE: { label: "New Device",       color: "#d97706", bg: "rgba(217,119,6,0.08)",   icon: FiWifi },
+  SUSPICIOUS: { label: "Suspicious Login", color: "#dc2626", bg: "rgba(220,38,38,0.08)",   icon: FiAlertTriangle },
+};
+
+const RiskBadge = ({ riskLevel }) => {
+  const cfg = RISK_CONFIG[riskLevel] || RISK_CONFIG.TRUSTED;
+  const Icon = cfg.icon;
+  return (
+    <span
+      className="sec-risk-badge"
+      style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.color}22` }}
+    >
+      <Icon style={{ fontSize: "0.75rem" }} /> {cfg.label}
+    </span>
+  );
 };
 
 const ActiveSessionsCard = ({ sessions = [], onRevokeSession, onRevokeAllOtherSessions }) => {
@@ -32,18 +49,17 @@ const ActiveSessionsCard = ({ sessions = [], onRevokeSession, onRevokeAllOtherSe
   };
 
   const handleConfirmAction = async () => {
+    const scrollY = window.scrollY;
     setIsSubmitting(true);
     try {
-      if (modalConfig.type === "single") {
-        await onRevokeSession(modalConfig.targetId);
-      } else if (modalConfig.type === "all") {
-        await onRevokeAllOtherSessions();
-      }
+      if (modalConfig.type === "single") await onRevokeSession(modalConfig.targetId);
+      else if (modalConfig.type === "all") await onRevokeAllOtherSessions();
     } catch (err) {
       alert(err.message || "Failed to revoke session.");
     } finally {
       setIsSubmitting(false);
       setModalConfig({ isOpen: false, type: null, targetId: null });
+      requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: "instant" }));
     }
   };
 
@@ -64,13 +80,7 @@ const ActiveSessionsCard = ({ sessions = [], onRevokeSession, onRevokeAllOtherSe
             className="secondary-btn"
             style={{ fontSize: "0.8rem", color: "#e11d48", borderColor: "#fecdd3" }}
             type="button"
-            onClick={() =>
-              setModalConfig({
-                isOpen: true,
-                type: "all",
-                targetId: null,
-              })
-            }
+            onClick={() => setModalConfig({ isOpen: true, type: "all", targetId: null })}
           >
             <FiLogOut /> Sign Out All Other Devices
           </button>
@@ -88,30 +98,31 @@ const ActiveSessionsCard = ({ sessions = [], onRevokeSession, onRevokeAllOtherSe
                 <div className="sec-session-icon">
                   <DeviceIcon />
                 </div>
-                <div>
-                  <h5 className="sec-session-device-name">
-                    {sess.browser} on {sess.os}
-                    {sess.isCurrent && <span className="sec-current-badge">Current Session</span>}
-                  </h5>
+                <div className="sec-session-body">
+                  <div className="sec-session-top">
+                    <h5 className="sec-session-device-name">
+                      {sess.browser} on {sess.os}
+                    </h5>
+                    <RiskBadge riskLevel={sess.riskLevel || (sess.isCurrent ? "CURRENT" : "TRUSTED")} />
+                  </div>
                   <p className="sec-session-meta">
-                    {sess.ipAddress} • {sess.city || "Unknown City"}, {sess.country || "Localhost"} • Last active:{" "}
+                    {sess.ipAddress} • {sess.city || "Unknown"}, {sess.country || "Unknown"} • Last active:{" "}
                     {formatRelativeTime(sess.lastActiveAt)}
                   </p>
+                  {sess.loginAt && (
+                    <p className="sec-session-login">
+                      Signed in: {new Date(sess.loginAt).toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {!sess.isCurrent && (
                 <button
                   className="secondary-btn"
-                  style={{ fontSize: "0.78rem", padding: "4px 10px" }}
+                  style={{ fontSize: "0.78rem", padding: "4px 10px", flexShrink: 0 }}
                   type="button"
-                  onClick={() =>
-                    setModalConfig({
-                      isOpen: true,
-                      type: "single",
-                      targetId: sess.id,
-                    })
-                  }
+                  onClick={() => setModalConfig({ isOpen: true, type: "single", targetId: sess.id })}
                 >
                   Revoke
                 </button>

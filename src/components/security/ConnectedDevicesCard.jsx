@@ -1,15 +1,29 @@
 import { useState } from "react";
-import { FiCheck, FiCpu, FiEdit2, FiMonitor, FiSmartphone, FiTablet, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiCpu, FiEdit2, FiMapPin, FiMonitor, FiSmartphone, FiTablet, FiTrash2 } from "react-icons/fi";
 import SecurityCard from "./SecurityCard";
 import ConfirmationModal from "./ConfirmationModal";
 import SecurityEmptyState from "./SecurityEmptyState";
 import "./ConnectedDevicesCard.css";
 
-const formatDate = (dateInput) => {
-  if (!dateInput) return "Recently";
+const formatRelativeTime = (dateInput) => {
+  if (!dateInput) return "Never";
   const date = new Date(dateInput);
-  if (Number.isNaN(date.getTime())) return "Recently";
-  return date.toLocaleDateString();
+  if (Number.isNaN(date.getTime())) return "Never";
+  const diffMins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (diffMins < 2) return "Just now";
+  if (diffMins < 60) return `${diffMins} minutes ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Yesterday";
+  return `${diffDays} days ago`;
+};
+
+const formatTrustedSince = (dateInput) => {
+  if (!dateInput) return "Unknown";
+  const date = new Date(dateInput);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 };
 
 const ConnectedDevicesCard = ({ devices = [], onRenameDevice, onRemoveDevice }) => {
@@ -26,11 +40,6 @@ const ConnectedDevicesCard = ({ devices = [], onRenameDevice, onRemoveDevice }) 
     return FiMonitor;
   };
 
-  const handleStartRename = (dev) => {
-    setEditingId(dev.id);
-    setEditingName(dev.deviceName);
-  };
-
   const handleSaveRename = async (id) => {
     if (!editingName.trim()) return;
     try {
@@ -42,6 +51,7 @@ const ConnectedDevicesCard = ({ devices = [], onRenameDevice, onRemoveDevice }) 
   };
 
   const handleConfirmRemove = async () => {
+    const scrollY = window.scrollY;
     setIsSubmitting(true);
     try {
       await onRemoveDevice(modalConfig.targetId);
@@ -50,6 +60,7 @@ const ConnectedDevicesCard = ({ devices = [], onRenameDevice, onRemoveDevice }) 
     } finally {
       setIsSubmitting(false);
       setModalConfig({ isOpen: false, targetId: null });
+      requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: "instant" }));
     }
   };
 
@@ -57,7 +68,7 @@ const ConnectedDevicesCard = ({ devices = [], onRenameDevice, onRemoveDevice }) 
     <SecurityCard>
       <div style={{ marginBottom: "14px" }}>
         <h4 style={{ fontSize: "0.98rem", fontWeight: 700, margin: "0 0 2px", color: "#1e293b" }}>
-          Connected & Trusted Devices
+          Connected &amp; Trusted Devices
         </h4>
         <p style={{ fontSize: "0.82rem", color: "#64748b", margin: 0 }}>
           View trusted hardware, browsers, and authorized access points.
@@ -70,77 +81,87 @@ const ConnectedDevicesCard = ({ devices = [], onRenameDevice, onRemoveDevice }) 
         devices.map((dev) => {
           const DeviceIcon = getDeviceIcon(dev.deviceType);
           const isEditing = editingId === dev.id;
+          const lastSeen = dev.lastSeenRelative || formatRelativeTime(dev.lastSeenAt);
 
           return (
             <div key={dev.id} className="sec-device-item">
-              <div className="sec-device-info">
-                <div className="sec-device-icon">
-                  <DeviceIcon />
-                </div>
-                <div>
-                  {isEditing ? (
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "4px" }}>
-                      <input
-                        style={{
-                          padding: "2px 6px",
-                          fontSize: "0.86rem",
-                          borderRadius: "4px",
-                          border: "1px solid #cbd5e1",
-                        }}
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                      />
-                      <button
-                        className="primary-btn"
-                        style={{ padding: "2px 6px", fontSize: "0.75rem" }}
-                        type="button"
-                        onClick={() => handleSaveRename(dev.id)}
-                      >
-                        <FiCheck />
-                      </button>
-                    </div>
-                  ) : (
-                    <h5
-                      style={{
-                        fontSize: "0.9rem",
-                        fontWeight: 700,
-                        margin: "0 0 2px",
-                        color: "#1e293b",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      {dev.deviceName}
-                      {dev.isCurrentDevice && (
-                        <span className="sec-current-badge">Current Device</span>
-                      )}
-                      <button
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#94a3b8",
-                          cursor: "pointer",
-                          padding: "2px",
-                        }}
-                        type="button"
-                        onClick={() => handleStartRename(dev)}
-                      >
-                        <FiEdit2 style={{ fontSize: "0.78rem" }} />
-                      </button>
-                    </h5>
-                  )}
+              {/* Icon */}
+              <div className="sec-device-icon">
+                <DeviceIcon />
+              </div>
 
-                  <p style={{ fontSize: "0.78rem", color: "#64748b", margin: 0 }}>
-                    {dev.browser} on {dev.os} • Trusted since: {formatDate(dev.trustedSince)}
-                  </p>
+              {/* Info */}
+              <div className="sec-device-body">
+                {/* Name row */}
+                {isEditing ? (
+                  <div className="sec-device-edit-row">
+                    <input
+                      className="sec-device-edit-input"
+                      value={editingName}
+                      autoFocus
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveRename(dev.id)}
+                    />
+                    <button
+                      className="primary-btn"
+                      style={{ padding: "3px 8px", fontSize: "0.78rem" }}
+                      type="button"
+                      onClick={() => handleSaveRename(dev.id)}
+                    >
+                      <FiCheck /> Save
+                    </button>
+                    <button
+                      className="secondary-btn"
+                      style={{ padding: "3px 8px", fontSize: "0.78rem" }}
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="sec-device-name-row">
+                    <span className="sec-device-name">{dev.deviceName}</span>
+                    {dev.isCurrentDevice && (
+                      <span className="sec-device-badge current">Current Device</span>
+                    )}
+                    {!dev.isCurrentDevice && (
+                      <span className="sec-device-badge trusted">Trusted</span>
+                    )}
+                    <button
+                      className="sec-device-rename-btn"
+                      type="button"
+                      title="Rename device"
+                      onClick={() => { setEditingId(dev.id); setEditingName(dev.deviceName); }}
+                    >
+                      <FiEdit2 />
+                    </button>
+                  </div>
+                )}
+
+                {/* Browser & OS */}
+                <p className="sec-device-spec">
+                  {dev.browser || "Unknown Browser"} &nbsp;·&nbsp; {dev.os || "Unknown OS"}
+                </p>
+
+                {/* Location & last seen */}
+                <div className="sec-device-meta-row">
+                  {(dev.city || dev.country) && (
+                    <span className="sec-device-location">
+                      <FiMapPin style={{ fontSize: "0.72rem" }} />
+                      {[dev.city, dev.country].filter(Boolean).join(", ")}
+                    </span>
+                  )}
+                  <span className="sec-device-lastseen">Last active: {lastSeen}</span>
+                  <span className="sec-device-trusted-since">Trusted since: {formatTrustedSince(dev.trustedSince)}</span>
                 </div>
               </div>
 
+              {/* Actions */}
               {!dev.isCurrentDevice && (
                 <button
                   className="secondary-btn"
-                  style={{ fontSize: "0.78rem", padding: "4px 8px", color: "#e11d48" }}
+                  style={{ fontSize: "0.78rem", padding: "4px 8px", color: "#e11d48", flexShrink: 0 }}
                   type="button"
                   onClick={() => setModalConfig({ isOpen: true, targetId: dev.id })}
                 >
@@ -157,7 +178,7 @@ const ConnectedDevicesCard = ({ devices = [], onRenameDevice, onRemoveDevice }) 
         isDanger
         isOpen={modalConfig.isOpen}
         isSubmitting={isSubmitting}
-        message="Are you sure you want to remove this trusted device?"
+        message="Remove this device from your trusted list? You'll need to re-authenticate next time."
         title="Remove Trusted Device"
         onClose={() => setModalConfig({ isOpen: false, targetId: null })}
         onConfirm={handleConfirmRemove}

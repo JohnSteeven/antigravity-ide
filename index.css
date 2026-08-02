@@ -925,6 +925,37 @@ img {
   padding: 0 14px;
 }
 
+/* Form Input Icon Group - High Specificity Fix */
+.form-grid div.input-icon-group,
+div.input-icon-group {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.form-grid div.input-icon-group>svg,
+div.input-icon-group>svg {
+  position: absolute !important;
+  left: 16px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+  font-size: 1.15rem !important;
+  color: var(--teal, #426c67) !important;
+}
+
+.form-grid div.input-icon-group>input,
+.form-grid div.input-icon-group>select,
+div.input-icon-group>input,
+div.input-icon-group>select {
+  padding-left: 48px !important;
+  padding-right: 16px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
 .subscribe-form button {
   min-height: 46px;
   padding: 0 22px;

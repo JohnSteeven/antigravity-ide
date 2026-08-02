@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FiAlertTriangle } from "react-icons/fi";
 import "./ConfirmationModal.css";
 
@@ -12,16 +14,36 @@ const ConfirmationModal = ({
   onConfirm,
   onClose,
 }) => {
+  // Prevent body scroll while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
-    <div className="sec-modal-backdrop" onClick={onClose}>
+  // Portal to document.body so position:fixed is never broken
+  // by ancestor overflow/transform/filter CSS
+  return createPortal(
+    <div
+      className="sec-modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sec-modal-title"
+    >
       <div className="sec-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="sec-modal-header">
           <div className="sec-modal-icon-badge">
             <FiAlertTriangle />
           </div>
-          <h3 className="sec-modal-title">{title}</h3>
+          <h3 className="sec-modal-title" id="sec-modal-title">{title}</h3>
         </div>
 
         <div className="sec-modal-body">{message}</div>
@@ -40,7 +62,8 @@ const ConfirmationModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

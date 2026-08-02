@@ -84,3 +84,17 @@
   font-size: 0.8rem;
   color: #64748b;
 }
+
+/* Action severity badge */
+.sec-action-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

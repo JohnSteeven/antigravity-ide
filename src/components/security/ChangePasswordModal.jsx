@@ -1,9 +1,20 @@
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
 
 const ChangePasswordModal = ({ isOpen, onClose, onConfirm, isSubmitting }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       style={{
         position: "fixed",
@@ -15,6 +26,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onConfirm, isSubmitting }) => {
         backdropFilter: "blur(4px)",
         padding: "16px",
       }}
+      onClick={onClose}
     >
       <div
         style={{
@@ -27,6 +39,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onConfirm, isSubmitting }) => {
           border: "1px solid rgba(226, 232, 240, 0.8)",
           textAlign: "center",
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div
           style={{
@@ -73,7 +86,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onConfirm, isSubmitting }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

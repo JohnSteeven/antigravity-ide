@@ -21,7 +21,7 @@ class SecurityController {
 
   async revokeSession(req, res, next) {
     try {
-      const result = await securityCenterService.revokeSession(req.user._id, req.params.id);
+      const result = await securityCenterService.revokeSession(req.user._id, req.params.id, req);
       res.json(result);
     } catch (err) {
       next(err);

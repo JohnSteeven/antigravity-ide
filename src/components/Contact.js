@@ -116,14 +116,13 @@ const Contact = () => {
           <form onSubmit={handleSubmit} className="form-grid one" style={{ gap: "20px" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
               Full Name *
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <FiUser style={{ position: "absolute", left: "12px", color: "var(--text-secondary)" }} />
+              <div className="input-icon-group">
+                <FiUser />
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => updateField("name", e.target.value)}
                   placeholder="John Doe"
-                  style={{ paddingLeft: "38px", width: "100%", height: "44px", borderRadius: "6px", border: "1px solid var(--border)" }}
                   required
                 />
               </div>
@@ -131,14 +130,13 @@ const Contact = () => {
 
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
               Email Address *
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <FiMail style={{ position: "absolute", left: "12px", color: "var(--text-secondary)" }} />
+              <div className="input-icon-group">
+                <FiMail />
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => updateField("email", e.target.value)}
                   placeholder="john@example.com"
-                  style={{ paddingLeft: "38px", width: "100%", height: "44px", borderRadius: "6px", border: "1px solid var(--border)" }}
                   required
                 />
               </div>
@@ -146,12 +144,11 @@ const Contact = () => {
 
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
               Inquiry Type *
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <FiHelpCircle style={{ position: "absolute", left: "12px", color: "var(--text-secondary)", pointerEvents: "none" }} />
+              <div className="input-icon-group">
+                <FiHelpCircle />
                 <select
                   value={form.inquiryType}
                   onChange={(e) => updateField("inquiryType", e.target.value)}
-                  style={{ paddingLeft: "38px", width: "100%", height: "44px", borderRadius: "6px", border: "1px solid var(--border)", background: "var(--surface)" }}
                 >
                   {INQUIRY_TYPES.map((type) => (
                     <option key={type} value={type}>{type}</option>
@@ -162,14 +159,13 @@ const Contact = () => {
 
             <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: "600", fontSize: "0.9rem" }}>
               Subject *
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <FiEdit3 style={{ position: "absolute", left: "12px", color: "var(--text-secondary)" }} />
+              <div className="input-icon-group">
+                <FiEdit3 />
                 <input
                   type="text"
                   value={form.subject}
                   onChange={(e) => updateField("subject", e.target.value)}
                   placeholder="What is this about?"
-                  style={{ paddingLeft: "38px", width: "100%", height: "44px", borderRadius: "6px", border: "1px solid var(--border)" }}
                   required
                 />
               </div>
