@@ -74,6 +74,10 @@ export const AuthProvider = ({ children }) => {
         return authService.resetPassword(payload);
       },
 
+      async changePassword(payload) {
+        return authService.changePassword(payload);
+      },
+
       async socialLogin(provider) {
         return applyAuthResult(await authService.socialLogin(provider));
       },

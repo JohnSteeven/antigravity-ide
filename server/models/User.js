@@ -43,6 +43,9 @@ const UserSchema = new mongoose.Schema(
     deletedAt: { type: Date, default: null },
     lastLogin: { type: Date },
     lastPasswordChange: { type: Date },
+    passwordResetToken: { type: String, default: null, select: false },
+    passwordResetExpires: { type: Date, default: null },
+    passwordHistory: [{ type: String, select: false }],
     verified: {
       email: { type: Boolean, default: false },
       mobile: { type: Boolean, default: false },

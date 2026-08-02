@@ -1,0 +1,38 @@
+.sec-skeleton-box {
+  background: rgba(241, 245, 249, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: secSkeletonPulse 1.5s ease-in-out infinite;
+}
+
+.sec-skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(203, 213, 225, 0.6);
+}
+
+.sec-skeleton-line.short {
+  width: 40%;
+}
+.sec-skeleton-line.medium {
+  width: 70%;
+}
+.sec-skeleton-line.full {
+  width: 100%;
+}
+
+@keyframes secSkeletonPulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}

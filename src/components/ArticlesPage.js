@@ -128,7 +128,6 @@ const ArticlesPage = () => {
 
       <section className="article-controls" aria-label="Article filters">
         <label className="search-control">
-          <FiSearch />
           <input
             value={query}
             onChange={(event) => {

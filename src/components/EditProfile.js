@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiSave } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
+import { ALL_COUNTRY_CODES } from "../utils/countryCodes";
 import { getProfileCover, getProfilePhoto } from "../utils/helpers";
 import AvatarUploader from "./AvatarUploader";
+import PasswordStrength from "./PasswordStrength";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -36,6 +38,16 @@ const EditProfile = () => {
     setMessage("");
 
     try {
+      if (form.currentPassword || form.newPassword) {
+        if (!form.currentPassword || !form.newPassword) {
+          throw new Error("Both current password and new password are required to change password.");
+        }
+        await changePassword({
+          currentPassword: form.currentPassword,
+          newPassword: form.newPassword,
+        });
+      }
+
       const result = await updateProfile({
         firstName: form.firstName,
         lastName: form.lastName,
@@ -119,7 +131,13 @@ const EditProfile = () => {
         <div className="form-grid country-mobile">
           <label>
             Country Code
-            <input value={form.countryCode} onChange={(event) => updateField("countryCode", event.target.value)} />
+            <select value={form.countryCode} onChange={(event) => updateField("countryCode", event.target.value)}>
+              {ALL_COUNTRY_CODES.map((c) => (
+                <option key={`${c.country}-${c.code}`} value={c.code}>
+                  {c.flag} {c.code} — {c.name}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             Mobile
@@ -148,10 +166,10 @@ const EditProfile = () => {
           <input value={form.skills} onChange={(event) => updateField("skills", event.target.value)} />
         </label>
 
-        {message && <div className="auth-alert">{message}</div>}
+        {message && <div className="auth-alert" style={{ marginTop: "16px" }}>{message}</div>}
 
-        <button className="primary-btn auth-submit" disabled={isSubmitting} type="submit">
-          <FiSave /> {isSubmitting ? "Saving..." : "Save Profile"}
+        <button className="primary-btn auth-submit" disabled={isSubmitting} type="submit" style={{ marginTop: "24px" }}>
+          <FiSave /> {isSubmitting ? "Saving..." : "Save Profile & Settings"}
         </button>
       </form>
     </main>

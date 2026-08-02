@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const env = require("../config/env");
 
 const registerValidator = [
   body("firstName")
@@ -100,20 +101,23 @@ const loginOtpRequestValidator = [
 ];
 
 const forgotPasswordValidator = [
+  body("email")
+    .optional()
+    .trim()
+    .isEmail()
+    .withMessage("Please enter a valid email address."),
   body("identifier")
+    .optional()
     .trim()
     .notEmpty()
     .withMessage("Identifier is required."),
   body("channel")
+    .optional()
     .isIn(["email", "mobile"])
     .withMessage("Channel must be email or mobile."),
 ];
 
 const resetPasswordValidator = [
-  body("resetToken")
-    .trim()
-    .notEmpty()
-    .withMessage("Reset token is required."),
   body("password")
     .isStrongPassword({
       minLength: 8,
@@ -122,10 +126,41 @@ const resetPasswordValidator = [
       minNumbers: 1,
       minSymbols: 1,
     })
-    .withMessage("Password does not meet the complexity requirements."),
+    .withMessage("Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character."),
+  body("confirmPassword")
+    .optional()
+    .custom((value, { req }) => {
+      if (value && value !== req.body.password) {
+        throw new Error("Passwords do not match.");
+      }
+      return true;
+    }),
+];
+
+const changePasswordValidator = [
+  body("currentPassword")
+    .notEmpty()
+    .withMessage("Current password is required."),
+  body("newPassword")
+    .isStrongPassword({
+      minLength: env.passwordMinLength || 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+    .withMessage("New password must be at least 8 characters long and contain uppercase, lowercase, number, and special character."),
+  body("confirmPassword")
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error("Passwords do not match.");
+      }
+      return true;
+    }),
 ];
 
 module.exports = {
+  changePasswordValidator,
   registerValidator,
   sendOtpValidator,
   resendOtpValidator,

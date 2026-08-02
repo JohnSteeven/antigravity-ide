@@ -59,6 +59,22 @@ const articleMatchesSubcategory = (article, subcategory) => {
 
 const getArticleUrl = (slug) => `${window.location.origin}/articles/${slug}`;
 
+const CATEGORY_QUOTES = {
+  life: "In the middle of difficulty lies opportunity. Ordinary moments held with care become extraordinary memories.",
+  reflections: "We do not learn from experience... we learn from reflecting on experience.",
+  experiences: "Failure is simply the opportunity to begin again, this time more intelligently.",
+  incidents: "Failure is simply the opportunity to begin again, this time more intelligently.",
+  postmortems: "Failure is simply the opportunity to begin again, this time more intelligently.",
+  lessons: "Wisdom is not a product of schooling but of the lifelong attempt to acquire it.",
+  growth: "Wisdom is not a product of schooling but of the lifelong attempt to acquire it.",
+  coding: "First, solve the problem. Then, write the code. Simplicity is prerequisite for reliability.",
+  development: "First, solve the problem. Then, write the code. Simplicity is prerequisite for reliability.",
+  technology: "First, solve the problem. Then, write the code. Simplicity is prerequisite for reliability.",
+  travel: "The journey of a thousand miles begins with a single step. Travel leaves you speechless, then turns you into a storyteller.",
+  adventures: "The journey of a thousand miles begins with a single step. Travel leaves you speechless, then turns you into a storyteller.",
+  news: "Journalism is the first rough draft of history. Stay informed, stay curious.",
+};
+
 const CategoryLanding = ({
   category,
   allCategories,
@@ -78,16 +94,16 @@ const CategoryLanding = ({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const sentinelRef = useRef(null);
 
-  const blueprint = getCategoryBlueprint(category.slug) || {};
-  const isLive = !!(category._id || (category.id && !String(category.id).startsWith("cat-")));
-  const categoryModel = isLive ? category : {
-    ...blueprint,
-    ...category,
-    subcategories: category.subcategories?.length
+  const blueprint = getCategoryBlueprint(category?.slug) || {};
+  const categoryModel = {
+    name: category?.name || blueprint.name || "Category",
+    description: category?.description || blueprint.description || "",
+    longDescription: category?.longDescription || blueprint.longDescription || category?.description || blueprint.description || "",
+    heroImage: category?.heroImage || blueprint.heroImage || "",
+    subcategories: (Array.isArray(category?.subcategories) && category.subcategories.length > 0)
       ? category.subcategories
-      : blueprint.subcategories || [],
-    heroImage: category.heroImage || blueprint.heroImage,
-    longDescription: category.longDescription || blueprint.longDescription,
+      : (blueprint.subcategories || []),
+    ...category,
   };
 
   const categoryArticles = useMemo(
@@ -212,6 +228,7 @@ const CategoryLanding = ({
   const isBookmarked = user?.profile?.bookmarks?.some(id => String(id) === String(featuredArticle?.id || featuredArticle?._id));
 
   const handleLikeToggle = async () => {
+    if (!featuredArticle) return;
     if (!requireLogin()) return;
     try {
       const articleId = featuredArticle.id || featuredArticle._id;
@@ -224,6 +241,7 @@ const CategoryLanding = ({
   };
 
   const handleBookmarkToggle = async () => {
+    if (!featuredArticle) return;
     if (!requireLogin()) return;
     try {
       const articleId = featuredArticle.id || featuredArticle._id;
@@ -286,9 +304,18 @@ const CategoryLanding = ({
         </div>
       </section>
 
+      {/* Editorial Category Quote Strip */}
+      <div className="life-editorial-quote-strip">
+        <span className="quote-icon">“</span>
+        <p>
+          {categoryModel.quote ||
+            CATEGORY_QUOTES[String(categoryModel.name).toLowerCase()] ||
+            "Every story brings a fresh perspective. Explore curated insights and thoughtful reflections."}
+        </p>
+      </div>
+
       <section className="category-toolbar" aria-label={`${categoryModel.name} filters`}>
         <label className="search-control">
-          <FiSearch />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}

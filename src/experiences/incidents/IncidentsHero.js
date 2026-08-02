@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { FiAlertTriangle, FiCheckCircle, FiClock, FiActivity, FiCopy, FiCheck, FiDownload, FiShare2, FiShield } from "react-icons/fi";
+import React from "react";
+import { FiBookOpen, FiCompass, FiHeart, FiTarget, FiZap, FiMessageSquare, FiTag } from "react-icons/fi";
+import { getImageUrl } from "../../utils/imageUrlHelper";
 import Breadcrumbs from "../../components/shared/Breadcrumbs";
 import EngagementBar from "../shared/widgets/EngagementBar";
+import AuthorHeroCard from "../shared/widgets/AuthorHeroCard";
 
 const IncidentsHero = ({
-  article,
+  article = {},
   isLiked,
   handleLikeToggle,
   isBookmarked,
@@ -13,93 +15,98 @@ const IncidentsHero = ({
   handleSaveToggle,
   handleCopyLink,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const categoryName = article.category || "Experiences";
+  const coverImg = article.coverImage || article.image || "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1200&q=80";
+  const imageUrl = getImageUrl(coverImg, "experiences");
+  
+  const subtitle = article.subtitle || article.description;
+  const heroQuote = article.quote || article.heroQuote;
 
-  const severity = article.severity || "SEV-1 Critical";
-  const incidentStatus = article.incidentStatus || "Mitigated & Resolved";
-  const outageDuration = article.outageDuration || "42 Minutes";
-  const impactedUsers = article.estimatedTime || "12.4% Traffic Impacted";
-
-  const handleCopyTimeline = () => {
-    const timelineText = (article.chronology || []).join("\n");
-    navigator.clipboard.writeText(timelineText || "Incident timeline copied.");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // Experience metadata highlights
+  const coreLesson = article.coreLesson || article.theme || "Resilience & Personal Growth";
+  const turningPoint = article.turningPoint || article.subcategory || "Career Pivot & Life Event";
+  const keyInsight = article.keyInsight || heroQuote || (article.takeaways && article.takeaways[0]) || "Growth begins outside your comfort zone";
+  const readingTime = article.readingTime || "15 min read";
+  const mood = article.mood || "Reflective & Hopeful";
+  const theme = article.theme || "Personal Growth & Resilience";
 
   return (
-    <header className="incidents-hero">
-      <div className="incidents-hero-container">
-        {/* Status Alert Banner */}
-        <div className="incidents-status-bar">
-          <div className="status-badge-pulse">
-            <span className="pulse-dot"></span>
-            <span className="status-text">{incidentStatus}</span>
-          </div>
-          <div className="severity-badge">{severity}</div>
+    <header
+      className="incidents-hero experience-hero"
+      style={{ backgroundImage: `url("${imageUrl}")` }}
+    >
+      <div className="incidents-hero-overlay"></div>
+      <div className="incidents-hero-body">
+        <Breadcrumbs
+          items={[
+            { label: categoryName, to: `/category/${article.categorySlug || "incidents"}` },
+            { label: article.title || "The Day Everything Changed" },
+          ]}
+        />
+
+        {/* Story Category Badge & Snapshot Metadata Chips */}
+        <div className="experience-hero-meta-bar">
+          <span className="experience-category-pill">
+            <FiCompass /> {categoryName}
+          </span>
+          <span className="experience-mood-pill">
+            <FiHeart /> {mood}
+          </span>
+          <span className="experience-theme-pill">
+            <FiBookOpen /> {theme}
+          </span>
         </div>
 
-        {/* Hero Body */}
-        <div className="incidents-hero-body">
-          <Breadcrumbs
-            items={[
-              { label: article.category || "Incidents", to: "/category/incidents" },
-              { label: article.title },
-            ]}
-          />
+        {/* Title */}
+        <h1 className="incidents-title experience-hero-title">
+          {article.title || "The Day Everything Changed"}
+        </h1>
 
-          <h1 className="incidents-title">
-            <FiAlertTriangle className="title-icon" /> {article.title}
-          </h1>
+        {/* Subtitle */}
+        {subtitle && (
+          <p className="incidents-subtitle experience-hero-subtitle">{subtitle}</p>
+        )}
 
-          {article.subtitle && (
-            <p className="incidents-subtitle">{article.subtitle}</p>
-          )}
+        {/* Quote Box */}
+        {heroQuote && (
+          <div className="life-hero-quote-box experience-hero-quote-card">
+            <span className="quote-mark">“</span>
+            <p className="life-hero-quote">{heroQuote}</p>
+          </div>
+        )}
 
-          {/* Incident Metrics Strip */}
-          <div className="incidents-metrics-strip">
-            <div className="metric-box">
-              <span className="metric-label">Outage Duration</span>
-              <span className="metric-val">{outageDuration}</span>
-            </div>
+        {/* Story Snapshot Details (Experience-Relevant Metadata) */}
+        <div className="hero-category-highlights experience-snapshot-strip">
+          <span className="highlight-chip">
+            <FiTarget style={{ color: "#f43f5e" }} /> <strong>Core Lesson:</strong> {coreLesson}
+          </span>
+          <span className="highlight-chip">
+            <FiZap style={{ color: "#f59e0b" }} /> <strong>Turning Point:</strong> {turningPoint}
+          </span>
+          <span className="highlight-chip">
+            <FiMessageSquare style={{ color: "#3b82f6" }} /> <strong>Key Insight:</strong> {keyInsight}
+          </span>
+          <span className="highlight-chip">
+            <FiBookOpen style={{ color: "#8b5cf6" }} /> <strong>Read Time:</strong> {readingTime}
+          </span>
+        </div>
 
-            <div className="metric-box">
-              <span className="metric-label">Severity Level</span>
-              <span className="metric-val text-red">{severity}</span>
-            </div>
+        {/* Author Card */}
+        <AuthorHeroCard article={article} />
 
-            <div className="metric-box">
-              <span className="metric-label">Impact Scope</span>
-              <span className="metric-val">{impactedUsers}</span>
-            </div>
-
-            <div className="metric-box">
-              <span className="metric-label">Resolution Status</span>
-              <span className="metric-val text-green">{incidentStatus}</span>
-            </div>
+        {/* Bottom Bar: Tags & Engagement */}
+        <div className="hero-bottom-bar">
+          <div className="hero-bottom-tags">
+            {(article.tags && article.tags.length > 0
+              ? article.tags
+              : ["career", "growth", "life-lessons", "resilience", "turning-point"]
+            ).map((tag, idx) => (
+              <span key={idx} className="hero-tag-pill">
+                <FiTag className="tag-icon" /> {tag.startsWith("#") ? tag : `#${tag}`}
+              </span>
+            ))}
           </div>
 
-          {/* Author / Incident Commander Row */}
-          <div className="incidents-author-row">
-            <div className="commander-avatar">
-              <FiShield />
-            </div>
-            <div className="incidents-author-meta">
-              <span className="incidents-author-name">
-                {article.author?.name || "Noble John Steeven (SRE Lead)"}
-              </span>
-              <span className="incidents-dates">
-                Post-Mortem Published {article.publishedAt || "Recently"} • {article.readingTime || 7} min read
-              </span>
-            </div>
-
-            <button className="copy-timeline-btn" onClick={handleCopyTimeline}>
-              {copied ? <FiCheck /> : <FiCopy />}
-              <span>{copied ? "Timeline Copied!" : "Copy Chronology"}</span>
-            </button>
-          </div>
-
-          {/* Engagement Bar */}
           <EngagementBar
             article={article}
             isLiked={isLiked}

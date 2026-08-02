@@ -1,3 +1,5 @@
+import React from "react";
+
 const SectionShell = ({ kicker, title, action, children, className = "" }) => (
   <section className={`section-shell ${className}`.trim()}>
     <div className="section-heading-row">

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiCompass, FiMapPin, FiArrowRight, FiCheckCircle } from "react-icons/fi";
+import { FiCompass, FiMapPin, FiArrowRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import CommentsSection from "../shared/widgets/CommentsSection";
 
 const TravelBottomSection = ({
@@ -12,11 +12,15 @@ const TravelBottomSection = ({
   commentMessage,
   relatedArticles = [],
 }) => {
+  const [showAll, setShowAll] = useState(false);
+
   const itinerary = article.itinerary || [
     "Day 1: Arrival & Exploring Historic Streets",
     "Day 2: Morning Temples & Bamboo Forest Walk",
     "Day 3: Culinary Market Tour & Evening Tea",
   ];
+
+  const visibleArticles = showAll ? relatedArticles : relatedArticles.slice(0, 2);
 
   return (
     <footer className="travel-bottom-section">
@@ -51,7 +55,7 @@ const TravelBottomSection = ({
             <FiMapPin /> More Travel Expeditions
           </h3>
           <div className="travel-reads-grid">
-            {relatedArticles.slice(0, 3).map((rel) => (
+            {visibleArticles.map((rel) => (
               <Link
                 key={rel._id || rel.id}
                 to={`/articles/${rel.slug}`}
@@ -78,6 +82,22 @@ const TravelBottomSection = ({
               </Link>
             ))}
           </div>
+
+          {relatedArticles.length > 2 && (
+            <div className="view-more-container">
+              <button
+                type="button"
+                className="view-more-btn"
+                onClick={() => setShowAll((prev) => !prev)}
+              >
+                {showAll ? (
+                  <>Show Less <FiChevronUp /></>
+                ) : (
+                  <>View More Expeditions ({relatedArticles.length - 2} more) <FiChevronDown /></>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </footer>

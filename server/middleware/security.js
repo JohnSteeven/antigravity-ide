@@ -120,9 +120,34 @@ const csrfProtection = (req, res, next) => {
   next();
 };
 
+const emailRateLimiter = rateLimit({
+  windowMs: env.forgotPasswordWindowMs || 60 * 60 * 1000,
+  max: env.forgotPasswordLimit || 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const email = String(req.body?.email || req.body?.identifier || "").toLowerCase().trim();
+    return email ? `email_${email}` : req.ip;
+  },
+  message: { message: "Too many password reset attempts for this account. Please wait 1 hour before trying again." },
+});
+
+const changePasswordLimiter = rateLimit({
+  windowMs: env.changePasswordWindowMs || 15 * 60 * 1000,
+  max: env.changePasswordRateLimit || 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.user?.id ? `change_pass_user_${req.user.id}` : req.ip;
+  },
+  message: { message: "Too many password change attempts. Please wait 15 minutes before trying again." },
+});
+
 module.exports = {
   authLimiter,
+  changePasswordLimiter,
   csrfProtection,
+  emailRateLimiter,
   globalLimiter,
   issueCsrfToken,
   sanitizeRequest,

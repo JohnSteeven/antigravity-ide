@@ -218,7 +218,6 @@ export default function NewsPage({ category }) {
           {/* Row 2: Search, Source Filter, Sort Filter, Refresh */}
           <div className="news-toolbar-controls">
             <label className="search-control" style={{ flex: 1, margin: 0 }}>
-              <FiSearch />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

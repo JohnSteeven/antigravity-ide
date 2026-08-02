@@ -1,12 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FiBookOpen, FiActivity } from "react-icons/fi";
+import { FiBookOpen, FiMic, FiCompass, FiAward } from "react-icons/fi";
 import AuthorCard from "../shared/widgets/AuthorCard";
 import ShareButtons from "../shared/widgets/ShareButtons";
 import NewsletterPanel from "../shared/widgets/NewsletterPanel";
 
 const LifeRightSidebar = ({
-  article,
+  article = {},
   handleCopyLink,
   relatedArticles = [],
   newsletterEmail,
@@ -22,13 +22,20 @@ const LifeRightSidebar = ({
   return (
     <aside className="life-right-sidebar">
       <div className="life-sticky-box">
+        {/* Author Card & Journey */}
         <AuthorCard article={article} />
 
+        <div className="life-author-journey-box">
+          <FiAward className="journey-icon" />
+          <span>Writing about mindful habits, personal growth, & intentional living since 2021.</span>
+        </div>
+
+        {/* Share Action */}
         <ShareButtons article={article} handleCopyLink={handleCopyLink} />
 
         {/* Life Collections */}
         <div className="life-sidebar-panel">
-          <h3>Life Collections</h3>
+          <h3><FiCompass /> Life Collections</h3>
           <div className="life-collections-list">
             <Link to="/category/life?subcategory=daily-journals" className="collection-tag">Daily Journals</Link>
             <Link to="/category/life?subcategory=personal-growth" className="collection-tag">Personal Growth</Link>
@@ -39,7 +46,7 @@ const LifeRightSidebar = ({
 
         {/* Recommended Books */}
         <div className="life-sidebar-panel book-recommendations-panel">
-          <h3><FiBookOpen /> Book Recommendations</h3>
+          <h3><FiBookOpen /> Recommended Books</h3>
           <div className="recommended-books-list">
             {books.map((b, i) => (
               <div key={i} className="book-item">
@@ -50,13 +57,19 @@ const LifeRightSidebar = ({
           </div>
         </div>
 
+        {/* Podcast Spotlight */}
+        <div className="life-sidebar-panel podcast-spotlight-panel">
+          <h3><FiMic /> Podcast Spotlight</h3>
+          <p>Listen to "The Quiet Mind" episode #42 discussing these principles.</p>
+        </div>
+
         {/* Related Stories */}
         {relatedArticles.length > 0 && (
           <div className="life-sidebar-panel">
             <h3>Related Reflections</h3>
             <div className="related-stories-list">
               {relatedArticles.map((item) => (
-                <Link to={`/articles/${item.slug}`} className="related-story-row" key={item.id}>
+                <Link to={`/articles/${item.slug}`} className="related-story-row" key={item.id || item._id}>
                   <div className="related-story-meta">
                     <span>{item.subcategory || "Habits"}</span>
                     <span>•</span>

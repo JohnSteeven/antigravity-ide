@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  FiArrowLeft,
+  FiArrowRight,
+  FiCompass,
   FiEye,
   FiEyeOff,
   FiFeather,
   FiHome,
-  FiKey,
-  FiLogIn,
+  FiLock,
   FiMail,
+  FiShield,
   FiUser,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
@@ -64,103 +67,145 @@ const Login = () => {
   return (
     <motion.main
       animate={{ opacity: 1 }}
-      className="auth-page login-auth-page"
+      className="auth-page login-auth-page centered-glass-login-page glass-split-login-page"
       initial={{ opacity: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <section className="auth-shell login-shell">
+      {/* Background Ambient Glows */}
+      <div className="glass-bg-glow glow-1" />
+      <div className="glass-bg-glow glow-2" />
+      <div className="glass-bg-glow glow-3" />
+
+      {/* Top Header Navigation */}
+      <header className="centered-login-header">
+        <Link className="auth-logo" to="/">
+          <span className="logo-brand-name">MyJourney</span>
+        </Link>
+
+        <Link className="auth-back-home" to="/">
+          <FiArrowLeft /> Back to Home
+        </Link>
+      </header>
+
+      {/* Main Two-Column Layout Container */}
+      <div className="glass-split-container">
+        {/* Left Side: Headline & Subheading */}
         <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="auth-brand-panel login-visual-panel"
-          initial={{ opacity: 0, y: 18 }}
-          transition={{ duration: 0.45 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="login-hero-left"
+          initial={{ opacity: 0, x: -28 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Link className="auth-logo" to="/">
-            <FiFeather />
-            MyJourney
-          </Link>
-          <div className="auth-brand-copy">
-            <span className="section-kicker">Secure reader space</span>
-            <h1>Welcome Back</h1>
-            <p>Log in to continue your journey of stories, lessons, and inspiration.</p>
-            <blockquote>
-              Every story you love is one step closer to your own beautiful journey.
-            </blockquote>
+          <div className="login-hero-badge">
+            <FiCompass className="badge-sparkle-icon" />
+            <span>Welcome</span>
+          </div>
+
+          <h1 className="login-hero-headline">
+            Explore Stories That <span className="headline-accent">Inspire</span> Every Journey.
+          </h1>
+
+          <p className="login-hero-subheading">
+            Whether you're here to learn something new, find inspiration, or simply enjoy great writing, MyJourney is built to make every visit meaningful.
+          </p>
+
+          <div className="login-hero-features">
+            <div className="hero-feature-item">
+              <span className="feature-check-icon">✓</span>
+              <span>Personalized Reading</span>
+            </div>
+            <div className="hero-feature-item">
+              <span className="feature-check-icon">✓</span>
+              <span>Save Your Favorites</span>
+            </div>
+            <div className="hero-feature-item">
+              <span className="feature-check-icon">✓</span>
+              <span>Continue Anywhere</span>
+            </div>
           </div>
         </motion.div>
 
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="login-form-panel"
-          initial={{ opacity: 0, y: 24 }}
-          transition={{ duration: 0.45, delay: 0.08 }}
-        >
-          <Link className="auth-back-home" to="/">
-            <FiHome /> Back to Home
-          </Link>
-
-          <div className="auth-card login-card">
-            <div className="auth-card-heading centered">
-              <span className="auth-icon">
-                <FiUser />
-              </span>
-              <div>
-                <h2>Log In</h2>
-                <p>Glad to see you again.</p>
-              </div>
+        {/* Right Side: Glassmorphism Login Form Card */}
+        <div className="login-hero-right">
+          <motion.div
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="auth-card login-card glass-login-card"
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            transition={{ duration: 0.45 }}
+          >
+            <div className="login-card-header">
+              <h2 className="login-card-title">Log In</h2>
+              <p className="login-card-subtitle">Sign in to continue exploring inspiring stories.</p>
             </div>
 
-            <form className="auth-form" onSubmit={handlePasswordLogin}>
-              <label>
-                Email or Mobile <span className="required-star">*</span>
-                <span className="input-icon">
-                  <FiMail />
+            <form className="auth-form login-form-body" onSubmit={handlePasswordLogin}>
+              <div className="login-field-group">
+                <label className="field-label" htmlFor="login-identifier">
+                  <span>
+                    Email or Mobile <span className="required-star">*</span>
+                  </span>
+                </label>
+                <div className="field-input-wrapper">
+                  <FiMail className="field-icon-left" />
                   <input
+                    id="login-identifier"
                     autoFocus
                     autoComplete="username"
                     aria-invalid={Boolean(errors.identifier)}
+                    placeholder="example@email.com"
                     value={form.identifier}
                     onChange={(event) => updateField("identifier", event.target.value)}
-                    placeholder="Enter your email or mobile"
                   />
-                </span>
-                {errors.identifier && <small>{errors.identifier}</small>}
-              </label>
+                </div>
+                {errors.identifier && (
+                  <small className="field-error-text">{errors.identifier}</small>
+                )}
+              </div>
 
-              <label>
-                Password <span className="required-star">*</span>
-                <span className="input-icon password-input">
-                  <FiKey />
+              <div className="login-field-group">
+                <label className="field-label" htmlFor="login-password">
+                  <span>
+                    Password <span className="required-star">*</span>
+                  </span>
+                </label>
+                <div className="field-input-wrapper">
+                  <FiLock className="field-icon-left" />
                   <input
+                    id="login-password"
                     autoComplete="current-password"
                     aria-invalid={Boolean(errors.password)}
+                    placeholder="••••••••"
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={(event) => updateField("password", event.target.value)}
-                    placeholder="Enter your password"
                   />
                   <button
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="password-toggle"
+                    className="password-eye-btn"
                     type="button"
                     onClick={() => setShowPassword((current) => !current)}
                   >
                     {showPassword ? <FiEyeOff /> : <FiEye />}
                   </button>
-                </span>
-                {errors.password && <small>{errors.password}</small>}
-              </label>
+                </div>
+                {errors.password && (
+                  <small className="field-error-text">{errors.password}</small>
+                )}
+              </div>
 
-              <div className="auth-form-row">
-                <label className="check-line">
+              <div className="login-options-row">
+                <label className="custom-checkbox-wrap">
                   <input
                     checked={form.remember}
                     type="checkbox"
                     onChange={(event) => updateField("remember", event.target.checked)}
                   />
-                  Remember Me
+                  <span className="checkbox-box"></span>
+                  <span className="checkbox-label-text">Remember Me</span>
                 </label>
-                <Link to="/forgot-password">Forgot Password?</Link>
+                <Link className="forgot-pass-link" to="/forgot-password">
+                  Forgot Password?
+                </Link>
               </div>
 
               {message && (
@@ -177,20 +222,26 @@ const Login = () => {
                 </div>
               )}
 
-              <button className="primary-btn auth-submit" disabled={isSubmitting} type="submit">
-                <FiLogIn /> {isSubmitting ? "Checking..." : "Log In"}
+              <button className="login-action-btn" disabled={isSubmitting} type="submit">
+                <span>{isSubmitting ? "Checking..." : "Start Reading"}</span>
+                <FiArrowRight className="btn-arrow-icon" />
               </button>
+
+              <div className="auth-trust-message">
+                <FiShield className="trust-shield-icon" />
+                <span>Protected with industry-standard security.</span>
+              </div>
             </form>
 
-            <p className="auth-switch">
+            <p className="auth-switch-text">
               Don't have an account?{" "}
               <Link to="/register" state={{ fromLogin: true }}>
                 Create an Account
               </Link>
             </p>
-          </div>
-        </motion.div>
-      </section>
+          </motion.div>
+        </div>
+      </div>
     </motion.main>
   );
 };

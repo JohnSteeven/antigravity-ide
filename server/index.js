@@ -31,6 +31,7 @@ const galleryRoutes = require("./routes/galleryRoutes");
 const newsletterCampaignRoutes = require("./routes/newsletterCampaignRoutes");
 const contactMessageRoutes = require("./routes/contactMessageRoutes");
 const newsRoutes = require("./routes/newsRoutes");
+const securityRoutes = require("./routes/securityRoutes");
 const path = require("path");
 
 const app = express();
@@ -61,6 +62,7 @@ app.get("/api/health", (req, res) => {
 // Auth & user routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", authenticate, userRoutes);
+app.use("/api/security", authenticate, securityRoutes);
 
 // Content routes (public reads, admin writes)
 app.use("/api/articles", articleRoutes);

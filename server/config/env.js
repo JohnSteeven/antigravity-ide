@@ -38,6 +38,12 @@ const env = {
     maxRetries: Number(process.env.MAX_EMAIL_RETRIES || 3),
     verificationTokenTtlHours: Number(process.env.VERIFICATION_TOKEN_TTL_HOURS || 24),
   },
+  forgotPasswordLimit: Number(process.env.FORGOT_PASSWORD_LIMIT || 5),
+  forgotPasswordWindowMs: Number(process.env.FORGOT_PASSWORD_WINDOW_MS || 60 * 60 * 1000),
+  passwordHistoryLimit: Number(process.env.PASSWORD_HISTORY_LIMIT || 5),
+  changePasswordRateLimit: Number(process.env.CHANGE_PASSWORD_RATE_LIMIT || 5),
+  changePasswordWindowMs: Number(process.env.CHANGE_PASSWORD_WINDOW_MS || 15 * 60 * 1000),
+  passwordMinLength: Number(process.env.PASSWORD_MIN_LENGTH || 8),
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,

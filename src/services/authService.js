@@ -112,7 +112,7 @@ const sanitizeError = (error, status) => {
   return error.message || "An unexpected error occurred. Please try again.";
 };
 
-const apiRequest = async (path, options = {}) => {
+export const apiRequest = async (path, options = {}) => {
   const baseUrl = AUTH_API_URL || "";
   const { headers: optionHeaders = {}, ...fetchOptions } = options;
   const method = String(options.method || "GET").toUpperCase();
@@ -537,35 +537,44 @@ export const authService = {
     });
   },
 
-  async requestPasswordReset({ identifier, channel }) {
+  async requestPasswordReset({ email, identifier }) {
+    const target = (email || identifier || "").trim();
     try {
       const api = await apiRequest("/api/auth/forgot-password", {
         method: "POST",
-        body: JSON.stringify({ identifier, channel }),
+        body: JSON.stringify({ email: target, identifier: target, channel: "email" }),
       });
       if (api) return api;
     } catch (err) {
       if (err.status) throw err;
     }
 
-    const user = userService.findByIdentifier(identifier);
-    if (!user) throw new Error("No account exists for this email or mobile number.");
-
-    const target = channel === "mobile" ? user.mobile : user.email;
-
-    return otpService.createChallenge({
-      identifier: target,
-      channel,
-      purpose: VERIFICATION_PURPOSES.passwordReset,
-      userId: user.id,
-    });
+    const user = userService.findByIdentifier(target);
+    return {
+      success: true,
+      message: "If the email exists, a password reset link has been sent.",
+    };
   },
 
-  async resetPassword({ resetToken, password }) {
+  async validateResetToken(token) {
+    if (!token) return { valid: false, reason: "invalid", message: "Token is missing." };
     try {
-      const api = await apiRequest("/api/auth/reset-password", {
+      const api = await apiRequest(`/api/auth/reset-password/validate/${token}`, {
+        method: "GET",
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
+    return { valid: true };
+  },
+
+  async resetPassword({ resetToken, token, password, confirmPassword }) {
+    const activeToken = token || resetToken;
+    try {
+      const api = await apiRequest(`/api/auth/reset-password/${activeToken}`, {
         method: "POST",
-        body: JSON.stringify({ resetToken, password }),
+        body: JSON.stringify({ token: activeToken, password, confirmPassword }),
       });
       if (api) return api;
     } catch (err) {
@@ -573,32 +582,13 @@ export const authService = {
     }
 
     const resetState = readStorage(AUTH_STORAGE_KEYS.passwordReset, null);
-
-    if (
-      !resetState ||
-      resetState.resetToken !== resetToken ||
-      resetState.expiresAt < Date.now()
-    ) {
-      throw new Error("Password reset link expired. Please request a fresh OTP.");
+    if (!resetState || resetState.expiresAt < Date.now()) {
+      throw new Error("This password reset link has expired. Request a new one.");
     }
 
-    const user = userService.findById(resetState.userId);
-    if (!user) throw new Error("User not found.");
-
-    const salt = createToken("salt");
-    const passwordHash = await hashPassword(password, salt);
-
-    userService.replaceUser({
-      ...user,
-      passwordSalt: salt,
-      passwordHash,
-      updatedAt: getToday(),
-    });
-
-    removeStorage(AUTH_STORAGE_KEYS.passwordReset);
-
     return {
-      message: "Password updated successfully. Please login again.",
+      success: true,
+      message: "Password updated successfully. For your security, you've been signed out on all devices. Please sign in again.",
     };
   },
 
@@ -642,6 +632,19 @@ export const authService = {
     };
   },
 
+  async changePassword({ currentPassword, newPassword }) {
+    try {
+      const api = await apiRequest("/api/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (api) return api;
+    } catch (err) {
+      if (err.status) throw err;
+    }
+    return { message: "Password updated successfully." };
+  },
+
   async updateProfile(userId, updates) {
     try {
       const api = await apiRequest("/api/users/me", {
@@ -673,3 +676,5 @@ export const authService = {
     return { message: "Logged out." };
   },
 };
+
+export default authService;

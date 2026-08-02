@@ -78,6 +78,7 @@ const CodingRightSidebar = ({
 
         {/* Newsletter Subscription */}
         <NewsletterPanel
+          category="coding"
           newsletterEmail={newsletterEmail}
           setNewsletterEmail={setNewsletterEmail}
           handleNewsletterSubmit={handleNewsletterSubmit}

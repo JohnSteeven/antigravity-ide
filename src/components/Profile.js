@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  FiActivity,
   FiBell,
   FiBookmark,
   FiBookOpen,
+  FiChevronDown,
+  FiChevronUp,
+  FiClock,
+  FiCornerDownRight,
+  FiEdit2,
   FiEdit3,
   FiGlobe,
   FiHeart,
+  FiLayers,
   FiLock,
   FiMail,
   FiMapPin,
@@ -22,6 +29,8 @@ import { useCms } from "../context/CmsContext";
 import { articleApi, userApi } from "../services/apiService";
 import { getFullName, getProfileCover } from "../utils/helpers";
 import UserAvatar from "./shared/UserAvatar";
+import SecuritySection from "./security/SecuritySection";
+import "./security/SecurityCenter.css";
 
 const formatDate = (value) => {
   if (!value) return "Not available";
@@ -33,6 +42,21 @@ const formatDate = (value) => {
     month: "short",
     day: "numeric",
   });
+};
+
+const getArticleReadingMinutes = (article) => {
+  if (!article) return 1;
+  if (typeof article.readTimeMinutes === "number") return article.readTimeMinutes;
+  const text = (article.content || article.excerpt || article.description || article.title || "").replace(/<[^>]+>/g, " ");
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
+};
+
+const formatArticleReadingTime = (article) => {
+  if (article?.readTime) return article.readTime;
+  if (article?.readingTime) return article.readingTime;
+  const mins = getArticleReadingMinutes(article);
+  return `${mins} min read`;
 };
 
 const getThemePreference = (profile) => {
@@ -53,6 +77,10 @@ const Profile = () => {
   });
   const [settingsMessage, setSettingsMessage] = useState("");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [libraryTab, setLibraryTab] = useState("overview");
+  const [communityTab, setCommunityTab] = useState("comments");
+  const [isLibraryExpanded, setIsLibraryExpanded] = useState(true);
+  const [isCommunityExpanded, setIsCommunityExpanded] = useState(true);
   const [expandedBookmarks, setExpandedBookmarks] = useState(false);
   const [expandedLiked, setExpandedLiked] = useState(false);
   const [expandedSaved, setExpandedSaved] = useState(false);
@@ -131,6 +159,21 @@ const Profile = () => {
     window.localStorage.setItem("myjourney-theme", settings.darkMode ? "dark" : "light");
   }, [settings.darkMode]);
 
+  const totalReadingTimeMins = useMemo(() => {
+    const uniqueMap = new Map();
+    [...bookmarked, ...liked, ...saved].forEach((art) => {
+      const key = art.id || art._id || art.slug;
+      if (key && !uniqueMap.has(key)) {
+        uniqueMap.set(key, art);
+      }
+    });
+    let sum = 0;
+    uniqueMap.forEach((art) => {
+      sum += getArticleReadingMinutes(art);
+    });
+    return sum;
+  }, [bookmarked, liked, saved]);
+
   const updateSetting = async (field) => {
     const nextValue = !settings[field];
     setSettings((current) => ({ ...current, [field]: nextValue }));
@@ -194,8 +237,16 @@ const Profile = () => {
       <>
         {visibleItems.map((article) => (
           <Link className="profile-article-row" to={`/articles/${article.slug}`} key={article.id || article._id}>
-            <strong>{article.title}</strong>
-            <span>{article.category}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "100%" }}>
+              <strong>{article.title}</strong>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>
+                <span>{article.category || "Article"}</span>
+                <span>•</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "var(--clay, #a5855f)", fontWeight: 600 }}>
+                  <FiClock style={{ fontSize: "0.78rem" }} /> {formatArticleReadingTime(article)}
+                </span>
+              </div>
+            </div>
           </Link>
         ))}
         {items.length > 2 && (
@@ -324,6 +375,285 @@ const Profile = () => {
           </dl>
         </section>
 
+        <section className="profile-panel my-library-panel" aria-label="My Library">
+          <button
+            className="sec-header-button settings-action"
+            type="button"
+            onClick={() => setIsLibraryExpanded((prev) => !prev)}
+            style={{ width: "100%" }}
+          >
+            <span className="sec-action-label">
+              <FiBookOpen style={{ fontSize: "1.1rem" }} /> My Library
+            </span>
+
+            <span className="sec-expand-indicator">
+              {isLibraryExpanded ? <><FiChevronUp /> Collapse Library</> : <><FiChevronDown /> View My Library</>}
+            </span>
+          </button>
+
+          <div className={`sec-section-wrap ${isLibraryExpanded ? "is-expanded" : ""}`}>
+            {/* Sub-navigation Tabs */}
+            <div className="profile-tab-nav">
+              <button
+                type="button"
+                className={`profile-subtab-btn ${libraryTab === "overview" ? "is-active" : ""}`}
+                onClick={() => setLibraryTab("overview")}
+              >
+                <FiLayers /> Overview
+              </button>
+              <button
+                type="button"
+                className={`profile-subtab-btn ${libraryTab === "saved" ? "is-active" : ""}`}
+                onClick={() => setLibraryTab("saved")}
+              >
+                <FiBookOpen /> Saved Articles ({saved.length})
+              </button>
+              <button
+                type="button"
+                className={`profile-subtab-btn ${libraryTab === "bookmarks" ? "is-active" : ""}`}
+                onClick={() => setLibraryTab("bookmarks")}
+              >
+                <FiBookmark /> Bookmarks ({bookmarked.length})
+              </button>
+              <button
+                type="button"
+                className={`profile-subtab-btn ${libraryTab === "liked" ? "is-active" : ""}`}
+                onClick={() => setLibraryTab("liked")}
+              >
+                <FiHeart /> Liked Articles ({liked.length})
+              </button>
+              <button
+                type="button"
+                className={`profile-subtab-btn ${libraryTab === "history" ? "is-active" : ""}`}
+                onClick={() => setLibraryTab("history")}
+              >
+                <FiClock /> Reading History
+              </button>
+            </div>
+
+            {/* Tab 1: Overview */}
+            {libraryTab === "overview" && (
+              <>
+                <div className="library-stats-header" style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  background: "var(--surface-variant, rgba(66, 108, 103, 0.06))",
+                  padding: "12px 20px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--line, rgba(66, 108, 103, 0.15))"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.88rem", fontWeight: 700, color: "var(--ink, #1e293b)" }}>
+                    <FiClock style={{ color: "var(--clay, #a5855f)", fontSize: "1.1rem" }} />
+                    <span>Total Estimated Reading Time: <strong style={{ color: "var(--teal, #426c67)" }}>{totalReadingTimeMins} mins</strong></span>
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)", fontWeight: 600 }}>
+                    <strong style={{ color: "var(--ink, #1e293b)" }}>{bookmarked.length + liked.length + saved.length}</strong> Saved Items
+                  </div>
+                </div>
+
+                <div className="my-library-grid" style={{ marginTop: "16px" }}>
+                  <div className="library-card">
+                    <h3 style={{ fontSize: "1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", color: "var(--ink, #1e293b)" }}>
+                      <FiBookOpen style={{ color: "var(--teal, #426c67)" }} /> Saved Articles
+                    </h3>
+                    {renderArticleList(saved, "No saved articles yet.", false, () => setLibraryTab("saved"))}
+                  </div>
+
+                  <div className="library-card">
+                    <h3 style={{ fontSize: "1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", color: "var(--ink, #1e293b)" }}>
+                      <FiBookmark style={{ color: "var(--clay, #a5855f)" }} /> Bookmarks
+                    </h3>
+                    {renderArticleList(bookmarked, "No bookmarks yet.", false, () => setLibraryTab("bookmarks"))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Tab 2: Saved Articles */}
+            {libraryTab === "saved" && (
+              <div className="library-card" style={{ padding: "24px" }}>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                  <FiBookOpen style={{ color: "var(--teal, #426c67)" }} /> Saved Articles ({saved.length})
+                </h3>
+                {renderArticleList(saved, "No saved articles in your library.", true, () => {})}
+              </div>
+            )}
+
+            {/* Tab 3: Bookmarks */}
+            {libraryTab === "bookmarks" && (
+              <div className="library-card" style={{ padding: "24px" }}>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                  <FiBookmark style={{ color: "var(--clay, #a5855f)" }} /> Bookmarked Articles ({bookmarked.length})
+                </h3>
+                {renderArticleList(bookmarked, "No bookmarks saved.", true, () => {})}
+              </div>
+            )}
+
+            {/* Tab 4: Liked Articles */}
+            {libraryTab === "liked" && (
+              <div className="library-card" style={{ padding: "24px" }}>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                  <FiHeart style={{ color: "#ef4444" }} /> Liked Articles ({liked.length})
+                </h3>
+                {renderArticleList(liked, "No liked articles yet.", true, () => {})}
+              </div>
+            )}
+
+            {/* Tab 5: Reading History */}
+            {libraryTab === "history" && (
+              <div className="coming-soon-card">
+                <span className="coming-soon-badge">Coming Soon</span>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "8px" }}>📜 Reading History</h3>
+                <p style={{ fontSize: "0.9rem", color: "var(--muted, #64748b)", maxWidth: "340px", margin: "0 0 16px 0" }}>
+                  Track your reading journey, article progress, and finish rates across all devices.
+                </p>
+                <button type="button" className="secondary-btn" disabled style={{ opacity: 0.6, fontSize: "0.85rem", padding: "6px 14px" }}>
+                  Feature In Development
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 💬 Community Section */}
+        <section className="profile-panel community-panel" aria-label="Community">
+          <button
+            className="sec-header-button settings-action"
+            type="button"
+            onClick={() => setIsCommunityExpanded((prev) => !prev)}
+            style={{ width: "100%" }}
+          >
+            <span className="sec-action-label">
+              <FiMessageCircle style={{ fontSize: "1.1rem" }} /> Community Activity
+            </span>
+
+            <span className="sec-expand-indicator">
+              {isCommunityExpanded ? <><FiChevronUp /> Collapse Community</> : <><FiChevronDown /> View Community</>}
+            </span>
+          </button>
+
+          <div className={`sec-section-wrap ${isCommunityExpanded ? "is-expanded" : ""}`}>
+            {/* Sub-navigation Tabs */}
+            <div className="profile-tab-nav">
+              <button
+                type="button"
+                className={`profile-subtab-btn ${communityTab === "comments" ? "is-active" : ""}`}
+                onClick={() => setCommunityTab("comments")}
+              >
+                <FiMessageCircle /> Comments ({(profile.comments || []).length})
+              </button>
+              <button
+                type="button"
+                className={`profile-subtab-btn ${communityTab === "replies" ? "is-active" : ""}`}
+                onClick={() => setCommunityTab("replies")}
+              >
+                <FiCornerDownRight /> Replies
+              </button>
+              <button
+                type="button"
+                className={`profile-subtab-btn ${communityTab === "drafts" ? "is-active" : ""}`}
+                onClick={() => setCommunityTab("drafts")}
+              >
+                <FiEdit2 /> Draft Comments
+              </button>
+            </div>
+
+            {/* Tab 1: Comments */}
+            {communityTab === "comments" && (
+              <div className="library-card" style={{ padding: "24px" }}>
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                  <FiMessageCircle style={{ color: "var(--teal, #426c67)" }} /> My Article Comments
+                </h3>
+                {(profile.comments || []).length ? (
+                  <>
+                    {(expandedComments ? profile.comments : profile.comments.slice(0, 3)).map((comment) => (
+                      <article className="profile-comment" key={comment.id || comment._id}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                          <strong>{comment.articleTitle}</strong>
+                          <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>{formatDate(comment.createdAt)}</span>
+                        </div>
+                        <p>{comment.text}</p>
+                      </article>
+                    ))}
+                    {(profile.comments || []).length > 3 && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedComments(!expandedComments)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--color-primary-light, #a5855f)",
+                          cursor: "pointer",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          marginTop: "10px",
+                          padding: "5px 0",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          textDecoration: "underline"
+                        }}
+                      >
+                        {expandedComments ? "Show Less" : `Show More (${profile.comments.length - 3} more)`}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="empty-state-container" style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    padding: "30px 15px",
+                    background: "rgba(255, 255, 255, 0.02)",
+                    border: "1px dashed rgba(255, 255, 255, 0.1)",
+                    borderRadius: "8px",
+                    marginTop: "5px",
+                    minHeight: "160px"
+                  }}>
+                    <span style={{ fontSize: "2rem", marginBottom: "10px" }} role="img" aria-label="comments">💬</span>
+                    <h4 style={{ fontSize: "1rem", fontWeight: "600", marginBottom: "6px", color: "var(--color-primary-light, #a5855f)" }}>No comments yet</h4>
+                    <p style={{ fontSize: "0.85rem", opacity: 0.7, maxWidth: "240px", lineHeight: "1.4", marginBottom: "12px" }}>
+                      Engage with stories and articles across MyJourney to see your comments listed here.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Replies */}
+            {communityTab === "replies" && (
+              <div className="coming-soon-card">
+                <span className="coming-soon-badge">Coming Soon</span>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "8px" }}>↩️ Replies to your Comments</h3>
+                <p style={{ fontSize: "0.9rem", color: "var(--muted, #64748b)", maxWidth: "340px", margin: "0 0 16px 0" }}>
+                  Get real-time updates and view responses from authors and fellow readers on your comments.
+                </p>
+                <button type="button" className="secondary-btn" disabled style={{ opacity: 0.6, fontSize: "0.85rem", padding: "6px 14px" }}>
+                  Feature In Development
+                </button>
+              </div>
+            )}
+
+            {/* Tab 3: Draft Comments */}
+            {communityTab === "drafts" && (
+              <div className="coming-soon-card">
+                <span className="coming-soon-badge">Coming Soon</span>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "8px" }}>✍️ Draft Comments</h3>
+                <p style={{ fontSize: "0.9rem", color: "var(--muted, #64748b)", maxWidth: "340px", margin: "0 0 16px 0" }}>
+                  Auto-save unfinished thoughts and article responses to publish whenever you're ready.
+                </p>
+                <button type="button" className="secondary-btn" disabled style={{ opacity: 0.6, fontSize: "0.85rem", padding: "6px 14px" }}>
+                  Feature In Development
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
         <section className="profile-panel account-settings-panel">
           <div className="profile-panel-heading">
             <span className="section-kicker">Account settings</span>
@@ -331,17 +661,6 @@ const Profile = () => {
           </div>
 
           <div className="settings-list">
-            <button
-              className="settings-action"
-              type="button"
-              onClick={() => setSettingsMessage("Use the secure password reset flow from the login screen.")}
-            >
-              <span>
-                <FiLock />
-                Change Password
-              </span>
-            </button>
-
             <label className="settings-toggle">
               <span>
                 <FiMoon />
@@ -377,6 +696,8 @@ const Profile = () => {
               />
             </label>
 
+            <SecuritySection user={user} />
+
             <button
               className="settings-action danger-text"
               type="button"
@@ -390,83 +711,6 @@ const Profile = () => {
           </div>
 
           {settingsMessage && <span className="profile-settings-note">{settingsMessage}</span>}
-        </section>
-
-        <section className="profile-panel profile-list-panel">
-          <h2>Bookmarks</h2>
-          {renderArticleList(bookmarked, "No bookmarks yet.", expandedBookmarks, setExpandedBookmarks)}
-        </section>
-
-        <section className="profile-panel profile-list-panel">
-          <h2>Liked Articles</h2>
-          {renderArticleList(liked, "No liked articles yet.", expandedLiked, setExpandedLiked)}
-        </section>
-
-        <section className="profile-panel profile-list-panel">
-          <h2><FiBookOpen /> Saved Articles</h2>
-          {renderArticleList(saved, "No saved articles yet.", expandedSaved, setExpandedSaved)}
-        </section>
-
-        <section className="profile-panel profile-list-panel">
-          <h2>Comments</h2>
-          {(profile.comments || []).length ? (
-            <>
-              {(expandedComments ? profile.comments : profile.comments.slice(0, 2)).map((comment) => (
-                <article className="profile-comment" key={comment.id || comment._id}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
-                    <strong>{comment.articleTitle}</strong>
-                    <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>{formatDate(comment.createdAt)}</span>
-                  </div>
-                  <p>{comment.text}</p>
-                </article>
-              ))}
-              {(profile.comments || []).length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => setExpandedComments(!expandedComments)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--color-primary-light, #a5855f)",
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                    fontWeight: "600",
-                    marginTop: "10px",
-                    padding: "5px 0",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    textDecoration: "underline"
-                  }}
-                >
-                  {expandedComments ? "Show Less" : `Show More (${profile.comments.length - 2} more)`}
-                </button>
-              )}
-            </>
-          ) : (
-            <div className="empty-state-container" style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              padding: "40px 20px",
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px dashed rgba(255, 255, 255, 0.1)",
-              borderRadius: "8px",
-              marginTop: "10px",
-              minHeight: "220px"
-            }}>
-              <span style={{ fontSize: "2.5rem", marginBottom: "15px" }} role="img" aria-label="comments">💬</span>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "600", marginBottom: "8px", color: "var(--color-primary-light, #a5855f)" }}>No comments yet</h3>
-              <p style={{ fontSize: "0.95rem", opacity: 0.7, maxWidth: "260px", lineHeight: "1.4", marginBottom: "20px" }}>
-                Once readers start engaging with your stories, their comments will appear here.
-              </p>
-              <Link to="/articles" className="primary-btn" style={{ fontSize: "0.9rem", padding: "8px 16px" }}>
-                Explore Articles
-              </Link>
-            </div>
-          )}
         </section>
 
       </section>

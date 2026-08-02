@@ -16,10 +16,12 @@ class AuthController {
       const [notifications, comments] = await Promise.all([
         Notification.find({ user: req.user._id })
           .sort({ createdAt: -1 })
-          .limit(20),
+          .limit(20)
+          .catch(() => []),
         Comment.find({ authorId: req.user._id, isDeleted: false })
           .populate("articleId", "title slug")
-          .sort({ createdAt: -1 }),
+          .sort({ createdAt: -1 })
+          .catch(() => []),
       ]);
 
       const safe = safeUser(req.user);
@@ -98,10 +100,12 @@ class AuthController {
       const [notifications, comments] = await Promise.all([
         Notification.find({ user: result.user._id })
           .sort({ createdAt: -1 })
-          .limit(20),
+          .limit(20)
+          .catch(() => []),
         Comment.find({ authorId: result.user._id, isDeleted: false })
           .populate("articleId", "title slug")
-          .sort({ createdAt: -1 }),
+          .sort({ createdAt: -1 })
+          .catch(() => []),
       ]);
 
       const safe = safeUser(result.user);
@@ -141,10 +145,12 @@ class AuthController {
       const [notifications, comments] = await Promise.all([
         Notification.find({ user: user._id })
           .sort({ createdAt: -1 })
-          .limit(20),
+          .limit(20)
+          .catch(() => []),
         Comment.find({ authorId: user._id, isDeleted: false })
           .populate("articleId", "title slug")
-          .sort({ createdAt: -1 }),
+          .sort({ createdAt: -1 })
+          .catch(() => []),
       ]);
 
       const safe = safeUser(user);
@@ -188,12 +194,19 @@ class AuthController {
 
   async forgotPassword(req, res, next) {
     try {
-      const challenge = await authService.sendOtp({
-        identifier: req.body.identifier,
-        channel: req.body.channel,
-        purpose: "password-reset",
-      });
-      res.json(challenge);
+      const emailOrIdentifier = req.body.email || req.body.identifier;
+      const result = await authService.requestPasswordReset(emailOrIdentifier, req);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async validateResetToken(req, res, next) {
+    try {
+      const token = req.params.token;
+      const result = await authService.validateResetToken(token);
+      res.json(result);
     } catch (err) {
       next(err);
     }
@@ -201,9 +214,10 @@ class AuthController {
 
   async resetPassword(req, res, next) {
     try {
-      const { resetToken, password } = req.body;
-      await authService.resetPassword(resetToken, password, res);
-      res.json({ message: "Password updated successfully. Please login again." });
+      const token = req.params.token || req.body.token || req.body.resetToken;
+      const { password, confirmPassword } = req.body;
+      const result = await authService.resetPasswordWithToken(token, password, confirmPassword, req, res);
+      res.json(result);
     } catch (err) {
       next(err);
     }
@@ -264,11 +278,8 @@ class AuthController {
   async changePassword(req, res, next) {
     try {
       const { currentPassword, newPassword } = req.body;
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: "Current and new passwords are required." });
-      }
-      await authService.changePassword(req.user._id, currentPassword, newPassword);
-      res.json({ success: true, message: "Password updated successfully." });
+      const result = await authService.changePassword(req.user._id, currentPassword, newPassword, req, res);
+      res.json(result);
     } catch (err) {
       next(err);
     }

@@ -27,6 +27,7 @@ import Register from "./components/Register";
 import VerifyOTP from "./components/VerifyOTP";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
+import ResetPasswordSuccess from "./components/ResetPasswordSuccess";
 import Profile from "./components/Profile";
 import EditProfile from "./components/EditProfile";
 import ReadMyStory from "./components/ReadMyStory.js";
@@ -56,8 +57,9 @@ const AppShell = () => {
     "/verify-otp",
     "/forgot-password",
     "/reset-password",
+    "/reset-password-success",
   ];
-  const isAuthRoute = authRoutes.includes(location.pathname);
+  const isAuthRoute = authRoutes.some((route) => location.pathname.startsWith(route));
 
   useEffect(() => {
     if (location.hash) {
@@ -189,6 +191,18 @@ const appRouter = createBrowserRouter([
             <ResetPassword />
           </GuestRoute>
         ),
+      },
+      {
+        path: "reset-password/:token",
+        element: (
+          <GuestRoute>
+            <ResetPassword />
+          </GuestRoute>
+        ),
+      },
+      {
+        path: "reset-password-success",
+        element: <ResetPasswordSuccess />,
       },
       {
         path: "profile",

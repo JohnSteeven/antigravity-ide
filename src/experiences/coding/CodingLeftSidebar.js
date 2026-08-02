@@ -134,7 +134,7 @@ const CodingLeftSidebar = ({
         )}
 
         {/* Reading Progress */}
-        <ReadingProgress scrollProgress={scrollProgress} />
+        <ReadingProgress scrollProgress={scrollProgress} article={article} category="coding" />
       </div>
     </aside>
   );

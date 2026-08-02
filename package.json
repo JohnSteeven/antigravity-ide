@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "article",
   "scripts": {
-    "start": "concurrently \"node server/index.js\" \"parcel index.html --port 1234\"",
-    "dev": "concurrently \"node server/index.js\" \"parcel index.html --port 1234\"",
-    "client": "parcel index.html --port 1234",
+    "start": "concurrently \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
+    "dev": "concurrently \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
+    "client": "parcel index.html --port 1234 --no-cache",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
-    "build": "parcel build index.html",
+    "build": "parcel build index.html --no-cache",
     "seed:articles": "node server/scripts/seedArticles.js",
     "test": "jest"
   },

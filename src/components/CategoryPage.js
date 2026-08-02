@@ -3,7 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { categoryBlueprintBySlug } from "../domain/knowledgeArchitecture";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";
-import CategoryLanding from "../features/categories/CategoryLanding";
+import LandingPageResolver from "../landings/LandingPageResolver";
 import LoadingScreen from "./LoadingScreen";
 import NewsPage from "./NewsPage";
 
@@ -13,7 +13,7 @@ const CategoryPage = () => {
   const [apiArticles, setApiArticles] = useState(null);
 
   const category =
-    data.categories.find((item) => item.slug === slug && !item.isDeleted && item.isActive !== false) || categoryBlueprintBySlug[slug];
+    (data?.categories || []).find((item) => item.slug === slug && !item.isDeleted && item.isActive !== false) || categoryBlueprintBySlug[slug];
 
   if (slug === "news") {
     return <NewsPage category={category} />;
@@ -45,10 +45,10 @@ const CategoryPage = () => {
   }
 
   // Prefer API articles; fall back to CmsContext (only published), synced with live CmsContext metrics
-  const articles = (apiArticles || data.articles)
-    .filter(a => a.status === "published")
+  const articles = (apiArticles || data?.articles || [])
+    .filter(a => a && a.status === "published")
     .map(a => {
-      const synced = data.articles.find(x => x.id === a.id || x._id === a.id || x.id === a._id || x._id === a._id);
+      const synced = (data?.articles || []).find(x => x && (x.id === a.id || x._id === a.id || x.id === a._id || x._id === a._id));
       if (synced) {
         return {
           ...a,
@@ -61,9 +61,9 @@ const CategoryPage = () => {
     });
 
   return (
-    <CategoryLanding
+    <LandingPageResolver
       category={category}
-      allCategories={data.categories}
+      allCategories={data?.categories || []}
       allArticles={articles}
       incrementArticle={incrementArticle}
     />
@@ -71,3 +71,4 @@ const CategoryPage = () => {
 };
 
 export default CategoryPage;
+

@@ -24,6 +24,7 @@ async function seedArticles() {
       const categoryModel = await Category.findOne({ slug: categorySlug });
       
       const mappedArticle = {
+        ...art,
         title: art.title,
         slug: art.slug,
         description: art.description,
@@ -37,7 +38,7 @@ async function seedArticles() {
         isPinned: art.pinned !== undefined ? art.pinned : false,
         publishedAt: art.publishedAt ? new Date(art.publishedAt) : new Date(),
         updatedAt: art.updatedAt ? new Date(art.updatedAt) : new Date(),
-        readingTime: art.readingTime || "5 min read",
+        readingTime: art.readingTime || "15 min read",
         authorId,
         author: authorName,
         category: art.category,
@@ -50,13 +51,6 @@ async function seedArticles() {
         bookmarks: art.bookmarks || 0,
         rating: art.rating || 4.5,
         isDeleted: false,
-        // Custom premium storytelling metadata fields (optional)
-        difficulty: art.difficulty || undefined,
-        location: art.location || undefined,
-        weather: art.weather || undefined,
-        budget: art.budget || undefined,
-        bestTime: art.bestTime || undefined,
-        tips: art.tips || undefined,
       };
 
       await Article.findOneAndUpdate(

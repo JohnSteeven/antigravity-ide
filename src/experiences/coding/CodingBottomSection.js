@@ -1,7 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiCode, FiTerminal, FiArrowRight, FiCheckCircle } from "react-icons/fi";
+import { FiCode, FiTerminal, FiArrowRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import CommentsSection from "../shared/widgets/CommentsSection";
+
+const formatReadingTime = (val) => {
+  if (!val) return "5 min read";
+  const num = String(val).replace(/read/gi, "").replace(/min/gi, "").trim();
+  return num ? `${num} min read` : "5 min read";
+};
 
 const CodingBottomSection = ({
   article,
@@ -12,11 +18,15 @@ const CodingBottomSection = ({
   commentMessage,
   relatedArticles = [],
 }) => {
+  const [showAll, setShowAll] = useState(false);
+
   const cliCommands = article.cliCommands || [
     "git clone " + (article.githubUrl || "https://github.com"),
     "npm install",
     "npm start",
   ];
+
+  const visibleArticles = showAll ? relatedArticles : relatedArticles.slice(0, 2);
 
   return (
     <footer className="coding-bottom-section">
@@ -37,6 +47,7 @@ const CodingBottomSection = ({
 
       {/* Comments Section */}
       <CommentsSection
+        category="coding"
         approvedComments={approvedComments}
         comment={comment}
         setComment={setComment}
@@ -51,7 +62,7 @@ const CodingBottomSection = ({
             <FiCode /> Recommended Tech Tutorials
           </h3>
           <div className="coding-reads-grid">
-            {relatedArticles.slice(0, 3).map((rel) => (
+            {visibleArticles.map((rel) => (
               <Link
                 key={rel._id || rel.id}
                 to={`/articles/${rel.slug}`}
@@ -59,7 +70,7 @@ const CodingBottomSection = ({
               >
                 <div className="card-top-bar">
                   <span className="card-lang">{rel.subcategory || rel.category || "Tech"}</span>
-                  <span className="card-time">{rel.readingTime || 5} min</span>
+                  <span className="card-time">{formatReadingTime(rel.readingTime)}</span>
                 </div>
                 <h4>{rel.title}</h4>
                 <p>{rel.excerpt}</p>
@@ -69,6 +80,22 @@ const CodingBottomSection = ({
               </Link>
             ))}
           </div>
+
+          {relatedArticles.length > 2 && (
+            <div className="view-more-container">
+              <button
+                type="button"
+                className="view-more-btn"
+                onClick={() => setShowAll((prev) => !prev)}
+              >
+                {showAll ? (
+                  <>Show Less <FiChevronUp /></>
+                ) : (
+                  <>View More Tutorials ({relatedArticles.length - 2} more) <FiChevronDown /></>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </footer>
