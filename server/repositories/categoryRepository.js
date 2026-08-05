@@ -1,12 +1,37 @@
-const Category = require("../models/Category");
+const Category = require('../models/Category');
 
+/**
+ * CategoryRepository — single access layer for all Category DB operations.
+ *
+ * Visibility filters:
+ *   publicOnly = true  →  only return published + active + public categories
+ *   publicOnly = false →  return everything (CMS admin view, includes hidden)
+ *
+ * Soft delete:
+ *   includeDeleted = true  →  include soft-deleted records (admin audit)
+ *   includeDeleted = false →  exclude them (default)
+ */
 class CategoryRepository {
   async find(filter = {}, sort = { sortOrder: 1, name: 1 }, includeDeleted = false) {
     const query = { ...filter };
     if (!includeDeleted) {
       query.isDeleted = false;
     }
-    return Category.find(query)
+    return Category.find(query).sort(sort).lean();
+  }
+
+  /**
+   * Public-only query: active + published + public visibility.
+   * Used by all public-facing pages (homepage, navigation, search, sitemap).
+   */
+  async findPublic(extraFilter = {}, sort = { sortOrder: 1, name: 1 }) {
+    return Category.find({
+      isDeleted: false,
+      isActive: true,
+      status: 'published',
+      visibility: 'public',
+      ...extraFilter,
+    })
       .sort(sort)
       .lean();
   }

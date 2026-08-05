@@ -1,0 +1,190 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  variables.css  —  Master Design Token System
+ *  MyJourney CMS  |  Layer X: Design System
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ *  SINGLE SOURCE OF TRUTH for every visual value.
+ *  The Theme Builder modifies only this file via CSS variable overrides.
+ *  Never hardcode colors, radii, shadows, or transitions in components.
+ *
+ *  Token Naming Convention:
+ *    --{category}-{variant}
+ *    e.g. --color-teal, --radius-md, --shadow-lg
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+:root {
+
+  /* ── Brand Color Palette ─────────────────────────────────────────────────── */
+  --color-teal:          #426c67;
+  --color-teal-dark:     #2f4e4a;
+  --color-teal-light:    #e8f0ef;
+  --color-gold:          #b58b5f;
+  --color-gold-dark:     #8f6b48;
+  --color-gold-light:    #f5ebe0;
+  --color-clay:          #a85f49;
+  --color-clay-light:    #f5ece9;
+  --color-blue:          #4d6478;
+  --color-blue-light:    #eaf0f5;
+
+  /* ── Semantic Surface Colors ─────────────────────────────────────────────── */
+  /* These map to the existing --paper, --surface, --soft, --ink, --muted, --line */
+  --color-paper:         #fbfaf7;
+  --color-surface:       #ffffff;
+  --color-soft:          #f1eee8;
+  --color-ink:           #2f3133;
+  --color-muted:         #666d6d;
+  --color-line:          #e4ded4;
+
+  /* ── Status / Feedback Colors ─────────────────────────────────────────────── */
+  --color-success:       #2e7d5a;
+  --color-success-bg:    #e8f5ee;
+  --color-danger:        #9d3e32;
+  --color-danger-bg:     #fdf1f0;
+  --color-warning:       #b58b5f;
+  --color-warning-bg:    #fdf6ee;
+  --color-info:          #4d6478;
+  --color-info-bg:       #eaf0f5;
+
+  /* ── Panel & Control Tokens ──────────────────────────────────────────────── */
+  --color-panel:         #ffffff;
+  --color-panel-muted:   #f8faf8;
+  --color-control-bg:    #ffffff;
+  --color-control-border:#d7cec3;
+
+  /* ── CMS-Specific Tokens ─────────────────────────────────────────────────── */
+  --cms-bg:              #f3f6f4;
+  --cms-sidebar:         #1e2523;
+  --cms-sidebar-text:    #ffffff;
+  --cms-accent:          #426c67;    /* THE canonical CMS accent — used everywhere in CMS */
+  --cms-accent-hover:    #2f4e4a;
+  --cms-accent-light:    #e8f0ef;
+  --cms-accent-muted:    rgba(66, 108, 103, 0.12);
+
+  /* ── Border Radius Scale ─────────────────────────────────────────────────── */
+  --radius-xs:    2px;
+  --radius-sm:    4px;
+  --radius-md:    8px;
+  --radius-lg:    14px;
+  --radius-xl:    20px;
+  --radius-2xl:   28px;
+  --radius-full:  100px;
+
+  /* ── Shadow Scale ────────────────────────────────────────────────────────── */
+  --shadow-xs:  0 1px 2px rgba(47, 49, 51, 0.04);
+  --shadow-sm:  0 1px 4px rgba(47, 49, 51, 0.06);
+  --shadow-md:  0 4px 16px rgba(47, 49, 51, 0.09);
+  --shadow-lg:  0 18px 45px rgba(47, 49, 51, 0.08);
+  --shadow-xl:  0 32px 64px rgba(47, 49, 51, 0.12);
+
+  /* ── Transition Scale ────────────────────────────────────────────────────── */
+  --transition-fast:    0.12s ease;
+  --transition-normal:  0.18s ease;
+  --transition-slow:    0.32s ease;
+  --transition-spring:  0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+  /* ── Spacing Scale (4-point grid) ────────────────────────────────────────── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-7:   32px;
+  --space-8:   48px;
+  --space-9:   64px;
+  --space-10:  96px;
+  --space-11: 128px;
+
+  /* ── Typography ──────────────────────────────────────────────────────────── */
+  --font-body:     Inter, "Segoe UI", Arial, sans-serif;
+  --font-heading:  Georgia, "Times New Roman", serif;
+  --font-mono:     "JetBrains Mono", Consolas, "Courier New", monospace;
+
+  --font-size-xs:  0.72rem;    /*  ~11.5px */
+  --font-size-sm:  0.82rem;    /*  ~13px   */
+  --font-size-md:  0.95rem;    /*  ~15px   */
+  --font-size-base:1rem;       /*   16px   */
+  --font-size-lg:  1.1rem;     /*  ~17.5px */
+  --font-size-xl:  1.25rem;    /*   20px   */
+  --font-size-2xl: 1.5rem;     /*   24px   */
+  --font-size-3xl: 2rem;       /*   32px   */
+  --font-size-4xl: 3rem;       /*   48px   */
+
+  --font-weight-normal:  400;
+  --font-weight-medium:  500;
+  --font-weight-semibold:600;
+  --font-weight-bold:    700;
+  --font-weight-black:   800;
+
+  --line-height-tight:   1.2;
+  --line-height-snug:    1.4;
+  --line-height-normal:  1.6;
+  --line-height-loose:   1.8;
+
+  /* ── Z-Index Scale ───────────────────────────────────────────────────────── */
+  --z-below:    -1;
+  --z-base:      0;
+  --z-raised:    1;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-header:  1000;
+  --z-modal:   2000;
+  --z-toast:   3000;
+  --z-overlay: 4000;
+
+  /* ── Breakpoints (also available to JS via getComputedStyle) ─────────────── */
+  --bp-mobile:  480px;
+  --bp-tablet:  768px;
+  --bp-laptop:  1024px;
+  --bp-desktop: 1280px;
+  --bp-wide:    1440px;
+
+  /* ── Layout Tokens ───────────────────────────────────────────────────────── */
+  --header-height:       74px;
+  --cms-sidebar-width:   240px;
+  --content-max-width:   1200px;
+  --article-max-width:   720px;
+  --form-max-width:      560px;
+
+  /* ── Focus Ring ──────────────────────────────────────────────────────────── */
+  --focus-ring:  0 0 0 3px rgba(66, 108, 103, 0.24);
+  --focus-ring-danger: 0 0 0 3px rgba(157, 62, 50, 0.24);
+
+}
+
+/* ── Dark Mode Token Overrides ──────────────────────────────────────────────── */
+/*
+ * Only override the tokens that change in dark mode.
+ * Component CSS uses the tokens above — dark mode is automatic.
+ */
+body.theme-dark {
+  --color-paper:         #131716;
+  --color-surface:       #1d2422;
+  --color-soft:          #222a28;
+  --color-ink:           #f8f4ed;
+  --color-muted:         #c3ccc8;
+  --color-line:          rgba(255, 255, 255, 0.14);
+
+  --color-panel:         #1d2422;
+  --color-panel-muted:   #26302d;
+  --color-control-bg:    #151b1a;
+  --color-control-border:rgba(255, 255, 255, 0.18);
+
+  --color-success-bg:    rgba(46, 125, 90, 0.12);
+  --color-danger-bg:     rgba(157, 62, 50, 0.12);
+  --color-warning-bg:    rgba(181, 139, 95, 0.12);
+  --color-info-bg:       rgba(77, 100, 120, 0.12);
+
+  --cms-bg:              #111615;
+  --cms-sidebar:         #151b1a;
+  --cms-accent-light:    rgba(66, 108, 103, 0.18);
+  --cms-accent-muted:    rgba(66, 108, 103, 0.20);
+
+  --shadow-sm:  0 1px 4px rgba(0, 0, 0, 0.18);
+  --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.22);
+  --shadow-lg:  0 20px 52px rgba(0, 0, 0, 0.34);
+  --shadow-xl:  0 32px 64px rgba(0, 0, 0, 0.42);
+}

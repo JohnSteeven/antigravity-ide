@@ -1,4 +1,5 @@
 :root {
+  /* ── Existing Tokens (unchanged) ── */
   --paper: #fbfaf7;
   --surface: #ffffff;
   --soft: #f1eee8;
@@ -19,6 +20,43 @@
   --cms-bg: #f3f6f4;
   --cms-sidebar: #1e2523;
   --cms-sidebar-strong: #ffffff;
+
+  /* ── Design System Additions (Layer X) ── */
+  /* CMS accent — canonical token (previously hardcoded inline as #426c67) */
+  --cms-accent:       #426c67;
+  --cms-accent-hover: #2f4e4a;
+  --cms-accent-light: #e8f0ef;
+  --cms-accent-muted: rgba(66, 108, 103, 0.12);
+
+  /* Border radius scale */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 100px;
+
+  /* Shadow scale */
+  --shadow-sm: 0 1px 4px rgba(47, 49, 51, 0.06);
+  --shadow-md: 0 4px 16px rgba(47, 49, 51, 0.09);
+  --shadow-lg: 0 18px 45px rgba(47, 49, 51, 0.08);
+
+  /* Transition scale */
+  --transition-fast:   0.12s ease;
+  --transition-normal: 0.18s ease;
+  --transition-slow:   0.32s ease;
+
+  /* Status colors */
+  --color-success:    #2e7d5a;
+  --color-success-bg: #e8f5ee;
+  --color-danger:     #9d3e32;
+  --color-danger-bg:  #fdf1f0;
+  --color-warning:    #b58b5f;
+  --color-warning-bg: #fdf6ee;
+  --color-info:       #4d6478;
+  --color-info-bg:    #eaf0f5;
+
+  /* Layout */
+  --header-height: 74px;
 }
 
 * {

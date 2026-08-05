@@ -39,3 +39,13 @@ prisma/migrations/
 # Backups
 server/backups/
 
+# Scratch / temporary files (root-level dev artifacts)
+scratch_*.css
+scratch_*.js
+reset_admin.js
+
+# User uploads — never commit real upload content
+uploads/
+
+# IDE brain data
+brain/

@@ -1,59 +1,58 @@
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const mediaController = require("../controllers/mediaController");
-const { authenticate } = require("../middleware/auth");
-const { requireAdmin } = require("../middleware/admin");
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  mediaRoutes.js  —  Digital Asset Management (DAM) API Routes
+ *  MyJourney CMS  |  Phase 2: Media Library 2.0
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const mediaController = require('../controllers/mediaController');
+const { authenticate } = require('../middleware/auth');
+const apiRegistry = require('../core/apiRegistry');
 
 const router = express.Router();
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const folder = (req.body.folder || req.query.folder || "misc").toLowerCase();
-    const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "uploads", "misc"];
-    const targetFolder = allowedFolders.includes(folder) ? folder : "misc";
-    const dest = path.join(__dirname, "../../uploads", targetFolder);
-    if (!fs.existsSync(dest)) {
-      fs.mkdirSync(dest, { recursive: true });
-    }
-    cb(null, dest);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const cleanName = path.basename(file.originalname, ext).toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    cb(null, `${cleanName}-${uniqueSuffix}${ext}`);
-  }
-});
-
-// File Type Filter Validation
-const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
-  if (allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
-    cb(null, true);
-  } else {
-    cb(new Error("Invalid file type. Only JPG, JPEG, PNG, WEBP, and GIF are allowed."), false);
-  }
-};
-
+// Memory Storage for Multer so StorageFactory adapter handles writing
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max
 });
 
-// Routes
-router.get("/", authenticate, requireAdmin, mediaController.getMediaFiles);
-router.get("/folders", authenticate, requireAdmin, mediaController.getFolders);
+// Folders CRUD
+router.get('/folders', authenticate, mediaController.getFolders);
+router.post('/folders', authenticate, mediaController.createFolder);
+router.patch('/folders/:id', authenticate, mediaController.updateFolder);
+router.delete('/folders/:id', authenticate, mediaController.deleteFolder);
 
-// File Upload - Using Multer single file upload with field name "file"
-router.post("/", authenticate, requireAdmin, upload.single("file"), mediaController.uploadFile);
+// Asset Operations & Queries
+router.get('/', authenticate, mediaController.getMedia);
+router.get('/usage/:id', authenticate, mediaController.getAssetUsage);
+router.get('/:id', authenticate, mediaController.getMediaById);
 
-router.put("/:id/rename", authenticate, requireAdmin, mediaController.renameMedia);
-router.put("/:id/move", authenticate, requireAdmin, mediaController.moveMedia);
-router.post("/:id/restore", authenticate, requireAdmin, mediaController.restoreFile);
-router.delete("/:id", authenticate, requireAdmin, mediaController.deleteFile);
+router.post('/', authenticate, upload.single('file'), mediaController.uploadMedia);
+router.post('/upload', authenticate, upload.single('file'), mediaController.uploadMedia);
+router.post('/replace/:id', authenticate, upload.single('file'), mediaController.replaceMedia);
+
+router.patch('/:id', authenticate, mediaController.updateMedia);
+router.delete('/:id', authenticate, mediaController.deleteMedia);
+
+// Bulk Operations
+router.post('/bulk', authenticate, mediaController.bulkAction);
+router.post('/move', authenticate, (req, res, next) => { req.body.action = 'move'; next(); }, mediaController.bulkAction);
+router.post('/archive', authenticate, (req, res, next) => { req.body.action = 'archive'; next(); }, mediaController.bulkAction);
+
+// Legacy route aliases
+router.put('/:id/rename', authenticate, mediaController.updateMedia);
+router.delete('/:id/file', authenticate, mediaController.deleteMedia);
+
+apiRegistry.register({
+  name: 'MediaLibrary',
+  prefix: '/api/media',
+  router,
+  public: false,
+});
 
 module.exports = router;

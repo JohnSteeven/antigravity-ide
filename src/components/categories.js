@@ -71,8 +71,15 @@ const ExploreCategories = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { data } = useCms();
   const rawCategories = (data?.categories && data.categories.length > 0) ? data.categories : cmsSeed.categories;
-  const filteredList = rawCategories.filter((c) => !c.isDeleted && c.isActive !== false);
-  const order = ["life", "reflections", "incidents", "lessons", "travel", "news", "coding"];
+  const filteredList = rawCategories.filter(
+    (c) =>
+      !c.isDeleted &&
+      c.isActive !== false &&
+      (c.status === undefined || c.status === 'published') &&
+      (c.visibility === undefined || c.visibility === 'public') &&
+      c.showOnHomepage !== false
+  );
+  const order = ['life', 'reflections', 'incidents', 'lessons', 'travel', 'news', 'coding'];
   const categoriesList = [...filteredList].sort((a, b) => {
     const indexA = order.indexOf(a.slug?.toLowerCase());
     const indexB = order.indexOf(b.slug?.toLowerCase());

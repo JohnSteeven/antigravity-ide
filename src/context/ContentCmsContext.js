@@ -380,11 +380,31 @@ export const ContentCmsProvider = ({ children }) => {
       const payload = {
         name: category.name,
         slug: category.slug || slugify(category.name),
-        description: category.description || "",
-        longDescription: category.longDescription || "",
-        icon: category.icon || "book",
-        heroImage: category.heroImage || "",
+        description: category.description || '',
+        longDescription: category.longDescription || '',
+        icon: category.icon || 'book',
+        heroImage: category.heroImage || '',
+        accentColor: category.accentColor || '',
+        layoutTemplate: category.layoutTemplate || 'default',
+        sortOrder: category.sortOrder !== undefined ? category.sortOrder : 0,
+        isFeatured: Boolean(category.isFeatured),
+        // Lifecycle
+        status: category.status || 'published',
         isActive: category.isActive !== undefined ? category.isActive : true,
+        visibility: category.visibility || 'public',
+        // Surface controls
+        showOnHomepage: category.showOnHomepage !== undefined ? category.showOnHomepage : true,
+        showInNavigation: category.showInNavigation !== undefined ? category.showInNavigation : true,
+        showInFooter: category.showInFooter !== undefined ? category.showInFooter : false,
+        showInSearch: category.showInSearch !== undefined ? category.showInSearch : true,
+        includeInSitemap: category.includeInSitemap !== undefined ? category.includeInSitemap : true,
+        // Content rules
+        allowArticles: category.allowArticles !== undefined ? category.allowArticles : true,
+        allowComments: category.allowComments !== undefined ? category.allowComments : true,
+        // SEO
+        seoTitle: category.seoTitle || '',
+        seoDescription: category.seoDescription || '',
+        seoKeywords: category.seoKeywords || [],
       };
       const targetId = category.id || category._id;
       let saved;

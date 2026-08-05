@@ -442,3 +442,37 @@ export const newsApi = {
   getStats: () => get("/api/news/analytics/stats"),
 };
 
+const apiService = {
+  request,
+  get,
+  post,
+  postFormData,
+  put,
+  patch,
+  delete: del,
+  del,
+  articles: articleApi,
+  categories: categoryApi,
+  tags: tagApi,
+  media: mediaApi,
+  comments: commentApi,
+  settings: settingApi,
+  users: userApi,
+  roles: roleApi,
+  permissions: permissionApi,
+  news: newsApi,
+  articleApi,
+  categoryApi,
+  tagApi,
+  mediaApi,
+  commentApi,
+  settingApi,
+  userApi,
+  roleApi,
+  permissionApi,
+  newsApi,
+};
+
+export default apiService;
+
+

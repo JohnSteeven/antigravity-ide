@@ -227,7 +227,7 @@ export const articleCapabilityGroups = [
 
 export const cmsNavigation = [
   {
-    group: "Publishing",
+    group: "Stage 1: Publishing",
     items: [
       { id: "overview", label: "Dashboard", icon: "dashboard" },
       { id: "articles", label: "Articles", icon: "edit" },
@@ -239,7 +239,7 @@ export const cmsNavigation = [
     ],
   },
   {
-    group: "Access",
+    group: "Stage 1: Access Control",
     items: [
       { id: "users", label: "Users", icon: "users" },
       { id: "roles", label: "Roles", icon: "shield" },
@@ -247,7 +247,7 @@ export const cmsNavigation = [
     ],
   },
   {
-    group: "Experience",
+    group: "Stage 1: Site Experience",
     items: [
       { id: "analytics", label: "Analytics", icon: "analytics" },
       { id: "seo", label: "SEO", icon: "search" },
@@ -264,13 +264,70 @@ export const cmsNavigation = [
     ],
   },
   {
-    group: "Operations",
+    group: "Stage 2: Post-Launch Engines",
     items: [
-      { id: "newsletters", label: "Newsletters", icon: "send" },
-      { id: "contact", label: "Contact Messages", icon: "mail" },
-      { id: "backups", label: "Backups", icon: "archive" },
-      { id: "logs", label: "Logs", icon: "activity" },
-      { id: "profile", label: "Profile", icon: "profile" },
+      { id: "workflow", label: "Editorial Workflow", icon: "git-branch" },
+      { id: "version-control", label: "Version Control", icon: "clock" },
+      { id: "automation", label: "Automation Scheduler", icon: "cpu" },
+      { id: "forms", label: "Form Builder & Leads", icon: "file-text" },
+      { id: "plugins", label: "Plugin Platform", icon: "package" },
+      { id: "localization", label: "Localization & i18n", icon: "globe" },
+    ],
+  },
+  {
+    group: "Stage 2: Design Systems",
+    items: [
+      { id: "website-builder", label: "Website Builder", icon: "layout" },
+      { id: "theme-builder", label: "Theme Builder", icon: "sliders" },
+      { id: "design-tokens", label: "Design Tokens", icon: "layers" },
+      { id: "components", label: "Component Library", icon: "grid" },
+      { id: "settings-registry", label: "Settings Registry", icon: "settings" },
+    ],
+  },
+  {
+    group: 'Stage 1: Operations',
+    items: [
+      { id: 'newsletters', label: 'Newsletters', icon: 'send' },
+      { id: 'contact', label: 'Contact Messages', icon: 'mail' },
+      { id: 'backups', label: 'Backups', icon: 'archive' },
+      { id: 'logs', label: 'Logs', icon: 'activity' },
+      { id: 'profile', label: 'Profile', icon: 'profile' },
+    ],
+  },
+  {
+    group: 'Stage 3: AI Intelligence',
+    items: [
+      { id: 'ai-providers',       label: 'AI Provider Manager',     icon: 'cpu' },
+      { id: 'ai-writer',          label: 'AI Writing Assistant',    icon: 'edit-3' },
+      { id: 'ai-assistant',       label: 'AI Knowledge Assistant',  icon: 'message' },
+      { id: 'ai-seo',             label: 'Smart SEO Assistant',     icon: 'search' },
+      { id: 'ai-recommendations', label: 'Recommendation Engine',   icon: 'layers' },
+      { id: 'ai-prompts',         label: 'Prompt Manager',          icon: 'file-text' },
+      { id: 'ai-analytics',       label: 'AI Analytics',            icon: 'bar-chart-2' },
+    ],
+  },
+  {
+    group: 'Stage 4: Reader Platform',
+    items: [
+      { id: 'membership',   label: 'Membership & Monetization', icon: 'credit-card' },
+      { id: 'community',    label: 'Community & Moderation',     icon: 'users' },
+      { id: 'distribution', label: 'Distribution & Marketing',   icon: 'send' },
+    ],
+  },
+  {
+    group: 'Stage 5: Search & Knowledge',
+    items: [
+      { id: 'search',     label: 'Universal Search & Graph', icon: 'search' },
+      { id: 'developers', label: 'Developer Portal',         icon: 'code' },
+      { id: 'tenants',    label: 'Multi-Site & White-Label', icon: 'globe' },
+    ],
+  },
+  {
+    group: 'Stage 6: Enterprise Security',
+    items: [
+      { id: 'governance',     label: 'Governance & Security',    icon: 'shield' },
+      { id: 'infrastructure', label: 'Cloud & Observability',    icon: 'cpu' },
+      { id: 'launch',         label: 'Production Launch Console', icon: 'award' },
     ],
   },
 ];

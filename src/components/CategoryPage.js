@@ -13,7 +13,14 @@ const CategoryPage = () => {
   const [apiArticles, setApiArticles] = useState(null);
 
   const category =
-    (data?.categories || []).find((item) => item.slug === slug && !item.isDeleted && item.isActive !== false) || categoryBlueprintBySlug[slug];
+    (data?.categories || []).find(
+      (item) =>
+        item.slug === slug &&
+        !item.isDeleted &&
+        item.isActive !== false &&
+        (item.status === undefined || item.status === 'published') &&
+        (item.visibility === undefined || item.visibility === 'public')
+    ) || categoryBlueprintBySlug[slug];
 
   if (slug === "news") {
     return <NewsPage category={category} />;

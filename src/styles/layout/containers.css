@@ -1,0 +1,61 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  containers.css  —  Container & Width Constraints
+ *  MyJourney CMS  |  Layer X: Design System
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ── Base App Shell ──────────────────────────────────────────────────────── */
+
+.app-container {
+  min-height: 100vh;
+}
+
+/* ── Section Containers ──────────────────────────────────────────────────── */
+
+.container {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding-inline: clamp(var(--space-5), 5vw, var(--space-10));
+}
+
+.container-narrow {
+  width: 100%;
+  max-width: var(--article-max-width);
+  margin-inline: auto;
+  padding-inline: clamp(var(--space-4), 3vw, var(--space-7));
+}
+
+.container-form {
+  width: 100%;
+  max-width: var(--form-max-width);
+  margin-inline: auto;
+}
+
+.container-wide {
+  width: 100%;
+  max-width: var(--bp-wide);
+  margin-inline: auto;
+  padding-inline: clamp(var(--space-5), 5vw, var(--space-10));
+}
+
+.container-full {
+  width: 100%;
+  padding-inline: clamp(var(--space-5), 5vw, var(--space-10));
+}
+
+/* ── CMS Content Area ────────────────────────────────────────────────────── */
+
+.cms-content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-7);
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .cms-content {
+    padding: var(--space-5);
+  }
+}

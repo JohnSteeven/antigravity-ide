@@ -20,9 +20,10 @@ import {
   FiSliders,
   FiChevronLeft,
   FiChevronRight,
-  FiCopy
+  FiCopy,
+  FiZap,
 } from "react-icons/fi";
-import { mediaApi } from "../../services/apiService";
+import { mediaApi, default as apiService } from "../../services/apiService";
 import { useCms } from "../../context/CmsContext";
 import { useBlocker } from "react-router-dom";
 import CmsPanelResolver from "./panels/CmsPanelResolver";
@@ -569,6 +570,30 @@ const ArticleModule = () => {
             <h2>{articleDraft.id || articleDraft._id ? "Edit Article" : "Create Article"}</h2>
           </div>
           <div className="inline-actions">
+            <button
+              className="small-outline-btn"
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await apiService.post('/api/ai/article/audit', {
+                    title: articleDraft.title,
+                    body: articleDraft.body,
+                    description: articleDraft.description,
+                    tags: articleDraft.tags,
+                    coverImage: articleDraft.coverImage,
+                  });
+                  if (res?.data?.content) {
+                    const parsed = typeof res.data.content === 'string' ? JSON.parse(res.data.content) : res.data.content;
+                    alert(`📋 AI Article Readiness Audit Score: ${parsed.readinessScore}/100\nReadability: ${parsed.readabilityGrade || 'Good'}\nSEO Score: ${parsed.seoScore || 80}/100\n\nRecommendations:\n• ${parsed.recommendations?.join('\n• ') || 'Article is ready for publish!'}`);
+                  }
+                } catch (err) {
+                  alert('AI Audit failed: ' + err.message);
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              <FiZap style={{ color: 'var(--cms-accent)' }} /> Audit Readiness
+            </button>
             <button className="small-outline-btn" type="button" onClick={onNew}>
               <FiPlus /> New
             </button>
@@ -593,7 +618,27 @@ const ArticleModule = () => {
         {/* Form Inputs */}
         <div className="form-grid">
           <label>
-            Title
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Title</span>
+              {articleDraft.title && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await apiService.post('/api/ai/write', { action: 'suggest_headings', title: articleDraft.title, content: articleDraft.body || '' });
+                      if (res?.data?.content) {
+                        alert(`✨ AI Suggested Title & Section Alternatives:\n\n${res.data.content}`);
+                      }
+                    } catch (e) {
+                      alert('AI generation failed');
+                    }
+                  }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--cms-accent)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 2 }}
+                >
+                  <FiZap /> AI Ideas
+                </button>
+              )}
+            </div>
             <input
               value={articleDraft.title || ""}
               onChange={(e) => update({ title: e.target.value })}

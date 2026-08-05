@@ -32,6 +32,37 @@ const newsletterCampaignRoutes = require("./routes/newsletterCampaignRoutes");
 const contactMessageRoutes = require("./routes/contactMessageRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const securityRoutes = require("./routes/securityRoutes");
+const featureFlagRoutes = require("./routes/featureFlagRoutes");
+const settingRegistryRoutes = require("./routes/settingRegistryRoutes");
+const layoutRoutes = require("./routes/layoutRoutes");
+const navigationRoutes = require("./routes/navigationRoutes");
+const pageRoutes = require("./routes/pageRoutes");
+const themeRoutes = require("./routes/themeRoutes");
+const designTokenRoutes = require("./routes/designTokenRoutes");
+const componentRoutes = require("./routes/componentRoutes");
+const contentModelingRoutes = require("./routes/contentModelingRoutes");
+const workflowRoutes = require("./routes/workflowRoutes");
+const versionControlRoutes = require("./routes/versionControlRoutes");
+const automationRoutes = require("./routes/automationRoutes");
+const formRoutes = require("./routes/formRoutes");
+const pluginRoutes = require("./routes/pluginRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const seoRoutes = require("./routes/seoRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const localizationRoutes = require("./routes/localizationRoutes");
+// ── Stage 3: AI Platform ───────────────────────────────────────────────────────
+const aiRoutes = require("./routes/aiRoutes");
+const recommendationRoutes = require("./routes/recommendationRoutes");
+const readerRoutes = require("./routes/readerRoutes");
+const membershipRoutes = require("./routes/membershipRoutes");
+const communityRoutes = require("./routes/communityRoutes");
+const distributionRoutes = require("./routes/distributionRoutes");
+const searchRoutes = require("./routes/searchRoutes");
+const developerRoutes = require("./routes/developerRoutes");
+const tenantRoutes = require("./routes/tenantRoutes");
+const governanceRoutes = require("./routes/governanceRoutes");
+const infrastructureRoutes = require("./routes/infrastructureRoutes");
+const launchRoutes = require("./routes/launchRoutes");
 const path = require("path");
 
 const app = express();
@@ -51,7 +82,7 @@ app.use(
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(globalLimiter);
+if (env.nodeEnv === 'production') app.use(globalLimiter);
 app.use(sanitizeRequest);
 app.use(csrfProtection);
 
@@ -85,6 +116,39 @@ app.use("/api/newsletter-campaigns", newsletterCampaignRoutes);
 app.use("/api/contact-messages", contactMessageRoutes);
 app.use("/api/contact", contactMessageRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/features", featureFlagRoutes);
+app.use("/api/settings-registry", settingRegistryRoutes);
+app.use("/api/layouts", layoutRoutes);
+app.use("/api/navigation", navigationRoutes);
+app.use("/api/pages", pageRoutes);
+app.use("/api/themes", themeRoutes);
+app.use("/api/design-tokens", designTokenRoutes);
+app.use("/api/components", componentRoutes);
+app.use("/api/content-modeling", contentModelingRoutes);
+app.use("/api/workflows", workflowRoutes);
+app.use("/api/version-control", versionControlRoutes);
+app.use("/api/automation", automationRoutes);
+app.use("/api/forms", formRoutes);
+app.use("/api/plugins", pluginRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/seo", seoRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/localization", localizationRoutes);
+
+// ── Stage 3–6 routes (AI, Reader, Membership, Community, Distribution,
+//    Search, Developer, Tenant, Governance, Infrastructure, Launch) ──────────
+app.use("/api/ai", aiRoutes);
+app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/reader", readerRoutes);
+app.use("/api/membership", membershipRoutes);
+app.use("/api/community", communityRoutes);
+app.use("/api/distribution", distributionRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/developer", developerRoutes);
+app.use("/api/tenants", tenantRoutes);
+app.use("/api/governance", governanceRoutes);
+app.use("/api/infrastructure", infrastructureRoutes);
+app.use("/api/launch", launchRoutes);
 
 // Serve uploads statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

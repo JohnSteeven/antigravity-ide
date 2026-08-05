@@ -1,702 +1,641 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  MediaLibraryModule.js  —  Enterprise Digital Asset Management (DAM)
+ *  MyJourney CMS  |  Phase 2: Media Library 2.0
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import apiService from '../../services/apiService';
+import { registerRoute } from '../../core/registerRoute';
+import { registerSidebar } from '../../core/registerSidebar';
 import {
-  FiUploadCloud,
-  FiTrash2,
-  FiRotateCcw,
-  FiSearch,
+  FiImage,
   FiFolder,
-  FiInfo,
+  FiUploadCloud,
+  FiSearch,
   FiGrid,
   FiList,
+  FiStar,
+  FiClock,
+  FiTrash2,
+  FiTag,
+  FiLayers,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiPlus,
   FiCopy,
+  FiArchive,
+  FiRefreshCw,
+  FiFileText,
+  FiFilm,
+  FiMusic,
   FiDownload,
-  FiEdit2,
-  FiFolderMinus,
-  FiEye,
-  FiCheck,
-} from "react-icons/fi";
-import { useCms } from "../../context/CmsContext";
-import { copyToClipboard } from "../../utils/helpers";
+  FiAlertTriangle,
+  FiInfo,
+  FiZap,
+} from 'react-icons/fi';
+
+const COLLECTIONS = [
+  { id: 'all', label: 'All Assets', icon: FiImage },
+  { id: 'favorites', label: 'Favorites', icon: FiStar },
+  { id: 'recently_uploaded', label: 'Recently Uploaded', icon: FiClock },
+  { id: 'unused', label: 'Unused Media', icon: FiLayers },
+  { id: 'most_used', label: 'Most Used', icon: FiLayers },
+  { id: 'large', label: 'Large Files (>5MB)', icon: FiFileText },
+  { id: 'duplicates', label: 'Duplicates', icon: FiAlertTriangle },
+  { id: 'archived', label: 'Archived', icon: FiArchive },
+];
 
 export default function MediaLibraryModule() {
-  const { data, uploadMedia, renameMedia, moveMedia, deleteMedia, restoreMedia, refreshMedia } = useCms();
-  const { media = [] } = data;
+  const [assets, setAssets] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [selectedFolder, setSelectedFolder] = useState(null);
+  const [selectedCollection, setSelectedCollection] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [activeAsset, setActiveAsset] = useState(null);
+  const [assetUsage, setAssetUsage] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [showFolderModal, setShowFolderModal] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [uploading, setUploading] = useState(false);
 
-  // UI State
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [viewMode, setViewMode] = useState("grid"); // grid or list
-  const [selectedItem, setSelectedItem] = useState(null);
-
-  // Bulk selection
-  const [selectedIds, setSelectedIds] = useState(new Set());
-
-  // Filters & Pagination
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState("all");
-  const [selectedType, setSelectedType] = useState("all");
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
-
-  // Upload state
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadFolder, setUploadFolder] = useState("misc");
-  const fileInputRef = useRef(null);
-
-  // Edit / Action state
-  const [renameText, setRenameText] = useState("");
-  const [moveFolderTarget, setMoveFolderTarget] = useState("misc");
-  const [copiedId, setCopiedId] = useState(null);
-
-  const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "misc"];
-
-  // Re-fetch media on mount to make sure we are live
-  useEffect(() => {
-    if (typeof refreshMedia === "function") {
-      refreshMedia();
+  // Load Folders & Assets
+  const fetchFolders = useCallback(async () => {
+    try {
+      const res = await apiService.get('/api/media/folders');
+      if (res?.data) setFolders(res.data);
+    } catch (err) {
+      console.error('[MediaLibrary] Error loading folders:', err);
     }
   }, []);
 
-  // Filter and Search media items
-  const filteredMedia = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    return media.filter((item) => {
-      const matchesSearch =
-        !q ||
-        (item.name || "").toLowerCase().includes(q) ||
-        (item.originalName || "").toLowerCase().includes(q);
+  const fetchAssets = useCallback(async () => {
+    try {
+      setLoading(true);
+      let query = `/api/media?type=${selectedType}&search=${encodeURIComponent(search)}`;
+      if (selectedFolder) query += `&folderId=${selectedFolder}`;
+      if (selectedCollection && selectedCollection !== 'all') query += `&collection=${selectedCollection}`;
 
-      const matchesFolder = selectedFolder === "all" || item.folder === selectedFolder;
-      const matchesType =
-        selectedType === "all" ||
-        (selectedType === "image" && (item.mimeType || "").startsWith("image/")) ||
-        (selectedType === "video" && (item.mimeType || "").startsWith("video/")) ||
-        (selectedType === "audio" && (item.mimeType || "").startsWith("audio/")) ||
-        (selectedType === "document" && (item.mimeType || "").includes("pdf"));
+      const res = await apiService.get(query);
+      if (res?.items) {
+        setAssets(res.items);
+      }
+    } catch (err) {
+      console.error('[MediaLibrary] Error loading assets:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedFolder, selectedCollection, selectedType, search]);
 
-      const matchesDeleted = showDeleted ? item.isDeleted === true : !item.isDeleted;
-
-      return matchesSearch && matchesFolder && matchesType && matchesDeleted;
-    });
-  }, [media, searchQuery, selectedFolder, selectedType, showDeleted]);
-
-  // Paginated media items
-  const paginatedMedia = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredMedia.slice(start, start + itemsPerPage);
-  }, [filteredMedia, currentPage]);
-
-  const totalPages = Math.ceil(filteredMedia.length / itemsPerPage);
-
-  // Reset pagination on filter change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedFolder, selectedType, showDeleted]);
+    fetchFolders();
+  }, [fetchFolders]);
 
-  // Upload handler
-  const handleUploadSubmit = async (e) => {
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
+
+  // Asset Select & Inspection
+  const handleSelectAsset = async (asset) => {
+    setActiveAsset(asset);
+    try {
+      const usageRes = await apiService.get(`/api/media/usage/${asset._id}`);
+      setAssetUsage(usageRes);
+    } catch (err) {
+      setAssetUsage(null);
+    }
+  };
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+  };
+
+  // Upload Handler
+  const handleFileUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      setUploading(true);
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append('file', files[i]);
+        if (selectedFolder) formData.append('folderId', selectedFolder);
+
+        const res = await apiService.post('/api/media/upload', formData);
+        if (res?.warning) {
+          setNotification({ type: 'warning', text: res.warning });
+        }
+      }
+      setNotification({ type: 'success', text: `Uploaded ${files.length} asset(s) successfully.` });
+      fetchAssets();
+    } catch (err) {
+      setNotification({ type: 'error', text: 'Upload failed: ' + err.message });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Create Folder
+  const handleCreateFolder = async (e) => {
     e.preventDefault();
-    if (!uploadFile) {
-      setError("Please select a file to upload.");
-      return;
-    }
-
-    // Client-side validation for type
-    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
-    const ext = "." + uploadFile.name.split(".").pop().toLowerCase();
-    if (!allowedExtensions.includes(ext)) {
-      setError("Invalid file type. Only JPG, JPEG, PNG, WEBP, and GIF are allowed.");
-      return;
-    }
-
-    // Size limit check (5MB)
-    if (uploadFile.size > 5 * 1024 * 1024) {
-      setError("File exceeds 5MB limit.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setSuccess("");
+    if (!newFolderName.trim()) return;
 
     try {
-      await uploadMedia(uploadFile, uploadFolder);
-      setSuccess("Media file uploaded successfully.");
-      setUploadFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      await apiService.post('/api/media/folders', {
+        name: newFolderName,
+        parentFolder: selectedFolder || null,
+      });
+      setNewFolderName('');
+      setShowFolderModal(false);
+      fetchFolders();
+      setNotification({ type: 'success', text: 'Folder created.' });
     } catch (err) {
-      setError(err.message || "Failed to upload file.");
-    } finally {
-      setLoading(false);
+      setNotification({ type: 'error', text: err.message });
     }
   };
 
-  // Action: Copy URL
-  const handleCopyUrl = async (item) => {
-    if (!item?.url) return;
-    const absoluteUrl = item.url.startsWith("http")
-      ? item.url
-      : `${window.location.protocol}//${window.location.hostname}:5000${item.url}`;
-    const success = await copyToClipboard(absoluteUrl);
-    if (success) {
-      setCopiedId(item._id || item.id);
-      setSuccess("URL copied to clipboard.");
-      setTimeout(() => setCopiedId(null), 2000);
-    } else {
-      setError("Failed to copy URL.");
-    }
-  };
+  // Bulk Actions
+  const handleBulkAction = async (action) => {
+    if (selectedIds.length === 0) return;
 
-  // Action: Rename
-  const handleRename = async (e) => {
-    e.preventDefault();
-    if (!selectedItem || !renameText.trim()) return;
-    setLoading(true);
-    setError("");
     try {
-      await renameMedia(selectedItem._id || selectedItem.id, renameText.trim());
-      setSuccess("Media renamed successfully.");
-      setSelectedItem({ ...selectedItem, name: renameText.trim() });
+      await apiService.post('/api/media/bulk', { action, ids: selectedIds });
+      setSelectedIds([]);
+      fetchAssets();
+      setNotification({ type: 'success', text: `Bulk ${action} completed.` });
     } catch (err) {
-      setError(err.message || "Failed to rename media.");
-    } finally {
-      setLoading(false);
+      setNotification({ type: 'error', text: err.message });
     }
   };
 
-  // Action: Move Folder
-  const handleMoveFolder = async (e) => {
-    e.preventDefault();
-    if (!selectedItem) return;
-    setLoading(true);
-    setError("");
+  // Delete Asset
+  const handleDeleteAsset = async (assetId, force = false) => {
     try {
-      const moved = await moveMedia(selectedItem._id || selectedItem.id, moveFolderTarget);
-      setSuccess(`Media moved to ${moveFolderTarget} folder.`);
-      setSelectedItem(moved);
+      await apiService.delete(`/api/media/${assetId}${force ? '?force=true' : ''}`);
+      if (activeAsset?._id === assetId) setActiveAsset(null);
+      fetchAssets();
+      setNotification({ type: 'success', text: 'Asset deleted.' });
     } catch (err) {
-      setError(err.message || "Failed to move media.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Action: Soft Delete
-  const handleDelete = async (item) => {
-    if (!window.confirm("Are you sure you want to soft-delete this media?")) return;
-    setLoading(true);
-    setError("");
-    try {
-      await deleteMedia(item._id || item.id);
-      setSuccess("Media soft-deleted.");
-      setSelectedItem(null);
-    } catch (err) {
-      setError(err.message || "Failed to delete media.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Action: Restore
-  const handleRestore = async (item) => {
-    setLoading(true);
-    setError("");
-    try {
-      await restoreMedia(item._id || item.id);
-      setSuccess("Media restored successfully.");
-      setSelectedItem(null);
-    } catch (err) {
-      setError(err.message || "Failed to restore media.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Bulk selection helpers
-  const toggleSelect = (e, id) => {
-    e.stopPropagation();
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.size === paginatedMedia.length && paginatedMedia.length > 0) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(paginatedMedia.map((m) => m._id || m.id)));
-    }
-  };
-
-  // Bulk delete handler
-  const handleBulkDelete = async () => {
-    if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} selected item(s)? This cannot be undone.`)) return;
-    setLoading(true);
-    setError("");
-    let failed = 0;
-    for (const id of selectedIds) {
-      try {
-        await deleteMedia(id);
-      } catch {
-        failed++;
+      if (err.status === 409) {
+        if (window.confirm(`Warning: Asset is used in ${err.usage?.usageCount || 0} locations. Force delete anyway?`)) {
+          handleDeleteAsset(assetId, true);
+        }
+      } else {
+        setNotification({ type: 'error', text: err.message });
       }
     }
-    setSelectedIds(new Set());
-    setSelectedItem(null);
-    setSuccess(
-      failed === 0
-        ? `${selectedIds.size} item(s) deleted successfully.`
-        : `Deleted with ${failed} error(s).`
-    );
-    setLoading(false);
+  };
+
+  // Toggle Favorite
+  const handleToggleFavorite = async (asset) => {
+    try {
+      const updated = await apiService.patch(`/api/media/${asset._id}`, { isFavorite: !asset.isFavorite });
+      if (updated?.data) {
+        setAssets((prev) => prev.map((a) => (a._id === asset._id ? updated.data : a)));
+        if (activeAsset?._id === asset._id) setActiveAsset(updated.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
-    <div className="cms-grid-two">
-      {/* LEFT PANEL: Uploader & Detailed Info */}
-      <div className="cms-panel">
-        <div className="cms-panel-heading">
-          <div>
-            <span className="section-kicker">Manage Media</span>
-            <h2>Upload Assets</h2>
+    <div className="cms-panel wide" style={{ padding: '0', display: 'flex', minHeight: '680px', overflow: 'hidden' }}>
+      {/* ── Left Sidebar (Folders & Collections) ─────────────────────────── */}
+      <div
+        style={{
+          width: '240px',
+          background: 'var(--color-panel-muted, #f8faf8)',
+          borderRight: '1px solid var(--color-line, #e4ded4)',
+          padding: '20px 14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          flexShrink: 0,
+        }}
+      >
+        <div>
+          <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--color-muted, #888)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Collections
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '8px' }}>
+            {COLLECTIONS.map((col) => {
+              const Icon = col.icon;
+              const isActive = selectedCollection === col.id && !selectedFolder;
+              return (
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCollection(col.id);
+                    setSelectedFolder(null);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: isActive ? '700' : '500',
+                    border: 'none',
+                    backgroundColor: isActive ? 'var(--cms-accent-light, #e8f0ef)' : 'transparent',
+                    color: isActive ? 'var(--cms-accent, #426c67)' : 'var(--color-ink, #444)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Icon style={{ fontSize: '1rem' }} />
+                  <span>{col.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <form onSubmit={handleUploadSubmit} className="form-grid one">
-          <div className="media-uploader-dropzone">
-            <FiUploadCloud size={40} className="upload-icon" />
-            <p>Select target image file (JPG, JPEG, PNG, WEBP, GIF)</p>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={(e) => setUploadFile(e.target.files[0])}
-              accept="image/*"
-              className="file-input-field"
-            />
-            {uploadFile && (
-              <div className="selected-file-badge">
-                Selected: <strong>{uploadFile.name}</strong> ({(uploadFile.size / 1024).toFixed(1)} KB)
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--color-muted, #888)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Folders
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowFolderModal(true)}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--cms-accent, #426c67)', fontSize: '1rem' }}
+              title="New Folder"
+            >
+              <FiPlus />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '260px', overflowY: 'auto' }}>
+            <button
+              type="button"
+              onClick={() => setSelectedFolder(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                fontSize: '0.82rem',
+                border: 'none',
+                backgroundColor: selectedFolder === null && selectedCollection === 'all' ? 'var(--cms-accent-light, #e8f0ef)' : 'transparent',
+                color: selectedFolder === null && selectedCollection === 'all' ? 'var(--cms-accent, #426c67)' : '#444',
+                cursor: 'pointer',
+              }}
+            >
+              <FiFolder /> All Root Assets
+            </button>
+            {folders.map((f) => (
+              <button
+                key={f._id}
+                type="button"
+                onClick={() => {
+                  setSelectedFolder(f._id);
+                  setSelectedCollection(null);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  fontSize: '0.82rem',
+                  border: 'none',
+                  backgroundColor: selectedFolder === f._id ? 'var(--cms-accent-light, #e8f0ef)' : 'transparent',
+                  color: selectedFolder === f._id ? 'var(--cms-accent, #426c67)' : '#444',
+                  cursor: 'pointer',
+                }}
+              >
+                <FiFolder style={{ color: f.color || 'inherit' }} />
+                <span>{f.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Asset Browser Area ───────────────────────────────────────── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, padding: '20px' }}>
+        {/* Top Action Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <label className="primary-btn" style={{ cursor: 'pointer' }}>
+              <FiUploadCloud /> {uploading ? 'Uploading...' : 'Upload Assets'}
+              <input type="file" multiple onChange={handleFileUpload} style={{ display: 'none' }} disabled={uploading} />
+            </label>
+
+            {selectedIds.length > 0 && (
+              <div style={{ display: 'flex', gap: '6px', background: '#f0f0f0', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem' }}>
+                <span>{selectedIds.length} selected</span>
+                <button type="button" onClick={() => handleBulkAction('archive')} className="btn-ghost" title="Archive">
+                  <FiArchive />
+                </button>
+                <button type="button" onClick={() => handleBulkAction('delete')} className="btn-ghost" title="Delete" style={{ color: 'red' }}>
+                  <FiTrash2 />
+                </button>
               </div>
             )}
           </div>
 
-          <label>
-            Target Folder
-            <select
-              value={uploadFolder}
-              onChange={(e) => setUploadFolder(e.target.value)}
-              className="form-select"
-            >
-              {allowedFolders.map((f) => (
-                <option key={f} value={f}>
-                  {f.toUpperCase()}
-                </option>
-              ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="cms-search-control" style={{ width: '200px' }}>
+              <FiSearch />
+              <input type="text" placeholder="Search assets..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+
+            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} style={{ padding: '6px 12px', borderRadius: '6px' }}>
+              <option value="all">All Types</option>
+              <option value="image">Images</option>
+              <option value="video">Videos</option>
+              <option value="audio">Audio</option>
+              <option value="pdf">PDFs</option>
+              <option value="document">Documents</option>
             </select>
-          </label>
 
-          <button
-            type="submit"
-            className="primary-btn"
-            disabled={loading || !uploadFile}
-          >
-            {loading ? "Uploading..." : "Upload Asset"}
-          </button>
-        </form>
-
-        {/* Selected Item Detail Actions */}
-        {selectedItem && (
-          <div className="media-details-block" style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: "1px solid #ccc" }}>
-            <h3>Selected Asset Details</h3>
-            <div className="media-preview-container" style={{ textAlign: "center", marginBottom: "1rem" }}>
-              {selectedItem?.url?.trim() ? (
-                <img
-                  src={selectedItem.url.startsWith("http") ? selectedItem.url : `${window.location.protocol}//${window.location.hostname}:5000${selectedItem.url}`}
-                  alt={selectedItem.name}
-                  style={{ maxWidth: "100%", maxHeight: "150px", objectFit: "contain", borderRadius: "8px" }}
-                />
-              ) : (
-                <div style={{ padding: "1rem", background: "#eee", borderRadius: "8px" }}>No Preview Available</div>
-              )}
+            <div style={{ display: 'flex', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                style={{ padding: '6px 10px', border: 'none', background: viewMode === 'grid' ? '#eee' : '#fff', cursor: 'pointer' }}
+              >
+                <FiGrid />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                style={{ padding: '6px 10px', border: 'none', background: viewMode === 'list' ? '#eee' : '#fff', cursor: 'pointer' }}
+              >
+                <FiList />
+              </button>
             </div>
-            
-            <div className="form-grid one" style={{ gap: "1rem" }}>
-              <div>
-                <strong>Original Name: </strong><span>{selectedItem.originalName || selectedItem.fileName}</span>
-              </div>
-              <div>
-                <strong>Folder: </strong><span>{selectedItem.folder}</span>
-              </div>
-              <div>
-                <strong>Size: </strong><span>{selectedItem.size}</span>
-              </div>
-
-              {/* Rename Form */}
-              <form onSubmit={handleRename} className="form-row-inline" style={{ display: "flex", gap: "0.5rem" }}>
-                <input
-                  type="text"
-                  placeholder="New display name"
-                  value={renameText}
-                  onChange={(e) => setRenameText(e.target.value)}
-                  className="form-input"
-                  style={{ flexGrow: 1 }}
-                />
-                <button type="submit" className="small-outline-btn" disabled={loading}>
-                  Rename
-                </button>
-              </form>
-
-              {/* Move Folder Form */}
-              <form onSubmit={handleMoveFolder} className="form-row-inline" style={{ display: "flex", gap: "0.5rem" }}>
-                <select
-                  value={moveFolderTarget}
-                  onChange={(e) => setMoveFolderTarget(e.target.value)}
-                  className="form-select"
-                  style={{ flexGrow: 1 }}
-                >
-                  {allowedFolders.map((f) => (
-                    <option key={f} value={f}>
-                      Move to: {f.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-                <button type="submit" className="small-outline-btn" disabled={loading}>
-                  Move
-                </button>
-              </form>
-
-              <div className="action-row-buttons" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={() => handleCopyUrl(selectedItem)}
-                  className="small-outline-btn"
-                >
-                  {copiedId === (selectedItem._id || selectedItem.id) ? <FiCheck /> : <FiCopy />} Copy URL
-                </button>
-
-                <a
-                  href={(selectedItem?.url && typeof selectedItem.url === "string" && selectedItem.url.startsWith("http")) ? selectedItem.url : (selectedItem?.url ? `${window.location.protocol}//${window.location.hostname}:5000${selectedItem.url}` : "#")}
-                  download={selectedItem?.originalName || "download"}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="small-outline-btn"
-                  style={{ textDecoration: "none", color: "inherit", display: "inline-flex", alignItems: "center" }}
-                >
-                  <FiDownload /> Download
-                </a>
-
-                {selectedItem.isDeleted ? (
-                  <button
-                    type="button"
-                    onClick={() => handleRestore(selectedItem)}
-                    className="small-outline-btn"
-                    style={{ color: "green" }}
-                  >
-                    <FiRotateCcw /> Restore
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(selectedItem)}
-                    className="small-outline-btn"
-                    style={{ color: "red" }}
-                  >
-                    <FiTrash2 /> Delete
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* RIGHT PANEL: Media Browser Grid/List */}
-      <div className="cms-panel">
-        <div className="cms-panel-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <span className="section-kicker">Library</span>
-            <h2>Media Browser</h2>
-          </div>
-          <div className="view-mode-buttons" style={{ display: "flex", gap: "0.5rem" }}>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`small-icon-btn ${viewMode === "grid" ? "active" : ""}`}
-            >
-              <FiGrid />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`small-icon-btn ${viewMode === "list" ? "active" : ""}`}
-            >
-              <FiList />
-            </button>
           </div>
         </div>
 
         {/* Notifications */}
-        {error && <div className="alert-message error">{error}</div>}
-        {success && <div className="alert-message success">{success}</div>}
-
-        {/* Toolbar Filter Filters */}
-        <div className="toolbar-search-filter" style={{ marginBottom: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <div className="search-input-wrapper" style={{ flexGrow: 1, position: "relative" }}>
-            <FiSearch className="search-icon" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
-            <input
-              type="text"
-              placeholder="Search assets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-              style={{ paddingLeft: "35px", width: "100%" }}
-            />
-          </div>
-
-          <select
-            value={selectedFolder}
-            onChange={(e) => setSelectedFolder(e.target.value)}
-            className="form-select"
-            style={{ width: "130px" }}
+        {notification && (
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: '6px',
+              marginBottom: '16px',
+              fontSize: '0.82rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: notification.type === 'warning' ? '#fdf6ee' : notification.type === 'success' ? '#e8f5ee' : '#fdf1f0',
+              color: notification.type === 'warning' ? '#b58b5f' : notification.type === 'success' ? '#2e7d5a' : '#9d3e32',
+            }}
           >
-            <option value="all">All Folders</option>
-            {allowedFolders.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="form-select"
-            style={{ width: "110px" }}
-          >
-            <option value="all">All Types</option>
-            <option value="image">Images</option>
-            <option value="video">Videos</option>
-            <option value="audio">Audios</option>
-            <option value="document">Documents</option>
-          </select>
-
-          <label className="checkbox-label" style={{ display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={showDeleted}
-              onChange={(e) => setShowDeleted(e.target.checked)}
-              style={{ marginRight: "0.5rem" }}
-            />
-            Show Deleted
-          </label>
-        </div>
-
-        {/* Bulk Selection Toolbar */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.6rem 0.875rem", background: selectedIds.size > 0 ? "#fff4e6" : "#f8faf8", border: `1px solid ${selectedIds.size > 0 ? "#e6a817" : "#dfe6e2"}`, borderRadius: "8px", transition: "all 0.2s ease" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.84rem", fontWeight: 700, color: "#4a5350", userSelect: "none" }}>
-            <input
-              type="checkbox"
-              checked={paginatedMedia.length > 0 && selectedIds.size === paginatedMedia.length}
-              ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < paginatedMedia.length; }}
-              onChange={toggleSelectAll}
-              style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "var(--teal)" }}
-            />
-            Select All
-          </label>
-
-          {selectedIds.size > 0 && (
-            <span style={{ fontSize: "0.82rem", color: "#7a6200", fontWeight: 700 }}>
-              {selectedIds.size} selected
-            </span>
-          )}
-
-          <div style={{ marginLeft: "auto" }}>
-            {selectedIds.size > 0 ? (
-              <button
-                type="button"
-                onClick={handleBulkDelete}
-                disabled={loading}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: "0.4rem",
-                  padding: "0.45rem 1rem", background: "#c5221f", color: "#fff",
-                  border: "none", borderRadius: "6px", fontWeight: 700,
-                  fontSize: "0.84rem", cursor: "pointer", transition: "background 0.2s"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#a31c1a"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "#c5221f"}
-              >
-                <FiTrash2 size={14} />
-                Delete Selected ({selectedIds.size})
-              </button>
-            ) : (
-              <span style={{ fontSize: "0.8rem", color: "#9aa8a5" }}>Select images to bulk delete</span>
-            )}
+            {notification.type === 'warning' ? <FiAlertTriangle /> : <FiCheckCircle />}
+            <span>{notification.text}</span>
           </div>
-        </div>
+        )}
 
-        {/* Media Browser Body */}
-        {paginatedMedia.length === 0 ? (
-          <p className="empty-state">No assets match your search/filter parameters.</p>
-        ) : viewMode === "grid" ? (
-          <div className="media-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "1rem" }}>
-            {paginatedMedia.map((item) => {
-              const id = item._id || item.id;
-              const hasUrl = item?.url && typeof item.url === "string" && item.url.trim();
-              const fileUrl = hasUrl
-                ? (item.url.startsWith("http") ? item.url : `${window.location.protocol}//${window.location.hostname}:5000${item.url}`)
-                : undefined;
-              const isDetailSelected = selectedItem && (selectedItem._id === id || selectedItem.id === id);
-              const isBulkSelected = selectedIds.has(id);
+        {/* Asset Grid Display */}
+        {loading ? (
+          <div style={{ padding: '60px', textAlign: 'center', color: '#888' }}>Loading assets...</div>
+        ) : assets.length === 0 ? (
+          <div className="empty-state" style={{ flex: 1 }}>
+            No media assets found. Upload images to populate your library.
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px', overflowY: 'auto', flex: 1, alignContent: 'start' }}>
+            {assets.map((asset) => {
+              const isSelected = selectedIds.includes(asset._id);
+              const isActive = activeAsset?._id === asset._id;
 
               return (
                 <div
-                  key={id}
-                  onClick={() => {
-                    setSelectedItem(item);
-                    setRenameText(item.name || "");
-                    setMoveFolderTarget(item.folder || "misc");
-                  }}
-                  className={`media-card-grid ${isDetailSelected ? "selected" : ""}`}
+                  key={asset._id}
+                  onClick={() => handleSelectAsset(asset)}
                   style={{
-                    position: "relative",
-                    border: isBulkSelected
-                      ? "2px solid #e6a817"
-                      : isDetailSelected
-                      ? "2px solid var(--accent-color, #426c67)"
-                      : "1px solid #ddd",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    backgroundColor: isBulkSelected ? "#fff8e6" : isDetailSelected ? "#eef5f4" : "transparent",
-                    transition: "all 0.2s ease"
+                    position: 'relative',
+                    background: '#fff',
+                    border: isActive ? '2px solid var(--cms-accent, #426c67)' : isSelected ? '2px solid #4d6478' : '1px solid #e4ded4',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
                   }}
                 >
-                  {/* Bulk-select checkbox */}
-                  <div
-                    onClick={(e) => toggleSelect(e, id)}
-                    style={{
-                      position: "absolute", top: "6px", left: "6px", zIndex: 2,
-                      width: "20px", height: "20px",
-                      background: isBulkSelected ? "#e6a817" : "rgba(255,255,255,0.9)",
-                      border: isBulkSelected ? "2px solid #b8860b" : "2px solid #ccc",
-                      borderRadius: "4px",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      transition: "all 0.15s ease", cursor: "pointer"
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleToggleSelect(asset._id);
                     }}
-                  >
-                    {isBulkSelected && <FiCheck size={12} color="#fff" strokeWidth={3} />}
-                  </div>
+                    style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 2 }}
+                  />
 
-                  <div className="thumbnail-wrapper" style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9f9f9" }}>
-                    {item.mimeType?.startsWith("image/") && fileUrl ? (
-                      <img src={fileUrl} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFavorite(asset);
+                    }}
+                    style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2, border: 'none', background: 'none', cursor: 'pointer', color: asset.isFavorite ? '#b58b5f' : '#ccc' }}
+                  >
+                    <FiStar style={{ fill: asset.isFavorite ? '#b58b5f' : 'none' }} />
+                  </button>
+
+                  <div style={{ height: '110px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {asset.type === 'image' ? (
+                      <img src={asset.url} alt={asset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : asset.type === 'video' ? (
+                      <FiFilm style={{ fontSize: '2rem', color: '#888' }} />
                     ) : (
-                      <FiFolder size={32} />
+                      <FiFileText style={{ fontSize: '2rem', color: '#888' }} />
                     )}
                   </div>
-                  <div className="name-wrapper" style={{ padding: "0.5rem", fontSize: "0.8rem", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                    {item.name}
+
+                  <div style={{ padding: '8px', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {asset.name}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: '#888' }}>{asset.size || '0 KB'}</span>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="media-list" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {paginatedMedia.map((item) => {
-              const id = item._id || item.id;
-              const isDetailSelected = selectedItem && (selectedItem._id === id || selectedItem.id === id);
-              const isBulkSelected = selectedIds.has(id);
-              return (
-                <div
-                  key={id}
-                  onClick={() => {
-                    setSelectedItem(item);
-                    setRenameText(item.name || "");
-                    setMoveFolderTarget(item.folder || "misc");
-                  }}
-                  className="media-card-list"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "0.5rem 1rem",
-                    border: isBulkSelected
-                      ? "2px solid #e6a817"
-                      : isDetailSelected
-                      ? "2px solid var(--accent-color, #426c67)"
-                      : "1px solid #ddd",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    backgroundColor: isBulkSelected ? "#fff8e6" : isDetailSelected ? "#eef5f4" : "transparent"
-                  }}
-                >
-                  {/* Bulk checkbox */}
-                  <div
-                    onClick={(e) => toggleSelect(e, id)}
-                    style={{
-                      width: "18px", height: "18px", flexShrink: 0, marginRight: "0.75rem",
-                      background: isBulkSelected ? "#e6a817" : "rgba(255,255,255,0.9)",
-                      border: isBulkSelected ? "2px solid #b8860b" : "2px solid #ccc",
-                      borderRadius: "4px",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      cursor: "pointer", transition: "all 0.15s ease"
-                    }}
-                  >
-                    {isBulkSelected && <FiCheck size={10} color="#fff" strokeWidth={3} />}
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1 }}>
-                    <FiFolder size={20} />
-                    <div>
-                      <span style={{ fontWeight: "600" }}>{item.name}</span>
-                      <div style={{ fontSize: "0.75rem", color: "#666" }}>
-                        {item.folder} • {item.size} • {item.mimeType}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCopyUrl(item);
-                    }}
-                    className="small-icon-btn"
-                  >
-                    {copiedId === id ? <FiCheck /> : <FiCopy />}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Pagination controls */}
-        {totalPages > 1 && (
-          <div className="pagination-wrapper" style={{ marginTop: "1.5rem", display: "flex", justifyContent: "center", gap: "0.5rem" }}>
-            <button
-              onClick={() => setCurrentPage((c) => Math.max(1, c - 1))}
-              disabled={currentPage === 1}
-              className="small-outline-btn"
-            >
-              Prev
-            </button>
-            <span style={{ display: "inline-flex", alignItems: "center" }}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage((c) => Math.min(totalPages, c + 1))}
-              disabled={currentPage === totalPages}
-              className="small-outline-btn"
-            >
-              Next
-            </button>
+          /* List View */
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #ddd', textAlign: 'left', color: '#666' }}>
+                  <th style={{ padding: '8px' }}>Asset</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Folder</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assets.map((asset) => (
+                  <tr key={asset._id} onClick={() => handleSelectAsset(asset)} style={{ borderBottom: '1px solid #eee', cursor: 'pointer' }}>
+                    <td style={{ padding: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <img src={asset.url} alt={asset.name} style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover' }} />
+                      <span>{asset.name}</span>
+                    </td>
+                    <td>{asset.type}</td>
+                    <td>{asset.size || '0 KB'}</td>
+                    <td>{asset.folderPath || '/'}</td>
+                    <td>{new Date(asset.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <button type="button" onClick={() => handleDeleteAsset(asset._id)} style={{ border: 'none', background: 'none', color: 'red', cursor: 'pointer' }}>
+                        <FiTrash2 />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+
+      {/* ── Right Inspector Panel (Metadata & Usage) ────────────────────── */}
+      {activeAsset && (
+        <div
+          style={{
+            width: '280px',
+            background: '#fff',
+            borderLeft: '1px solid var(--color-line, #e4ded4)',
+            padding: '20px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            overflowY: 'auto',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700' }}>Asset Inspector</h4>
+            <button type="button" onClick={() => setActiveAsset(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#888' }}>
+              ✕
+            </button>
+          </div>
+
+          <div style={{ height: '160px', background: '#fafafa', border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {activeAsset.type === 'image' ? (
+              <img src={activeAsset.url} alt={activeAsset.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+            ) : (
+              <FiFileText style={{ fontSize: '3rem', color: '#aaa' }} />
+            )}
+          </div>
+
+          <div style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <strong>{activeAsset.name}</strong>
+            <span style={{ color: '#888' }}>{activeAsset.mimeType} • {activeAsset.size}</span>
+            <span style={{ color: '#888', wordBreak: 'break-all' }}>{activeAsset.url}</span>
+          </div>
+
+          {/* Usage Scan */}
+          <div style={{ background: '#f8faf8', padding: '10px', borderRadius: '6px', fontSize: '0.78rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <FiLayers style={{ color: 'var(--cms-accent, #426c67)' }} />
+              <strong>Used In ({assetUsage?.usageCount || 0} locations)</strong>
+            </div>
+            {assetUsage?.usedBy?.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: '16px', color: '#555' }}>
+                {assetUsage.usedBy.map((u, idx) => (
+                  <li key={idx}>
+                    {u.entityType}: <strong>{u.title}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span style={{ color: '#888' }}>Asset is currently unused.</span>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={async () => {
+                try {
+                  const res = await apiService.post('/api/ai/media', {
+                    fileName: activeAsset.name,
+                    fileType: activeAsset.mimeType,
+                  });
+                  if (res?.data?.content) {
+                    const parsed = typeof res.data.content === 'string' ? JSON.parse(res.data.content) : res.data.content;
+                    alert(`✨ AI Suggested Alt Text:\n${parsed.altText || ''}\n\nCaption:\n${parsed.caption || ''}`);
+                  }
+                } catch (err) {
+                  alert('AI Media generation failed: ' + err.message);
+                }
+              }}
+              style={{ justifyContent: 'center' }}
+            >
+              <FiZap /> Auto-Generate Alt Text
+            </button>
+            <a href={activeAsset.url} target="_blank" rel="noreferrer" className="secondary-btn" style={{ justifyContent: 'center', textDecoration: 'none' }}>
+              <FiDownload /> Download Original
+            </a>
+            <button type="button" onClick={() => handleDeleteAsset(activeAsset._id)} className="btn-danger" style={{ padding: '8px' }}>
+              <FiTrash2 /> Delete Asset
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* New Folder Modal */}
+      {showFolderModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <form onSubmit={handleCreateFolder} style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Create New Folder</h3>
+            <input
+              type="text"
+              placeholder="Folder name (e.g. Hero Images)"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              autoFocus
+              required
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" className="secondary-btn" onClick={() => setShowFolderModal(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="primary-btn">
+                Create
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
+
+// ── Self Registration with CMS Core ─────────────────────────────────────────
+
+registerRoute({
+  path: '/cms/media',
+  component: MediaLibraryModule,
+  auth: true,
+  permissions: ['media.read'],
+});
+
+registerSidebar({
+  key: 'media',
+  label: 'Media Library 2.0',
+  icon: FiImage,
+  path: '/cms/media',
+  group: 'Content',
+  order: 3,
+});

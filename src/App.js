@@ -9,6 +9,8 @@ import {
 } from "react-router-dom";
 import { CmsProvider } from "./context/CmsContext";
 import { AuthProvider } from "./context/AuthContext";
+import { FeatureProvider } from "./context/FeatureContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import StoriesSection from "./components/StoriesSection";
@@ -34,8 +36,14 @@ import ReadMyStory from "./components/ReadMyStory.js";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import Contact from "./components/Contact";
+import DynamicPage from "./components/DynamicPage";
 import NewsletterVerificationPage from "./components/NewsletterVerificationPage";
 import NewsletterPreferencesPage from "./components/NewsletterPreferencesPage";
+
+import AskMyJourneyWidget from "./components/shared/AskMyJourneyWidget.jsx";
+import ReaderDashboard from "./components/ReaderDashboard.jsx";
+import SubscriptionDashboard from "./components/SubscriptionDashboard.jsx";
+import CommunityFeed from "./components/CommunityFeed.jsx";
 
 const HomePage = () => (
   <main>
@@ -85,15 +93,20 @@ const AppShell = () => {
       {!isAuthRoute && <Header />}
       <Outlet />
       {!isCms && !isAuthRoute && <Footer />}
+      {!isCms && !isAuthRoute && <AskMyJourneyWidget />}
     </div>
   );
 };
 
 const Root = () => (
   <AuthProvider>
-    <CmsProvider>
-      <AppShell />
-    </CmsProvider>
+    <FeatureProvider>
+      <ThemeProvider>
+        <CmsProvider>
+          <AppShell />
+        </CmsProvider>
+      </ThemeProvider>
+    </FeatureProvider>
   </AuthProvider>
 );
 
@@ -213,12 +226,40 @@ const appRouter = createBrowserRouter([
         ),
       },
       {
+        path: "profile/dashboard",
+        element: (
+          <ProtectedRoute>
+            <ReaderDashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "profile/subscription",
+        element: (
+          <ProtectedRoute>
+            <SubscriptionDashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "profile/community",
+        element: (
+          <ProtectedRoute>
+            <CommunityFeed />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "edit-profile",
         element: (
           <ProtectedRoute>
             <EditProfile />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: ":pageSlug",
+        element: <DynamicPage />,
       },
     ],
   },

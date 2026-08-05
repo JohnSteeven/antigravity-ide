@@ -1,0 +1,66 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  design-system.css  —  Design System Entry Point
+ *  MyJourney CMS  |  Layer X: Design System
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ *  IMPORT ORDER IS CRITICAL — Dependencies must come before consumers:
+ *    1. variables   → tokens (no dependencies)
+ *    2. reset       → uses tokens
+ *    3. typography  → uses tokens
+ *    4. animations  → standalone keyframes
+ *    5. layout/*    → uses tokens + animations
+ *    6. utilities/* → uses tokens + layout
+ *    7. shared/*    → uses all of the above
+ *
+ *  STATUS: This file is NOT yet imported in App.js / index.css.
+ *  It is the FUTURE state — individual @imports will be added as migration
+ *  progresses and corresponding selectors are removed from index.css.
+ *
+ *  HOW TO ACTIVATE A MODULE:
+ *    1. Add the @import below
+ *    2. Verify build passes with no visual regression
+ *    3. Remove the migrated selectors from index.css
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ── 1. Base Tokens ──────────────────────────────────────────────────────── */
+@import "./base/variables.css";
+
+/* ── 2. Reset ────────────────────────────────────────────────────────────── */
+/* @import "./base/reset.css"; */
+/* ↑ Uncomment when index.css reset selectors are removed */
+
+/* ── 3. Typography ───────────────────────────────────────────────────────── */
+/* @import "./base/typography.css"; */
+/* ↑ Uncomment when typography is migrated */
+
+/* ── 4. Animations ───────────────────────────────────────────────────────── */
+/* @import "./base/animations.css"; */
+/* ↑ Uncomment when @keyframes are removed from index.css */
+
+/* ── 5. Layout ───────────────────────────────────────────────────────────── */
+/* @import "./layout/grid.css"; */
+/* @import "./layout/containers.css"; */
+/* @import "./layout/spacing.css"; */
+
+/* ── 6. Utilities ────────────────────────────────────────────────────────── */
+/* @import "./utilities/helpers.css"; */
+/* @import "./utilities/responsive.css"; */
+
+/* ── 7. Shared Components ────────────────────────────────────────────────── */
+/* @import "./shared/Button.css"; */
+/* @import "./shared/Card.css"; */
+/* @import "./shared/Badge.css"; */
+/* @import "./shared/Alert.css"; */
+/* @import "./shared/Input.css"; */
+/* @import "./shared/Toggle.css"; */
+/* @import "./shared/Pagination.css"; */
+/* @import "./shared/Tabs.css"; */
+/* @import "./shared/Skeleton.css"; */
+/* @import "./shared/EmptyState.css"; */
+/* @import "./shared/Modal.css"; */
+/* @import "./shared/Avatar.css"; */
+/* @import "./shared/Tooltip.css"; */
+/* @import "./shared/Table.css"; */

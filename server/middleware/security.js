@@ -82,14 +82,16 @@ const sanitizeRequest = (req, res, next) => {
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  // In development, use a very high limit to avoid 429 errors during CMS usage
+  max: env.nodeEnv === 'production' ? 300 : 50000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => env.nodeEnv !== 'production', // completely skip in development
 });
 
 const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 30,
+  max: env.nodeEnv === 'production' ? 30 : 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many authentication attempts. Please wait." },
