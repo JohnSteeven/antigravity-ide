@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const communityController = require('../controllers/communityController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public endpoints
@@ -22,8 +23,8 @@ router.post('/polls/:id/vote', authenticate, communityController.votePoll);
 router.post('/report', communityController.reportComment);
 
 // Admin CMS endpoints
-router.get('/moderation', authenticate, communityController.getModerationQueue);
-router.patch('/moderation/:id', authenticate, communityController.updateModerationReport);
+router.get('/moderation', authenticate, requireAdmin, communityController.getModerationQueue);
+router.patch('/moderation/:id', authenticate, requireAdmin, communityController.updateModerationReport);
 
 apiRegistry.register({
   name: 'CommunityPlatform',

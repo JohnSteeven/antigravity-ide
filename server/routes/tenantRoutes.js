@@ -9,15 +9,16 @@ const express = require('express');
 const router = express.Router();
 const tenantController = require('../controllers/tenantController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public tenant lookup
 router.get('/public/:id', tenantController.getTenantById);
 
 // Admin CMS endpoints
-router.get('/', authenticate, tenantController.getTenants);
-router.post('/', authenticate, tenantController.createTenant);
-router.patch('/:id/branding', authenticate, tenantController.updateBranding);
+router.get('/', authenticate, requireAdmin, tenantController.getTenants);
+router.post('/', authenticate, requireAdmin, tenantController.createTenant);
+router.patch('/:id/branding', authenticate, requireAdmin, tenantController.updateBranding);
 
 apiRegistry.register({
   name: 'TenantPlatform',

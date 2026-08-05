@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const distributionController = require('../controllers/distributionController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public podcast RSS XML feed
@@ -16,12 +17,12 @@ router.get('/podcasts/rss', distributionController.getPodcastRss);
 router.get('/podcasts', distributionController.getPodcasts);
 
 // Authenticated CMS Distribution Endpoints
-router.get('/campaigns', authenticate, distributionController.getCampaigns);
-router.post('/campaigns', authenticate, distributionController.launchCampaign);
+router.get('/campaigns', authenticate, requireAdmin, distributionController.getCampaigns);
+router.post('/campaigns', authenticate, requireAdmin, distributionController.launchCampaign);
 router.post('/social/captions', authenticate, distributionController.generateSocialCaptions);
-router.get('/social/accounts', authenticate, distributionController.getSocialAccounts);
-router.post('/social/accounts', authenticate, distributionController.connectSocialAccount);
-router.post('/podcasts', authenticate, distributionController.createPodcast);
+router.get('/social/accounts', authenticate, requireAdmin, distributionController.getSocialAccounts);
+router.post('/social/accounts', authenticate, requireAdmin, distributionController.connectSocialAccount);
+router.post('/podcasts', authenticate, requireAdmin, distributionController.createPodcast);
 
 apiRegistry.register({
   name: 'DistributionPlatform',

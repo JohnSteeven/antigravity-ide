@@ -107,48 +107,44 @@ describe('bootstrapAdminIfEnabled()', () => {
 
   // ── Guard 2: missing credentials ─────────────────────────────────────────
 
-  it('warns and skips when BOOTSTRAP_ADMIN_EMAIL is missing',
+  it('throws an error when BOOTSTRAP_ADMIN_EMAIL is missing',
     withEnv(
       { BOOTSTRAP_ADMIN_ENABLED: 'true', BOOTSTRAP_ADMIN_EMAIL: '', BOOTSTRAP_ADMIN_PASSWORD: 'ValidPass123!' },
       async () => {
-        await bootstrapAdminIfEnabled();
+        await expect(bootstrapAdminIfEnabled()).rejects.toThrow('BOOTSTRAP_ADMIN_EMAIL');
         expect(User.create).not.toHaveBeenCalled();
-        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('BOOTSTRAP_ADMIN_EMAIL'));
       }
     )
   );
 
-  it('warns and skips when BOOTSTRAP_ADMIN_PASSWORD is missing',
+  it('throws an error when BOOTSTRAP_ADMIN_PASSWORD is missing',
     withEnv(
       { BOOTSTRAP_ADMIN_ENABLED: 'true', BOOTSTRAP_ADMIN_EMAIL: 'admin@example.com', BOOTSTRAP_ADMIN_PASSWORD: '' },
       async () => {
-        await bootstrapAdminIfEnabled();
+        await expect(bootstrapAdminIfEnabled()).rejects.toThrow('BOOTSTRAP_ADMIN_PASSWORD');
         expect(User.create).not.toHaveBeenCalled();
-        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('BOOTSTRAP_ADMIN_PASSWORD'));
       }
     )
   );
 
-  it('warns and skips when both credentials are missing',
+  it('throws an error when both credentials are missing',
     withEnv(
       { BOOTSTRAP_ADMIN_ENABLED: 'true', BOOTSTRAP_ADMIN_EMAIL: undefined, BOOTSTRAP_ADMIN_PASSWORD: undefined },
       async () => {
-        await bootstrapAdminIfEnabled();
+        await expect(bootstrapAdminIfEnabled()).rejects.toThrow();
         expect(User.create).not.toHaveBeenCalled();
-        expect(consoleWarnSpy).toHaveBeenCalled();
       }
     )
   );
 
   // ── Guard 3: password minimum length ─────────────────────────────────────
 
-  it('warns and skips when password is shorter than 12 characters',
+  it('throws an error when password is shorter than 12 characters',
     withEnv(
       { BOOTSTRAP_ADMIN_ENABLED: 'true', BOOTSTRAP_ADMIN_EMAIL: 'admin@example.com', BOOTSTRAP_ADMIN_PASSWORD: 'Short1!' },
       async () => {
-        await bootstrapAdminIfEnabled();
+        await expect(bootstrapAdminIfEnabled()).rejects.toThrow('12 characters');
         expect(User.create).not.toHaveBeenCalled();
-        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('12 characters'));
       }
     )
   );

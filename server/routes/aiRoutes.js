@@ -9,30 +9,31 @@ const express = require('express');
 const router = express.Router();
 const aiController = require('../controllers/aiController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // ── Status (public — used by frontend to conditionally show AI features) ──────
 router.get('/status', aiController.getStatus);
 
 // ── Provider Management (admin only) ─────────────────────────────────────────
-router.get('/providers', authenticate, aiController.getProviders);
-router.post('/providers', authenticate, aiController.createProvider);
-router.patch('/providers/:id', authenticate, aiController.updateProvider);
-router.post('/providers/:id/activate', authenticate, aiController.activateProvider);
-router.post('/providers/:id/test', authenticate, aiController.testProvider);
-router.delete('/providers/:id', authenticate, aiController.deleteProvider);
+router.get('/providers', authenticate, requireAdmin, aiController.getProviders);
+router.post('/providers', authenticate, requireAdmin, aiController.createProvider);
+router.patch('/providers/:id', authenticate, requireAdmin, aiController.updateProvider);
+router.post('/providers/:id/activate', authenticate, requireAdmin, aiController.activateProvider);
+router.post('/providers/:id/test', authenticate, requireAdmin, aiController.testProvider);
+router.delete('/providers/:id', authenticate, requireAdmin, aiController.deleteProvider);
 
 // ── AI Writing (all actions via single endpoint) ──────────────────────────────
 router.post('/write', authenticate, aiController.write);
 
 // ── Prompt Templates ──────────────────────────────────────────────────────────
 router.get('/prompts', authenticate, aiController.getPrompts);
-router.post('/prompts', authenticate, aiController.createPrompt);
-router.patch('/prompts/:id', authenticate, aiController.updatePrompt);
-router.delete('/prompts/:id', authenticate, aiController.deletePrompt);
+router.post('/prompts', authenticate, requireAdmin, aiController.createPrompt);
+router.patch('/prompts/:id', authenticate, requireAdmin, aiController.updatePrompt);
+router.delete('/prompts/:id', authenticate, requireAdmin, aiController.deletePrompt);
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
-router.get('/analytics', authenticate, aiController.getAnalytics);
+router.get('/analytics', authenticate, requireAdmin, aiController.getAnalytics);
 router.post('/analytics/acceptance', authenticate, aiController.markAcceptance);
 
 // ── Phase 20B: RAG Knowledge Assistant ─────────────────────────────────────────
@@ -44,12 +45,12 @@ router.post('/feedback', aiController.submitFeedback);
 
 // Conversations
 router.get('/conversations', authenticate, aiController.listConversations);
-router.get('/conversations/:id', aiController.getConversation);
+router.get('/conversations/:id', authenticate, aiController.getConversation);
 
 // Knowledge Indexing (Admin)
-router.get('/index/stats', authenticate, aiController.getIndexStats);
-router.post('/index/reindex', authenticate, aiController.reindexAll);
-router.post('/index/article/:articleId', authenticate, aiController.indexArticle);
+router.get('/index/stats', authenticate, requireAdmin, aiController.getIndexStats);
+router.post('/index/reindex', authenticate, requireAdmin, aiController.reindexAll);
+router.post('/index/article/:articleId', authenticate, requireAdmin, aiController.indexArticle);
 
 // ── Phase 20C: Contextual CMS Endpoints ───────────────────────────────────────
 router.post('/article/audit', authenticate, aiController.auditArticle);
@@ -62,7 +63,7 @@ router.post('/dashboard', authenticate, aiController.dashboardSuggestions);
 
 // ── Phase 20D: Editorial Advisor & Content Intelligence Endpoints ─────────────
 router.post('/advisor/analyze', authenticate, aiController.analyzeAdvisor);
-router.get('/advisor/weekly-report', authenticate, aiController.weeklyReport);
+router.get('/advisor/weekly-report', authenticate, requireAdmin, aiController.weeklyReport);
 router.post('/health/score', authenticate, aiController.calculateContentHealth);
 router.post('/internal-links', authenticate, aiController.suggestInternalLinks);
 router.post('/refresh', authenticate, aiController.refreshArticleAI);

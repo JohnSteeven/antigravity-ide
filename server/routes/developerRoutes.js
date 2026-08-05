@@ -9,18 +9,19 @@ const express = require('express');
 const router = express.Router();
 const developerController = require('../controllers/developerController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
-// All developer portal routes require authentication
-router.get('/keys', authenticate, developerController.getApiKeys);
-router.post('/keys', authenticate, developerController.createApiKey);
-router.delete('/keys/:id', authenticate, developerController.revokeApiKey);
+// All developer portal routes require authentication and administrator privilege
+router.get('/keys', authenticate, requireAdmin, developerController.getApiKeys);
+router.post('/keys', authenticate, requireAdmin, developerController.createApiKey);
+router.delete('/keys/:id', authenticate, requireAdmin, developerController.revokeApiKey);
 
-router.get('/webhooks', authenticate, developerController.getWebhooks);
-router.post('/webhooks', authenticate, developerController.createWebhook);
+router.get('/webhooks', authenticate, requireAdmin, developerController.getWebhooks);
+router.post('/webhooks', authenticate, requireAdmin, developerController.createWebhook);
 
-router.get('/apps', authenticate, developerController.getApplications);
-router.post('/apps', authenticate, developerController.createApplication);
+router.get('/apps', authenticate, requireAdmin, developerController.getApplications);
+router.post('/apps', authenticate, requireAdmin, developerController.createApplication);
 
 apiRegistry.register({
   name: 'DeveloperPlatform',

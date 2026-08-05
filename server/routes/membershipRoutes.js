@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const membershipController = require('../controllers/membershipController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public endpoints
@@ -20,10 +21,10 @@ router.post('/subscribe', authenticate, membershipController.subscribe);
 router.post('/cancel', authenticate, membershipController.cancelSubscription);
 
 // Admin CMS endpoints
-router.post('/plans', authenticate, membershipController.createPlan);
-router.patch('/plans/:id', authenticate, membershipController.updatePlan);
-router.get('/revenue', authenticate, membershipController.getRevenueStats);
-router.post('/coupons', authenticate, membershipController.createCoupon);
+router.post('/plans', authenticate, requireAdmin, membershipController.createPlan);
+router.patch('/plans/:id', authenticate, requireAdmin, membershipController.updatePlan);
+router.get('/revenue', authenticate, requireAdmin, membershipController.getRevenueStats);
+router.post('/coupons', authenticate, requireAdmin, membershipController.createCoupon);
 
 apiRegistry.register({
   name: 'MembershipPlatform',

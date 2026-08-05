@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const searchController = require('../controllers/searchController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public search endpoints
@@ -17,8 +18,8 @@ router.get('/autocomplete', searchController.autocomplete);
 router.get('/graph/neighbors', searchController.getGraphNeighbors);
 
 // Admin CMS endpoints
-router.get('/graph/stats', authenticate, searchController.getGraphStats);
-router.post('/reindex', authenticate, searchController.reindexAll);
+router.get('/graph/stats', authenticate, requireAdmin, searchController.getGraphStats);
+router.post('/reindex', authenticate, requireAdmin, searchController.reindexAll);
 
 apiRegistry.register({
   name: 'SearchPlatform',

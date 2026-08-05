@@ -126,20 +126,17 @@ async function bootstrapAdminIfEnabled() {
 
   // Guard 2: both credentials must be supplied
   if (!email || !password) {
-    console.warn(
+    throw new Error(
       '[Seeder] BOOTSTRAP_ADMIN_ENABLED=true but BOOTSTRAP_ADMIN_EMAIL or ' +
-      'BOOTSTRAP_ADMIN_PASSWORD is not set. Admin bootstrap skipped.'
+      'BOOTSTRAP_ADMIN_PASSWORD is not set.'
     );
-    return;
   }
 
   // Guard 3: password minimum length (12 chars)
   if (password.length < 12) {
-    console.warn(
-      '[Seeder] BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters. ' +
-      'Admin bootstrap skipped.'
+    throw new Error(
+      '[Seeder] BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters.'
     );
-    return;
   }
 
   const User   = require('../models/User');
