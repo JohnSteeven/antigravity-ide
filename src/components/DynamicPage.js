@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react';
+import { useParams } from 'react-router-dom';
 import apiService from '../services/apiService';
 import PageRenderer from './PageRenderer';
 import Error from './Error';
