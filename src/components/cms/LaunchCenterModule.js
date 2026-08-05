@@ -94,10 +94,10 @@ export default function LaunchCenterModule() {
       {/* Readiness Gauge & Release Banner */}
       <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: 24, marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
         <div>
-          <span style={{ fontSize: '0.75rem', background: '#10b98120', color: '#10b981', padding: '3px 10px', borderRadius: 100, fontWeight: 700 }}>
-            COMMERCIAL RELEASE READY (v6.0.0)
+          <span style={{ fontSize: '0.75rem', background: '#3b82f620', color: '#3b82f6', padding: '3px 10px', borderRadius: 100, fontWeight: 700 }}>
+            DEVELOPMENT STABILIZATION (v1.0.0-stabilizing)
           </span>
-          <h3 style={{ margin: '8px 0 4px', fontSize: '1.4rem' }}>MyJourney Enterprise Platform</h3>
+          <h3 style={{ margin: '8px 0 4px', fontSize: '1.4rem' }}>MyJourney Platform Readiness</h3>
           <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>30 Completed Phases · Zero Regressions · Production Hardened</p>
         </div>
 

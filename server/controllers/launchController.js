@@ -61,9 +61,9 @@ exports.getTests = async (req, res) => {
     let tests = await TestExecution.find().lean();
     if (tests.length === 0) {
       await TestExecution.create([
-        { suiteName: 'Unit & Integration Suite', totalTests: 180, passedCount: 180, durationMs: 4200, coveragePercent: 98.4 },
-        { suiteName: 'API Gateway & Security Audit', totalTests: 65, passedCount: 65, durationMs: 1800, coveragePercent: 100 },
-        { suiteName: 'E2E & UI Accessibility Suite', totalTests: 45, passedCount: 45, durationMs: 6100, coveragePercent: 96.0 },
+        { suiteName: 'Unit & Integration Suite (Sample Baseline)', totalTests: 56, passedCount: 56, durationMs: 2600, coveragePercent: 85.0 },
+        { suiteName: 'API Gateway & Security Audit (Route Protection)', totalTests: 22, passedCount: 22, durationMs: 1200, coveragePercent: 90.0 },
+        { suiteName: 'E2E & UI Accessibility Suite (Simulated)', totalTests: 15, passedCount: 15, durationMs: 3100, coveragePercent: 80.0 },
       ]);
       tests = await TestExecution.find().lean();
     }
