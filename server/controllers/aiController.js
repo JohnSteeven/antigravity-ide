@@ -301,6 +301,13 @@ exports.chat = async (req, res) => {
 exports.getConversation = async (req, res) => {
   try {
     const conversation = await AIAssistantService.getConversation(req.params.id);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found.' });
+    }
+    // Check ownership: logged-in user must own the conversation (or be Admin)
+    if (conversation.userId && String(conversation.userId) !== String(req.user?._id || req.user?.id) && req.user?.role !== 'Admin') {
+      return res.status(403).json({ error: 'Access denied. You do not own this conversation.' });
+    }
     res.json({ success: true, data: conversation });
   } catch (err) {
     res.status(404).json({ error: err.message });
