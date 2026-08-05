@@ -9,7 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../services/apiService';
 import {
   FiBookOpen, FiClock, FiZap, FiAward, FiBookmark,
-  FiFolder, FiCheckCircle, FiFlame, FiArrowRight, FiPlay
+  FiFolder, FiCheckCircle, FiArrowRight, FiPlay
 } from 'react-icons/fi';
 
 export default function ReaderDashboard() {
@@ -68,7 +68,7 @@ export default function ReaderDashboard() {
           <div style={{ display: 'flex', gap: 16 }}>
             {/* Streak Badge */}
             <div style={{ background: 'var(--soft, #18191b)', padding: '12px 20px', borderRadius: 12, border: '1px solid var(--line, #333)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <FiFlame size={24} style={{ color: '#f59e0b' }} />
+              <FiZap size={24} style={{ color: '#f59e0b' }} />
               <div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--muted, #888)', textTransform: 'uppercase' }}>Current Streak</div>
                 <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{profile?.currentStreakDays || 0} Days</div>
