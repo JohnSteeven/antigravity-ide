@@ -222,7 +222,7 @@ const Footer = () => {
                 <Link to="/">Home</Link>
               </li>
               <li>
-                <Link to="/#featured">Must Read</Link>
+                <Link to="/articles">Articles</Link>
               </li>
               <li>
                 <Link to="/#categories">Categories</Link>
@@ -233,14 +233,6 @@ const Footer = () => {
               <li>
                 <Link to="/contact">Contact</Link>
               </li>
-              <li>
-                <Link to="/profile">Profile</Link>
-              </li>
-              {isAdmin && (
-                <li>
-                  <Link to="/cms">CMS Dashboard</Link>
-                </li>
-              )}
             </ul>
           </div>
 

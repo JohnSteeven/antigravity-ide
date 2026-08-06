@@ -13,6 +13,7 @@ import {
 } from 'react-icons/fi';
 
 export default function AskMyJourneyWidget({ articleSlug = null, categorySlug = null }) {
+  const [isAiAvailable, setIsAiAvailable] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState([]);
@@ -23,6 +24,27 @@ export default function AskMyJourneyWidget({ articleSlug = null, categorySlug = 
   const [quizLoading, setQuizLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
+
+  // Check AI provider status on mount
+  useEffect(() => {
+    let isMounted = true;
+    apiService
+      .get('/api/ai/status')
+      .then((res) => {
+        if (isMounted && res?.data?.available) {
+          setIsAiAvailable(true);
+        } else if (isMounted) {
+          setIsAiAvailable(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsAiAvailable(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,6 +167,8 @@ export default function AskMyJourneyWidget({ articleSlug = null, categorySlug = 
       setQuizLoading(false);
     }
   };
+
+  if (!isAiAvailable) return null;
 
   return (
     <>
