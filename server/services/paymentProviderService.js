@@ -11,37 +11,21 @@
 
 class PaymentProviderService {
   /**
-   * Create checkout session for plan upgrade.
+   * Create checkout session for plan upgrade (disabled in private beta).
    */
-  static async createCheckoutSession({ provider = 'stripe', plan, userId, userEmail, returnUrl }) {
-    switch (provider) {
-      case 'lemonsqueezy':
-        return {
-          provider: 'lemonsqueezy',
-          checkoutUrl: `https://lemonsqueezy.com/checkout/mock?plan=${plan.slug}&user=${userId}`,
-          sessionId: `ls_chk_${Date.now()}`,
-        };
-      case 'paddle':
-        return {
-          provider: 'paddle',
-          checkoutUrl: `https://checkout.paddle.com/mock?plan=${plan.slug}&user=${userId}`,
-          sessionId: `pad_chk_${Date.now()}`,
-        };
-      case 'stripe':
-      default:
-        return {
-          provider: 'stripe',
-          checkoutUrl: `https://checkout.stripe.com/mock?plan=${plan.slug}&user=${userId}`,
-          sessionId: `str_chk_${Date.now()}`,
-        };
-    }
+  static async createCheckoutSession() {
+    const err = new Error('Payments and membership checkout are disabled in private beta.');
+    err.status = 503;
+    throw err;
   }
 
   /**
-   * Cancel subscription with provider.
+   * Cancel subscription with provider (disabled in private beta).
    */
-  static async cancelSubscription({ provider, subscriptionId }) {
-    return { success: true, provider, subscriptionId, canceledAt: new Date() };
+  static async cancelSubscription() {
+    const err = new Error('Payments and membership service are disabled in private beta.');
+    err.status = 503;
+    throw err;
   }
 }
 

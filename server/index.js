@@ -156,19 +156,23 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use(notFound);
 app.use(errorHandler);
 
-connectDb()
-  .then(() => {
-    app.listen(env.port, () => {
-      console.log(`Auth API running on port ${env.port}`);
-      try {
-        const { startScheduler } = require("./cron");
-        startScheduler();
-      } catch (err) {
-        console.error("Failed to start scheduler:", err);
-      }
+if (require.main === module) {
+  connectDb()
+    .then(() => {
+      app.listen(env.port, () => {
+        console.log(`Auth API running on port ${env.port}`);
+        try {
+          const { startScheduler } = require("./cron");
+          startScheduler();
+        } catch (err) {
+          console.error("Failed to start scheduler:", err);
+        }
+      });
+    })
+    .catch((error) => {
+      console.error("Could not start server", error);
+      process.exit(1);
     });
-  })
-  .catch((error) => {
-    console.error("Could not start server", error);
-    process.exit(1);
-  });
+}
+
+module.exports = app;

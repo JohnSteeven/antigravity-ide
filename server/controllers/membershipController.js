@@ -54,43 +54,10 @@ exports.getMyMembership = async (req, res) => {
 };
 
 exports.subscribe = async (req, res) => {
-  try {
-    if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const { planSlug, provider = 'stripe' } = req.body;
-
-    const plan = await MembershipPlan.findOne({ slug: planSlug, status: 'active' }).lean();
-    if (!plan) return res.status(404).json({ error: 'Plan not found.' });
-
-    // Create Checkout Session
-    const session = await PaymentProviderService.createCheckoutSession({
-      provider,
-      plan,
-      userId: req.user.id,
-      userEmail: req.user.email,
-    });
-
-    // Create or update ReaderMembership record
-    let membership = await ReaderMembership.findOne({ userId: req.user.id });
-    if (!membership) {
-      membership = new ReaderMembership({
-        userId: req.user.id,
-        planId: plan._id,
-        planSlug: plan.slug,
-        billingProvider: provider,
-        billingStatus: 'active',
-      });
-    } else {
-      membership.planId = plan._id;
-      membership.planSlug = plan.slug;
-      membership.billingProvider = provider;
-      membership.billingStatus = 'active';
-    }
-    await membership.save();
-
-    res.json({ success: true, data: { checkoutUrl: session.checkoutUrl, membership } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  return res.status(503).json({
+    error: 'Service Unavailable',
+    message: 'Payments and membership checkout are disabled in private beta.',
+  });
 };
 
 exports.cancelSubscription = async (req, res) => {

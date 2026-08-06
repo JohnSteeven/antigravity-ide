@@ -75,29 +75,41 @@ exports.createPolicy = async (req, res) => {
 // ── Compliance & Secret Vault ────────────────────────────────────────────────
 
 exports.exportUserData = async (req, res) => {
-  try {
-    const record = await GovernanceService.exportUserData(req.user.id);
-    res.json({ success: true, data: record });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  return res.status(503).json({
+    error: 'Service Unavailable',
+    message: 'GDPR export service is disabled in private beta.',
+  });
 };
 
 exports.getSecrets = async (req, res) => {
+  if (!GovernanceService.isVaultEnabled()) {
+    return res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Secret Vault is disabled in private beta.',
+    });
+  }
   try {
-    const secrets = await SecretVault.find().select('secretKey version lastRotatedAt').lean();
+    const secrets = await SecretVault.find().select('secretKey version lastRotatedAt encryptionVersion').lean();
     res.json({ success: true, data: secrets });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
   }
 };
 
 exports.setSecret = async (req, res) => {
+  if (!GovernanceService.isVaultEnabled()) {
+    return res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Secret Vault is disabled in private beta.',
+    });
+  }
   try {
     const { secretKey, value } = req.body;
     const secret = await GovernanceService.setSecret(secretKey, value);
     res.status(201).json({ success: true, data: secret });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
   }
 };

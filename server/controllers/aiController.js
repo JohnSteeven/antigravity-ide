@@ -291,8 +291,8 @@ exports.chat = async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (err) {
-    const status = err.message?.includes('No AI provider') ? 503 : 500;
-    res.status(status).json({ error: 'Chat failed', message: err.message });
+    const status = err.status === 503 || err.message?.includes('No active AI provider') ? 503 : (err.status || 500);
+    res.status(status).json({ error: 'AI Completions Unavailable', message: err.message });
   }
 };
 

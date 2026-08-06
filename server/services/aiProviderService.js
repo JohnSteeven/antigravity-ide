@@ -252,41 +252,9 @@ class AIProviderService {
 
     const config = await AIProviderService.getActiveConfig();
     if (!config || !config.apiKey) {
-      // Fallback built-in AI response when no external provider key is configured yet
-      const lastUserMsg = [...(messages || [])].reverse().find((m) => m.role === 'user')?.content || '';
-      const contextMsg = (messages || []).find((m) => m.role === 'system')?.content || '';
-
-      let fallbackText = '';
-      const q = lastUserMsg.toLowerCase();
-
-      if (q.includes('react') || q.includes('learn')) {
-        fallbackText = `To learn **React**, start with core JavaScript fundamentals (ES6 syntax, Promises, and Modules), then master:
-1. **Components & JSX**: Building modular UI elements.
-2. **State & Props**: Managing data flow with \`useState\`.
-3. **Hooks**: Dynamic side effects with \`useEffect\` and custom hooks.
-4. **Routing & State Management**: Using React Router and Context API.
-
-Check out MyJourney's **Learning Paths** and **Coding Category** for structured step-by-step guides!`;
-      } else if (q.includes('jwt') || q.includes('auth')) {
-        fallbackText = `**JSON Web Tokens (JWT)** are compact, URL-safe tokens used for securely transmitting information between client and server.
-- **Header**: Contains algorithm & token type.
-- **Payload**: Contains claims (user ID, roles, expiration).
-- **Signature**: Verifies token authenticity.
-
-Explore MyJourney's Security & Architecture articles for deep dives into OAuth2 and JWT implementations!`;
-      } else if (q.includes('travel') || q.includes('guide')) {
-        fallbackText = `Welcome to MyJourney Travel Guides! Explore our curated articles on budget travel, hidden destinations, packing essentials, and cultural itineraries.`;
-      } else {
-        fallbackText = `Thank you for your question: "${lastUserMsg}".\n\nI searched MyJourney's knowledge base and published catalog to help guide your learning journey. Browse our top categories, learning pathways, and articles in the navigation menu, or configure a live AI API Key (OpenAI / Gemini / Claude / Ollama) in **CMS → AI Provider Manager** to unlock full real-time model completions!`;
-      }
-
-      return {
-        content: fallbackText,
-        tokens: { promptTokens: 30, completionTokens: 80, totalTokens: 110 },
-        latencyMs: 25,
-        provider: 'built-in-assistant',
-        model: 'myjourney-ai-v1',
-      };
+      const err = new Error('AI Completions Unavailable. No active AI provider configured with a valid API key.');
+      err.status = 503;
+      throw err;
     }
 
     // Check daily/monthly limits

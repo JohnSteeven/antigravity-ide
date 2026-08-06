@@ -11,6 +11,7 @@ const SecretVaultSchema = new mongoose.Schema(
   {
     secretKey: { type: String, required: true, unique: true, index: true }, // e.g. STRIPE_SECRET_KEY
     encryptedValue: { type: String, required: true },
+    encryptionVersion: { type: String, default: 'v2' },
     version: { type: Number, default: 1 },
     lastRotatedAt: { type: Date, default: Date.now },
   },

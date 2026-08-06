@@ -53,19 +53,10 @@ exports.getWebhooks = async (req, res) => {
 };
 
 exports.createWebhook = async (req, res) => {
-  try {
-    const { targetUrl, events } = req.body;
-    const secret = `whsec_${crypto.randomBytes(20).toString('hex')}`;
-    const webhook = await WebhookSubscription.create({
-      targetUrl,
-      events: events || ['article.published'],
-      secret,
-      owner: req.user.id,
-    });
-    res.status(201).json({ success: true, data: webhook });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  return res.status(503).json({
+    error: 'Service Unavailable',
+    message: 'Outbound webhooks are disabled in private beta.',
+  });
 };
 
 // ── OAuth Applications ────────────────────────────────────────────────────────

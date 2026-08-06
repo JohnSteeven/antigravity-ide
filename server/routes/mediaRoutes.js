@@ -15,11 +15,27 @@ const apiRegistry = require('../core/apiRegistry');
 
 const router = express.Router();
 
-// Memory Storage for Multer so StorageFactory adapter handles writing
+const { multerFileFilter, validateFileBuffer } = require('../middleware/uploadValidation');
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max
+  fileFilter: multerFileFilter,
 });
+
+// Middleware helper to catch Multer file filter errors and return 400/415
+const handleUpload = (singleField) => (req, res, next) => {
+  upload.single(singleField)(req, res, (err) => {
+    if (err) {
+      const statusCode = err.statusCode || 400;
+      return res.status(statusCode).json({
+        error: statusCode === 415 ? 'Unsupported Media Type' : 'Bad Request',
+        message: err.message,
+      });
+    }
+    next();
+  });
+};
 
 // Folders CRUD
 router.get('/folders', authenticate, mediaController.getFolders);
@@ -32,9 +48,9 @@ router.get('/', authenticate, mediaController.getMedia);
 router.get('/usage/:id', authenticate, mediaController.getAssetUsage);
 router.get('/:id', authenticate, mediaController.getMediaById);
 
-router.post('/', authenticate, upload.single('file'), mediaController.uploadMedia);
-router.post('/upload', authenticate, upload.single('file'), mediaController.uploadMedia);
-router.post('/replace/:id', authenticate, upload.single('file'), mediaController.replaceMedia);
+router.post('/', authenticate, handleUpload('file'), validateFileBuffer, mediaController.uploadMedia);
+router.post('/upload', authenticate, handleUpload('file'), validateFileBuffer, mediaController.uploadMedia);
+router.post('/replace/:id', authenticate, handleUpload('file'), validateFileBuffer, mediaController.replaceMedia);
 
 router.patch('/:id', authenticate, mediaController.updateMedia);
 router.delete('/:id', authenticate, mediaController.deleteMedia);
