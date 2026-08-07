@@ -11,8 +11,8 @@ import DeleteAccountCard from "./DeleteAccountCard";
 import LoadingSkeleton from "./LoadingSkeleton";
 import "./SecurityCenter.css";
 
-const SecurityCenter = ({ user }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const SecurityCenter = ({ user, embedFull = false, standaloneDeleteOnly = false }) => {
+  const [isExpanded, setIsExpanded] = useState(embedFull);
 
   const {
     overview,
@@ -33,24 +33,29 @@ const SecurityCenter = ({ user }) => {
     deleteAccount,
   } = useSecurityCenter(user);
 
+  if (standaloneDeleteOnly) {
+    return <DeleteAccountCard onDeleteAccount={deleteAccount} />;
+  }
+
   return (
     <>
-      {/* ── SECURITY ACCORDION ── */}
       <div className="sec-embedded-container" style={{ width: "100%" }}>
-        <button
-          className="sec-header-button settings-action"
-          type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
-        >
-          <span className="sec-action-label">
-            <FiShield style={{ fontSize: "1.1rem" }} /> Security
-          </span>
-          <span className="sec-expand-indicator">
-            {isExpanded ? <><FiChevronUp /> Collapse Security</> : <><FiChevronDown /> View Security Center</>}
-          </span>
-        </button>
+        {!embedFull && (
+          <button
+            className="sec-header-button settings-action"
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+          >
+            <span className="sec-action-label">
+              <FiShield style={{ fontSize: "1.1rem" }} /> Security
+            </span>
+            <span className="sec-expand-indicator">
+              {isExpanded ? <><FiChevronUp /> Collapse Security</> : <><FiChevronDown /> View Security Center</>}
+            </span>
+          </button>
+        )}
 
-        <div className={`sec-section-wrap ${isExpanded ? "is-expanded" : ""}`}>
+        <div className={`sec-section-wrap ${isExpanded || embedFull ? "is-expanded" : ""}`}>
           {loading ? (
             <LoadingSkeleton count={4} />
           ) : error ? (
@@ -93,30 +98,16 @@ const SecurityCenter = ({ user }) => {
                 on2FASetup={setup2FA}
                 on2FAVerify={verify2FA}
               />
-
-              {/* 7. Passkeys — Phase 2C placeholder */}
-              <div className="sec-passkeys-reserved">
-                <div className="sec-passkeys-inner">
-                  <div className="sec-passkeys-icon">🔑</div>
-                  <div>
-                    <h4 className="sec-passkeys-title">Passkeys &amp; WebAuthn</h4>
-                    <p className="sec-passkeys-desc">
-                      Sign in without a password using biometric hardware — Touch ID, Face ID, Windows Hello, or a FIDO2 key.
-                      Passkeys are being rolled out as a separate update.
-                    </p>
-                  </div>
-                  <span className="sec-passkeys-badge">Coming in Phase 2C</span>
-                </div>
-              </div>
             </>
           )}
         </div>
       </div>
 
-      {/* ── STANDALONE DELETE ACCOUNT SECTION (Unattached, separate margin) ── */}
-      <div className="sec-standalone-delete-wrap" style={{ width: "100%", marginTop: "24px" }}>
-        <DeleteAccountCard onDeleteAccount={deleteAccount} />
-      </div>
+      {!embedFull && (
+        <div className="sec-standalone-delete-wrap" style={{ width: "100%", marginTop: "24px" }}>
+          <DeleteAccountCard onDeleteAccount={deleteAccount} />
+        </div>
+      )}
     </>
   );
 };

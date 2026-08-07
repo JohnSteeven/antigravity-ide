@@ -19827,43 +19827,164 @@ body.theme-dark .dropdown-divider {
   text-align: center !important;
 }
 
+/* Top Spacing Normalization - Remove duplicate top margin & excessive padding below sticky header across ALL pages */
+.hero,
+.story-hero,
+.listing-hero,
+.article-detail-hero,
+.category-detail-hero,
+.profile-page,
+.profile-hero,
+.account-profile-page,
+.account-profile-hero,
+.edit-profile-page,
+.edit-profile-header,
+.articles-page,
+.article-detail-page,
+.category-page,
+.contact-page,
+.story-page,
+.dynamic-page,
+.cms-page,
+.auth-page,
+.register-page,
+.login-page,
+main,
+main.container,
+.app-container > main {
+  margin-top: 0 !important;
+}
+
+/* Scoped top-padding for hero/header blocks sitting right under sticky header */
+.profile-page,
+.account-profile-page {
+  padding-top: 0 !important;
+}
+
+.profile-hero,
+.account-profile-hero {
+  padding-top: 24px !important;
+  margin-top: 0 !important;
+  position: relative !important;
+  padding: 32px clamp(20px, 6vw, 90px) 28px !important;
+  background: linear-gradient(135deg, #FAF8F5 0%, #FAF6F0 50%, #F5F1EB 100%) !important;
+  border-bottom: 1px solid var(--line, rgba(0, 0, 0, 0.1)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+body.theme-dark .account-profile-hero {
+  background: linear-gradient(135deg, #181c1b 0%, #151817 50%, #0f1312 100%) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.account-profile-summary {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+  margin-top: 8px !important;
+}
+
+.account-profile-summary > div {
+  background: var(--paper, #ffffff) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+body.theme-dark .account-profile-summary > div {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.account-profile-summary span {
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: var(--gold-dark, #8f6b48) !important;
+}
+
+.account-profile-summary strong {
+  font-size: 0.96rem !important;
+  font-weight: 700 !important;
+  color: var(--ink, #292524) !important;
+  word-break: break-word !important;
+}
+
+body.theme-dark .account-profile-summary strong {
+  color: var(--ink, #f8f4ed) !important;
+}
+
+.edit-profile-page,
+.edit-profile-header {
+  padding-top: 24px !important;
+  margin-top: 0 !important;
+}
+
+.articles-page,
+.listing-hero {
+  padding-top: 28px !important;
+  margin-top: 0 !important;
+}
+
+.category-detail-hero {
+  padding-top: 28px !important;
+  margin-top: 0 !important;
+}
+
+.article-detail-hero {
+  padding-top: 36px !important;
+  margin-top: 0 !important;
+}
+
+.contact-page {
+  padding-top: 28px !important;
+  margin-top: 0 !important;
+}
+
 /* Header Actions */
 .header-actions {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 8px !important;
   white-space: nowrap !important;
 }
 
-.header-action-btn {
+.search-trigger-btn {
   font-family: inherit !important;
-  font-size: 0.84rem !important;
-  font-weight: 700 !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
   color: var(--ink, #292524) !important;
-  background: rgba(0, 0, 0, 0.04) !important;
-  border: 1px solid var(--line, rgba(0, 0, 0, 0.12)) !important;
-  padding: 7px 16px !important;
-  border-radius: 100px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
   cursor: pointer !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
+  box-shadow: none !important;
   text-transform: none !important;
-  transition: all 0.18s ease !important;
+  transition: color 0.15s ease, background-color 0.15s ease !important;
 }
 
-body.theme-dark .header-action-btn {
+body.theme-dark .search-trigger-btn {
   color: var(--ink, #e7e5e4) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.header-action-btn:hover,
-.header-action-btn.active {
-  border-color: var(--gold-dark, #8f6b48) !important;
+.search-trigger-btn:hover,
+.search-trigger-btn.active {
   color: var(--gold-dark, #8f6b48) !important;
-  background: rgba(143, 107, 72, 0.1) !important;
+  background-color: rgba(143, 107, 72, 0.08) !important;
+  border: none !important;
 }
 
 .account-avatar-icon {
@@ -19881,11 +20002,12 @@ body.theme-dark .header-action-btn {
   padding: 8px 20px !important;
   border-radius: 100px !important;
   text-decoration: none !important;
-  transition: opacity 0.18s ease !important;
+  transition: opacity 0.18s ease, transform 0.18s ease !important;
 }
 
 .btn-sign-in:hover {
   opacity: 0.92 !important;
+  transform: translateY(-1px) !important;
 }
 
 /* Public Search Modal */
@@ -20400,4 +20522,4 @@ body.theme-dark .mobile-logout-btn {
     display: block !important;
   }
 }
-
+

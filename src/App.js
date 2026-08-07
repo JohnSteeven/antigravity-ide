@@ -227,27 +227,15 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "profile/dashboard",
-        element: (
-          <ProtectedRoute>
-            <ReaderDashboard />
-          </ProtectedRoute>
-        ),
+        element: <Navigate to="/profile?tab=overview" replace />,
       },
       {
         path: "profile/subscription",
-        element: (
-          <ProtectedRoute>
-            <SubscriptionDashboard />
-          </ProtectedRoute>
-        ),
+        element: <Navigate to="/profile?tab=overview" replace />,
       },
       {
         path: "profile/community",
-        element: (
-          <ProtectedRoute>
-            <CommunityFeed />
-          </ProtectedRoute>
-        ),
+        element: <Navigate to="/profile?tab=reading" replace />,
       },
       {
         path: "edit-profile",
