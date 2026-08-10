@@ -177,7 +177,7 @@ const OverviewTab = () => {
         {/* ── Main column ── */}
         <div>
           {/* Streak */}
-          <div className="rp-streak-card" style={{ marginBottom: 16 }}>
+          <div className={`rp-streak-card${streak === 0 ? " is-zero" : ""}`} style={{ marginBottom: 16 }}>
             <span className="rp-streak-icon">⚡</span>
             <div>
               <div className="rp-streak-value">{streak} Days</div>

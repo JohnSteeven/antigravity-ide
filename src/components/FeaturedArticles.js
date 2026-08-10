@@ -9,12 +9,13 @@ const getVisibleCount = () => {
   if (typeof window === "undefined") {
     return 5;
   }
-
-  if (window.innerWidth <= 550) return 1;
-  if (window.innerWidth <= 1023) return 2;
-  if (window.innerWidth <= 1279) return 3;
-  if (window.innerWidth <= 1599) return 4;
-  return 5;
+  const w = window.innerWidth;
+  if (w <= 480) return 1;
+  if (w <= 768) return 2;
+  if (w <= 1100) return 3;
+  if (w <= 1440) return 4;
+  if (w <= 1920) return 5;
+  return 6;
 };
 
 const FeaturedArticles = () => {
@@ -28,7 +29,7 @@ const FeaturedArticles = () => {
     let cancelled = false;
 
     articleApi
-      .list({ status: "published", isFeatured: "true", limit: 20 })
+      .list({ status: "published", isFeatured: "true", limit: 25 })
       .then((res) => {
         if (!cancelled && Array.isArray(res.articles)) {
           setApiArticles(res.articles);
@@ -74,9 +75,10 @@ const FeaturedArticles = () => {
     );
   };
 
+  const count = Math.min(visibleCount, featuredArticles.length);
   const visibleArticles = featuredArticles.length > 0
     ? Array.from(
-        { length: visibleCount },
+        { length: count },
         (_, offset) => featuredArticles[(currentIndex + offset) % featuredArticles.length]
       )
     : [];

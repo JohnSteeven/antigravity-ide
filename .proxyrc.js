@@ -25,4 +25,12 @@ module.exports = function (app) {
       pathFilter: "/uploads",
     })
   );
+  app.use(
+    createProxyMiddleware({
+      target,
+      changeOrigin: true,
+      pathFilter: "/socket.io",
+      ws: true,
+    })
+  );
 };

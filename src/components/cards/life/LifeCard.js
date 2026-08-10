@@ -90,7 +90,7 @@ const LifeCard = ({ articleData }) => {
         </div>
 
         <Link to={`/articles/${slug}`} className="life-read-btn">
-          Read Story <FiBookmark />
+          Read article <FiBookmark />
         </Link>
       </div>
     </article>

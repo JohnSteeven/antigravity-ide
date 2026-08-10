@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { FiAward, FiBriefcase, FiCompass, FiStar } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
+import AboutProjectsSection from "../features/about/AboutProjectsSection";
 
 const ReadMyStory = () => {
   const { data } = useCms();
@@ -61,7 +62,7 @@ const ReadMyStory = () => {
         </aside>
       </section>
 
-      <section className="story-work-band" id="projects">
+      <section className="story-work-band" id="projects-list">
         <div className="story-project-intro">
           <span className="section-kicker">Projects and work</span>
           <h2>Things I've Built</h2>
@@ -88,6 +89,9 @@ const ReadMyStory = () => {
           ))}
         </div>
       </section>
+
+      {/* Flagship Projects & Experiences Section */}
+      <AboutProjectsSection />
 
       <section className="story-lower-grid">
         <div className="stat-strip">

@@ -124,12 +124,18 @@ const request = async (path, options = {}) => {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const rawMsg = data.message || "API request failed.";
+    const rawMsg = data.error?.message || data.message || "API request failed.";
     const status = response.status;
     const friendlyMsg = sanitizeError(new Error(rawMsg), status);
     const err = new Error(friendlyMsg);
     err.status = status;
-    err.code = data.code;
+    err.code = data.error?.code || data.code;
+    err.retryable = Boolean(data.error?.retryable);
+    err.details = data.error?.details;
+    // Attach raw data payload so callers can read redirect, article, etc.
+    err.data = data;
+    err.redirect = data.redirect;
+    err.article = data.article;
     throw err;
   }
 
@@ -197,7 +203,21 @@ export const articleApi = {
 
   /** Submit a comment */
   addComment: (id, body) => post(`/api/articles/${id}/comments`, { body }),
+};
 
+// ─── Stories ──────────────────────────────────────────────────────────────────
+
+export const storyApi = {
+  /** Fetch published stories — enforced contentType=story on backend */
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/stories${qs ? `?${qs}` : ""}`);
+  },
+
+  /** Get a single story by slug */
+  getBySlug: (slug) => get(`/api/stories/${slug}`),
 };
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -452,6 +472,7 @@ const apiService = {
   delete: del,
   del,
   articles: articleApi,
+  stories: storyApi,
   categories: categoryApi,
   tags: tagApi,
   media: mediaApi,
@@ -462,6 +483,7 @@ const apiService = {
   permissions: permissionApi,
   news: newsApi,
   articleApi,
+  storyApi,
   categoryApi,
   tagApi,
   mediaApi,

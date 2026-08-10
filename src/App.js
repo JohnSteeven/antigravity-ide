@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import {
   Navigate,
@@ -21,7 +21,10 @@ import QuoteSection from "./components/QuoteSection";
 import Footer from "./components/Footer";
 import ArticlesPage from "./components/ArticlesPage";
 import ArticleDetail from "./components/ArticleDetail";
+import StoriesPage from "./stories/StoriesPage";
+import StoryDetail from "./stories/StoryDetail";
 import CategoryPage from "./components/CategoryPage";
+import AllCategoriesPage from "./components/AllCategoriesPage";
 import Error from "./components/Error";
 import AdminDashboard from "./components/AdminDashboard";
 import Login from "./components/Login";
@@ -39,11 +42,16 @@ import Contact from "./components/Contact";
 import DynamicPage from "./components/DynamicPage";
 import NewsletterVerificationPage from "./components/NewsletterVerificationPage";
 import NewsletterPreferencesPage from "./components/NewsletterPreferencesPage";
+import LoadingScreen from "./components/LoadingScreen";
+import { playWithFriendsEnabled } from "./features/play-with-friends/config";
 
 import AskMyJourneyWidget from "./components/shared/AskMyJourneyWidget.jsx";
 import ReaderDashboard from "./components/ReaderDashboard.jsx";
 import SubscriptionDashboard from "./components/SubscriptionDashboard.jsx";
 import CommunityFeed from "./components/CommunityFeed.jsx";
+
+const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"));
+const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));
 
 const HomePage = () => (
   <main>
@@ -59,6 +67,9 @@ const HomePage = () => (
 const AppShell = () => {
   const location = useLocation();
   const isCms = location.pathname.startsWith("/cms");
+  const isPlayLife = location.pathname.startsWith("/play-life");
+  const isPlayWithFriends = location.pathname.startsWith("/play-with-friends");
+  const isImmersive = isPlayLife || isPlayWithFriends;
   const authRoutes = [
     "/login",
     "/register",
@@ -90,10 +101,10 @@ const AppShell = () => {
 
   return (
     <div className="app-container">
-      {!isAuthRoute && <Header />}
+      {!isAuthRoute && !isImmersive && <Header />}
       <Outlet />
-      {!isCms && !isAuthRoute && <Footer />}
-      {!isCms && !isAuthRoute && <AskMyJourneyWidget />}
+      {!isCms && !isAuthRoute && !isImmersive && <Footer />}
+      {!isCms && !isAuthRoute && !isImmersive && <AskMyJourneyWidget />}
     </div>
   );
 };
@@ -129,12 +140,56 @@ const appRouter = createBrowserRouter([
         element: <ArticleDetail />,
       },
       {
+        path: "stories",
+        element: <StoriesPage />,
+      },
+      {
+        path: "stories/:slug",
+        element: <StoryDetail />,
+      },
+      {
+        path: "categories",
+        element: <AllCategoriesPage />,
+      },
+      {
         path: "category/:slug",
         element: <CategoryPage />,
       },
       {
         path: "about",
         element: <ReadMyStory />,
+      },
+      {
+        path: "play-life",
+        element: (
+          <Suspense fallback={<LoadingScreen message="Opening Play Life..." />}>
+            <PlayLifePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "play-with-friends",
+        element: (
+          <Suspense fallback={<LoadingScreen message="Opening Play With Friends..." />}>
+            {playWithFriendsEnabled ? <PlayWithFriendsPage /> : <Navigate to="/about#games" replace />}
+          </Suspense>
+        ),
+      },
+      {
+        path: "play-with-friends/join/:code",
+        element: (
+          <Suspense fallback={<LoadingScreen message="Opening room..." />}>
+            {playWithFriendsEnabled ? <PlayWithFriendsPage /> : <Navigate to="/about#games" replace />}
+          </Suspense>
+        ),
+      },
+      {
+        path: "play-with-friends/room/:code",
+        element: (
+          <Suspense fallback={<LoadingScreen message="Reconnecting to room..." />}>
+            {playWithFriendsEnabled ? <PlayWithFriendsPage /> : <Navigate to="/about#games" replace />}
+          </Suspense>
+        ),
       },
       {
         path: "read-my-story",
@@ -256,3 +311,5 @@ const appRouter = createBrowserRouter([
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(<RouterProvider router={appRouter} />);
+// Stories feature architecture updated
+

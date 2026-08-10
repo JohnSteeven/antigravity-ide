@@ -4,6 +4,7 @@ const requiredInProduction = [
   "MONGO_URI",
   "JWT_ACCESS_SECRET",
   "JWT_REFRESH_SECRET",
+  "MULTIPLAYER_GUEST_SECRET",
 ];
 
 if (process.env.NODE_ENV === "production") {
@@ -48,6 +49,18 @@ const env = {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,
     from: process.env.TWILIO_FROM_NUMBER,
+  },
+  multiplayer: {
+    enabled: process.env.MULTIPLAYER_ENABLED !== "false",
+    guestSecret: process.env.MULTIPLAYER_GUEST_SECRET || "development-multiplayer-secret-change-me",
+    analyticsSalt: process.env.MULTIPLAYER_ANALYTICS_SALT || "development-analytics-salt-change-me",
+    analyticsRetentionDays: Number(process.env.MULTIPLAYER_ANALYTICS_RETENTION_DAYS || 90),
+    roomTtlHours: Number(process.env.MULTIPLAYER_ROOM_TTL_HOURS || 6),
+    hostGraceSeconds: Number(process.env.MULTIPLAYER_HOST_GRACE_SECONDS || 45),
+    redisUrl: process.env.REDIS_URL || "",
+    requireRedis: process.env.MULTIPLAYER_REQUIRE_REDIS !== undefined
+      ? process.env.MULTIPLAYER_REQUIRE_REDIS === "true"
+      : process.env.NODE_ENV === "production",
   },
 };
 

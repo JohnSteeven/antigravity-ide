@@ -1,0 +1,63 @@
+const messages = {
+  title: "Life Auction",
+  eyebrow: "Tonight's Life Auction",
+  lobby: {
+    title: "What matters when you can't have everything?",
+    intro: [
+      "You receive a limited wallet of fictional Life Coins.",
+      "Spend them on the lots that matter to you.",
+      "Once they're gone, they're gone. 👀",
+    ],
+    mode: "Auction mode",
+    length: "Game length",
+    coins: "Starting Life Coins",
+    start: "Open the auction",
+    waiting: "The host is setting the stage",
+    invite: "Invite your friends",
+  },
+  rules: {
+    title: "Auction rules",
+    items: [
+      "Life Coins are fictional and have no monetary value.",
+      "Open bids are public. The current highest bid is reserved and released when you are outbid.",
+      "Sealed bids stay private until the reveal. Ties go to the earliest valid server-received bid.",
+      "Fixed-price lots may have more than one buyer.",
+      "The server owns wallets, deadlines, extensions and results.",
+      "Life Events add variety, but no result is a personality diagnosis.",
+    ],
+  },
+  bidding: {
+    open: "Open ascending auction",
+    sealed: "Sealed bid",
+    fixed: "Fixed-price decision",
+    bid: "Place bid",
+    submitSecret: "Lock sealed bid",
+    buy: "Buy for",
+    pass: "Passing is always allowed.",
+    submitted: "Your sealed bid is locked. Other bids remain private.",
+    current: "Current highest bid",
+    noBids: "No bids yet",
+    available: "Available",
+    reserved: "Reserved",
+  },
+  result: {
+    sold: "SOLD",
+    shared: "CLAIMED",
+    unsold: "PASSED",
+    next: "The next moment is entering the room...",
+    tie: "A tie was settled by the earliest valid server-received bid.",
+  },
+  portfolio: {
+    eyebrow: "That's it.",
+    title: "Your Life Portfolio",
+    choices: "Tonight's Choices",
+    remaining: "Life Coins remaining",
+    group: "Your group",
+    share: "Share my value map",
+    rematch: "Rematch Life Auction",
+    otherGame: "Play Who Knows Me Better?",
+    waiting: "The host chooses what the party plays next.",
+  },
+};
+
+export default messages;

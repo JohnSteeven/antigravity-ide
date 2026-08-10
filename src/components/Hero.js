@@ -29,20 +29,49 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Right Column: Floating Translucent Glass Card Decoration */}
+        {/* Right Column: Stacked Layered Glass Cards Display */}
         <div className="hero-glass-column">
-          <div className="hero-glass-card">
-            <div className="glass-card-badge">❤️ Life</div>
-            <h3 className="glass-card-title">Finding beauty in the quiet corners of our journey.</h3>
-            <p className="glass-card-excerpt">Reflections on slow living, finding purpose, and the small moments that shape who we are.</p>
-            <div className="glass-card-meta">
-              <span className="glass-card-author">Noble John Steeven</span>
-              <span className="glass-card-dot">•</span>
-              <span className="glass-card-read">5 min read</span>
+          <div className="hero-card-stack">
+            {/* Back Card 2 (Peeking Top-Left) */}
+            <div className="hero-glass-card stack-card back-card-2" aria-hidden="true">
+              <div className="glass-card-badge coding">⚡ Coding</div>
+              <h3 className="glass-card-title">Clean Architecture & Modern React</h3>
+              <p className="glass-card-excerpt">Building scalable web interfaces with robust state management.</p>
+              <div className="glass-card-meta">
+                <span className="glass-card-author">Noble John Steeven</span>
+                <span className="glass-card-dot">•</span>
+                <span className="glass-card-read">8 min read</span>
+              </div>
             </div>
-          </div>
-          <div className="hero-floating-badge">
-            <span>✍️ 12+ Published Stories</span>
+
+            {/* Back Card 1 (Peeking Top-Right) */}
+            <div className="hero-glass-card stack-card back-card-1" aria-hidden="true">
+              <div className="glass-card-badge reflections">🌿 Reflections</div>
+              <h3 className="glass-card-title">The Art of Slowing Down in a Fast World</h3>
+              <p className="glass-card-excerpt">Why intentional pause fuels long-term creativity and inner clarity.</p>
+              <div className="glass-card-meta">
+                <span className="glass-card-author">Noble John Steeven</span>
+                <span className="glass-card-dot">•</span>
+                <span className="glass-card-read">6 min read</span>
+              </div>
+            </div>
+
+            {/* Front Card (Primary Main Layer) */}
+            <div className="hero-glass-card stack-card front-card">
+              <div className="glass-card-badge life">❤️ Life</div>
+              <h3 className="glass-card-title">Finding beauty in the quiet corners of our journey.</h3>
+              <p className="glass-card-excerpt">Reflections on slow living, finding purpose, and the small moments that shape who we are.</p>
+              <div className="glass-card-meta">
+                <span className="glass-card-author">Noble John Steeven</span>
+                <span className="glass-card-dot">•</span>
+                <span className="glass-card-read">5 min read</span>
+              </div>
+              
+              {/* Anchored Floating Badge */}
+              <div className="hero-floating-badge">
+                <span>✍️ 12+ Published Stories</span>
+              </div>
+            </div>
           </div>
         </div>
 

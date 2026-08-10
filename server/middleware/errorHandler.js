@@ -33,9 +33,17 @@ const errorHandler = (error, req, res, next) => {
     message = "Something went wrong. Please try again.";
   }
 
-  res.status(status).json({
-    message,
-  });
+  const payload = { message };
+  if (error.code && String(error.code).startsWith("MULTIPLAYER_")) {
+    payload.error = {
+      code: error.code,
+      message,
+      retryable: Boolean(error.retryable),
+      ...(error.details ? { details: error.details } : {}),
+    };
+  }
+
+  res.status(status).json(payload);
 };
 
 module.exports = { errorHandler, handleValidation, notFound };

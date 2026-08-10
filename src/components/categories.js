@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   FiAward,
@@ -9,7 +9,9 @@ import {
   FiHeart,
   FiSend,
   FiGlobe,
-  FiArrowRight
+  FiArrowRight,
+  FiChevronLeft,
+  FiChevronRight
 } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { cmsSeed } from "../data/cmsSeed";
@@ -68,7 +70,10 @@ const getCategoryHeroImage = (category) => {
 };
 
 const ExploreCategories = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
   const { data } = useCms();
   const rawCategories = (data?.categories && data.categories.length > 0) ? data.categories : cmsSeed.categories;
   const filteredList = rawCategories.filter(
@@ -89,51 +94,105 @@ const ExploreCategories = () => {
     return indexA - indexB;
   });
 
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 4);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
+    }
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) {
+      checkScroll();
+      el.addEventListener("scroll", checkScroll);
+      window.addEventListener("resize", checkScroll);
+      return () => {
+        el.removeEventListener("scroll", checkScroll);
+        window.removeEventListener("resize", checkScroll);
+      };
+    }
+  }, [categoriesList]);
+
+  const handleScrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -360, behavior: "smooth" });
+    }
+  };
+
+  const handleScrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 360, behavior: "smooth" });
+    }
+  };
+
+  const showNavButtons = canScrollLeft || canScrollRight;
+
   return (
     <section className="categories-section" id="categories">
       <span className="section-kicker">Browse by theme</span>
       <h2 className="categories-heading">Explore by Category</h2>
       <p className="categories-subheading">Choose a topic and dive into meaningful content.</p>
 
-      <div 
-        className={`categories-grid-premium ${isExpanded ? "expanded" : "collapsed"}`}
-        style={{ "--num-cols": categoriesList.length }}
-      >
-        {categoriesList.map((category) => (
-          <Link
-            className="category-card-premium"
-            key={category.id || category._id}
-            to={`/category/${category.slug}`}
-            style={{
-              backgroundImage: `url(${getCategoryHeroImage(category)})`
-            }}
+      <div className="categories-carousel-outer">
+        {showNavButtons && (
+          <button
+            type="button"
+            className={`categories-carousel-nav prev ${!canScrollLeft ? "disabled" : ""}`}
+            onClick={handleScrollLeft}
+            disabled={!canScrollLeft}
+            aria-label="Scroll categories left"
           >
-            <div className="category-overlay-premium" />
-            
-            <div className="category-content-premium">
-              <div className="category-icon-premium">
-                {getCategoryIcon(category)}
+            <FiChevronLeft />
+          </button>
+        )}
+
+        <div
+          className="categories-grid-premium"
+          ref={scrollRef}
+        >
+          {categoriesList.map((category) => (
+            <Link
+              className="category-card-premium"
+              key={category.id || category._id}
+              to={`/category/${category.slug}`}
+              style={{
+                backgroundImage: `url(${getCategoryHeroImage(category)})`
+              }}
+            >
+              <div className="category-overlay-premium" />
+
+              <div className="category-content-premium">
+                <div className="category-icon-premium">
+                  {getCategoryIcon(category)}
+                </div>
+
+                <div className="category-info-premium">
+                  <h3 className="category-title-premium">{getCategoryName(category)}</h3>
+                  <p className="category-desc-premium">{getCategoryDescription(category)}</p>
+                </div>
               </div>
 
-              <div className="category-info-premium">
-                <h3 className="category-title-premium">{getCategoryName(category)}</h3>
-                <p className="category-desc-premium">{getCategoryDescription(category)}</p>
+              <div className="category-arrow-premium">
+                <FiArrowRight />
               </div>
-            </div>
+            </Link>
+          ))}
+        </div>
 
-            <div className="category-arrow-premium">
-              <FiArrowRight />
-            </div>
-          </Link>
-        ))}
+        {showNavButtons && (
+          <button
+            type="button"
+            className={`categories-carousel-nav next ${!canScrollRight ? "disabled" : ""}`}
+            onClick={handleScrollRight}
+            disabled={!canScrollRight}
+            aria-label="Scroll categories right"
+          >
+            <FiChevronRight />
+          </button>
+        )}
       </div>
-
-      <button 
-        className="categories-toggle-btn"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        {isExpanded ? "Show Less" : "View All Categories"}
-      </button>
     </section>
   );
 };

@@ -4,16 +4,15 @@ import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";
 import ArticlesCard from "./ArticlesCard";
 
-/** Configurable: how many articles to show at each breakpoint */
-const HOMEPAGE_LIMIT = 5;
-
 const getVisibleCount = () => {
-  if (typeof window === "undefined") return HOMEPAGE_LIMIT;
-  if (window.innerWidth <= 550) return 1;
-  if (window.innerWidth <= 1023) return 2;
-  if (window.innerWidth <= 1279) return 3;
-  if (window.innerWidth <= 1599) return 4;
-  return HOMEPAGE_LIMIT; // 5 on wide screens
+  if (typeof window === "undefined") return 5;
+  const w = window.innerWidth;
+  if (w <= 480) return 1;
+  if (w <= 768) return 2;
+  if (w <= 1100) return 3;
+  if (w <= 1440) return 4;
+  if (w <= 1920) return 5;
+  return 6;
 };
 
 const ArticlesBody = () => {
@@ -26,7 +25,7 @@ const ArticlesBody = () => {
     let cancelled = false;
 
     articleApi
-      .list({ status: "published", sort: "latest", limit: 20 })
+      .list({ status: "published", sort: "latest", limit: 25 })
       .then((res) => {
         if (!cancelled && Array.isArray(res.articles)) {
           setApiArticles(res.articles);
@@ -56,7 +55,7 @@ const ArticlesBody = () => {
         .slice(0, visibleCount);
 
   return (
-    <section className="articles-body" id="latest-articles">
+    <section className="articles-body homepage-latest-articles" id="latest-articles">
       <div className="section-heading-row">
         <div>
           <span className="section-kicker">Latest stories</span>
@@ -68,7 +67,7 @@ const ArticlesBody = () => {
         </Link>
       </div>
 
-      <div className="article-grid">
+      <div className="article-grid homepage-articles-grid">
         {articles.map((article) => (
           <ArticlesCard articleData={article} key={article.id || article._id} />
         ))}

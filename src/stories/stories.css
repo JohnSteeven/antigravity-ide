@@ -1,0 +1,1134 @@
+/* =============================================================================
+   stories.css -- Reader-First Editorial Styling for MyJourney Stories
+   Philosophy: Wikipedia content efficiency + premium magazine polish + MyJourney warmth
+   ============================================================================= */
+
+:root {
+  --story-bg: #faf7f2;
+  --story-surface-warm: #f4efe6;
+  --story-surface-card: #f5f0e6;
+  --story-surface-tonight: #24201d;
+  --story-ink: #1c1917;
+  --story-ink-soft: #44403c;
+  --story-ink-muted: #78716c;
+  --story-accent: #78350f;
+  --story-accent-hover: #92400e;
+  --story-border-subtle: #e7e5e4;
+  --story-border-warm: #e2dacd;
+
+  --story-font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --story-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* -- Dark Mode Overrides ---------------------------------------------------- */
+[data-theme="dark"] .stories-page,
+[data-theme="dark"] .story-detail-page,
+body.dark-theme .stories-page,
+body.dark-theme .story-detail-page {
+  --story-bg: #141211;
+  --story-surface-warm: #1c1917;
+  --story-surface-card: #1f1c1a;
+  --story-surface-tonight: #1c1917;
+  --story-ink: #f5f5f4;
+  --story-ink-soft: #d6d3d1;
+  --story-ink-muted: #a8a29e;
+  --story-accent: #f59e0b;
+  --story-accent-hover: #fbbf24;
+  --story-border-subtle: #292524;
+  --story-border-warm: #332d29;
+}
+
+/* -- MAIN LANDING PAGE ------------------------------------------------------ */
+
+.stories-page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2rem 2rem 5rem;
+  background-color: var(--story-bg);
+  color: var(--story-ink);
+  font-family: var(--story-font-sans);
+  box-sizing: border-box;
+}
+
+/* -- HERO SECTION ----------------------------------------------------------- */
+
+.story-hero {
+  display: block !important;
+  position: static !important;
+  min-height: 0 !important;
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 2.25rem;
+  padding: 0.25rem 0 0;
+}
+
+.story-hero-kicker {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--story-accent);
+  margin-bottom: 0.6rem;
+}
+
+.story-hero-title {
+  font-family: var(--story-font-serif);
+  font-size: clamp(2rem, 3.8vw, 3rem);
+  font-weight: 700;
+  line-height: 1.18;
+  color: var(--story-ink);
+  margin: 0 auto 0.9rem;
+  letter-spacing: -0.015em;
+  max-width: 640px;
+  white-space: normal !important;
+  word-break: normal !important;
+}
+
+.story-hero-subtitle {
+  font-family: var(--story-font-serif);
+  font-size: clamp(1.05rem, 1.8vw, 1.2rem);
+  line-height: 1.5;
+  color: var(--story-ink-soft);
+  margin: 0 auto 0.65rem;
+  font-style: italic;
+  font-weight: 400;
+  max-width: 560px;
+}
+
+.story-hero-subnote {
+  display: block;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--story-ink-muted);
+  letter-spacing: 0.02em;
+  margin: 0 auto;
+}
+
+/* -- SECTION HEADERS & TITLES ----------------------------------------------- */
+
+.story-section-header {
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--story-border-subtle);
+  padding-bottom: 0.85rem;
+}
+
+.story-section-title {
+  font-family: var(--story-font-serif);
+  font-size: clamp(1.6rem, 2.6vw, 2rem);
+  font-weight: 700;
+  color: var(--story-ink);
+  margin: 0 0 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+.story-section-sub {
+  font-size: 0.88rem;
+  color: var(--story-ink-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+/* -- TODAY'S STORY -- Text-First Editorial Layout ---------------------------- */
+/*
+   Text (55-60%) left, image (40-45%) right.
+   Content comes first in DOM order for SEO/a11y;
+   CSS order:1 / order:2 controls the visual column placement.
+*/
+
+.todays-story-section {
+  margin-bottom: 4.5rem;
+}
+
+.todays-story-layout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.todays-story-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  order: 1;
+}
+
+.todays-story-image-wrap {
+  position: relative;
+  width: 100%;
+  max-height: 320px;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  display: block;
+  background-color: var(--story-border-warm);
+  order: 2;
+}
+
+.todays-story-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.todays-story-layout:hover .todays-story-image {
+  transform: scale(1.03);
+}
+
+.todays-story-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.todays-story-kicker {
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--story-accent);
+}
+
+.todays-story-date-sep {
+  color: var(--story-ink-muted);
+  font-size: 0.71rem;
+}
+
+.todays-story-date {
+  font-size: 0.71rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--story-ink-muted);
+}
+
+.todays-story-title {
+  font-family: var(--story-font-serif);
+  font-size: clamp(1.85rem, 3.2vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.16;
+  color: var(--story-ink);
+  margin: 0 0 1rem;
+  text-decoration: none;
+  letter-spacing: -0.015em;
+  transition: color 0.25s ease;
+  display: block;
+}
+
+.todays-story-title:hover {
+  color: var(--story-accent);
+}
+
+.todays-story-teaser {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--story-ink-soft);
+  margin-bottom: 1.75rem;
+}
+
+.todays-story-footer {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.story-meta-time {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--story-ink-muted);
+  letter-spacing: 0.02em;
+}
+
+.story-cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--story-ink);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--story-ink);
+  padding-bottom: 0.2rem;
+  width: fit-content;
+  transition: gap 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.story-cta-link svg {
+  transition: transform 0.25s ease;
+}
+
+.story-cta-link:hover {
+  color: var(--story-accent);
+  border-color: var(--story-accent);
+}
+
+.story-cta-link:hover svg {
+  transform: translateX(4px);
+}
+
+.story-cta-light {
+  color: #f5f5f4;
+  border-color: #f5f5f4;
+}
+
+.story-cta-light:hover {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+/* -- EDITORIAL STORY CARDS & GRID ------------------------------------------- */
+/*
+   2-column editorial list on large desktop.
+   Each card: horizontal row with 154x108px thumbnail + text.
+   Title dominates; image supports atmosphere.
+*/
+
+.story-grid-section {
+  margin-bottom: 4.5rem;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 3rem;
+}
+
+.story-card {
+  display: flex;
+  flex-direction: row;
+  gap: 1.25rem;
+  align-items: flex-start;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--story-border-subtle);
+}
+
+.story-card-image-wrap {
+  flex: 0 0 auto;
+  width: 154px;
+  height: 108px;
+  border-radius: 7px;
+  overflow: hidden;
+  background-color: var(--story-border-warm);
+}
+
+.story-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-card:hover .story-card-image {
+  transform: scale(1.05);
+}
+
+.story-card-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.story-card-title {
+  font-family: var(--story-font-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--story-ink);
+  margin: 0 0 0.45rem;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+  display: block;
+}
+
+.story-card-title:hover {
+  color: var(--story-accent);
+}
+
+.story-card-teaser {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--story-ink-soft);
+  margin-bottom: 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.story-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+/* -- TONIGHT'S READ --------------------------------------------------------- */
+
+.tonight-story-section {
+  margin-bottom: 4.5rem;
+  background: var(--story-surface-tonight);
+  color: #f5f5f4;
+  border-radius: 14px;
+  padding: 3rem 3.5rem;
+}
+
+.tonight-story-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.tonight-story-kicker {
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #f59e0b;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.tonight-story-heading {
+  font-family: var(--story-font-serif);
+  font-size: 1.2rem;
+  font-style: italic;
+  color: #a8a29e;
+  margin: 0 0 1.25rem;
+  font-weight: 400;
+}
+
+.tonight-story-title {
+  font-family: var(--story-font-serif);
+  font-size: clamp(1.65rem, 2.8vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #ffffff;
+  margin: 0 0 0.85rem;
+  text-decoration: none;
+  display: block;
+  transition: color 0.2s ease;
+}
+
+.tonight-story-title:hover {
+  color: #f59e0b;
+}
+
+.tonight-story-teaser {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #d6d3d1;
+  margin-bottom: 1.75rem;
+}
+
+.tonight-story-footer {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.tonight-story-image-wrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  max-height: 280px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: block;
+}
+
+.tonight-story-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s ease;
+}
+
+.tonight-story-layout:hover .tonight-story-image {
+  transform: scale(1.03);
+}
+
+/* -- LOAD MORE -------------------------------------------------------------- */
+
+.story-load-more-wrap {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.story-load-more-btn {
+  background-color: var(--story-ink);
+  color: var(--story-bg);
+  border: none;
+  font-size: 0.93rem;
+  font-weight: 600;
+  padding: 0.88rem 2.25rem;
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background-color 0.25s ease, transform 0.2s ease;
+}
+
+.story-load-more-btn:hover {
+  background-color: var(--story-accent);
+  transform: translateY(-2px);
+}
+
+.stories-empty-message {
+  text-align: center;
+  padding: 5rem 1rem;
+  color: var(--story-ink-muted);
+  font-style: italic;
+  font-family: var(--story-font-serif);
+  font-size: 1.2rem;
+}
+
+/* -- DAILY RETURN FOOTER ---------------------------------------------------- */
+
+.story-daily-footer {
+  margin-top: 5rem;
+  padding-top: 3.5rem;
+  border-top: 1px solid var(--story-border-subtle);
+  text-align: center;
+}
+
+.story-daily-footer-content {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2.25rem 1.75rem;
+  background-color: var(--story-surface-warm);
+  border-radius: 14px;
+  border: 1px solid var(--story-border-warm);
+}
+
+.story-daily-footer-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--story-accent);
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.story-daily-footer-title {
+  font-family: var(--story-font-serif);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--story-ink);
+  margin: 0 0 0.4rem;
+}
+
+.story-daily-footer-sub {
+  font-size: 0.95rem;
+  color: var(--story-ink-soft);
+  margin: 0;
+}
+
+/* =============================================================================
+   STORY DETAIL READER PAGE -- /stories/:slug
+   Reader-first: text begins immediately, image floats beside opening prose
+   ============================================================================= */
+
+.story-detail-page {
+  background-color: var(--story-bg);
+  color: var(--story-ink);
+  min-height: 100vh;
+  padding-bottom: 8rem;
+  font-family: var(--story-font-sans);
+}
+
+.story-detail-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 2rem 2rem 0;
+  box-sizing: border-box;
+}
+
+.story-detail-nav {
+  margin-bottom: 1.25rem;
+}
+
+.story-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--story-ink-soft);
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.story-back-link:hover {
+  color: var(--story-accent);
+  transform: translateX(-3px);
+}
+
+/* -- Story Header -- Left-Aligned, Compact ---------------------------------- */
+
+.story-detail-header {
+  text-align: left;
+  max-width: 820px;
+  margin: 0 0 1.75rem;
+}
+
+/* Single compact line: STORY * 15 MIN READ * DATE */
+.story-detail-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.story-detail-kicker {
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--story-accent);
+}
+
+.story-detail-meta-sep {
+  font-size: 0.71rem;
+  color: var(--story-ink-muted);
+  opacity: 0.55;
+  font-weight: 500;
+}
+
+.story-detail-readtime {
+  font-size: 0.71rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--story-ink-muted);
+}
+
+.story-detail-date {
+  font-size: 0.71rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  color: var(--story-ink-muted);
+  text-transform: uppercase;
+}
+
+/* Title -- proportional, editorial, not a billboard */
+.story-detail-title {
+  font-family: var(--story-font-serif);
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.14;
+  color: var(--story-ink);
+  margin: 0 0 1rem;
+  letter-spacing: -0.015em;
+}
+
+/* Subtitle / description -- italic lead-in */
+.story-detail-subtitle {
+  font-family: var(--story-font-serif);
+  font-size: clamp(1.1rem, 1.8vw, 1.25rem);
+  line-height: 1.55;
+  color: var(--story-ink-soft);
+  font-style: italic;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* -- Reading Column -- 820px comfortable long-form width -------------------- */
+/*
+   Not too narrow (no 500px), not full-screen (no 1400px).
+   820px gives ~65-75 chars per line at 18-20px -- excellent readability.
+*/
+
+.story-reading-column {
+  width: 100%;
+  max-width: 820px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* -- Intro Image -- CSS Float Right ----------------------------------------- */
+/*
+   Placed immediately before <article> inside .story-reading-column.
+   Opening paragraphs wrap naturally around it -- no body parsing needed.
+   float: right means text fills left and wraps.
+   h2/h3 headings clear the float with clear:both.
+   .story-float-clear after </article> ends the float context.
+*/
+
+.story-intro-image-wrap {
+  float: right;
+  width: clamp(260px, 34%, 400px);
+  margin: 0.35rem 0 1.75rem 2.75rem;
+  border-radius: 9px;
+  overflow: hidden;
+  background-color: var(--story-border-warm);
+}
+
+.story-intro-image {
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+}
+
+/* Clears intro float -- placed after </article> before ending box */
+.story-float-clear {
+  clear: both;
+}
+
+/* -- Story Prose ------------------------------------------------------------- */
+
+.story-prose {
+  font-family: var(--story-font-serif);
+  font-size: 1.175rem;
+  line-height: 1.85;
+  color: var(--story-ink);
+}
+
+/* Slightly larger opening lead paragraph -- editorial magazine feel */
+.story-prose>p:first-child {
+  font-size: 1.275rem;
+  line-height: 1.75;
+  color: var(--story-ink);
+}
+
+.story-prose p {
+  margin-bottom: 1.75rem;
+}
+
+/* Scene / chapter headings -- restrained editorial, clear float */
+.story-prose h2 {
+  font-family: var(--story-font-serif);
+  font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  color: var(--story-ink);
+  margin: 3.25rem 0 1rem;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  clear: both;
+}
+
+.story-prose h3 {
+  font-family: var(--story-font-serif);
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+  font-weight: 700;
+  color: var(--story-ink);
+  margin: 2.5rem 0 0.8rem;
+  line-height: 1.3;
+  clear: both;
+}
+
+/* Editorial aside -- thin left rule, no card, no background */
+.story-prose blockquote,
+.story-prose .callout {
+  font-style: italic;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: var(--story-ink-soft);
+  border-left: 2.5px solid var(--story-accent);
+  padding: 0.25rem 0 0.25rem 1.5rem;
+  margin: 2.25rem 0;
+  background: transparent;
+}
+
+/* Scene break via HR */
+.story-prose hr {
+  border: none;
+  text-align: center;
+  margin: 3rem 0;
+}
+
+.story-prose hr::after {
+  content: "* * *";
+  font-size: 1.3rem;
+  letter-spacing: 0.6em;
+  color: var(--story-ink-muted);
+}
+
+/* -- Scene Break element ---------------------------------------------------- */
+
+.story-scene-break {
+  text-align: center;
+  font-size: 1.45rem;
+  color: var(--story-ink-muted);
+  letter-spacing: 0.7em;
+  margin: 3.75rem 0 1.75rem;
+  user-select: none;
+  clear: both;
+}
+
+/* -- Ending Box ------------------------------------------------------------- */
+
+.story-ending-box {
+  text-align: center;
+  margin: 4rem 0 3.5rem;
+  clear: both;
+}
+
+.story-ending-label {
+  font-family: var(--story-font-serif);
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--story-ink-muted);
+  margin-bottom: 1.75rem;
+}
+
+/* -- Reflection -- thin left rule aside, no card ---------------------------- */
+/*
+   Reduced from large bordered card to a subtle editorial aside.
+   Does not interrupt the narrative with a visual lesson-box.
+   Both class names handled for backward compat.
+*/
+
+.story-reflection-aside,
+.story-reflection-card {
+  border-left: 2px solid var(--story-accent);
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+  padding: 0.35rem 0 0.35rem 1.5rem;
+  margin: 2rem auto;
+  background: transparent;
+  border-radius: 0;
+  text-align: left;
+  max-width: 640px;
+}
+
+.story-reflection-title {
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--story-accent);
+  margin-bottom: 0.5rem;
+}
+
+.story-reflection-text {
+  font-family: var(--story-font-serif);
+  font-size: 1.1rem;
+  line-height: 1.65;
+  color: var(--story-ink-soft);
+  margin: 0;
+  font-style: italic;
+}
+
+/* -- Action Bar ------------------------------------------------------------- */
+
+.story-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 3rem 0;
+}
+
+.story-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--story-border-warm);
+  color: var(--story-ink-soft);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.story-action-btn:hover {
+  background-color: var(--story-ink);
+  color: var(--story-bg);
+  border-color: var(--story-ink);
+}
+
+/* -- Related Stories -------------------------------------------------------- */
+
+.related-stories-wrap {
+  margin-top: 5rem;
+  padding-top: 3.5rem;
+  border-top: 1px solid var(--story-border-subtle);
+}
+
+.related-stories-header {
+  margin-bottom: 1.75rem;
+}
+
+.related-stories-title {
+  font-family: var(--story-font-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--story-ink);
+  margin: 0 0 0.3rem;
+}
+
+.related-stories-sub {
+  font-size: 0.88rem;
+  color: var(--story-ink-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+/* =============================================================================
+   RESPONSIVE MEDIA QUERIES
+   Tested at: 320, 375, 430, 768, 1024, 1280, 1366, 1440, 1536, 1920, 2560, 3440
+   ============================================================================= */
+
+/* -- 1366px: large laptop -- two-column grid, float intro active ------------ */
+@media (max-width: 1366px) {
+  .story-reading-column {
+    max-width: 780px;
+  }
+
+  .story-detail-header {
+    max-width: 780px;
+  }
+}
+
+/* -- 1280px: smaller desktop ----------------------------------------------- */
+@media (max-width: 1280px) {
+  .story-grid {
+    gap: 0 2.25rem;
+  }
+
+  .todays-story-layout {
+    gap: 2.5rem;
+  }
+}
+
+/* -- 1024px: tablet wide -- disable float, image stacks above opening text -- */
+@media (max-width: 1024px) {
+  .todays-story-layout {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 2rem;
+  }
+
+  .todays-story-image-wrap {
+    max-height: 270px;
+  }
+
+  .tonight-story-layout {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .tonight-story-section {
+    padding: 2.5rem 2.25rem;
+  }
+
+  /* Disable float -- image becomes a normal block above prose */
+  .story-intro-image-wrap {
+    float: none;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 0 1.75rem 0;
+    border-radius: 9px;
+  }
+
+  .story-intro-image {
+    max-height: 280px;
+  }
+
+  .story-reading-column {
+    max-width: 100%;
+  }
+
+  .story-detail-header {
+    max-width: 100%;
+  }
+}
+
+/* -- 768px: tablet ---------------------------------------------------------- */
+@media (max-width: 768px) {
+  .stories-page {
+    padding: 1.75rem 1.25rem 4rem;
+  }
+
+  .story-hero {
+    margin-bottom: 2.25rem;
+  }
+
+  .todays-story-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Image after text on stacked tablet */
+  .todays-story-image-wrap {
+    order: 2;
+    max-height: 240px;
+    max-width: 100%;
+  }
+
+  .todays-story-content {
+    order: 1;
+  }
+
+  .todays-story-section,
+  .story-grid-section,
+  .tonight-story-section {
+    margin-bottom: 3.25rem;
+  }
+
+  .tonight-story-section {
+    padding: 2rem 1.5rem;
+  }
+
+  /* Single-column card list on tablet */
+  .story-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .story-detail-container {
+    padding: 1.5rem 1.25rem 0;
+  }
+
+  .story-intro-image-wrap {
+    max-width: 100%;
+    max-height: 220px;
+    margin-bottom: 1.5rem;
+  }
+
+  .story-intro-image {
+    max-height: 220px;
+  }
+
+  .story-prose {
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+
+  .story-prose>p:first-child {
+    font-size: 1.175rem;
+  }
+
+  .story-daily-footer-content {
+    padding: 2rem 1.25rem;
+  }
+}
+
+/* -- 430px: large phone ---------------------------------------------------- */
+@media (max-width: 430px) {
+  .stories-page {
+    padding: 1.5rem 1rem 3.5rem;
+  }
+
+  .story-hero-title {
+    font-size: 1.95rem;
+  }
+
+  .story-hero-subtitle {
+    font-size: 1.05rem;
+  }
+
+  .todays-story-title {
+    font-size: 1.75rem;
+  }
+
+  .tonight-story-title {
+    font-size: 1.6rem;
+  }
+
+  .story-detail-title {
+    font-size: 1.85rem;
+  }
+
+  .story-intro-image-wrap {
+    max-height: 200px;
+  }
+
+  .story-intro-image {
+    max-height: 200px;
+  }
+
+  .story-card-image-wrap {
+    width: 116px;
+    height: 82px;
+  }
+
+  .story-card-title {
+    font-size: 1.1rem;
+  }
+
+  .story-actions-bar {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .story-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* -- 375px: standard phone ------------------------------------------------- */
+@media (max-width: 375px) {
+  .story-detail-title {
+    font-size: 1.7rem;
+  }
+
+  .story-card-image-wrap {
+    width: 96px;
+    height: 70px;
+  }
+
+  .story-card-title {
+    font-size: 1.05rem;
+  }
+}
+
+/* -- 320px: small phone ---------------------------------------------------- */
+@media (max-width: 320px) {
+  .story-detail-title {
+    font-size: 1.55rem;
+  }
+
+  .story-card-image-wrap {
+    width: 80px;
+    height: 60px;
+  }
+}
+
+/* -- Ultrawide (1920px+) -- cap at 840px, use horizontal whitespace --------- */
+@media (min-width: 1920px) {
+  .story-reading-column {
+    max-width: 840px;
+  }
+
+  .story-detail-header {
+    max-width: 840px;
+  }
+}
+
+/* -- Reduced Motion -------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+
+  .todays-story-image,
+  .story-card-image,
+  .tonight-story-image,
+  .story-cta-link svg,
+  .story-load-more-btn,
+  .story-action-btn {
+    transition: none !important;
+    transform: none !important;
+  }
+}

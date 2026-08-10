@@ -91,6 +91,21 @@ const ArticleSchema = new mongoose.Schema(
     isBreaking: { type: Boolean, default: false },
     isLive: { type: Boolean, default: false },
 
+    // Content Type (article vs story)
+    contentType: {
+      type: String,
+      enum: ["article", "story"],
+      default: "article",
+      index: true,
+    },
+    storyThemes: [{ type: String }],
+    storyFormat: { type: String, default: "" },
+    storyOrigin: { type: String, default: "" },
+    introLocation: { type: String, default: "" },
+    introTime: { type: String, default: "" },
+    reflection: { type: String, default: "" },
+    takeaway: { type: String, default: "" },
+
     // Status
     status: {
       type: String,

@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "article",
   "scripts": {
-    "start": "concurrently \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
-    "dev": "concurrently \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
+    "start": "concurrently -k -n \"server,client\" -c \"blue,magenta\" \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
+    "dev": "concurrently -k -n \"server,client\" -c \"blue,magenta\" \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
     "client": "parcel index.html --port 1234 --no-cache",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
@@ -12,7 +12,13 @@
     "seed:articles": "node server/scripts/seedArticles.js",
     "check:server": "node -e \"const fs=require('fs'),path=require('path'),cp=require('child_process');function walk(d){fs.readdirSync(d).forEach(f=>{const p=path.join(d,f);if(fs.statSync(p).isDirectory())walk(p);else if(p.endsWith('.js'))cp.execSync('node --check \\\"'+p+'\\\"');});}walk('server');console.log('Server JS syntax check passed.');\"",
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:multiplayer": "jest server/tests/multiplayer --runInBand",
+    "test:multiplayer:load": "node server/scripts/multiplayerLoad.js",
+    "test:life-auction:load": "node server/scripts/lifeAuctionLoad.js",
+    "migrate": "node server/scripts/runMigrations.js",
+    "preview:qa": "node server/scripts/serveQaBuild.js",
+    "test:multiplayer:preview": "node server/scripts/multiplayerPreviewSmoke.js"
   },
   "repository": {
     "type": "git",
@@ -60,6 +66,7 @@
   ],
   "dependencies": {
     "@simplewebauthn/server": "^13.3.2",
+    "@socket.io/redis-adapter": "^8.3.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -78,8 +85,12 @@
     "react-dom": "^19.2.7",
     "react-icons": "^5.6.0",
     "react-router-dom": "^6.30.1",
+    "redis": "^5.12.1",
     "sanitize-html": "^2.14.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "speakeasy": "^2.0.0",
-    "twilio": "^5.4.0"
+    "twilio": "^5.4.0",
+    "zod": "^4.4.3"
   }
 }

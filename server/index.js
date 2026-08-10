@@ -2,6 +2,8 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const express = require("express");
 const helmet = require("helmet");
+const http = require("http");
+const mongoose = require("mongoose");
 const connectDb = require("./config/db");
 const env = require("./config/env");
 const { authenticate } = require("./middleware/auth");
@@ -14,6 +16,7 @@ const { errorHandler, notFound } = require("./middleware/errorHandler");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const articleRoutes = require("./routes/articleRoutes");
+const storyRoutes = require("./routes/storyRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const tagRoutes = require("./routes/tagRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
@@ -63,6 +66,9 @@ const tenantRoutes = require("./routes/tenantRoutes");
 const governanceRoutes = require("./routes/governanceRoutes");
 const infrastructureRoutes = require("./routes/infrastructureRoutes");
 const launchRoutes = require("./routes/launchRoutes");
+const multiplayerRoutes = require("./routes/multiplayerRoutes");
+const { multiplayerPlatform } = require("./multiplayer/platform");
+const { attachMultiplayerSocketServer } = require("./multiplayer/realtime/socketServer");
 const path = require("path");
 
 const app = express();
@@ -97,6 +103,7 @@ app.use("/api/security", authenticate, securityRoutes);
 
 // Content routes (public reads, admin writes)
 app.use("/api/articles", articleRoutes);
+app.use("/api/stories", storyRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/tags", tagRoutes);
 app.use("/api/media", mediaRoutes);
@@ -149,6 +156,7 @@ app.use("/api/tenants", tenantRoutes);
 app.use("/api/governance", governanceRoutes);
 app.use("/api/infrastructure", infrastructureRoutes);
 app.use("/api/launch", launchRoutes);
+app.use("/api/multiplayer", multiplayerRoutes);
 
 // Serve uploads statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -156,23 +164,47 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use(notFound);
 app.use(errorHandler);
 
+const startServer = async () => {
+  await connectDb();
+  multiplayerPlatform.readiness.storage = mongoose.connection.readyState === 1;
+  mongoose.connection.on("connected", () => { multiplayerPlatform.readiness.storage = true; });
+  mongoose.connection.on("disconnected", () => { multiplayerPlatform.readiness.storage = false; });
+  const httpServer = http.createServer(app);
+  const multiplayerRuntime = env.multiplayer.enabled
+    ? await attachMultiplayerSocketServer(httpServer, multiplayerPlatform)
+    : null;
+
+  await new Promise((resolve) => httpServer.listen(env.port, resolve));
+  console.log(`MyJourney API running on port ${env.port}`);
+
+  try {
+    const { startScheduler } = require("./cron");
+    startScheduler();
+  } catch (err) {
+    console.error("Failed to start scheduler:", err);
+  }
+
+  let closing = false;
+  const shutdown = async (signal) => {
+    if (closing) return;
+    closing = true;
+    console.log(`Received ${signal}; shutting down MyJourney.`);
+    await multiplayerRuntime?.close();
+    if (httpServer.listening) await new Promise((resolve) => httpServer.close(resolve));
+    await mongoose.disconnect();
+  };
+  process.once("SIGTERM", () => shutdown("SIGTERM").finally(() => process.exit(0)));
+  process.once("SIGINT", () => shutdown("SIGINT").finally(() => process.exit(0)));
+
+  return { httpServer, multiplayerRuntime, shutdown };
+};
+
 if (require.main === module) {
-  connectDb()
-    .then(() => {
-      app.listen(env.port, () => {
-        console.log(`Auth API running on port ${env.port}`);
-        try {
-          const { startScheduler } = require("./cron");
-          startScheduler();
-        } catch (err) {
-          console.error("Failed to start scheduler:", err);
-        }
-      });
-    })
-    .catch((error) => {
-      console.error("Could not start server", error);
-      process.exit(1);
-    });
+  startServer().catch((error) => {
+    console.error("Could not start server", error);
+    process.exit(1);
+  });
 }
 
 module.exports = app;
+module.exports.startServer = startServer;

@@ -278,8 +278,10 @@ const CategoryLanding = ({
     }
   };
 
+  const categorySlug = String(categoryModel.slug || categoryModel.name || "").toLowerCase().trim();
+
   return (
-    <main className={`category-detail-page ${isDarkMode ? "dark-mode" : ""}`}>
+    <main className={`category-detail-page ${isDarkMode ? "dark-mode" : ""}`} data-category={categorySlug} data-experience={categorySlug}>
       <section
         className="category-detail-hero"
         style={{ backgroundImage: `url("${getImageUrl(categoryModel.heroImage, categoryModel.name)}")` }}

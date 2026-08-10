@@ -280,7 +280,7 @@ const CodingLanding = ({
   };
 
   return (
-    <main className={`category-detail-page coding-landing-page ${isDarkMode ? "dark-mode" : ""}`}>
+    <main className={`category-detail-page coding-landing-page ${isDarkMode ? "dark-mode" : ""}`} data-experience="coding" data-category="coding">
       {/* IDE Terminal Hero Section */}
       <section className="coding-landing-hero">
         <div className="coding-terminal-window">

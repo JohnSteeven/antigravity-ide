@@ -182,17 +182,9 @@ const SettingsTab = () => {
               </label>
             </div>
 
-            {/* Danger Zone: Delete Account placed at bottom of Account section */}
-            <div style={{ marginTop: 32 }}>
-              <div className="rp-danger-zone">
-                <h4 className="rp-danger-title">
-                  <FiTrash2 /> Danger Zone: Delete Account
-                </h4>
-                <p className="rp-danger-desc">
-                  Requesting account deletion will initiate a 7-day grace window during which you can cancel deletion anytime. Permanently deletes your profile, comments, reading history, and saved bookmarks.
-                </p>
-                <SecurityCenter user={user} standaloneDeleteOnly />
-              </div>
+            {/* Single Danger Zone: Delete Account Card */}
+            <div style={{ marginTop: 28 }}>
+              <SecurityCenter user={user} standaloneDeleteOnly />
             </div>
           </div>
         )}

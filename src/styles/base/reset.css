@@ -56,6 +56,14 @@ select {
   font: inherit;
 }
 
+/* Disable native browser password reveal & clear icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* Pointer on interactive elements */
 button,
 label[for],

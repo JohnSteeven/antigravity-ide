@@ -1,5 +1,88 @@
 [
   {
+    "id": "story-2",
+    "title": "The Second Chance Rainstorm",
+    "slug": "the-second-chance-rainstorm",
+    "description": "How a sudden summer downpour in Seattle forced two alienated brothers to seek shelter under the same porch after four years of silence.",
+    "coverImage": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=1200&q=80",
+    "body": "<h2>Four Years of Silence</h2><p>For forty-eight months, my brother David and I hadn't exchanged a single sentence. A foolish disagreement over family estate matters had hardened into a wall of stubborn silence that neither of us was willing to tear down first.</p><h2>The Sky Opens Up</h2><p>I was walking through Pike Place Market when the sky turned ink-black and torrential rain poured down without warning. I ducked under the awning of an antique bookstore, shaking rain from my coat. Ten seconds later, another runner ducked into the exact same shelter.</p><p>I turned to look, and my heart froze. It was David, dripping wet, holding a brown paper bag of sourdough bread.</p><blockquote>Are you just going to stand there in the rain, or are we sharing this awning? — David</blockquote><p>We stood shoulder to shoulder for forty minutes as thunder rattled the glass windows. We talked about our mother, about our work, and about how ridiculous four years of pride felt when standing together in the rain.</p>",
+    "category": "Life",
+    "subcategory": "Family",
+    "tags": [
+      "family",
+      "reconciliation",
+      "life"
+    ],
+    "author": "Noble John Steeven",
+    "publishedAt": "2026-04-18",
+    "updatedAt": "2026-04-18",
+    "readingTime": "5 min read",
+    "views": 1540,
+    "likes": 512,
+    "bookmarks": 110,
+    "rating": 4.9,
+    "featured": true,
+    "mustRead": true,
+    "trending": true,
+    "pinned": true,
+    "status": "published",
+    "comments": [],
+    "contentType": "story",
+    "storyThemes": [
+      "second-chances",
+      "love",
+      "hope",
+      "forgiveness"
+    ],
+    "storyFormat": "standard",
+    "storyOrigin": "real-life",
+    "introLocation": "Seattle, WA",
+    "introTime": "Summer 2025",
+    "reflection": "Reconciliation often waits on the other side of an uncomfortable pause. It takes only one shared moment to undo years of silence.",
+    "takeaway": "Never let pride hold hostage a relationship that took a lifetime to build."
+  },
+  {
+    "id": "story-1",
+    "title": "The Midnight Train to Kyoto",
+    "slug": "the-midnight-train-to-kyoto",
+    "description": "A silent midnight journey through snow-covered mountains and an unexpected moment of warmth shared with an elderly station master.",
+    "coverImage": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
+    "body": "<h2>Snow Across the Tracks</h2><p>The local train from Osaka to Kyoto was nearly empty at 11:45 PM. Outside the frost-rimmed windows, dark cedar forests passed by in a silence broken only by the rhythmic clack of wheels against steel.</p><p>At a small rural station where the train paused for fifteen minutes, an elderly station master stepped onto the platform carrying two paper cups of steaming green tea. Seeing me sitting alone by the window, he handed one through the narrowed door frame with a nod that needed no translation.</p><blockquote>Warm hands, quiet mind. — The Station Master</blockquote><p>We sat in quiet contemplation until the conductor's whistle blew. No grand speeches were made, yet that single act of spontaneous hospitality made the cold winter night feel impossibly warm.</p>",
+    "category": "Travel",
+    "subcategory": "Journeys",
+    "tags": [
+      "travel",
+      "japan",
+      "kindness"
+    ],
+    "author": "Noble John Steeven",
+    "publishedAt": "2026-04-15",
+    "updatedAt": "2026-04-15",
+    "readingTime": "1 min read",
+    "views": 980,
+    "likes": 320,
+    "bookmarks": 64,
+    "rating": 4.9,
+    "featured": false,
+    "mustRead": true,
+    "trending": true,
+    "pinned": false,
+    "status": "published",
+    "comments": [],
+    "contentType": "story",
+    "storyThemes": [
+      "memories",
+      "kindness",
+      "humanity"
+    ],
+    "storyFormat": "one-minute",
+    "storyOrigin": "real-life",
+    "introLocation": "Kyoto, Japan",
+    "introTime": "Midnight, Winter 2024",
+    "reflection": "Small gestures of human warmth across language barriers remind us how connected we truly are beneath the noise of daily life.",
+    "takeaway": "Hospitality doesn't require complex words—sometimes a cup of hot tea speaks everything."
+  },
+  {
     "id": "article-1",
     "title": "The Power of Small Daily Habits",
     "slug": "the-power-of-small-daily-habits",
@@ -26,7 +109,8 @@
     "trending": true,
     "pinned": true,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-2",
@@ -53,7 +137,8 @@
     "featured": true,
     "mustRead": true,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-3",
@@ -80,7 +165,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-4",
@@ -107,7 +193,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-5",
@@ -134,7 +221,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-6",
@@ -324,7 +412,19 @@
       "What step can you take today to set healthier boundaries before reaching a breaking point?",
       "If a mentor told you to stop trying not to fail, how would that reframe your current goals?",
       "What daily practice or habit helps you stay grounded when work pressure escalates?"
-    ]
+    ],
+    "contentType": "story",
+    "storyThemes": [
+      "resilience",
+      "growth",
+      "courage"
+    ],
+    "storyFormat": "standard",
+    "storyOrigin": "real-life",
+    "introLocation": "San Francisco, CA",
+    "introTime": "Autumn 2024",
+    "reflection": "Looking back, that frightening breakdown in the conference room was the greatest turning point of my life. It demolished an unsustainable lifestyle and forced me to rebuild a life based on intention, boundaries, and genuine self-care.",
+    "takeaway": "Growth doesn't come from pushing past your human limits—it comes from honoring them."
   },
   {
     "id": "article-7",
@@ -509,7 +609,19 @@
       "If you were stranded at an airport for 7 hours, how would you turn that time into a creative opportunity?",
       "Have you ever sketched a big idea or business plan on a napkin or scrap piece of paper?",
       "How do you balance sticking to a strict schedule with staying open to unexpected detours?"
-    ]
+    ],
+    "contentType": "story",
+    "storyThemes": [
+      "choices",
+      "change",
+      "humanity"
+    ],
+    "storyFormat": "standard",
+    "storyOrigin": "real-life",
+    "introLocation": "Heathrow Airport, London",
+    "introTime": "Spring 2025",
+    "reflection": "If I had arrived ten minutes earlier, I would have boarded my flight and returned to a job I had outgrown. Missing that flight was the single best travel error of my life.",
+    "takeaway": "Sometimes, the closed gate or missed connection is not a barrier—it is a gentle nudge redirecting you toward a far greater path."
   },
   {
     "id": "article-8",
@@ -694,7 +806,8 @@
       "What is the most important lesson a past failure or setback taught you about yourself?",
       "How can you shorten your feedback loop today to validate your key assumptions faster?",
       "What would your project look like if you cut 70% of the non-essential features and focused only on the core pain point?"
-    ]
+    ],
+    "contentType": "article"
   },
   {
     "id": "article-9",
@@ -879,7 +992,8 @@
       "If your current routine was disrupted tomorrow, what creative skill or passion would you pursue?",
       "What small step can you take this week to build independent creative ownership outside your primary job?",
       "Looking back at your career pivots, which unexpected change turned out to be your greatest blessing?"
-    ]
+    ],
+    "contentType": "article"
   },
   {
     "id": "article-10",
@@ -1064,7 +1178,8 @@
       "What is one piece of unvarnished feedback you received that hurt at first but made you significantly better?",
       "How can you shift from performing for applause to creating real leverage for your team?",
       "Who in your life played the role of a quiet mentor, and how can you pay that wisdom forward today?"
-    ]
+    ],
+    "contentType": "article"
   },
   {
     "id": "article-11",
@@ -1091,7 +1206,8 @@
     "featured": true,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-12",
@@ -1118,7 +1234,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-13",
@@ -1145,7 +1262,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-14",
@@ -1172,7 +1290,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-15",
@@ -1199,7 +1318,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-16",
@@ -1226,7 +1346,8 @@
     "featured": true,
     "mustRead": true,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-17",
@@ -1253,7 +1374,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-18",
@@ -1280,7 +1402,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-19",
@@ -1307,7 +1430,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-20",
@@ -1334,7 +1458,8 @@
     "featured": false,
     "mustRead": false,
     "status": "published",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-21",
@@ -1370,7 +1495,8 @@
       "https://images.unsplash.com/photo-1595878715977-2e8ff999e543?auto=format&fit=crop&w=400&q=80",
       "https://images.unsplash.com/photo-1589136777351-fdc9c9c8536b?auto=format&fit=crop&w=400&q=80"
     ],
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-22",
@@ -1403,7 +1529,8 @@
     "bestTime": "May - September",
     "tips": "Carry thermal wear; prepare for offline maps.",
     "gallery": [],
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-23",
@@ -1436,7 +1563,8 @@
     "bestTime": "October - March",
     "tips": "Book houseboat in advance; try local coconut water.",
     "gallery": [],
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-24",
@@ -1469,7 +1597,8 @@
     "bestTime": "March - May",
     "tips": "Get a JR Rail Pass; buy a Suica card for metro.",
     "gallery": [],
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-25",
@@ -1502,7 +1631,8 @@
     "bestTime": "November - February",
     "tips": "Choose local home stays; explore on foot.",
     "gallery": [],
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-26",
@@ -1530,7 +1660,8 @@
     "mustRead": true,
     "status": "published",
     "difficulty": "Advanced",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-27",
@@ -1558,7 +1689,8 @@
     "mustRead": false,
     "status": "published",
     "difficulty": "Intermediate",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-28",
@@ -1586,7 +1718,8 @@
     "mustRead": false,
     "status": "published",
     "difficulty": "Intermediate",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-29",
@@ -1614,7 +1747,8 @@
     "mustRead": false,
     "status": "published",
     "difficulty": "Beginner",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   },
   {
     "id": "article-30",
@@ -1642,6 +1776,7 @@
     "mustRead": false,
     "status": "published",
     "difficulty": "Advanced",
-    "comments": []
+    "comments": [],
+    "contentType": "article"
   }
 ]

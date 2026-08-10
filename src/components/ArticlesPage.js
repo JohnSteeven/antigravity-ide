@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FiFilter, FiSearch } from "react-icons/fi";
+import { FiChevronDown, FiFilter, FiSearch, FiTag } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";
 import ArticlesCard from "./ArticlesCard";
 
-const INITIAL_VISIBLE = 6;
-const LOAD_MORE_COUNT = 6;
+const INITIAL_VISIBLE = 12;
+const LOAD_MORE_COUNT = 12;
 
 const sortArticlesLocal = (articles, sort) => {
   const sorted = [...articles];
@@ -66,36 +66,31 @@ const ArticlesPage = () => {
 
   // Source data: prefer API, fall back to CmsContext, synced with live CmsContext metrics
   const sourceArticles = useMemo(() => {
-    const list = allArticles || data.articles;
-    return list
-      .filter((a) => a.status === "published")
-      .map((a) => {
-        const synced = data.articles.find((x) => x.id === a.id || x._id === a.id || x.id === a._id || x._id === a._id);
-        if (synced) {
-          return {
-            ...a,
-            likes: synced.likes,
-            bookmarks: synced.bookmarks,
-            views: synced.views,
-          };
-        }
-        return a;
-      });
-  }, [allArticles, data.articles]);
+    if (allArticles && Array.isArray(allArticles)) {
+      return allArticles;
+    }
+    return (data?.articles || []).filter(
+      (a) => String(a.status || "published").toLowerCase() === "published"
+    );
+  }, [allArticles, data?.articles]);
 
   // Collect unique tags from available articles
-  const tags = useMemo(
-    () => [...new Set(sourceArticles.flatMap((a) => a.tags || []))].sort(),
-    [sourceArticles]
-  );
+  const tags = useMemo(() => {
+    const set = new Set();
+    sourceArticles.forEach((a) => {
+      if (Array.isArray(a.tags)) {
+        a.tags.forEach((t) => set.add(t));
+      }
+    });
+    return Array.from(set).sort();
+  }, [sourceArticles]);
 
   // Client-side filtering (search, category, tag) + sorting
   const filteredArticles = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
     const filtered = sourceArticles.filter((article) => {
-      const matchesFeatured =
-        !showFeatured || article.isFeatured || article.featured;
+      const matchesFeatured = !showFeatured || article.featured;
 
       const articleCategory = (article.category || "").toLowerCase();
       const matchesCategory = category === "all" || articleCategory === category;
@@ -117,31 +112,37 @@ const ArticlesPage = () => {
   }, [category, sourceArticles, query, showFeatured, sort, tag]);
 
   return (
-    <main className="listing-page">
-      <section className="listing-hero">
-        <span className="section-kicker">Article library</span>
+    <main className="listing-page articles-page">
+      <header className="listing-hero articles-hero">
+        <span className="section-kicker">ARTICLE LIBRARY</span>
         <h1>{showFeatured ? "Featured Articles" : "All Articles"}</h1>
-        <p>
-          Search, filter, and sort every published story managed from the CMS.
+        <p className="listing-subtitle">
+          Explore ideas, experiences, reflections and lessons from MyJourney.
         </p>
-      </section>
+      </header>
 
-      <section className="article-controls" aria-label="Article filters">
-        <label className="search-control">
+      <section className="article-controls articles-toolbar" aria-label="Article filters">
+        <div className="toolbar-item search-control">
+          <FiSearch className="search-icon" aria-hidden="true" />
           <input
+            type="text"
+            className="search-input"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
               setVisibleCount(INITIAL_VISIBLE);
             }}
-            placeholder="Search articles"
+            placeholder="Search articles by title, topic, or keyword…"
+            aria-label="Search articles by title, topic, or keyword"
           />
-        </label>
+        </div>
 
-        <label>
-          <FiFilter />
+        <div className="toolbar-item select-control category-control">
+          <FiFilter className="control-icon" aria-hidden="true" />
           <select
+            className="toolbar-select"
             value={category}
+            aria-label="Filter by category"
             onChange={(event) => {
               setCategory(event.target.value);
               setVisibleCount(INITIAL_VISIBLE);
@@ -150,7 +151,7 @@ const ArticlesPage = () => {
             <option value="all">All categories</option>
             {(() => {
               const order = ["life", "reflections", "incidents", "lessons", "travel", "news", "coding"];
-              const sortedCategories = [...data.categories].sort((a, b) => {
+              const sortedCategories = [...(data?.categories || [])].sort((a, b) => {
                 const indexA = order.indexOf(a.slug?.toLowerCase() || a.name?.toLowerCase());
                 const indexB = order.indexOf(b.slug?.toLowerCase() || b.name?.toLowerCase());
                 if (indexA === -1 && indexB === -1) return 0;
@@ -165,12 +166,15 @@ const ArticlesPage = () => {
               ));
             })()}
           </select>
-        </label>
+          <FiChevronDown className="select-chevron" aria-hidden="true" />
+        </div>
 
-        <label>
-          Tag
+        <div className="toolbar-item select-control tag-control">
+          <FiTag className="control-icon" aria-hidden="true" />
           <select
+            className="toolbar-select"
             value={tag}
+            aria-label="Filter by tag"
             onChange={(event) => {
               setTag(event.target.value);
               setVisibleCount(INITIAL_VISIBLE);
@@ -183,21 +187,27 @@ const ArticlesPage = () => {
               </option>
             ))}
           </select>
-        </label>
+          <FiChevronDown className="select-chevron" aria-hidden="true" />
+        </div>
 
-        <label>
-          Sort
-          <select value={sort} onChange={(event) => setSort(event.target.value)}>
-            <option value="latest">Latest</option>
-            <option value="oldest">Oldest</option>
-            <option value="popular">Popular</option>
-            <option value="rated">Highest rated</option>
+        <div className="toolbar-item select-control sort-control">
+          <select
+            className="toolbar-select"
+            value={sort}
+            aria-label="Sort articles"
+            onChange={(event) => setSort(event.target.value)}
+          >
+            <option value="latest">Sort: Latest</option>
+            <option value="oldest">Sort: Oldest</option>
+            <option value="popular">Sort: Popular</option>
+            <option value="rated">Sort: Highest rated</option>
           </select>
-        </label>
+          <FiChevronDown className="select-chevron" aria-hidden="true" />
+        </div>
       </section>
 
-      <section className="articles-body listing-results">
-        <div className="article-grid">
+      <section className="all-articles-section listing-results">
+        <div className="article-grid all-articles-grid">
           {filteredArticles.slice(0, visibleCount).map((article) => (
             <ArticlesCard articleData={article} key={article.id || article._id} />
           ))}

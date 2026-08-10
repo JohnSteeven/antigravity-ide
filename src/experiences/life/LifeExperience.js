@@ -31,8 +31,10 @@ const LifeExperience = (props) => {
     newsletterMsg,
   } = props;
 
+  const categorySlug = String(article?.category || article?.categorySlug || "").toLowerCase().trim();
+
   return (
-    <main className="life-experience-page" data-experience="life">
+    <main className="life-experience-page" data-experience="life" data-category={categorySlug || "life"}>
       {/* Layer 1: Immersive Hero */}
       <LifeHero
         article={article}

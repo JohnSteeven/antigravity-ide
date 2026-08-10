@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   FiChevronDown,
-  FiSearch,
   FiUser,
   FiLogOut,
   FiLogIn,
@@ -12,11 +11,13 @@ import {
   FiBookOpen,
   FiMenu,
   FiX,
+  FiShield,
+  FiCompass,
+  FiArrowRight,
 } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
 import { categoryApi } from "../services/apiService";
-import PublicSearchModal from "./shared/PublicSearchModal";
 
 const Header = () => {
   const { data } = useCms();
@@ -28,7 +29,6 @@ const Header = () => {
   const [categories, setCategories] = useState([]);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobileCatExpanded, setIsMobileCatExpanded] = useState(false);
 
@@ -37,25 +37,64 @@ const Header = () => {
 
   const isAdmin = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
 
+  const avatarUrl = useMemo(() => {
+    const raw =
+      user?.avatar ||
+      user?.profile?.avatar ||
+      user?.photoURL ||
+      user?.profileImage ||
+      "";
+    return typeof raw === "string" && raw.trim() && !raw.includes("placeholder")
+      ? raw.trim()
+      : "";
+  }, [user]);
+
+  const displayName = useMemo(() => {
+    if (!user) return "User";
+    if (user.name && user.name.trim()) return user.name.trim();
+    if (user.displayName && user.displayName.trim()) return user.displayName.trim();
+    if (user.firstName && user.firstName.trim()) {
+      return `${user.firstName} ${user.lastName || ""}`.trim();
+    }
+    if (user.username && user.username.trim()) return user.username.trim();
+    return "User";
+  }, [user]);
+
+  const username = useMemo(() => {
+    return user?.username ? user.username.replace(/^@/, "").trim() : "";
+  }, [user]);
+
+  const initials = useMemo(() => {
+    if (!user) return "U";
+    const nameStr = displayName !== "User" ? displayName : (username || "User");
+    const parts = nameStr.replace(/^@/, "").split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    if (parts.length === 1 && parts[0].length > 0) {
+      return parts[0][0].toUpperCase();
+    }
+    return "U";
+  }, [user, displayName, username]);
+
+  const email = user?.email || "";
+
   // Fetch public categories directly from public category API
   const fetchPublicCategories = async () => {
     try {
-      const res = await categoryApi.list({ isActive: true, status: "published" });
+      const res = await categoryApi.list({ isActive: true });
       const rawCategories = res?.categories || [];
 
-      // Enforce strict public lifecycle filtering
-      const filtered = rawCategories
-        .filter(
-          (c) =>
-            c.isActive !== false &&
-            (c.status || "published") === "published" &&
-            (c.visibility || "public") === "public" &&
-            c.showInNavigation !== false &&
-            !c.isDeleted
-        )
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      // Filter active non-deleted categories
+      const active = rawCategories.filter(
+        (c) =>
+          c.isActive !== false &&
+          !c.isDeleted &&
+          (c.status === undefined || c.status === "published") &&
+          (c.visibility === undefined || c.visibility === "public")
+      );
 
-      setCategories(filtered);
+      setCategories(active);
     } catch (err) {
       console.warn("Could not fetch public categories from API", err);
     }
@@ -65,24 +104,42 @@ const Header = () => {
     fetchPublicCategories();
   }, [data?.categories]);
 
-  // Combined public categories fallback (if API call is pending, filter context categories)
-  const displayCategories = useMemo(() => {
-    if (categories.length > 0) return categories;
+  // Featured Categories logic (selects top 8 categories data-driven)
+  const featuredCategories = useMemo(() => {
+    const raw = categories.length > 0 ? categories : (data?.categories || []);
+    if (!Array.isArray(raw) || raw.length === 0) return [];
 
-    if (Array.isArray(data?.categories)) {
-      return data.categories
-        .filter(
-          (c) =>
-            c.isActive !== false &&
-            (c.status || "published") === "published" &&
-            (c.visibility || "public") === "public" &&
-            c.showInNavigation !== false &&
-            !c.isDeleted
-        )
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    }
+    const active = raw.filter(
+      (c) =>
+        c.isActive !== false &&
+        !c.isDeleted &&
+        (c.status === undefined || c.status === "published") &&
+        (c.visibility === undefined || c.visibility === "public")
+    );
 
-    return [];
+    const coreSlugs = ["life", "reflections", "incidents", "experiences", "lessons", "travel", "news", "coding"];
+
+    const sorted = [...active].sort((a, b) => {
+      const featA = a.isFeatured || a.featured || a.showInNavigation ? 1 : 0;
+      const featB = b.isFeatured || b.featured || b.showInNavigation ? 1 : 0;
+      if (featA !== featB) return featB - featA;
+
+      const orderA = a.navigationPriority ?? a.displayOrder ?? a.sortOrder ?? a.order;
+      const orderB = b.navigationPriority ?? b.displayOrder ?? b.sortOrder ?? b.order;
+      if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
+      if (orderA !== undefined) return -1;
+      if (orderB !== undefined) return 1;
+
+      const indexA = coreSlugs.indexOf((a.slug || "").toLowerCase());
+      const indexB = coreSlugs.indexOf((b.slug || "").toLowerCase());
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+
+      return (a.name || "").localeCompare(b.name || "");
+    });
+
+    return sorted.slice(0, 8);
   }, [categories, data?.categories]);
 
   // Close menus on location change
@@ -178,13 +235,21 @@ const Header = () => {
                 </NavLink>
               </li>
 
+              <li>
+                <NavLink
+                  to="/stories"
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  Stories
+                </NavLink>
+              </li>
+
               {/* Categories Dropdown */}
               <li className="nav-dropdown-wrapper" ref={categoriesDropdownRef}>
                 <button
                   type="button"
-                  className={`nav-dropdown-trigger ${
-                    isCategoryActive || isCategoriesOpen ? "active" : ""
-                  }`}
+                  className={`nav-dropdown-trigger ${isCategoryActive || isCategoriesOpen ? "active" : ""
+                    }`}
                   onClick={() => setIsCategoriesOpen((prev) => !prev)}
                   aria-expanded={isCategoriesOpen}
                   aria-haspopup="true"
@@ -192,38 +257,66 @@ const Header = () => {
                 >
                   <span>Categories</span>
                   <FiChevronDown
-                    className={`dropdown-chevron ${
-                      isCategoriesOpen ? "open" : ""
-                    }`}
+                    className={`dropdown-chevron ${isCategoriesOpen ? "open" : ""
+                      }`}
                   />
                 </button>
 
                 {isCategoriesOpen && (
-                  <ul className="nav-dropdown-menu" id="categories-menu" role="menu">
-                    {displayCategories.length > 0 ? (
-                      displayCategories.map((cat) => (
-                        <li key={cat.id || cat._id || cat.slug} role="none">
-                          <Link
-                            to={`/category/${cat.slug}`}
-                            className="dropdown-item"
-                            role="menuitem"
-                            onClick={() => setIsCategoriesOpen(false)}
-                          >
-                            <span className="dropdown-item-title">{cat.name}</span>
-                            {cat.description && (
-                              <span className="dropdown-item-desc">
-                                {cat.description}
-                              </span>
-                            )}
-                          </Link>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="dropdown-empty" role="none">
-                        No active categories
-                      </li>
-                    )}
-                  </ul>
+                  <div
+                    className="nav-dropdown-menu categories-mega-menu"
+                    id="categories-menu"
+                    role="menu"
+                  >
+                    <div className="mega-menu-header">
+                      <span className="mega-menu-title">Explore MyJourney</span>
+                      <span className="mega-menu-subtitle">
+                        Choose a topic to dive into meaningful content
+                      </span>
+                    </div>
+
+                    <div className="mega-menu-grid">
+                      {featuredCategories.length > 0 ? (
+                        featuredCategories.map((cat) => {
+                          const shortDesc =
+                            cat.shortDescription || cat.description || "Articles and insights";
+                          const displayName = cat.name === "Incidents" ? "Experiences" : cat.name;
+                          return (
+                            <Link
+                              key={cat.id || cat._id || cat.slug}
+                              to={`/category/${cat.slug}`}
+                              className="mega-menu-item"
+                              role="menuitem"
+                              onClick={() => setIsCategoriesOpen(false)}
+                            >
+                              <div className="mega-menu-item-icon">
+                                <FiCompass />
+                              </div>
+                              <div className="mega-menu-item-content">
+                                <span className="mega-menu-item-title">{displayName}</span>
+                                <span className="mega-menu-item-desc">{shortDesc}</span>
+                              </div>
+                            </Link>
+                          );
+                        })
+                      ) : (
+                        <div className="dropdown-empty" role="none">
+                          No categories available
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mega-menu-footer">
+                      <Link
+                        to="/categories"
+                        className="mega-menu-all-link"
+                        onClick={() => setIsCategoriesOpen(false)}
+                      >
+                        <span>View All Categories</span>
+                        <FiArrowRight />
+                      </Link>
+                    </div>
+                  </div>
                 )}
               </li>
 
@@ -232,8 +325,8 @@ const Header = () => {
                   to="/about"
                   className={({ isActive }) =>
                     isActive ||
-                    location.pathname === "/read-my-story" ||
-                    location.pathname === "/readmystory"
+                      location.pathname === "/read-my-story" ||
+                      location.pathname === "/readmystory"
                       ? "active"
                       : ""
                   }
@@ -253,19 +346,8 @@ const Header = () => {
             </ul>
           </nav>
 
-          {/* Right Header Actions: Search & Account */}
+          {/* Right Header Actions: Account & Mobile Navigation */}
           <div className="header-actions">
-            {/* Search Trigger Button */}
-            <button
-              type="button"
-              className="header-action-btn search-trigger-btn"
-              onClick={() => setIsSearchOpen(true)}
-              aria-label="Open search modal"
-            >
-              <FiSearch />
-              <span className="desktop-only-text">Search</span>
-            </button>
-
             {/* Account Menu / Sign In */}
             {isAuthenticated ? (
               <div className="nav-dropdown-wrapper" ref={accountDropdownRef}>
@@ -279,10 +361,16 @@ const Header = () => {
                   aria-haspopup="true"
                   aria-controls="account-menu"
                 >
-                  <FiUser className="account-avatar-icon" />
-                  <span className="desktop-only-text">
-                    {user?.name ? user.name.split(" ")[0] : "Account"}
-                  </span>
+                  <div className="header-avatar-circle">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={displayName} className="header-avatar-img" />
+                    ) : (
+                      <span className="header-avatar-initials">{initials}</span>
+                    )}
+                  </div>
+
+                  <span className="header-user-name">{displayName}</span>
+
                   <FiChevronDown
                     className={`dropdown-chevron ${
                       isAccountOpen ? "open" : ""
@@ -293,8 +381,57 @@ const Header = () => {
                 {isAccountOpen && (
                   <ul className="nav-dropdown-menu account-dropdown-menu" id="account-menu" role="menu">
                     <li className="account-menu-header" role="none">
-                      <div className="user-name">{user?.name || "Reader"}</div>
-                      <div className="user-email">{user?.email}</div>
+                      <div className="account-profile-card">
+                        <div className="dropdown-avatar-circle">
+                          {avatarUrl ? (
+                            <img src={avatarUrl} alt={displayName} className="dropdown-avatar-img" />
+                          ) : (
+                            <span className="dropdown-avatar-initials">{initials}</span>
+                          )}
+                        </div>
+
+                        <div className="dropdown-user-info">
+                          <div className="dropdown-display-name">{displayName}</div>
+                          {username && <div className="dropdown-username">@{username}</div>}
+                          {email && <div className="dropdown-email">{email}</div>}
+
+                          {isAdmin ? (
+                            <div className="dropdown-role-tag admin">
+                              <FiShield className="role-shield-icon" /> Administrator
+                            </div>
+                          ) : (
+                            <div className="dropdown-role-tag reader">
+                              Reader
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+
+                    <li className="dropdown-divider" role="none" />
+
+                    <li role="none">
+                      <Link
+                        to="/profile"
+                        className="dropdown-item"
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <FiUser className="dropdown-item-icon" />
+                        <span className="dropdown-item-label">My Profile</span>
+                      </Link>
+                    </li>
+
+                    <li role="none">
+                      <Link
+                        to="/profile/dashboard"
+                        className="dropdown-item"
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <FiBookOpen className="dropdown-item-icon" />
+                        <span className="dropdown-item-label">Reader Dashboard</span>
+                      </Link>
                     </li>
 
                     {isAdmin && (
@@ -305,43 +442,11 @@ const Header = () => {
                           role="menuitem"
                           onClick={() => setIsAccountOpen(false)}
                         >
-                          <FiGrid /> CMS Dashboard
+                          <FiGrid className="dropdown-item-icon" />
+                          <span className="dropdown-item-label">Admin Dashboard</span>
                         </Link>
                       </li>
                     )}
-
-                    <li role="none">
-                      <Link
-                        to="/profile/dashboard"
-                        className="dropdown-item"
-                        role="menuitem"
-                        onClick={() => setIsAccountOpen(false)}
-                      >
-                        <FiBookOpen /> Reader Dashboard
-                      </Link>
-                    </li>
-
-                    <li role="none">
-                      <Link
-                        to="/profile"
-                        className="dropdown-item"
-                        role="menuitem"
-                        onClick={() => setIsAccountOpen(false)}
-                      >
-                        <FiBookmark /> Saved / Bookmarks
-                      </Link>
-                    </li>
-
-                    <li role="none">
-                      <Link
-                        to="/profile"
-                        className="dropdown-item"
-                        role="menuitem"
-                        onClick={() => setIsAccountOpen(false)}
-                      >
-                        <FiUser /> Profile
-                      </Link>
-                    </li>
 
                     <li role="none">
                       <Link
@@ -350,7 +455,8 @@ const Header = () => {
                         role="menuitem"
                         onClick={() => setIsAccountOpen(false)}
                       >
-                        <FiSettings /> Settings
+                        <FiSettings className="dropdown-item-icon" />
+                        <span className="dropdown-item-label">Settings</span>
                       </Link>
                     </li>
 
@@ -363,7 +469,8 @@ const Header = () => {
                         role="menuitem"
                         onClick={handleLogout}
                       >
-                        <FiLogOut /> Logout
+                        <FiLogOut className="dropdown-item-icon" />
+                        <span className="dropdown-item-label">Sign Out</span>
                       </button>
                     </li>
                   </ul>
@@ -387,12 +494,6 @@ const Header = () => {
           </div>
         </div>
       </header>
-
-      {/* Global Search Modal */}
-      <PublicSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
 
       {/* Mobile Drawer & Backdrop */}
       {isMobileOpen && (
@@ -425,17 +526,6 @@ const Header = () => {
             </div>
 
             <div className="mobile-drawer-body">
-              <button
-                type="button"
-                className="mobile-search-btn"
-                onClick={() => {
-                  setIsMobileOpen(false);
-                  setIsSearchOpen(true);
-                }}
-              >
-                <FiSearch /> Search articles & topics...
-              </button>
-
               <nav className="mobile-drawer-nav">
                 <ul>
                   <li>
@@ -457,6 +547,15 @@ const Header = () => {
                     </NavLink>
                   </li>
 
+                  <li>
+                    <NavLink
+                      to="/stories"
+                      onClick={() => setIsMobileOpen(false)}
+                    >
+                      Stories
+                    </NavLink>
+                  </li>
+
                   {/* Mobile Categories Collapsible */}
                   <li className="mobile-cat-accordion">
                     <button
@@ -467,24 +566,32 @@ const Header = () => {
                     >
                       <span>Categories</span>
                       <FiChevronDown
-                        className={`dropdown-chevron ${
-                          isMobileCatExpanded ? "open" : ""
-                        }`}
+                        className={`dropdown-chevron ${isMobileCatExpanded ? "open" : ""
+                          }`}
                       />
                     </button>
 
                     {isMobileCatExpanded && (
                       <ul className="mobile-sub-list">
-                        {displayCategories.map((cat) => (
+                        {featuredCategories.map((cat) => (
                           <li key={cat.id || cat._id || cat.slug}>
                             <Link
                               to={`/category/${cat.slug}`}
                               onClick={() => setIsMobileOpen(false)}
                             >
-                              {cat.name}
+                              {cat.name === "Incidents" ? "Experiences" : cat.name}
                             </Link>
                           </li>
                         ))}
+                        <li className="mobile-more-cat-item">
+                          <Link
+                            to="/categories"
+                            className="mobile-more-cat-link"
+                            onClick={() => setIsMobileOpen(false)}
+                          >
+                            <span>More Categories →</span>
+                          </Link>
+                        </li>
                       </ul>
                     )}
                   </li>

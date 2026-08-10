@@ -44,6 +44,14 @@ select {
     background   var(--transition-normal);
 }
 
+/* Disable native browser password reveal & clear icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
