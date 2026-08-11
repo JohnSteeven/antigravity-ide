@@ -22463,6 +22463,26 @@ body.theme-dark .mobile-logout-btn {
 }
 
 /* Responsive Media Queries */
+@media (min-width: 901px) and (max-width: 1120px) {
+  .desktop-nav {
+    margin: 0 10px !important;
+  }
+
+  .desktop-nav .nav-links {
+    gap: 4px !important;
+  }
+
+  .desktop-nav .nav-links a,
+  .nav-dropdown-trigger {
+    padding: 8px 7px !important;
+    font-size: 0.76rem !important;
+  }
+
+  .header-user-name {
+    display: none !important;
+  }
+}
+
 @media (max-width: 900px) {
   .desktop-nav {
     display: none !important;

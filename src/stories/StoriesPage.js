@@ -6,11 +6,13 @@ import FeaturedStory from "./components/FeaturedStory";
 import StoryCard from "./components/StoryCard";
 import { storyApi } from "../services/apiService";
 import { getImageUrl } from "../utils/imageUrlHelper";
+import storyMedia from "./storyMedia.cjs";
 import { cmsSeed } from "../data/cmsSeed";
 import "./stories.css";
 
 const INITIAL_VISIBLE = 6;
 const LOAD_MORE_COUNT = 6;
+const { resolveStoryPrimaryImage } = storyMedia;
 
 const getFallbackStories = () => {
   const list = cmsSeed?.articles || [];
@@ -86,6 +88,8 @@ export default function StoriesPage() {
   const tonightStory = useMemo(() => {
     return remainingStories[3] || null;
   }, [remainingStories]);
+  const tonightMedia = tonightStory ? resolveStoryPrimaryImage(tonightStory, { preferCover: true }) : null;
+  const tonightImage = getImageUrl(tonightMedia?.src);
 
   // "Latest Stories": 5th story onwards
   const latestStories = useMemo(() => {
@@ -116,7 +120,7 @@ export default function StoriesPage() {
       {/* TONIGHT'S READ (Atmospheric Editorial Section) */}
       {tonightStory && (
         <section className="tonight-story-section" aria-label="Tonight's Read">
-          <div className="tonight-story-layout">
+          <div className={`tonight-story-layout${tonightImage ? "" : " tonight-story-layout--text-only"}`}>
             <div className="tonight-story-content">
               <span className="tonight-story-kicker">TONIGHT'S READ</span>
               <h2 className="tonight-story-heading">A story to slow down with before the day ends.</h2>
@@ -137,17 +141,22 @@ export default function StoriesPage() {
               </div>
             </div>
 
-            <Link
-              to={`/stories/${tonightStory.slug}`}
-              className="tonight-story-image-wrap"
-              aria-label={tonightStory.title || "Story"}
-            >
-              <img
-                src={getImageUrl(tonightStory.coverImage || tonightStory.image)}
-                alt={tonightStory.title || "Story Cover"}
-                className="tonight-story-image"
-              />
-            </Link>
+            {tonightImage && (
+              <Link
+                to={`/stories/${tonightStory.slug}`}
+                className="tonight-story-image-wrap"
+                aria-label={tonightStory.title || "Story"}
+              >
+                <img
+                  src={tonightImage}
+                  alt={tonightMedia?.alt || ""}
+                  className="tonight-story-image"
+                  loading="lazy"
+                  width="640"
+                  height="480"
+                />
+              </Link>
+            )}
           </div>
         </section>
       )}

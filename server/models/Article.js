@@ -12,6 +12,33 @@ const SeoSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const StorySectionSchema = new mongoose.Schema(
+  {
+    id: { type: String, default: "" },
+    type: {
+      type: String,
+      enum: ["text", "text-image-right", "image-left-text", "chapter", "quote", "reflection", "scene-break", "image", "wide-image"],
+      default: "text",
+    },
+    heading: { type: String, default: "" },
+    body: { type: String, default: "" },
+    image: { type: String, default: "" },
+    alt: { type: String, default: "" },
+    caption: { type: String, default: "" },
+    imageSize: { type: String, enum: ["small", "medium", "portrait", "large", "wide"], default: "medium" },
+    imageWidth: { type: Number },
+    imageHeight: { type: Number },
+    imageSide: { type: String, enum: ["left", "right"], default: "right" },
+    chapterNumber: { type: String, default: "" },
+    chapterTitle: { type: String, default: "" },
+    quote: { type: String, default: "" },
+    attribution: { type: String, default: "" },
+    // Retained only so historical multi-image data can be linearized safely.
+    images: [{ type: mongoose.Schema.Types.Mixed }],
+  },
+  { _id: false }
+);
+
 const ArticleSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
@@ -105,6 +132,9 @@ const ArticleSchema = new mongoose.Schema(
     introTime: { type: String, default: "" },
     reflection: { type: String, default: "" },
     takeaway: { type: String, default: "" },
+    storyLayout: { type: String, default: "classic-reader" },
+    storySections: { type: [StorySectionSchema], default: undefined },
+    coverImageAlt: { type: String, default: "" },
 
     // Status
     status: {
@@ -190,7 +220,12 @@ ArticleSchema.pre("validate", function (next) {
 
 // Auto-calculate reading time from body
 ArticleSchema.pre("save", function (next) {
-  if (this.isModified("body") && this.body) {
+  if (this.contentType === "story" && (this.isModified("storySections") || this.isModified("body") || this.isModified("description"))) {
+    const { calculateStoryReadingTime } = require("../utils/storyContent");
+    const minutes = calculateStoryReadingTime(this.toObject());
+    this.readingTimeMin = minutes;
+    this.readingTime = `${minutes} min read`;
+  } else if (this.isModified("body") && this.body) {
     const plainText = this.body.replace(/<[^>]+>/g, " ");
     const wordCount = plainText.trim().split(/\s+/).length;
     const minutes = Math.max(1, Math.round(wordCount / 200));

@@ -6,6 +6,7 @@ import CmsLayout from "./layout/CmsLayout";
 // Import modules
 import DashboardOverview from "./cms/DashboardOverview";
 import ArticleModule from "./cms/ArticleModule";
+import StoryCmsPanel from "./cms/panels/StoryCmsPanel";
 import CategoryModule from "./cms/CategoryModule";
 import SubCategoryModule from "./cms/SubCategoryModule";
 import TagModule from "./cms/TagModule";
@@ -73,6 +74,7 @@ import LaunchCenterModule from "./cms/LaunchCenterModule";
 const MODULE_TITLES = {
   overview: { kicker: "Dashboard", title: "Overview & Analytics" },
   articles: { kicker: "Writing", title: "Articles & Drafts" },
+  stories: { kicker: "Narrative", title: "Stories & Reading Layouts" },
   categories: { kicker: "Structure", title: "Category Management" },
   subcategories: { kicker: "Structure", title: "Subcategory Management" },
   tags: { kicker: "Taxonomy", title: "Tag List" },
@@ -180,6 +182,7 @@ export default function AdminDashboard() {
         <Route index element={<DashboardOverview analytics={analytics} articles={data?.articles} />} />
         <Route path="overview" element={<DashboardOverview analytics={analytics} articles={data?.articles} />} />
         <Route path="articles" element={<ArticleModule />} />
+        <Route path="stories" element={<StoryCmsPanel />} />
         <Route path="categories" element={<CategoryModule />} />
         <Route path="subcategories" element={<SubCategoryModule />} />
         <Route path="tags" element={<TagModule />} />

@@ -16,6 +16,9 @@
     "test:multiplayer": "jest server/tests/multiplayer --runInBand",
     "test:multiplayer:load": "node server/scripts/multiplayerLoad.js",
     "test:life-auction:load": "node server/scripts/lifeAuctionLoad.js",
+    "test:life": "jest --runInBand --testPathPattern=server/tests/life",
+    "test:life:load": "node server/scripts/lifeOsLoad.js",
+    "fixture:life": "node server/scripts/generateLifeFixtures.js",
     "migrate": "node server/scripts/runMigrations.js",
     "preview:qa": "node server/scripts/serveQaBuild.js",
     "test:multiplayer:preview": "node server/scripts/multiplayerPreviewSmoke.js"

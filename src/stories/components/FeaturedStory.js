@@ -2,11 +2,15 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FiArrowRight } from "react-icons/fi";
 import { getImageUrl } from "../../utils/imageUrlHelper";
+import storyMedia from "../storyMedia.cjs";
+
+const { resolveStoryPrimaryImage } = storyMedia;
 
 export default function FeaturedStory({ story }) {
   if (!story) return null;
 
-  const imageUrl = getImageUrl(story.coverImage || story.image);
+  const media = resolveStoryPrimaryImage(story, { preferCover: true });
+  const imageUrl = getImageUrl(media?.src);
   const readingTime = story.readingTime || `${story.readingTimeMin || 8} min read`;
   const title = story.title || "Untitled Story";
   const teaser = story.description || story.excerpt || "";
@@ -23,7 +27,7 @@ export default function FeaturedStory({ story }) {
 
   return (
     <section className="todays-story-section" aria-label="Today's Story">
-      <div className="todays-story-layout">
+      <div className={`todays-story-layout${imageUrl ? "" : " todays-story-layout--text-only"}`}>
         {/* Content first in DOM — CSS order:1 keeps it visually left */}
         <div className="todays-story-content">
           <div className="todays-story-badge">
@@ -47,13 +51,17 @@ export default function FeaturedStory({ story }) {
         </div>
 
         {/* Image second in DOM — CSS order:2 keeps it visually right */}
-        <Link to={`/stories/${story.slug}`} className="todays-story-image-wrap" aria-label={title}>
-          <img
-            src={imageUrl}
-            alt={title}
-            className="todays-story-image"
-          />
-        </Link>
+        {imageUrl && (
+          <Link to={`/stories/${story.slug}`} className="todays-story-image-wrap" aria-label={title}>
+            <img
+              src={imageUrl}
+              alt={media?.alt || ""}
+              className="todays-story-image"
+              width="720"
+              height="540"
+            />
+          </Link>
+        )}
       </div>
     </section>
   );

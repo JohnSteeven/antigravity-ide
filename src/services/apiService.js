@@ -218,6 +218,15 @@ export const storyApi = {
 
   /** Get a single story by slug */
   getBySlug: (slug) => get(`/api/stories/${slug}`),
+
+  /** Create a structured Story (admin) */
+  create: (payload) => post("/api/stories", { ...payload, contentType: "story" }),
+
+  /** Update a structured or legacy Story (admin) */
+  update: (id, payload) => put(`/api/stories/${id}`, { ...payload, contentType: "story" }),
+
+  /** Change Story publishing state (admin) */
+  setStatus: (id, status) => put(`/api/stories/${id}/status`, { status }),
 };
 
 // ─── Categories ───────────────────────────────────────────────────────────────

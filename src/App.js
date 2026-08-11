@@ -52,6 +52,7 @@ import CommunityFeed from "./components/CommunityFeed.jsx";
 
 const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"));
 const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));
+const LifeApp = lazy(() => import("./features/life/LifeApp.jsx"));
 
 const HomePage = () => (
   <main>
@@ -69,6 +70,7 @@ const AppShell = () => {
   const isCms = location.pathname.startsWith("/cms");
   const isPlayLife = location.pathname.startsWith("/play-life");
   const isPlayWithFriends = location.pathname.startsWith("/play-with-friends");
+  const isLife = location.pathname.startsWith("/life");
   const isImmersive = isPlayLife || isPlayWithFriends;
   const authRoutes = [
     "/login",
@@ -103,8 +105,8 @@ const AppShell = () => {
     <div className="app-container">
       {!isAuthRoute && !isImmersive && <Header />}
       <Outlet />
-      {!isCms && !isAuthRoute && !isImmersive && <Footer />}
-      {!isCms && !isAuthRoute && !isImmersive && <AskMyJourneyWidget />}
+      {!isCms && !isAuthRoute && !isImmersive && !isLife && <Footer />}
+      {!isCms && !isAuthRoute && !isImmersive && !isLife && <AskMyJourneyWidget />}
     </div>
   );
 };
@@ -281,6 +283,16 @@ const appRouter = createBrowserRouter([
         ),
       },
       {
+        path: "life/*",
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingScreen message="Opening Life..." />}>
+              <LifeApp />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "profile/dashboard",
         element: <Navigate to="/profile?tab=overview" replace />,
       },
@@ -312,4 +324,3 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(<RouterProvider router={appRouter} />);
 // Stories feature architecture updated
-

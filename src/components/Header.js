@@ -244,6 +244,17 @@ const Header = () => {
                 </NavLink>
               </li>
 
+              {isAuthenticated && (
+                <li>
+                  <NavLink
+                    to="/life/today"
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    Life
+                  </NavLink>
+                </li>
+              )}
+
               {/* Categories Dropdown */}
               <li className="nav-dropdown-wrapper" ref={categoriesDropdownRef}>
                 <button
@@ -555,6 +566,17 @@ const Header = () => {
                       Stories
                     </NavLink>
                   </li>
+
+                  {isAuthenticated && (
+                    <li>
+                      <NavLink
+                        to="/life/today"
+                        onClick={() => setIsMobileOpen(false)}
+                      >
+                        Life
+                      </NavLink>
+                    </li>
+                  )}
 
                   {/* Mobile Categories Collapsible */}
                   <li className="mobile-cat-accordion">

@@ -67,6 +67,7 @@ const governanceRoutes = require("./routes/governanceRoutes");
 const infrastructureRoutes = require("./routes/infrastructureRoutes");
 const launchRoutes = require("./routes/launchRoutes");
 const multiplayerRoutes = require("./routes/multiplayerRoutes");
+const lifeRoutes = require("./life/routes");
 const { multiplayerPlatform } = require("./multiplayer/platform");
 const { attachMultiplayerSocketServer } = require("./multiplayer/realtime/socketServer");
 const path = require("path");
@@ -157,6 +158,7 @@ app.use("/api/governance", governanceRoutes);
 app.use("/api/infrastructure", infrastructureRoutes);
 app.use("/api/launch", launchRoutes);
 app.use("/api/multiplayer", multiplayerRoutes);
+app.use("/api/life", authenticate, lifeRoutes);
 
 // Serve uploads statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

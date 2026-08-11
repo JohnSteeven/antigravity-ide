@@ -22,9 +22,10 @@
 
 /* -- Dark Mode Overrides ---------------------------------------------------- */
 [data-theme="dark"] .stories-page,
-[data-theme="dark"] .story-detail-page,
+[data-theme="dark"] .story-detail-route,
 body.dark-theme .stories-page,
-body.dark-theme .story-detail-page {
+body.dark-theme .story-detail-route,
+body.theme-dark .story-detail-route {
   --story-bg: #141211;
   --story-surface-warm: #1c1917;
   --story-surface-card: #1f1c1a;
@@ -145,6 +146,10 @@ body.dark-theme .story-detail-page {
   grid-template-columns: 1.3fr 1fr;
   gap: 3rem;
   align-items: center;
+}
+
+.todays-story-layout--text-only {
+  grid-template-columns: minmax(0, 760px);
 }
 
 .todays-story-content {
@@ -310,6 +315,14 @@ body.dark-theme .story-detail-page {
   border-bottom: 1px solid var(--story-border-subtle);
 }
 
+.story-card--text-only {
+  padding-right: clamp(1rem, 4vw, 3rem);
+}
+
+.story-card--text-only .story-card-content {
+  max-width: 34rem;
+}
+
 .story-card-image-wrap {
   flex: 0 0 auto;
   width: 154px;
@@ -390,6 +403,10 @@ body.dark-theme .story-detail-page {
   grid-template-columns: 1.15fr 0.85fr;
   gap: 3rem;
   align-items: center;
+}
+
+.tonight-story-layout--text-only {
+  grid-template-columns: minmax(0, 760px);
 }
 
 .tonight-story-kicker {
@@ -498,19 +515,31 @@ body.dark-theme .story-detail-page {
 /* -- DAILY RETURN FOOTER ---------------------------------------------------- */
 
 .story-daily-footer {
-  margin-top: 5rem;
-  padding-top: 3.5rem;
-  border-top: 1px solid var(--story-border-subtle);
+  width: min(100% - 2rem, 1120px);
+  margin: clamp(3rem, 7vw, 5.5rem) auto 0;
+  padding: clamp(2.75rem, 6vw, 4.5rem) 1rem;
+  border-top: 1px solid var(--story-border-warm);
+  border-bottom: 1px solid var(--story-border-warm);
+  background: transparent;
   text-align: center;
 }
 
 .story-daily-footer-content {
-  max-width: 480px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 2.25rem 1.75rem;
-  background-color: var(--story-surface-warm);
-  border-radius: 14px;
-  border: 1px solid var(--story-border-warm);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.story-daily-footer-content::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  margin: 0 auto 1.25rem;
+  background: var(--story-accent);
 }
 
 .story-daily-footer-kicker {
@@ -525,339 +554,32 @@ body.dark-theme .story-detail-page {
 
 .story-daily-footer-title {
   font-family: var(--story-font-serif);
-  font-size: 1.85rem;
-  font-weight: 700;
+  font-size: clamp(1.9rem, 3.5vw, 2.6rem);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
   color: var(--story-ink);
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.65rem;
 }
 
 .story-daily-footer-sub {
-  font-size: 0.95rem;
-  color: var(--story-ink-soft);
-  margin: 0;
-}
-
-/* =============================================================================
-   STORY DETAIL READER PAGE -- /stories/:slug
-   Reader-first: text begins immediately, image floats beside opening prose
-   ============================================================================= */
-
-.story-detail-page {
-  background-color: var(--story-bg);
-  color: var(--story-ink);
-  min-height: 100vh;
-  padding-bottom: 8rem;
-  font-family: var(--story-font-sans);
-}
-
-.story-detail-container {
-  max-width: 1120px;
+  max-width: 34rem;
   margin: 0 auto;
-  padding: 2rem 2rem 0;
-  box-sizing: border-box;
-}
-
-.story-detail-nav {
-  margin-bottom: 1.25rem;
-}
-
-.story-back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--story-ink-soft);
-  text-decoration: none;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.story-back-link:hover {
-  color: var(--story-accent);
-  transform: translateX(-3px);
-}
-
-/* -- Story Header -- Left-Aligned, Compact ---------------------------------- */
-
-.story-detail-header {
-  text-align: left;
-  max-width: 820px;
-  margin: 0 0 1.75rem;
-}
-
-/* Single compact line: STORY * 15 MIN READ * DATE */
-.story-detail-meta-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin-bottom: 0.85rem;
-  flex-wrap: wrap;
-}
-
-.story-detail-kicker {
-  font-size: 0.71rem;
-  font-weight: 700;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  color: var(--story-accent);
-}
-
-.story-detail-meta-sep {
-  font-size: 0.71rem;
-  color: var(--story-ink-muted);
-  opacity: 0.55;
-  font-weight: 500;
-}
-
-.story-detail-readtime {
-  font-size: 0.71rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--story-ink-muted);
-}
-
-.story-detail-date {
-  font-size: 0.71rem;
-  font-weight: 500;
-  letter-spacing: 0.07em;
-  color: var(--story-ink-muted);
-  text-transform: uppercase;
-}
-
-/* Title -- proportional, editorial, not a billboard */
-.story-detail-title {
   font-family: var(--story-font-serif);
-  font-size: clamp(2rem, 3.5vw, 3rem);
-  font-weight: 700;
-  line-height: 1.14;
-  color: var(--story-ink);
-  margin: 0 0 1rem;
-  letter-spacing: -0.015em;
-}
-
-/* Subtitle / description -- italic lead-in */
-.story-detail-subtitle {
-  font-family: var(--story-font-serif);
-  font-size: clamp(1.1rem, 1.8vw, 1.25rem);
-  line-height: 1.55;
-  color: var(--story-ink-soft);
-  font-style: italic;
-  margin: 0;
-  font-weight: 400;
-}
-
-/* -- Reading Column -- 820px comfortable long-form width -------------------- */
-/*
-   Not too narrow (no 500px), not full-screen (no 1400px).
-   820px gives ~65-75 chars per line at 18-20px -- excellent readability.
-*/
-
-.story-reading-column {
-  width: 100%;
-  max-width: 820px;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* -- Intro Image -- CSS Float Right ----------------------------------------- */
-/*
-   Placed immediately before <article> inside .story-reading-column.
-   Opening paragraphs wrap naturally around it -- no body parsing needed.
-   float: right means text fills left and wraps.
-   h2/h3 headings clear the float with clear:both.
-   .story-float-clear after </article> ends the float context.
-*/
-
-.story-intro-image-wrap {
-  float: right;
-  width: clamp(260px, 34%, 400px);
-  margin: 0.35rem 0 1.75rem 2.75rem;
-  border-radius: 9px;
-  overflow: hidden;
-  background-color: var(--story-border-warm);
-}
-
-.story-intro-image {
-  width: 100%;
-  height: auto;
-  max-height: 320px;
-  object-fit: cover;
-  object-position: center 30%;
-  display: block;
-}
-
-/* Clears intro float -- placed after </article> before ending box */
-.story-float-clear {
-  clear: both;
-}
-
-/* -- Story Prose ------------------------------------------------------------- */
-
-.story-prose {
-  font-family: var(--story-font-serif);
-  font-size: 1.175rem;
-  line-height: 1.85;
-  color: var(--story-ink);
-}
-
-/* Slightly larger opening lead paragraph -- editorial magazine feel */
-.story-prose>p:first-child {
-  font-size: 1.275rem;
-  line-height: 1.75;
-  color: var(--story-ink);
-}
-
-.story-prose p {
-  margin-bottom: 1.75rem;
-}
-
-/* Scene / chapter headings -- restrained editorial, clear float */
-.story-prose h2 {
-  font-family: var(--story-font-serif);
-  font-size: clamp(1.45rem, 2.5vw, 1.85rem);
-  font-weight: 700;
-  color: var(--story-ink);
-  margin: 3.25rem 0 1rem;
-  line-height: 1.25;
-  letter-spacing: -0.012em;
-  clear: both;
-}
-
-.story-prose h3 {
-  font-family: var(--story-font-serif);
-  font-size: clamp(1.2rem, 2vw, 1.45rem);
-  font-weight: 700;
-  color: var(--story-ink);
-  margin: 2.5rem 0 0.8rem;
-  line-height: 1.3;
-  clear: both;
-}
-
-/* Editorial aside -- thin left rule, no card, no background */
-.story-prose blockquote,
-.story-prose .callout {
-  font-style: italic;
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 1.7vw, 1.12rem);
   line-height: 1.6;
   color: var(--story-ink-soft);
-  border-left: 2.5px solid var(--story-accent);
-  padding: 0.25rem 0 0.25rem 1.5rem;
-  margin: 2.25rem 0;
-  background: transparent;
 }
 
-/* Scene break via HR */
-.story-prose hr {
-  border: none;
-  text-align: center;
-  margin: 3rem 0;
-}
-
-.story-prose hr::after {
-  content: "* * *";
-  font-size: 1.3rem;
-  letter-spacing: 0.6em;
-  color: var(--story-ink-muted);
-}
-
-/* -- Scene Break element ---------------------------------------------------- */
-
-.story-scene-break {
-  text-align: center;
-  font-size: 1.45rem;
-  color: var(--story-ink-muted);
-  letter-spacing: 0.7em;
-  margin: 3.75rem 0 1.75rem;
-  user-select: none;
-  clear: both;
-}
-
-/* -- Ending Box ------------------------------------------------------------- */
-
-.story-ending-box {
-  text-align: center;
-  margin: 4rem 0 3.5rem;
-  clear: both;
-}
-
-.story-ending-label {
-  font-family: var(--story-font-serif);
-  font-size: 1.2rem;
-  font-style: italic;
-  color: var(--story-ink-muted);
-  margin-bottom: 1.75rem;
-}
-
-/* -- Reflection -- thin left rule aside, no card ---------------------------- */
-/*
-   Reduced from large bordered card to a subtle editorial aside.
-   Does not interrupt the narrative with a visual lesson-box.
-   Both class names handled for backward compat.
-*/
-
-.story-reflection-aside,
-.story-reflection-card {
-  border-left: 2px solid var(--story-accent);
-  border-right: none;
-  border-top: none;
-  border-bottom: none;
-  padding: 0.35rem 0 0.35rem 1.5rem;
-  margin: 2rem auto;
-  background: transparent;
-  border-radius: 0;
-  text-align: left;
-  max-width: 640px;
-}
-
-.story-reflection-title {
-  font-size: 0.69rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--story-accent);
-  margin-bottom: 0.5rem;
-}
-
-.story-reflection-text {
-  font-family: var(--story-font-serif);
-  font-size: 1.1rem;
-  line-height: 1.65;
-  color: var(--story-ink-soft);
-  margin: 0;
-  font-style: italic;
-}
-
-/* -- Action Bar ------------------------------------------------------------- */
-
-.story-actions-bar {
+.story-daily-footer-link {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 1.25rem;
-  margin: 3rem 0;
+  margin-top: 1.25rem;
 }
 
-.story-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  border: 1px solid var(--story-border-warm);
-  color: var(--story-ink-soft);
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 0.6rem 1.5rem;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.story-action-btn:hover {
-  background-color: var(--story-ink);
-  color: var(--story-bg);
-  border-color: var(--story-ink);
+.story-daily-footer-link .story-cta-link {
+  color: var(--story-accent);
+  border-color: color-mix(in srgb, var(--story-accent) 65%, transparent);
 }
 
 /* -- Related Stories -------------------------------------------------------- */
@@ -889,19 +611,8 @@ body.dark-theme .story-detail-page {
 
 /* =============================================================================
    RESPONSIVE MEDIA QUERIES
-   Tested at: 320, 375, 430, 768, 1024, 1280, 1366, 1440, 1536, 1920, 2560, 3440
+   Responsive targets: 320, 375, 430, 768, 1024, 1280, 1366, 1440, 1536, 1920, 2560, 3440
    ============================================================================= */
-
-/* -- 1366px: large laptop -- two-column grid, float intro active ------------ */
-@media (max-width: 1366px) {
-  .story-reading-column {
-    max-width: 780px;
-  }
-
-  .story-detail-header {
-    max-width: 780px;
-  }
-}
 
 /* -- 1280px: smaller desktop ----------------------------------------------- */
 @media (max-width: 1280px) {
@@ -934,26 +645,12 @@ body.dark-theme .story-detail-page {
     padding: 2.5rem 2.25rem;
   }
 
-  /* Disable float -- image becomes a normal block above prose */
-  .story-intro-image-wrap {
-    float: none;
-    width: 100%;
-    max-width: 460px;
-    margin: 0 0 1.75rem 0;
-    border-radius: 9px;
-  }
+}
 
-  .story-intro-image {
-    max-height: 280px;
-  }
-
-  .story-reading-column {
-    max-width: 100%;
-  }
-
-  .story-detail-header {
-    max-width: 100%;
-  }
+.story-detail-route {
+  min-height: 100vh;
+  background: var(--story-bg);
+  color: var(--story-ink);
 }
 
 /* -- 768px: tablet ---------------------------------------------------------- */
@@ -998,31 +695,8 @@ body.dark-theme .story-detail-page {
     gap: 0;
   }
 
-  .story-detail-container {
-    padding: 1.5rem 1.25rem 0;
-  }
-
-  .story-intro-image-wrap {
-    max-width: 100%;
-    max-height: 220px;
-    margin-bottom: 1.5rem;
-  }
-
-  .story-intro-image {
-    max-height: 220px;
-  }
-
-  .story-prose {
-    font-size: 1.1rem;
-    line-height: 1.8;
-  }
-
-  .story-prose>p:first-child {
-    font-size: 1.175rem;
-  }
-
   .story-daily-footer-content {
-    padding: 2rem 1.25rem;
+    padding: 0;
   }
 }
 
@@ -1048,18 +722,6 @@ body.dark-theme .story-detail-page {
     font-size: 1.6rem;
   }
 
-  .story-detail-title {
-    font-size: 1.85rem;
-  }
-
-  .story-intro-image-wrap {
-    max-height: 200px;
-  }
-
-  .story-intro-image {
-    max-height: 200px;
-  }
-
   .story-card-image-wrap {
     width: 116px;
     height: 82px;
@@ -1069,23 +731,10 @@ body.dark-theme .story-detail-page {
     font-size: 1.1rem;
   }
 
-  .story-actions-bar {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .story-action-btn {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 /* -- 375px: standard phone ------------------------------------------------- */
 @media (max-width: 375px) {
-  .story-detail-title {
-    font-size: 1.7rem;
-  }
-
   .story-card-image-wrap {
     width: 96px;
     height: 70px;
@@ -1098,24 +747,9 @@ body.dark-theme .story-detail-page {
 
 /* -- 320px: small phone ---------------------------------------------------- */
 @media (max-width: 320px) {
-  .story-detail-title {
-    font-size: 1.55rem;
-  }
-
   .story-card-image-wrap {
     width: 80px;
     height: 60px;
-  }
-}
-
-/* -- Ultrawide (1920px+) -- cap at 840px, use horizontal whitespace --------- */
-@media (min-width: 1920px) {
-  .story-reading-column {
-    max-width: 840px;
-  }
-
-  .story-detail-header {
-    max-width: 840px;
   }
 }
 
@@ -1126,8 +760,7 @@ body.dark-theme .story-detail-page {
   .story-card-image,
   .tonight-story-image,
   .story-cta-link svg,
-  .story-load-more-btn,
-  .story-action-btn {
+  .story-load-more-btn {
     transition: none !important;
     transform: none !important;
   }

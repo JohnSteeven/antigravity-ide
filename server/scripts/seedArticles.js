@@ -4,6 +4,8 @@ const Article = require("../models/Article");
 const Category = require("../models/Category");
 const User = require("../models/User");
 const premiumArticles = require("../../src/data/premiumArticles.json");
+const storyFixtures = require("../../src/data/storyFixtures.cjs");
+const { normalizeStorySections, normalizeStoryLayout, calculateStoryReadingTime } = require("../utils/storyContent");
 
 async function seedArticles() {
   console.log("Starting Article Seeding Script...");
@@ -18,7 +20,8 @@ async function seedArticles() {
   const authorName = authorUser ? `${authorUser.firstName} ${authorUser.lastName}`.trim() : "Noble John Steeven";
 
   try {
-    for (const art of premiumArticles) {
+    const developmentContent = [...premiumArticles.filter((item) => item.contentType !== "story"), ...storyFixtures];
+    for (const art of developmentContent) {
       // Find matching category to map categoryId
       const categorySlug = art.category.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
       const categoryModel = await Category.findOne({ slug: categorySlug });
@@ -39,6 +42,9 @@ async function seedArticles() {
         introTime: art.introTime || "",
         reflection: art.reflection || "",
         takeaway: art.takeaway || "",
+        storyLayout: normalizeStoryLayout(art.storyLayout),
+        storySections: Array.isArray(art.storySections) ? normalizeStorySections(art.storySections) : undefined,
+        coverImageAlt: art.coverImageAlt || "",
         status: art.status || "published",
         isFeatured: art.featured !== undefined ? art.featured : false,
         isMustRead: art.mustRead !== undefined ? art.mustRead : false,
@@ -46,7 +52,8 @@ async function seedArticles() {
         isPinned: art.pinned !== undefined ? art.pinned : false,
         publishedAt: art.publishedAt ? new Date(art.publishedAt) : new Date(),
         updatedAt: art.updatedAt ? new Date(art.updatedAt) : new Date(),
-        readingTime: art.readingTime || "15 min read",
+        readingTimeMin: art.contentType === "story" ? calculateStoryReadingTime(art) : art.readingTimeMin,
+        readingTime: art.contentType === "story" ? `${calculateStoryReadingTime(art)} min read` : (art.readingTime || "1 min read"),
         authorId,
         author: authorName,
         category: art.category,

@@ -29,6 +29,21 @@ function formatArticleImageUrls(article) {
   if (Array.isArray(doc.gallery)) {
     doc.gallery = doc.gallery.map(formatImageUrl);
   }
+  if (Array.isArray(doc.storySections)) {
+    doc.storySections = doc.storySections.map((section) => {
+      if (!section || typeof section !== "object") return section;
+      return {
+        ...section,
+        image: formatImageUrl(section.image),
+        images: Array.isArray(section.images)
+          ? section.images.map((item) => {
+            if (!item) return item;
+            return typeof item === "string" ? formatImageUrl(item) : { ...item, url: formatImageUrl(item.url || item.src) };
+          })
+          : section.images,
+      };
+    });
+  }
   if (doc.seo && doc.seo.openGraphImage) {
     doc.seo.openGraphImage = formatImageUrl(doc.seo.openGraphImage);
   }
