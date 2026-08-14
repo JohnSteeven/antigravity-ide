@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import { creatorApi } from "../../services/apiService";
 import { ALL_COUNTRY_CODES } from "../../utils/countryCodes";
 import "./creators.css";
@@ -33,6 +34,51 @@ const STAGES = [
   { key: "create", label: "Create" },
   { key: "review", label: "Review" },
 ];
+
+const APPLICATION_STATUS_PRESENTATION = {
+  applied: {
+    title: "Application received",
+    message: "Your application has been received and is in the MyJourney review process.",
+  },
+  under_review: {
+    title: "Application under review",
+    message: "The MyJourney review team is currently reviewing your application.",
+  },
+  interview: {
+    title: "Interview stage",
+    message: "Your application is still being reviewed and has moved to the interview stage.",
+  },
+  verification: {
+    title: "Verification in progress",
+    message: "Your application is still being reviewed while verification is completed.",
+  },
+  approved: {
+    title: "Application approved",
+    message: "Your application was approved. Creator activation and workspace setup are pending.",
+  },
+  active: {
+    title: "You're an active MyJourney Creator.",
+    message: "Your public Creator profile and Creator Studio are ready.",
+  },
+  rejected: {
+    title: "Application not approved",
+    message: "This application was not approved and is no longer under review.",
+  },
+  restricted: {
+    title: "Creator access restricted",
+    message: "Your Creator access is currently restricted.",
+  },
+  suspended: {
+    title: "Creator access suspended",
+    message: "Your Creator access is currently suspended.",
+  },
+  deactivated: {
+    title: "Creator profile deactivated",
+    message: "Your Creator profile is currently deactivated.",
+  },
+};
+
+const normalizeApplicationStatus = (status) => typeof status === "string" ? status.trim().toLowerCase() : "";
 
 const initial = {
   legalName: "",
@@ -125,6 +171,7 @@ const ReviewBlock = ({ title, step, onEdit, children }) => (
 );
 
 export default function CreatorApplication() {
+  const { creatorAccess } = useAuth();
   const [form, setForm] = useState(initial);
   const [application, setApplication] = useState(null);
   const [step, setStep] = useState(0);
@@ -132,12 +179,15 @@ export default function CreatorApplication() {
   const [drafts, setDrafts] = useState({ languages: "", specialties: "", intendedTopics: "" });
   const [stepError, setStepError] = useState("");
   const [state, setState] = useState({ loading: true, busy: false, message: "", error: "" });
+  const applicationStatus = normalizeApplicationStatus(application?.status)
+    || normalizeApplicationStatus(creatorAccess?.applicationStatus)
+    || normalizeApplicationStatus(creatorAccess?.creatorStatus);
 
   useEffect(() => {
     creatorApi.myApplication().then((response) => {
       const currentApplication = response.data;
       setApplication(currentApplication);
-      if (currentApplication?.status === "more_info_required") setForm(hydrateApplication(currentApplication));
+      if (normalizeApplicationStatus(currentApplication?.status) === "more_info_required") setForm(hydrateApplication(currentApplication));
       setState((current) => ({ ...current, loading: false }));
     }).catch(() => setState((current) => ({ ...current, loading: false })));
   }, []);
@@ -218,7 +268,7 @@ export default function CreatorApplication() {
     };
 
     try {
-      const response = application?.status === "more_info_required" ? await creatorApi.updateApplication(payload) : await creatorApi.apply(payload);
+      const response = applicationStatus === "more_info_required" ? await creatorApi.updateApplication(payload) : await creatorApi.apply(payload);
       setApplication(response.data);
       setState({ loading: false, busy: false, message: "Your Creator application has been submitted for review.", error: "" });
     } catch (error) {
@@ -227,12 +277,22 @@ export default function CreatorApplication() {
   };
 
   if (state.loading) return <main className="creator-page"><p className="creator-empty" role="status">Checking your Creator application…</p></main>;
-  if (application && application.status !== "more_info_required") return <main className="creator-page"><section className="creator-application-state"><p className="creator-kicker">Creator application</p><h1>{application.status.replaceAll("_", " ")}</h1><p>{application.applicantMessage || "Your application is safely with the MyJourney review team."}</p><p>Submitted {new Date(application.submittedAt).toLocaleDateString()}</p><Link to="/creators">Explore Creators</Link></section></main>;
+  if (applicationStatus && applicationStatus !== "more_info_required") {
+    const presentation = APPLICATION_STATUS_PRESENTATION[applicationStatus] || {
+      title: "Creator application status",
+      message: `Your Creator application status is ${applicationStatus.replaceAll("_", " ")}.`,
+    };
+    const submittedDate = application?.submittedAt ? new Date(application.submittedAt).toLocaleDateString() : "";
+    const showApplicantMessage = application?.applicantMessage && applicationStatus !== "active";
+    const creatorSlug = typeof creatorAccess?.creatorSlug === "string" ? creatorAccess.creatorSlug.trim() : "";
+
+    return <main className="creator-page creator-application-status"><section className="creator-application-state"><p className="creator-kicker">Creator application</p><h1>{presentation.title}</h1><p>{presentation.message}</p>{showApplicantMessage && <p>{application.applicantMessage}</p>}{submittedDate && <p>Submitted {submittedDate}</p>}<div className="creator-application-state__actions">{applicationStatus === "active" ? <><Link className="creator-primary-action" to="/creator-studio">Open Creator Studio</Link>{creatorSlug && <Link className="creator-text-action" to={`/creators/${creatorSlug}`}>View public profile</Link>}</> : <Link to="/creators">Explore Creators</Link>}</div></section></main>;
+  }
 
   return (
     <main className="creator-page creator-application">
       <section className="creator-hero creator-hero--compact"><p className="creator-kicker">Create with MyJourney</p><h1>Share what you know, with care.</h1><p id="creator-application-intro">Your existing MyJourney account remains your identity. Verification information stays private.</p></section>
-      {application?.applicantMessage && <p className="creator-notice" role="status">Review request: {application.applicantMessage}</p>}
+      {applicationStatus === "more_info_required" && <p className="creator-notice" role="status"><strong>Additional information is required.</strong> {application?.applicantMessage || "Update the application below and resubmit it for review."}</p>}
 
       <form onSubmit={submit} className="creator-form creator-application__workspace" aria-describedby="creator-application-intro">
         <nav className="creator-application__progress" aria-label="Creator application progress">

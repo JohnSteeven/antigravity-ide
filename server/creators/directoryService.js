@@ -80,17 +80,36 @@ const getCapability = async (userId) => {
   };
 };
 
-const getPublicProfile = async (slug) => {
+const creatorFollowFilter = (followerId, profile) => ({
+  ...(followerId ? { followerId } : {}),
+  targetType: "creator",
+  targetId: String(profile.creatorKey),
+});
+
+const isCreatorOwner = (profile, userId) => Boolean(profile?.userId && userId && String(profile.userId) === String(userId));
+
+const getCreatorFollowState = async (profile, followerId = null) => {
+  const targetFilter = creatorFollowFilter(null, profile);
+  const [followerCount, existing] = await Promise.all([
+    UserFollow.countDocuments(targetFilter),
+    followerId ? UserFollow.exists(creatorFollowFilter(followerId, profile)) : null,
+  ]);
+  return { followerCount: Math.max(0, Number(followerCount) || 0), isFollowing: Boolean(existing) };
+};
+
+const getPublicProfile = async (slug, viewerId = null) => {
   const profile = await CreatorProfile.findOne({ slug, status: "active" }).lean();
   if (!profile) return null;
   const creatorId = profile._id;
-  const [articles, stories, courses, videos, podcasts, resources] = await Promise.all([
+  const isOwner = isCreatorOwner(profile, viewerId);
+  const [articles, stories, courses, videos, podcasts, resources, followState] = await Promise.all([
     Article.find({ creatorProfileId: creatorId, contentType: "article", status: "published", isDeleted: false }).select("title slug description excerpt coverImage coverImageAlt author readingTime accessLevel publishedAt contentType").sort({ publishedAt: -1 }).limit(12).lean(),
     Article.find({ creatorProfileId: creatorId, contentType: "story", status: "published", isDeleted: false }).select("title slug description excerpt coverImage coverImageAlt author readingTime accessLevel publishedAt contentType storyLayout").sort({ publishedAt: -1 }).limit(12).lean(),
     Course.find({ creatorId, publicationStatus: "published", isDeleted: false }).select("title slug subtitle description coverImage coverImageAlt accessLevel level language lessonCount estimatedDurationMinutes publishedAt").sort({ publishedAt: -1 }).limit(12).lean(),
     CreatorVideo.find({ creatorId, publicationStatus: "published", isDeleted: false }).select("title slug description thumbnail thumbnailAlt durationSeconds accessLevel language publishedAt").sort({ publishedAt: -1 }).limit(12).lean(),
     PodcastEpisode.find({ creatorId, publicationStatus: "published" }).select("title slug description coverImage durationSeconds seasonNumber episodeNumber accessLevel language publishedAt").sort({ publishedAt: -1 }).limit(12).lean(),
     LearningResource.find({ creatorId, publicationStatus: "published" }).select("title slug description resourceType sizeBytes accessLevel language publishedAt").sort({ publishedAt: -1 }).limit(12).lean(),
+    getCreatorFollowState(profile, isOwner ? null : viewerId),
   ]);
   const shelves = {
     articles: articles.map((item) => serializePublicContent(item, { listing: true })),
@@ -109,7 +128,8 @@ const getPublicProfile = async (slug) => {
   if (featured.length) shelves.featured = featured;
   const orderedModules = (profile.moduleOrder || []).filter((module) => module !== "featured");
   const modules = [...(featured.length ? ["featured"] : []), ...orderedModules.filter((module) => module === "about" || (shelves[module]?.length > 0))];
-  return { ...publicProfile(profile), modules, shelves };
+  const serializedProfile = publicProfile(profile);
+  return { ...serializedProfile, metrics: { ...(serializedProfile.metrics || {}), followerCount: followState.followerCount }, isFollowing: followState.isFollowing, isOwner, modules, shelves };
 };
 
 const updateOwnProfile = async (creatorId, input) => {
@@ -128,17 +148,28 @@ const updateOwnProfile = async (creatorId, input) => {
   return publicProfile(profile);
 };
 
-const toggleFollow = async (followerId, profile) => {
-  const targetId = String(profile.creatorKey);
-  const existing = await UserFollow.findOne({ followerId, targetType: "creator", targetId });
-  if (existing) {
-    await existing.deleteOne();
-    await CreatorProfile.updateOne({ _id: profile._id, "metrics.followerCount": { $gt: 0 } }, { $inc: { "metrics.followerCount": -1 } });
-    return { following: false };
+const syncCreatorFollowerCount = async (profile) => {
+  const followerCount = Math.max(0, Number(await UserFollow.countDocuments(creatorFollowFilter(null, profile))) || 0);
+  await CreatorProfile.updateOne({ _id: profile._id }, { $set: { "metrics.followerCount": followerCount } });
+  return followerCount;
+};
+
+const followCreator = async (followerId, profile) => {
+  if (isCreatorOwner(profile, followerId)) {
+    throw Object.assign(new Error("You cannot follow your own Creator profile."), { status: 403, code: "CREATOR_SELF_FOLLOW_FORBIDDEN" });
   }
-  await UserFollow.create({ followerId, targetType: "creator", targetId });
-  await CreatorProfile.updateOne({ _id: profile._id }, { $inc: { "metrics.followerCount": 1 } });
-  return { following: true };
+  const filter = creatorFollowFilter(followerId, profile);
+  try {
+    await UserFollow.updateOne(filter, { $setOnInsert: filter }, { upsert: true, runValidators: true });
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+  }
+  return { following: true, followerCount: await syncCreatorFollowerCount(profile) };
+};
+
+const unfollowCreator = async (followerId, profile) => {
+  await UserFollow.deleteOne(creatorFollowFilter(followerId, profile));
+  return { following: false, followerCount: await syncCreatorFollowerCount(profile) };
 };
 
 const updateFeaturedContent = async (creatorId, input) => {
@@ -159,4 +190,4 @@ const updateFeaturedContent = async (creatorId, input) => {
   return publicProfile(profile);
 };
 
-module.exports = { getCapability, getPublicProfile, listCreators, publicProfile, toggleFollow, updateFeaturedContent, updateOwnProfile };
+module.exports = { followCreator, getCapability, getCreatorFollowState, getPublicProfile, listCreators, publicProfile, unfollowCreator, updateFeaturedContent, updateOwnProfile };

@@ -37,6 +37,7 @@ export default function CreatorDirectory() {
 
   const update = (key) => (event) => setFilters((current) => ({ ...current, [key]: event.target.value }));
   const hasActiveFilters = Boolean(filters.search.trim() || filters.specialty || filters.language || filters.format);
+  const creatorTotal = result.pagination.total || 0;
 
   return (
     <main className="creator-page creator-directory">
@@ -56,7 +57,7 @@ export default function CreatorDirectory() {
       </section>
 
       <section aria-labelledby="creator-results-heading">
-        <div className="creator-section-heading"><div><p className="creator-kicker">Creator directory</p><h2 id="creator-results-heading">Explore Creators</h2></div><span>{result.pagination.total || 0} Creators</span></div>
+        <div className="creator-section-heading"><div><p className="creator-kicker">Creator directory</p><h2 id="creator-results-heading">Explore Creators</h2></div><span>{creatorTotal} {creatorTotal === 1 ? "Creator" : "Creators"}</span></div>
         {state.error && <p className="creator-notice" role="alert">{state.error}</p>}
         {state.loading ? <p className="creator-empty" role="status">Finding Creators…</p> : result.creators.length ? (
           <div className="creator-grid">{result.creators.map((creator) => <CreatorCard key={creator.creatorKey} creator={creator} />)}</div>

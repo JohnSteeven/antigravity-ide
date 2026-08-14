@@ -5,6 +5,7 @@ const CreatorProfile = require("../models/CreatorProfile");
 const Course = require("../models/Course");
 const CourseModule = require("../models/CourseModule");
 const CourseLesson = require("../models/CourseLesson");
+const UserFollow = require("../models/UserFollow");
 const { APPLICATION_TRANSITIONS, CREATOR_CONTENT_TYPES, RECOMMENDED_STORY_LAYOUTS } = require("../creators/constants");
 const { assertFixtureEnvironment, buildCreatorLearnFixtures } = require("../creators/fixtures");
 
@@ -37,6 +38,11 @@ describe("Creator and structured Course domain", () => {
     const userSource = read("server", "models", "User.js");
     expect(userSource).not.toMatch(/enum\s*:\s*\[[^\]]*["']Creator["']/);
     expect(CreatorProfile.schema.path("status").enumValues).toContain("active");
+  });
+
+  test("Creator follows retain the compound per-user uniqueness constraint", () => {
+    const uniqueFollowIndex = UserFollow.schema.indexes().find(([fields, options]) => fields.followerId === 1 && fields.targetType === 1 && fields.targetId === 1 && options.unique === true);
+    expect(uniqueFollowIndex).toBeDefined();
   });
 
   test("Courses, Modules, and Lessons are separate stable records", () => {

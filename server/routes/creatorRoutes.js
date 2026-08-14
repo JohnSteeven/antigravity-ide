@@ -3,7 +3,7 @@ const rateLimit = require("express-rate-limit");
 const { validationResult } = require("express-validator");
 const controllers = require("../creators/controllers");
 const { applicationValidator, reviewValidator } = require("../creators/validators");
-const { authenticate } = require("../middleware/auth");
+const { authenticate, optionalAuthenticate } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { handleValidation } = require("../middleware/errorHandler");
 
@@ -26,6 +26,7 @@ router.patch("/admin/content/:contentType/:contentId/status", authenticate, requ
 
 router.get("/", searchLimiter, controllers.listCreators);
 router.post("/:slug/follow", authenticate, followLimiter, controllers.followCreator);
-router.get("/:slug", controllers.getCreator);
+router.delete("/:slug/follow", authenticate, followLimiter, controllers.unfollowCreator);
+router.get("/:slug", optionalAuthenticate, controllers.getCreator);
 
 module.exports = router;

@@ -42,9 +42,9 @@ exports.listCreators = async (req, res, next) => {
 
 exports.getCreator = async (req, res, next) => {
   try {
-    const creator = await directoryService.getPublicProfile(req.params.slug);
+    const creator = await directoryService.getPublicProfile(req.params.slug, userId(req));
     if (!creator) return res.status(404).json({ message: "Creator not found." });
-    return res.json({ success: true, data: creator });
+    return res.vary("Cookie").vary("Authorization").set("Cache-Control", "private, no-store").json({ success: true, data: creator });
   } catch (error) { return next(error); }
 };
 
@@ -52,7 +52,15 @@ exports.followCreator = async (req, res, next) => {
   try {
     const creator = await CreatorProfile.findOne({ slug: req.params.slug, status: "active" });
     if (!creator) return res.status(404).json({ message: "Creator not found." });
-    return res.json({ success: true, data: await directoryService.toggleFollow(userId(req), creator) });
+    return res.json({ success: true, data: await directoryService.followCreator(userId(req), creator) });
+  } catch (error) { return next(error); }
+};
+
+exports.unfollowCreator = async (req, res, next) => {
+  try {
+    const creator = await CreatorProfile.findOne({ slug: req.params.slug, status: "active" });
+    if (!creator) return res.status(404).json({ message: "Creator not found." });
+    return res.json({ success: true, data: await directoryService.unfollowCreator(userId(req), creator) });
   } catch (error) { return next(error); }
 };
 

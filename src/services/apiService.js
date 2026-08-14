@@ -461,6 +461,7 @@ export const creatorApi = {
   myApplication: () => get("/api/creators/applications/me"),
   updateApplication: (payload) => patch("/api/creators/applications/me", payload),
   follow: (slug) => post(`/api/creators/${slug}/follow`, {}),
+  unfollow: (slug) => del(`/api/creators/${slug}/follow`),
   adminApplications: (params = {}) => get(`/api/creators/admin/applications${queryString(params)}`),
   adminApplication: (id) => get(`/api/creators/admin/applications/${id}`),
   reviewApplication: (id, payload) => patch(`/api/creators/admin/applications/${id}/status`, payload),

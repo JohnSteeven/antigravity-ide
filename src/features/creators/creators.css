@@ -321,7 +321,25 @@
 .creator-directory .creator-empty a { color: inherit; display: inline-block; font-weight: 700; margin-top: .35rem; text-underline-offset: 4px; }
 
 .creator-application-state { margin: 5rem auto; max-width: 720px; }
-.creator-application-state h1 { font-size: clamp(2.1rem, 5vw, 4rem); text-transform: capitalize; }
+.creator-application-status {
+  align-items: center;
+  box-sizing: border-box;
+  display: grid;
+  min-height: calc(100vh - var(--header-height, 74px));
+  min-height: calc(100svh - var(--header-height, 74px));
+  padding-block: clamp(1.5rem, 4vw, 3rem);
+}
+.creator-application-status .creator-application-state { margin: 0 auto; width: 100%; }
+.creator-application-state h1 { font-size: clamp(2.1rem, 5vw, 4rem); }
+.creator-application-state__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+.creator-application-state__actions .creator-primary-action { margin-top: 0; }
 .creator-notice { background: #fff4e8; border: 1px solid #dfb98e; border-radius: 10px; color: #663816; padding: .9rem 1rem; }
 
 .creator-profile__header {
