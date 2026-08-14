@@ -34,6 +34,7 @@ const errorHandler = (error, req, res, next) => {
   }
 
   const payload = { message };
+  if (typeof error.code === "string" && status < 500) payload.code = error.code;
   if (error.code && String(error.code).startsWith("MULTIPLAYER_")) {
     payload.error = {
       code: error.code,

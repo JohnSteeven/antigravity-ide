@@ -6,7 +6,7 @@ const NotificationSchema = new mongoose.Schema(
     title: { type: String, required: true },
     message: { type: String, required: true },
     readAt: Date,
-    type: { type: String, enum: ["daily_quote", "article", "summary", "reminder"] },
+    type: { type: String, enum: ["daily_quote", "article", "summary", "reminder", "creator_application", "creator_content"] },
     status: { type: String, enum: ["unread", "read"], default: "unread" },
     source: { type: String, enum: ["site", "life"], default: "site", index: true },
     sourceId: { type: mongoose.Schema.Types.ObjectId, default: null },

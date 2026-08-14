@@ -232,6 +232,7 @@ export const cmsNavigation = [
       { id: "overview", label: "Dashboard", icon: "dashboard" },
       { id: "articles", label: "Articles", icon: "edit" },
       { id: "stories", label: "Stories", icon: "book" },
+      { id: "creators", label: "Creator Review", icon: "award" },
       { id: "categories", label: "Categories", icon: "folder" },
       { id: "subcategories", label: "Sub Categories", icon: "layers" },
       { id: "tags", label: "Tags", icon: "tag" },

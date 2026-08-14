@@ -18,6 +18,8 @@
     "test:life-auction:load": "node server/scripts/lifeAuctionLoad.js",
     "test:life": "jest --runInBand --testPathPattern=server/tests/life",
     "test:premium": "jest --runInBand --testPathPattern=server/tests/premium",
+    "test:creator": "jest --runInBand --testPathPattern=server/tests/creator",
+    "test:learn": "jest --runInBand --testPathPattern=server/tests/learn",
     "test:life:load": "node server/scripts/lifeOsLoad.js",
     "fixture:life": "node server/scripts/generateLifeFixtures.js",
     "migrate": "node server/scripts/runMigrations.js",

@@ -57,6 +57,15 @@ import "./features/premium/premium.css";
 const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"));
 const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));
 const LifeApp = lazy(() => import("./features/life/LifeApp.jsx"));
+const CreatorDirectory = lazy(() => import("./features/creators/CreatorDirectory.jsx"));
+const CreatorProfile = lazy(() => import("./features/creators/CreatorProfile.jsx"));
+const CreatorApplication = lazy(() => import("./features/creators/CreatorApplication.jsx"));
+const CreatorStudio = lazy(() => import("./features/creators/CreatorStudio.jsx"));
+const LearnHome = lazy(() => import("./features/learn/LearnHome.jsx"));
+const LearnCatalog = lazy(() => import("./features/learn/LearnCatalog.jsx"));
+const CoursePage = lazy(() => import("./features/learn/CoursePage.jsx"));
+const LessonWorkspace = lazy(() => import("./features/learn/LessonWorkspace.jsx"));
+const FormatDetailPage = lazy(() => import("./features/learn/FormatDetailPage.jsx"));
 
 const HomePage = () => (
   <main>
@@ -281,6 +290,66 @@ const appRouter = createBrowserRouter([
       {
         path: "premium",
         element: <PremiumPage />,
+      },
+      {
+        path: "creators",
+        element: <Suspense fallback={<LoadingScreen message="Opening Creators..." />}><CreatorDirectory /></Suspense>,
+      },
+      {
+        path: "creators/apply",
+        element: <ProtectedRoute><Suspense fallback={<LoadingScreen message="Opening Creator application..." />}><CreatorApplication /></Suspense></ProtectedRoute>,
+      },
+      {
+        path: "creators/:slug",
+        element: <Suspense fallback={<LoadingScreen message="Opening Creator..." />}><CreatorProfile /></Suspense>,
+      },
+      {
+        path: "creator-studio/*",
+        element: <ProtectedRoute><Suspense fallback={<LoadingScreen message="Opening Creator Studio..." />}><CreatorStudio /></Suspense></ProtectedRoute>,
+      },
+      {
+        path: "learn",
+        element: <Suspense fallback={<LoadingScreen message="Opening Learn..." />}><LearnHome /></Suspense>,
+      },
+      {
+        path: "learn/courses",
+        element: <Suspense fallback={<LoadingScreen message="Finding Courses..." />}><LearnCatalog format="courses" /></Suspense>,
+      },
+      {
+        path: "learn/courses/:slug",
+        element: <Suspense fallback={<LoadingScreen message="Opening Course..." />}><CoursePage /></Suspense>,
+      },
+      {
+        path: "learn/courses/:slug/lessons/:lessonId",
+        element: <Suspense fallback={<LoadingScreen message="Opening Lesson..." />}><LessonWorkspace /></Suspense>,
+      },
+      {
+        path: "learn/videos",
+        element: <Suspense fallback={<LoadingScreen message="Finding Videos..." />}><LearnCatalog format="videos" /></Suspense>,
+      },
+      {
+        path: "learn/videos/:slug",
+        element: <Suspense fallback={<LoadingScreen message="Opening Video..." />}><FormatDetailPage format="video" /></Suspense>,
+      },
+      {
+        path: "learn/podcasts",
+        element: <Suspense fallback={<LoadingScreen message="Finding Podcasts..." />}><LearnCatalog format="podcasts" /></Suspense>,
+      },
+      {
+        path: "learn/podcasts/:slug",
+        element: <Suspense fallback={<LoadingScreen message="Opening Podcast..." />}><FormatDetailPage format="podcast" /></Suspense>,
+      },
+      {
+        path: "learn/resources",
+        element: <Suspense fallback={<LoadingScreen message="Finding Resources..." />}><LearnCatalog format="resources" /></Suspense>,
+      },
+      {
+        path: "learn/resources/:slug",
+        element: <Suspense fallback={<LoadingScreen message="Opening Resource..." />}><FormatDetailPage format="resource" /></Suspense>,
+      },
+      {
+        path: "learn/exams",
+        element: <Suspense fallback={<LoadingScreen message="Opening exam catalog..." />}><LearnCatalog format="exams" /></Suspense>,
       },
       {
         path: "profile",

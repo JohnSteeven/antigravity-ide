@@ -447,6 +447,78 @@ export const membershipApi = {
   cancelRenewal: () => post("/api/membership/cancel", {}),
 };
 
+// ─── MyJourney Creators ─────────────────────────────────────────────────────
+const queryString = (params = {}) => {
+  const value = new URLSearchParams(Object.entries(params).filter(([, item]) => item !== undefined && item !== "")).toString();
+  return value ? `?${value}` : "";
+};
+
+export const creatorApi = {
+  capability: () => get("/api/creators/capability"),
+  list: (params = {}) => get(`/api/creators${queryString(params)}`),
+  get: (slug) => get(`/api/creators/${slug}`),
+  apply: (payload) => post("/api/creators/applications", payload),
+  myApplication: () => get("/api/creators/applications/me"),
+  updateApplication: (payload) => patch("/api/creators/applications/me", payload),
+  follow: (slug) => post(`/api/creators/${slug}/follow`, {}),
+  adminApplications: (params = {}) => get(`/api/creators/admin/applications${queryString(params)}`),
+  adminApplication: (id) => get(`/api/creators/admin/applications/${id}`),
+  reviewApplication: (id, payload) => patch(`/api/creators/admin/applications/${id}/status`, payload),
+  adminContent: (params = {}) => get(`/api/creators/admin/content${queryString(params)}`),
+  reviewContent: (contentType, contentId, payload) => patch(`/api/creators/admin/content/${contentType}/${contentId}/status`, payload),
+};
+
+export const creatorStudioApi = {
+  overview: () => get("/api/creator-studio/overview"),
+  analytics: (params = {}) => get(`/api/creator-studio/analytics${queryString(params)}`),
+  earnings: () => get("/api/creator-studio/earnings"),
+  updateProfile: (payload) => patch("/api/creator-studio/profile", payload),
+  updateFeatured: (items) => put("/api/creator-studio/profile/featured", { items }),
+  content: (params = {}) => get(`/api/creator-studio/content${queryString(params)}`),
+  preview: (contentType, contentId) => get(`/api/creator-studio/content/${contentType}/${contentId}/preview`),
+  submit: (contentType, contentId) => post(`/api/creator-studio/content/${contentType}/${contentId}/submit`, {}),
+  createArticle: (payload) => post("/api/creator-studio/articles", payload),
+  updateArticle: (id, payload) => patch(`/api/creator-studio/articles/${id}`, payload),
+  createStory: (payload) => post("/api/creator-studio/stories", payload),
+  updateStory: (id, payload) => patch(`/api/creator-studio/stories/${id}`, payload),
+  createCourse: (payload) => post("/api/creator-studio/courses", payload),
+  updateCourse: (id, payload) => patch(`/api/creator-studio/courses/${id}`, payload),
+  saveCurriculum: (id, payload) => put(`/api/creator-studio/courses/${id}/curriculum`, payload),
+  submitCourse: (id) => post(`/api/creator-studio/courses/${id}/submit`, {}),
+  registerAsset: (payload) => post("/api/creator-studio/media/assets", payload),
+  createVideo: (payload) => post("/api/creator-studio/videos", payload),
+  createPodcastSeries: (payload) => post("/api/creator-studio/podcast-series", payload),
+  createPodcastEpisode: (payload) => post("/api/creator-studio/podcast-episodes", payload),
+  createResource: (payload) => post("/api/creator-studio/resources", payload),
+};
+
+export const learnApi = {
+  home: () => get("/api/learn"),
+  topics: () => get("/api/learn/topics"),
+  adminTopics: () => get("/api/learn/topics/admin"),
+  search: (q) => get(`/api/learn/search?q=${encodeURIComponent(q)}`),
+  createTopic: (payload) => post("/api/learn/topics", payload),
+  updateTopic: (id, payload) => patch(`/api/learn/topics/${id}`, payload),
+  courses: (params = {}) => get(`/api/learn/courses${queryString(params)}`),
+  course: (slug) => get(`/api/learn/courses/${slug}`),
+  lesson: (slug, lessonId) => get(`/api/learn/courses/${slug}/lessons/${lessonId}`),
+  enroll: (courseId) => post(`/api/learn/courses/${courseId}/enroll`, {}),
+  progress: (courseId, payload) => patch(`/api/learn/courses/${courseId}/progress`, payload),
+  continueLearning: () => get("/api/learn/continue"),
+  videos: (params = {}) => get(`/api/learn/videos${queryString(params)}`),
+  video: (slug) => get(`/api/learn/videos/${slug}`),
+  podcasts: (params = {}) => get(`/api/learn/podcasts${queryString(params)}`),
+  podcast: (slug) => get(`/api/learn/podcasts/${slug}`),
+  resources: (params = {}) => get(`/api/learn/resources${queryString(params)}`),
+  resource: (slug) => get(`/api/learn/resources/${slug}`),
+  exams: (params = {}) => get(`/api/learn/exams${queryString(params)}`),
+  mediaAccess: (assetId, purpose = "playback") => get(`/api/learn/media/${assetId}/access?purpose=${encodeURIComponent(purpose)}`),
+  engagement: (payload) => post("/api/learn/engagement", payload),
+  report: (payload) => post("/api/learn/reports", payload),
+  adminReports: (params = {}) => get(`/api/learn/reports/admin${queryString(params)}`),
+  reviewReport: (id, payload) => patch(`/api/learn/reports/admin/${id}`, payload),
+};
+
 // ─── Roles ───────────────────────────────────────────────────────────────────
 export const roleApi = {
   list: (params = {}) => {
@@ -498,6 +570,9 @@ const apiService = {
   settings: settingApi,
   users: userApi,
   membership: membershipApi,
+  creators: creatorApi,
+  creatorStudio: creatorStudioApi,
+  learn: learnApi,
   roles: roleApi,
   permissions: permissionApi,
   news: newsApi,
@@ -510,6 +585,9 @@ const apiService = {
   settingApi,
   userApi,
   membershipApi,
+  creatorApi,
+  creatorStudioApi,
+  learnApi,
   roleApi,
   permissionApi,
   newsApi,

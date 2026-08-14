@@ -69,6 +69,9 @@ const governanceRoutes = require("./routes/governanceRoutes");
 const infrastructureRoutes = require("./routes/infrastructureRoutes");
 const launchRoutes = require("./routes/launchRoutes");
 const multiplayerRoutes = require("./routes/multiplayerRoutes");
+const creatorRoutes = require("./routes/creatorRoutes");
+const creatorStudioRoutes = require("./routes/creatorStudioRoutes");
+const learnRoutes = require("./routes/learnRoutes");
 const lifeRoutes = require("./life/routes");
 const { multiplayerPlatform } = require("./multiplayer/platform");
 const { attachMultiplayerSocketServer } = require("./multiplayer/realtime/socketServer");
@@ -160,6 +163,9 @@ app.use("/api/governance", governanceRoutes);
 app.use("/api/infrastructure", infrastructureRoutes);
 app.use("/api/launch", launchRoutes);
 app.use("/api/multiplayer", multiplayerRoutes);
+app.use("/api/creators", creatorRoutes);
+app.use("/api/creator-studio", creatorStudioRoutes);
+app.use("/api/learn", learnRoutes);
 const requireLifeAccess = requireEntitlement(ENTITLEMENTS.LIFE_ACCESS);
 const lifeAccessPolicy = (req, res, next) => {
   const privacyRoute = (req.method === "GET" && req.path === "/settings/export")

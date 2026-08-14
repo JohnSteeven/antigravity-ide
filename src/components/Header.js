@@ -21,7 +21,7 @@ import { categoryApi } from "../services/apiService";
 
 const Header = () => {
   const { data } = useCms();
-  const { user, isAuthenticated, logout, accountAccess } = useAuth();
+  const { user, isAuthenticated, logout, accountAccess, creatorAccess } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -244,6 +244,15 @@ const Header = () => {
                 </NavLink>
               </li>
 
+              <li>
+                <NavLink
+                  to="/learn"
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  Learn
+                </NavLink>
+              </li>
+
               {isAuthenticated && (
                 <li>
                   <NavLink
@@ -324,6 +333,14 @@ const Header = () => {
                         onClick={() => setIsCategoriesOpen(false)}
                       >
                         <span>View All Categories</span>
+                        <FiArrowRight />
+                      </Link>
+                      <Link
+                        to="/creators"
+                        className="mega-menu-all-link"
+                        onClick={() => setIsCategoriesOpen(false)}
+                      >
+                        <span>Explore Creators</span>
                         <FiArrowRight />
                       </Link>
                     </div>
@@ -462,6 +479,18 @@ const Header = () => {
                       </Link>
                     </li>
 
+                    <li role="none">
+                      <Link
+                        to={creatorAccess?.studioAvailable ? "/creator-studio" : "/creators/apply"}
+                        className="dropdown-item"
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <FiCompass className="dropdown-item-icon" />
+                        <span className="dropdown-item-label">{creatorAccess?.studioAvailable ? "Creator Studio" : "Become a Creator"}</span>
+                      </Link>
+                    </li>
+
                     {isAdmin && (
                       <li role="none">
                         <Link
@@ -584,6 +613,15 @@ const Header = () => {
                     </NavLink>
                   </li>
 
+                  <li>
+                    <NavLink
+                      to="/learn"
+                      onClick={() => setIsMobileOpen(false)}
+                    >
+                      Learn
+                    </NavLink>
+                  </li>
+
                   {isAuthenticated && (
                     <li>
                       <NavLink
@@ -629,6 +667,15 @@ const Header = () => {
                             onClick={() => setIsMobileOpen(false)}
                           >
                             <span>More Categories →</span>
+                          </Link>
+                        </li>
+                        <li className="mobile-more-cat-item">
+                          <Link
+                            to="/creators"
+                            className="mobile-more-cat-link"
+                            onClick={() => setIsMobileOpen(false)}
+                          >
+                            <span>Explore Creators →</span>
                           </Link>
                         </li>
                       </ul>
@@ -685,6 +732,13 @@ const Header = () => {
                         onClick={() => setIsMobileOpen(false)}
                       >
                         <FiBookOpen /> Reader Dashboard
+                      </Link>
+                      <Link
+                        to={creatorAccess?.studioAvailable ? "/creator-studio" : "/creators/apply"}
+                        className="mobile-account-link"
+                        onClick={() => setIsMobileOpen(false)}
+                      >
+                        <FiCompass /> {creatorAccess?.studioAvailable ? "Creator Studio" : "Become a Creator"}
                       </Link>
                       <Link
                         to="/profile"

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { authService } from "../services/authService";
-import { membershipApi } from "../services/apiService";
+import { creatorApi, membershipApi } from "../services/apiService";
 
 const FREE_ACCESS = Object.freeze({
   plan: "free",
@@ -10,6 +10,7 @@ const FREE_ACCESS = Object.freeze({
   cancelAtPeriodEnd: false,
   entitlements: {},
 });
+const NO_CREATOR_ACCESS = Object.freeze({ studioAvailable: false, creatorStatus: null, applicationStatus: null, applicationMessage: "", creatorSlug: null });
 
 const AuthContext = createContext(null);
 
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   const [accountAccess, setAccountAccess] = useState(FREE_ACCESS);
   const [accessLoading, setAccessLoading] = useState(false);
   const [accessError, setAccessError] = useState("");
+  const [creatorAccess, setCreatorAccess] = useState(NO_CREATOR_ACCESS);
 
   const refreshEntitlements = useCallback(async (authenticatedUser) => {
     if (!authenticatedUser) {
@@ -43,24 +45,41 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const refreshCreatorAccess = useCallback(async (authenticatedUser) => {
+    if (!authenticatedUser) {
+      setCreatorAccess(NO_CREATOR_ACCESS);
+      return NO_CREATOR_ACCESS;
+    }
+    try {
+      const response = await creatorApi.capability();
+      const next = response?.data || NO_CREATOR_ACCESS;
+      setCreatorAccess(next);
+      return next;
+    } catch (error) {
+      setCreatorAccess(NO_CREATOR_ACCESS);
+      return NO_CREATOR_ACCESS;
+    }
+  }, []);
+
   const refreshSession = useCallback(async () => {
     setLoading(true);
     try {
       const result = await authService.getSession();
       setUser(result.user);
       setSession(result.session);
-      await refreshEntitlements(result.user);
+      await Promise.all([refreshEntitlements(result.user), refreshCreatorAccess(result.user)]);
       return result;
     } catch (error) {
       console.warn("Failed to refresh session", error);
       setUser(null);
       setSession(null);
       setAccountAccess(FREE_ACCESS);
+      setCreatorAccess(NO_CREATOR_ACCESS);
       return { user: null, session: null };
     } finally {
       setLoading(false);
     }
-  }, [refreshEntitlements]);
+  }, [refreshCreatorAccess, refreshEntitlements]);
 
   useEffect(() => {
     refreshSession();
@@ -69,9 +88,9 @@ export const AuthProvider = ({ children }) => {
   const applyAuthResult = useCallback(async (result) => {
     if (result?.user) setUser(result.user);
     if (result?.session) setSession(result.session);
-    await refreshEntitlements(result?.user || null);
+    await Promise.all([refreshEntitlements(result?.user || null), refreshCreatorAccess(result?.user || null)]);
     return result;
-  }, [refreshEntitlements]);
+  }, [refreshCreatorAccess, refreshEntitlements]);
 
   const value = useMemo(
     () => ({
@@ -84,6 +103,8 @@ export const AuthProvider = ({ children }) => {
       accessError,
       hasEntitlement: (entitlement) => Boolean(accountAccess?.entitlements?.[entitlement]),
       refreshEntitlements: () => refreshEntitlements(user),
+      creatorAccess,
+      refreshCreatorAccess: () => refreshCreatorAccess(user),
 
       async register(form) {
         return authService.register(form);
@@ -145,12 +166,13 @@ export const AuthProvider = ({ children }) => {
         setSession(null);
         setAccountAccess(FREE_ACCESS);
         setAccessError("");
+        setCreatorAccess(NO_CREATOR_ACCESS);
         return result;
       },
 
       refreshSession,
     }),
-    [accessError, accessLoading, accountAccess, applyAuthResult, loading, refreshEntitlements, refreshSession, session, user]
+    [accessError, accessLoading, accountAccess, applyAuthResult, creatorAccess, loading, refreshCreatorAccess, refreshEntitlements, refreshSession, session, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

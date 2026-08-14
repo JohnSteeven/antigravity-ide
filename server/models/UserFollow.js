@@ -12,7 +12,7 @@ const UserFollowSchema = new mongoose.Schema(
     followerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     targetType: {
       type: String,
-      enum: ['author', 'category', 'tag', 'learning_path', 'collection'],
+      enum: ['author', 'creator', 'category', 'tag', 'learning_path', 'collection'],
       required: true,
       index: true,
     },

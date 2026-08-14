@@ -169,6 +169,15 @@ const ArticleSchema = new mongoose.Schema(
     // Author
     authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     author: { type: String, default: "Noble John Steeven", trim: true },
+    creatorProfileId: { type: mongoose.Schema.Types.ObjectId, ref: "CreatorProfile", default: null, index: true },
+    creatorWorkflowStatus: {
+      type: String,
+      enum: [null, "draft", "submitted", "under_review", "changes_requested", "approved", "scheduled", "published", "rejected", "archived"],
+      default: null,
+      index: true,
+    },
+    contentRightsConfirmedAt: { type: Date, default: null },
+    creatorContentVersion: { type: Number, default: 1, min: 1 },
 
     // Taxonomy
     category: { type: String, trim: true, index: true },
@@ -197,6 +206,7 @@ const ArticleSchema = new mongoose.Schema(
 );
 
 ArticleSchema.index({ isDeleted: 1, status: 1, publishedAt: -1 });
+ArticleSchema.index({ creatorProfileId: 1, creatorWorkflowStatus: 1, updatedAt: -1 });
 
 // Compound indexes for common queries
 ArticleSchema.index({ status: 1, publishedAt: -1 });
