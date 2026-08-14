@@ -36,6 +36,22 @@ describe("Creator + Learn public and CMS client contracts", () => {
     expect(`${learnCss}\n${creatorCss}`).toContain("prefers-reduced-motion");
   });
 
+  test("Creator application uses progressive accessible controls without changing its payload fields", () => {
+    const application = read("src", "features", "creators", "CreatorApplication.jsx");
+    ["Identity", "Expertise", "Experience", "Create", "Review"].forEach((stage) => expect(application).toContain(`label: "${stage}"`));
+    ["legalName", "displayName", "headline", "biography", "country", "languages", "specialties", "yearsExperience", "professionalBackground", "creatorTypes", "intendedTopics", "intendedFormats", "portfolioLinks", "workSamples", "motivation", "acceptTerms", "confirmContentRights"].forEach((field) => expect(application).toContain(field));
+    expect(application).toContain("ALL_COUNTRY_CODES");
+    expect(application).toContain('aria-label="Creator application progress"');
+    expect(application).not.toContain("comma separated");
+  });
+
+  test("Learn Home prioritizes progress, topics, Courses, and Creator discovery", () => {
+    const home = read("src", "features", "learn", "LearnHome.jsx");
+    expect(home.indexOf("Continue Learning")).toBeLessThan(home.indexOf("Explore Topics"));
+    expect(home.indexOf("Explore Topics")).toBeLessThan(home.indexOf("Featured Courses"));
+    expect(home.indexOf("Featured Courses")).toBeLessThan(home.indexOf("Meet the Creators behind the work"));
+  });
+
   test("players and creator economy do not fake unavailable operations", () => {
     const detail = read("src", "features", "learn", "FormatDetailPage.jsx");
     const studio = read("src", "features", "creators", "CreatorStudio.jsx");

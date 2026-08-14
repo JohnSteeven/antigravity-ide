@@ -36,6 +36,7 @@ export default function CreatorDirectory() {
   }, [filters]);
 
   const update = (key) => (event) => setFilters((current) => ({ ...current, [key]: event.target.value }));
+  const hasActiveFilters = Boolean(filters.search.trim() || filters.specialty || filters.language || filters.format);
 
   return (
     <main className="creator-page creator-directory">
@@ -59,7 +60,7 @@ export default function CreatorDirectory() {
         {state.error && <p className="creator-notice" role="alert">{state.error}</p>}
         {state.loading ? <p className="creator-empty" role="status">Finding Creators…</p> : result.creators.length ? (
           <div className="creator-grid">{result.creators.map((creator) => <CreatorCard key={creator.creatorKey} creator={creator} />)}</div>
-        ) : <div className="creator-empty"><h2>No Creators match these filters yet.</h2><p>Try a broader topic or return as the community grows.</p></div>}
+        ) : <div className="creator-empty creator-directory__empty"><h2>No Creators match these filters yet.</h2><p>{hasActiveFilters ? "Try another topic or explore again as the community grows." : "Explore again as the community grows."}</p>{!hasActiveFilters && <Link to="/creators/apply">Apply to become a Creator</Link>}</div>}
       </section>
     </main>
   );
