@@ -11,9 +11,11 @@ const LifeTaskSchema = new mongoose.Schema({
   lifeAreaId: { type: String, default: "" },
   durationEstimateMinutes: { type: Number, default: null, min: 0, max: 1440 },
   notes: { type: String, default: "", maxlength: 2000 },
+  clientMutationId: { type: String, default: undefined, maxlength: 240 },
   status: { type: String, enum: ["active", "archived"], default: "active" },
   archivedAt: { type: Date, default: null },
 }, { timestamps: true });
 
 LifeTaskSchema.index({ user: 1, localDate: 1, status: 1 });
+LifeTaskSchema.index({ user: 1, clientMutationId: 1 }, { unique: true, sparse: true });
 module.exports = mongoose.model("LifeTask", LifeTaskSchema);

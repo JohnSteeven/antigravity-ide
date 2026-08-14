@@ -23,6 +23,10 @@ router.patch("/profile", mutationLimiter, schemas.validate(schemas.profile), con
 router.post("/onboarding/complete", mutationLimiter, schemas.validate(schemas.profile), controller.completeOnboarding);
 router.post("/onboarding/skip", mutationLimiter, schemas.validate(schemas.profile), controller.skipOnboarding);
 router.get("/today", controller.today);
+router.get("/capabilities", controller.capabilities);
+router.get("/search", controller.search);
+router.get("/templates", controller.templates);
+router.post("/templates/:key/apply", mutationLimiter, schemas.validate(schemas.templateApply), controller.applyTemplate);
 
 router.get("/habits", controller.listHabits);
 router.post("/habits", mutationLimiter, schemas.validate(schemas.habitCreate), controller.createHabit);
@@ -64,7 +68,20 @@ router.post("/journal", mutationLimiter, schemas.validate(schemas.journal), cont
 router.delete("/journal/:id", mutationLimiter, controller.deleteJournal);
 router.get("/insights", controller.insights);
 router.patch("/insights/:id/dismiss", mutationLimiter, controller.dismissInsight);
+router.patch("/insights/:id/feedback", mutationLimiter, schemas.validate(require("zod").z.object({ action: require("zod").z.enum(["dismiss", "useful", "hide_similar"]) })), controller.insightFeedback);
+router.get("/reports", controller.report);
+router.get("/planning/tomorrow", controller.planTomorrow);
+router.post("/ai/review", mutationLimiter, schemas.validate(schemas.aiReview), controller.aiReview);
+router.post("/ai/ask", mutationLimiter, schemas.validate(schemas.aiReview.extend({ question: require("zod").z.string().trim().min(1).max(500) })), controller.aiAsk);
 router.get("/notifications", controller.notifications);
+router.patch("/notifications/:id/read", mutationLimiter, controller.readNotification);
+router.get("/push/config", controller.pushConfig);
+router.get("/push/subscriptions", controller.pushSubscriptions);
+router.post("/push/subscriptions", mutationLimiter, schemas.validate(schemas.pushSubscription), controller.subscribePush);
+router.delete("/push/subscriptions", mutationLimiter, schemas.validate(require("zod").z.object({ endpoint: require("zod").z.string().url().max(4096) })), controller.unsubscribePush);
+
+router.post("/money/import/preview", mutationLimiter, schemas.validate(schemas.financeImportPreview), controller.financeImportPreview);
+router.post("/money/import/:id/confirm", mutationLimiter, controller.financeImportConfirm);
 
 router.get("/settings/export", controller.exportData);
 router.delete("/settings/data", mutationLimiter, controller.deleteData);

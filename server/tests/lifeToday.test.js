@@ -16,9 +16,13 @@ const lean = (rows) => ({ lean: jest.fn().mockResolvedValue(rows) });
 const sortedLean = (rows) => ({ sort: jest.fn().mockReturnValue(lean(rows)) });
 
 describe("Life Today aggregation", () => {
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
 
   test("combines multi-time habits, routines, medications, tasks, summaries, and immutable event status", async () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-08-11T12:00:00.000Z"));
     jest.spyOn(profileService, "getOrCreateProfile").mockResolvedValue({ timezone: "Asia/Kolkata", visibleModules: ["habits", "routines", "water", "sleep", "money"], waterTargetMl: 2000, vacationMode: { enabled: false } });
     jest.spyOn(LifeScheduleVersion, "find").mockReturnValue(lean([
       { itemType: "habit", itemId: "habit-a", timezone: "Asia/Kolkata", schedule: { type: "daily", startDate: "2026-08-01", times: ["08:00", "18:00"] } },

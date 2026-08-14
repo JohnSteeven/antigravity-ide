@@ -3,12 +3,15 @@ const LifeEvent = require("../models/LifeEvent");
 const LifeHabit = require("../models/LifeHabit");
 const LifeMedication = require("../models/LifeMedication");
 const LifeRoutine = require("../models/LifeRoutine");
+const LifeProfile = require("../models/LifeProfile");
 const LifeNotificationDelivery = require("../models/LifeNotificationDelivery");
 const LifeNotificationJob = require("../models/LifeNotificationJob");
 const { addLocalDays, getZonedParts, localDateKey, zonedDateTimeToUtc, zonedDayRange } = require("../domain/time");
 const { generateSchedule } = require("../domain/recurrence");
 const profileService = require("../services/profileService");
 const metrics = require("../services/observability");
+const webPushService = require("../services/webPushService");
+const todayService = require("../services/todayService");
 
 class InAppDeliveryAdapter {
   async deliver(job) {
@@ -18,12 +21,14 @@ class InAppDeliveryAdapter {
       message: job.message,
       type: "reminder",
       status: "unread",
+      source: "life",
+      sourceId: job._id,
     });
     return { providerMessageId: String(notification._id) };
   }
 }
 
-const adapters = new Map([["in_app", new InAppDeliveryAdapter()]]);
+const adapters = new Map([["in_app", new InAppDeliveryAdapter()], ["web_push", webPushService.adapter]]);
 const registerAdapter = (channel, adapter) => adapters.set(channel, adapter);
 
 const timeText = (parts) => `${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`;
@@ -51,6 +56,8 @@ const scheduleItemReminders = async (userId, item, itemType, daysAhead = 14, fro
   }
   const profile = await profileService.getOrCreateProfile(userId);
   if (!profile.notifications.enabled) return { scheduled: 0 };
+  const preferenceKey = itemType === "habit" ? "habitReminders" : itemType === "medication" ? "medicationReminders" : null;
+  if (preferenceKey && profile.notifications[preferenceKey] === false) return { scheduled: 0 };
   const start = fromDate || localDateKey(new Date(), profile.timezone);
   const end = addLocalDays(start, Math.max(0, Math.min(60, daysAhead)));
   const dates = generateSchedule(item.schedule, start, end, 93);
@@ -111,6 +118,30 @@ const scheduleSnooze = async (userId, event, item) => {
   );
 };
 
+const scheduleBriefJobs = async ({ daysAhead = 1, batchSize = 200 } = {}) => {
+  const profiles = await LifeProfile.find({ "notifications.enabled": true, $or: [{ "notifications.morningBrief": true }, { "notifications.eveningSummary": true }] }).sort({ _id: 1 }).limit(Math.min(1000, batchSize)).lean();
+  let scheduled = 0;
+  for (const profile of profiles) {
+    const start = localDateKey(new Date(), profile.timezone);
+    for (let offset = 0; offset <= Math.min(7, daysAhead); offset += 1) {
+      const dateKey = addLocalDays(start, offset);
+      const day = await todayService.getToday(profile.user, dateKey);
+      const definitions = [];
+      if (profile.notifications.morningBrief && (day.timeline.total || day.upcomingBills.length)) definitions.push({ kind: "morning", time: profile.notifications.morningBriefTime || "07:30", title: "Good morning", message: [day.timeline.total && `${day.timeline.total} planned item${day.timeline.total === 1 ? "" : "s"}`, day.upcomingBills.length && `${day.upcomingBills.length} bill${day.upcomingBills.length === 1 ? "" : "s"} due`].filter(Boolean).join(" · ") });
+      if (profile.notifications.eveningSummary && (day.timeline.total || day.summary.water.currentMl || day.summary.exercise.sessions || Object.keys(day.summary.spending).length)) definitions.push({ kind: "evening", time: profile.notifications.eveningSummaryTime || "20:30", title: "A quiet look at today", message: `${day.summary.completed} of ${day.summary.planned} planned items recorded${day.reflection.saved ? " · reflection saved" : " · reflect when useful"}` });
+      for (const definition of definitions) {
+        const [hour, minute] = definition.time.split(":").map(Number);
+        for (const channel of profile.notifications.channels || ["in_app"]) {
+          const dedupeKey = `brief:${definition.kind}:${profile.user}:${dateKey}:${channel}`;
+          await LifeNotificationJob.updateOne({ dedupeKey }, { $setOnInsert: { user: profile.user, itemType: "brief", itemId: profile._id, occurrenceDate: dateKey, dueAt: zonedDateTimeToUtc({ dateKey, hour, minute }, profile.timezone), channel, title: definition.title, message: definition.message, dedupeKey, state: "pending" } }, { upsert: true });
+          scheduled += 1;
+        }
+      }
+    }
+  }
+  return { profiles: profiles.length, scheduled };
+};
+
 const eligibility = async (job, now = new Date()) => {
   const profile = await profileService.getOrCreateProfile(job.user);
   if (!profile.notifications.enabled || !profile.notifications.channels.includes(job.channel)) return { eligible: false, reason: "preferences" };
@@ -132,6 +163,7 @@ const eligibility = async (job, now = new Date()) => {
 
 const processOne = async (job, now = new Date()) => {
   const startedAt = Date.now();
+  metrics.observe("life_notification_queue_lag_ms", Math.max(0, now.getTime() - new Date(job.dueAt || now).getTime()));
   const allowed = await eligibility(job, now);
   if (!allowed.eligible) {
     if (allowed.rescheduleAt) {
@@ -159,7 +191,7 @@ const processOne = async (job, now = new Date()) => {
     return { state: "delivered" };
   } catch (error) {
     const attempts = job.attempts + 1;
-    const terminal = attempts >= job.maxAttempts;
+    const terminal = attempts >= job.maxAttempts || ["PUSH_NOT_SUBSCRIBED", "PUSH_UNAVAILABLE"].includes(error.code);
     const nextAttemptAt = terminal ? null : new Date(now.getTime() + Math.min(60, 2 ** attempts) * 60000);
     await LifeNotificationJob.updateOne({ _id: job._id }, { $set: { state: terminal ? "failed" : "retry", nextAttemptAt, lockedAt: null, lastErrorCode: error.code || "DELIVERY_FAILED" }, $inc: { attempts: 1 } });
     await LifeNotificationDelivery.create({ user: job.user, job: job._id, channel: job.channel, status: "failed", attempt: attempts, errorCode: error.code || "DELIVERY_FAILED", latencyMs: Date.now() - startedAt });
@@ -183,4 +215,4 @@ const processDueNotifications = async ({ now = new Date(), limit = 100 } = {}) =
   return { processed: results.length, results };
 };
 
-module.exports = { eligibility, isQuietTime, processDueNotifications, registerAdapter, replenishReminderJobs, scheduleHabitReminders, scheduleItemReminders, scheduleMedicationReminders, scheduleRoutineReminders, scheduleSnooze };
+module.exports = { eligibility, isQuietTime, processDueNotifications, registerAdapter, replenishReminderJobs, scheduleBriefJobs, scheduleHabitReminders, scheduleItemReminders, scheduleMedicationReminders, scheduleRoutineReminders, scheduleSnooze };

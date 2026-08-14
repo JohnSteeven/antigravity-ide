@@ -227,6 +227,7 @@ export const ContentCmsProvider = ({ children }) => {
         subcategory: article.subcategory,
         tags: article.tags,
         status: article.status,
+        accessLevel: article.accessLevel || "free",
         isFeatured: article.featured,
         isMustRead: article.mustRead,
         isTrending: article.trending,

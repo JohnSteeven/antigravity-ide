@@ -7,7 +7,7 @@ const storyWriteValidator = [
   body("storyLayout").optional().isIn(STORY_LAYOUT_IDS).withMessage("Invalid Story layout."),
   body("storySections").optional().isArray().withMessage("Story sections must be an array."),
   body("status").optional().isIn(["draft", "published", "archived", "scheduled"]).withMessage("Invalid status value."),
+  body("accessLevel").optional().isIn(["free", "premium"]).withMessage("Access must be Free or Premium."),
 ];
 
 module.exports = { storyWriteValidator };
-

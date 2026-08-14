@@ -2,6 +2,20 @@ const articleService = require("../services/articleService");
 const commentService = require("../services/commentService");
 const Comment = require("../models/Comment");
 const mongoose = require("mongoose");
+const entitlementService = require("../services/entitlementService");
+const { ENTITLEMENTS } = require("../premium/catalog");
+const { serializePublicContent } = require("../premium/contentPreview");
+
+const canReadPremiumContent = async (req) => {
+  if (!req.user) return false;
+  const resolution = await entitlementService.resolveForUser(req.user._id || req.user.id);
+  return entitlementService.hasEntitlement(resolution, ENTITLEMENTS.PREMIUM_CONTENT);
+};
+
+const privateContentResponse = (res) => res.set({
+  "Cache-Control": "private, no-store",
+  Vary: "Cookie, Authorization",
+});
 
 const runInTransaction = async (fn) => {
   const session = await mongoose.startSession();
@@ -41,15 +55,15 @@ const calcReadingTime = (html = "") => {
 class ArticleController {
   async getArticles(req, res, next) {
     try {
-      // When fetching by specific IDs (Profile bookmark/like/saved lookup),
-      // don't force status=published — the article may not be published but
-      // the user still owns the reference. For all other public browse paths,
-      // force status=published so drafts are never exposed.
-      const query = req.query.ids
-        ? { ...req.query }
-        : { ...req.query, status: "published" };
+      // Public listing is never an alternate route to drafts or protected
+      // full-text search. Admins use the dedicated /admin/all endpoint.
+      const query = {
+        ...req.query,
+        status: "published",
+        ...(req.query.search ? { accessLevel: "free" } : {}),
+      };
       const data = await articleService.getArticles(query);
-      res.json(data);
+      res.json({ ...data, articles: data.articles.map((article) => serializePublicContent(article, { listing: true })) });
     } catch (err) {
       next(err);
     }
@@ -61,7 +75,8 @@ class ArticleController {
       if (!article || article.status !== "published") {
         return res.status(404).json({ message: "Article not found." });
       }
-      res.json({ article });
+      const canAccessPremium = await canReadPremiumContent(req);
+      privateContentResponse(res).json({ article: serializePublicContent(article, { canAccessPremium }) });
     } catch (err) {
       next(err);
     }
@@ -160,7 +175,7 @@ class ArticleController {
         gallery, videoUrl, audioUrl, pdfAttachment, category,
         subcategory, tags, status, isFeatured, isMustRead,
         isTrending, isPinned, publishedAt, scheduledAt, rating,
-        author, readingTime, seo, categoryId,
+        author, readingTime, seo, categoryId, accessLevel,
       } = req.body;
 
       const finalSlug = slug ? slugify(slug) : slugify(title);
@@ -193,6 +208,7 @@ class ArticleController {
         author: author || [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") || "Noble John Steeven",
         rating: Number(rating) || 4.0,
         seo: seo || {},
+        accessLevel: accessLevel === "premium" ? "premium" : "free",
       }, req.user._id);
 
       res.status(201).json({ article, message: "Article created successfully." });
@@ -208,7 +224,7 @@ class ArticleController {
         gallery, videoUrl, audioUrl, pdfAttachment, category,
         subcategory, tags, status, isFeatured, isMustRead,
         isTrending, isPinned, publishedAt, scheduledAt, rating,
-        author, readingTime, seo, categoryId,
+        author, readingTime, seo, categoryId, accessLevel,
       } = req.body;
 
       const updateData = {};
@@ -252,6 +268,7 @@ class ArticleController {
       if (publishedAt !== undefined) updateData.publishedAt = new Date(publishedAt);
       if (scheduledAt !== undefined) updateData.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
       if (seo !== undefined) updateData.seo = seo;
+      if (accessLevel !== undefined) updateData.accessLevel = accessLevel === "premium" ? "premium" : "free";
 
       const article = await articleService.updateArticle(req.params.id, updateData, req.user._id);
       res.json({ article, message: "Article updated successfully." });

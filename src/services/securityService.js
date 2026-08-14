@@ -79,8 +79,6 @@ export const securityService = {
     return apiRequest("/api/security/delete-account", {
       method: "POST",
       body: JSON.stringify({ password, confirmation }),
-    }).catch(() => {
-      return { success: true, message: "Account deletion scheduled." };
     });
   },
 };

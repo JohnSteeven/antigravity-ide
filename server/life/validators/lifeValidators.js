@@ -74,7 +74,7 @@ const task = z.object({
   title: z.string().trim().min(1).max(160), localDate: dateKey.optional(), scheduledFor: z.string().datetime().nullable().optional(),
   period: z.enum(["all_day", "morning", "afternoon", "evening"]).optional(), priority: z.enum(["none", "low", "medium", "high"]).optional(),
   linkedGoal: optionalObjectId, lifeAreaId: z.string().max(80).optional(), durationEstimateMinutes: z.coerce.number().min(0).max(1440).nullable().optional(),
-  notes: z.string().max(2000).optional(), status: z.enum(["active", "archived"]).optional(),
+  notes: z.string().max(2000).optional(), status: z.enum(["active", "archived"]).optional(), clientMutationId: z.string().min(8).max(240).optional(),
 }).passthrough();
 
 const routine = z.object({
@@ -90,7 +90,7 @@ const health = z.object({
   quality: z.coerce.number().int().min(1).max(5).nullable().optional(), mood: z.coerce.number().int().min(1).max(5).nullable().optional(), energy: z.coerce.number().int().min(1).max(5).nullable().optional(), stress: z.coerce.number().int().min(1).max(5).nullable().optional(),
   severity: z.coerce.number().int().min(1).max(10).nullable().optional(), label: z.string().max(160).optional(), doseText: z.string().max(160).optional(),
   workoutType: z.enum(["strength", "cardio", "mobility", "sport", "custom", ""]).optional(), exercises: z.array(z.any()).max(100).optional(), effort: z.coerce.number().min(1).max(10).nullable().optional(),
-  note: z.string().max(3000).optional(), dedupeKey: z.string().max(240).optional(), source: z.object({ type: z.enum(["manual", "import", "integration", "system"]).optional(), provider: z.string().max(80).optional(), externalId: z.string().max(200).optional() }).optional(),
+  note: z.string().max(3000).optional(), dedupeKey: z.string().max(240).optional(), source: z.object({ type: z.enum(["manual", "import", "integration", "system"]).optional(), provider: z.string().max(80).optional(), externalId: z.string().max(200).optional(), originalTimestamp: z.string().datetime().optional(), importedAt: z.string().datetime().optional() }).optional(),
 }).passthrough();
 
 const medication = z.object({
@@ -112,15 +112,20 @@ const financePlan = z.object({
 
 const journal = z.object({
   type: z.enum(["daily", "free", "weekly_review", "monthly_review"]).optional(), localDate: dateKey.optional(), title: z.string().max(180).optional(), body: z.string().trim().min(1).max(20000),
-  promptResponses: z.array(z.object({ prompt: z.string().max(300), response: z.string().max(5000) })).max(20).optional(), occurredAt: z.string().datetime().optional(), pinnedToTimeline: z.boolean().optional(),
+  promptResponses: z.array(z.object({ prompt: z.string().max(300), response: z.string().max(5000) })).max(20).optional(), occurredAt: z.string().datetime().optional(), pinnedToTimeline: z.boolean().optional(), dedupeKey: z.string().min(8).max(240).optional(),
 }).strict();
 
 const profile = z.object({
   timezone: z.string().max(80).optional(), locale: z.string().max(20).optional(), weekStart: z.enum(["monday", "sunday"]).optional(), unitSystem: z.enum(["metric", "imperial"]).optional(),
   waterUnit: z.enum(["ml", "l", "oz"]).optional(), weightUnit: z.enum(["kg", "lb"]).optional(), distanceUnit: z.enum(["km", "miles"]).optional(), currency: z.string().length(3).optional(),
   waterTargetMl: z.coerce.number().min(0).nullable().optional(), sleepTargetMinutes: z.coerce.number().min(0).max(1440).nullable().optional(), visibleModules: z.array(z.string()).max(20).optional(),
-  aiInsightsEnabled: z.boolean().optional(), notifications: z.any().optional(), vacationMode: z.any().optional(), priorities: z.array(z.string()).max(5).optional(),
+  aiInsightsEnabled: z.boolean().optional(), aiReview: z.object({ includeJournal: z.boolean().optional(), includeHealth: z.boolean().optional(), includeFinance: z.boolean().optional() }).optional(), notifications: z.any().optional(), vacationMode: z.any().optional(), priorities: z.array(z.string()).max(5).optional(),
 }).passthrough();
+
+const templateApply = z.object({ name: z.string().trim().min(1).max(120).optional(), time: time.optional(), scheduleType: schedule.shape.type.optional(), weekdays: z.array(z.coerce.number().int().min(0).max(6)).max(7).optional(), reminderEnabled: z.boolean().optional(), channels: z.array(z.enum(["in_app", "web_push"])).max(2).optional(), removedSteps: z.array(z.string().max(120)).max(30).optional(), steps: z.array(z.string().trim().min(1).max(120)).max(30).optional(), target: z.coerce.number().min(0).optional(), unit: z.string().max(40).optional() }).strict();
+const pushSubscription = z.object({ endpoint: z.string().url().max(4096), expirationTime: z.union([z.number(), z.null()]).optional(), keys: z.object({ p256dh: z.string().min(1).max(1024), auth: z.string().min(1).max(512) }) }).strict();
+const financeImportPreview = z.object({ csvText: z.string().min(1).max(1024 * 1024), mapping: z.record(z.string(), z.string()).optional() }).strict();
+const aiReview = z.object({ days: z.coerce.number().int().min(7).max(366).optional(), period: z.enum(["ytd"]).optional(), start: dateKey.optional(), end: dateKey.optional(), question: z.string().trim().min(1).max(500).optional() }).passthrough();
 
 const validate = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.body || {});
@@ -134,4 +139,5 @@ module.exports = {
   profile, routine, routineUpdate: routine.partial(), task, taskUpdate: task.partial(), validate,
   event: event.extend({ routineSteps: z.array(z.object({ stepId: optionalObjectId, title: z.string().min(1).max(120), status: z.enum(["pending", "completed", "skipped"]) })).max(100).optional() }),
   medication, medicationUpdate: medication.partial(),
+  aiReview, financeImportPreview, pushSubscription, templateApply,
 };

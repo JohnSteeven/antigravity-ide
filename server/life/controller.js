@@ -2,6 +2,7 @@ const AuditLogger = require("../audit/AuditLogger");
 const LifeEvent = require("./models/LifeEvent");
 const LifeNotificationDelivery = require("./models/LifeNotificationDelivery");
 const LifeNotificationJob = require("./models/LifeNotificationJob");
+const Notification = require("../models/Notification");
 const { notFound, LifeError } = require("./domain/errors");
 const eventService = require("./services/eventService");
 const habitService = require("./services/habitService");
@@ -13,6 +14,15 @@ const privacyService = require("./services/privacyService");
 const todayService = require("./services/todayService");
 const notificationService = require("./scheduling/notificationService");
 const metrics = require("./services/observability");
+const capabilityService = require("./services/capabilityService");
+const financeImportService = require("./services/financeImportService");
+const integrationService = require("./services/integrationService");
+const lifeAiService = require("./services/lifeAiService");
+const planningService = require("./services/planningService");
+const reportService = require("./services/reportService");
+const searchService = require("./services/searchService");
+const templateService = require("./services/templateService");
+const webPushService = require("./services/webPushService");
 
 const ok = (res, data, status = 200) => res.status(status).json({ success: true, data });
 const userId = (req) => req.user._id;
@@ -109,13 +119,30 @@ const controller = {
 
   insights: handle("insights", async (req, res) => ok(res, await insightService.buildInsights(userId(req), req.query))),
   dismissInsight: handle("insight_dismiss", async (req, res) => { const item = await insightService.dismissInsight(userId(req), req.params.id); if (!item) throw notFound("Insight"); ok(res, item); }),
+  insightFeedback: handle("insight_feedback", async (req, res) => { const item = await insightService.recordInsightFeedback(userId(req), req.params.id, req.body.action); if (!item) throw notFound("Insight"); ok(res, item); }),
+  report: handle("report", async (req, res) => ok(res, await reportService.buildReport(userId(req), req.query))),
+  planTomorrow: handle("plan_tomorrow", async (req, res) => ok(res, await planningService.planTomorrow(userId(req)))),
+  search: handle("search", async (req, res) => ok(res, await searchService.searchLife(userId(req), req.query.q, req.query))),
+  templates: handle("templates", async (req, res) => ok(res, templateService.listTemplates())),
+  applyTemplate: handle("template_apply", async (req, res) => { const item = await templateService.applyTemplate(userId(req), req.params.key, req.body); await audit(req, "template", item._id, "apply"); ok(res, item, 201); }),
+  capabilities: handle("capabilities", async (req, res) => ok(res, { ...capabilityService.getCapabilities(), integrations: integrationService.integrationStatus() })),
+  aiReview: handle("ai_review", async (req, res) => ok(res, await lifeAiService.generateReview(userId(req), req.body))),
+  aiAsk: handle("ai_ask", async (req, res) => ok(res, await lifeAiService.ask(userId(req), req.body.question, req.body))),
+  financeImportPreview: handle("finance_import_preview", async (req, res) => ok(res, await financeImportService.previewFinanceCsv(userId(req), req.body.csvText, req.body.mapping), 201)),
+  financeImportConfirm: handle("finance_import_confirm", async (req, res) => ok(res, await financeImportService.confirmFinanceImport(userId(req), req.params.id))),
+  pushConfig: handle("push_config", async (req, res) => ok(res, webPushService.publicConfig())),
+  pushSubscriptions: handle("push_list", async (req, res) => ok(res, await webPushService.listSubscriptions(userId(req)))),
+  subscribePush: handle("push_subscribe", async (req, res) => ok(res, await webPushService.subscribe(userId(req), req.body), 201)),
+  unsubscribePush: handle("push_unsubscribe", async (req, res) => ok(res, await webPushService.unsubscribe(userId(req), req.body.endpoint))),
   notifications: handle("notifications", async (req, res) => {
-    const [jobs, deliveries] = await Promise.all([
+    const [notifications, jobs, deliveries] = await Promise.all([
+      Notification.find({ user: userId(req), source: "life" }).sort({ createdAt: -1 }).limit(50).lean(),
       LifeNotificationJob.find({ user: userId(req) }).sort({ dueAt: -1 }).limit(50).lean(),
       LifeNotificationDelivery.find({ user: userId(req) }).sort({ attemptedAt: -1 }).limit(50).lean(),
     ]);
-    ok(res, { jobs, deliveries });
+    ok(res, { notifications, upcoming: jobs.filter((job) => ["pending", "retry"].includes(job.state)).slice(0, 20).map((job) => ({ id: job._id, title: job.title, message: job.message, dueAt: job.dueAt, state: job.state })), recent: deliveries.slice(0, 20).map((delivery) => ({ id: delivery._id, channel: delivery.channel, status: delivery.status, attemptedAt: delivery.attemptedAt })) });
   }),
+  readNotification: handle("notification_read", async (req, res) => { const item = await Notification.findOneAndUpdate({ _id: req.params.id, user: userId(req), source: "life" }, { $set: { status: "read", readAt: new Date() } }, { new: true }); if (!item) throw notFound("Notification"); ok(res, item); }),
   exportData: handle("export", async (req, res) => ok(res, await privacyService.exportLifeData(userId(req)))),
   deleteData: handle("delete_all", async (req, res) => {
     if (req.body.confirmation !== "DELETE MY LIFE DATA") throw new LifeError("Type DELETE MY LIFE DATA to confirm.", 422, "LIFE_DELETE_CONFIRMATION");

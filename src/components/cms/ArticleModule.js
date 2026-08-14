@@ -91,6 +91,7 @@ const createArticleDraft = (categories = []) => ({
   subcategory: "",
   body: "<p>Write your story here...</p>",
   status: "draft",
+  accessLevel: "free",
   tags: [],
   isFeatured: false,
   isMustRead: false,
@@ -914,6 +915,17 @@ const ArticleModule = () => {
                 onChange={(e) => update({ pinned: e.target.checked })}
               />
               Pinned
+            </label>
+            <label>
+              Access
+              <select
+                value={articleDraft.accessLevel || "free"}
+                onChange={(e) => update({ accessLevel: e.target.value })}
+                aria-label="Article access"
+              >
+                <option value="free">Free</option>
+                <option value="premium">Premium</option>
+              </select>
             </label>
             <label>
               Publishing Status

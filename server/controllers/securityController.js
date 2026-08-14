@@ -1,6 +1,16 @@
 const securityCenterService = require("../services/securityCenterService");
+const accountDeletionService = require("../services/accountDeletionService");
 
 class SecurityController {
+  async requestAccountDeletion(req, res, next) {
+    try { res.json({ success: true, ...(await accountDeletionService.requestDeletion(req.user, req.body.password, req.body.confirmation)), message: "Account deletion scheduled. You have seven days to cancel." }); }
+    catch (err) { next(err); }
+  }
+
+  async cancelAccountDeletion(req, res, next) {
+    try { res.json({ success: true, ...(await accountDeletionService.cancelDeletion(req.user._id)), message: "Account deletion cancelled." }); }
+    catch (err) { next(err); }
+  }
   async getOverview(req, res, next) {
     try {
       const data = await securityCenterService.getSecurityOverview(req.user);

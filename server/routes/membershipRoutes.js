@@ -17,6 +17,7 @@ router.get('/plans', membershipController.getPlans);
 
 // Authenticated reader endpoints
 router.get('/me', authenticate, membershipController.getMyMembership);
+router.get('/me/entitlements', authenticate, membershipController.getMyMembership);
 router.post('/subscribe', authenticate, membershipController.subscribe);
 router.post('/cancel', authenticate, membershipController.cancelSubscription);
 

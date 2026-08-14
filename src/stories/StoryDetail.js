@@ -6,13 +6,8 @@ import RelatedStories from "./components/RelatedStories";
 import StoryEngine from "./components/StoryEngine";
 import LegacyStoryReader from "./components/LegacyStoryReader";
 import LoadingScreen from "../components/LoadingScreen";
-import { cmsSeed } from "../data/cmsSeed";
+import PremiumContentBoundary from "../features/premium/PremiumContentBoundary";
 import "./stories.css";
-
-const getFallbackBySlug = (slug) => {
-  const list = cmsSeed?.articles || [];
-  return list.find((article) => article && article.slug === slug) || null;
-};
 
 export default function StoryDetail() {
   const { slug } = useParams();
@@ -30,24 +25,17 @@ export default function StoryDetail() {
     setRedirectToArticle(false);
     setNotFound(false);
 
-    const useFallback = () => {
-      if (cancelled) return;
-      const fallback = getFallbackBySlug(slug);
-      if (fallback) setStory(fallback);
-      else setNotFound(true);
-    };
-
     storyApi.getBySlug(slug)
       .then((response) => {
         if (cancelled) return;
-        if (!response?.article) return useFallback();
+        if (!response?.article) return setNotFound(true);
         if (response.article.contentType === "article") setRedirectToArticle(true);
         else setStory(response.article);
       })
       .catch((error) => {
         if (cancelled) return;
         if (error?.redirect) setRedirectToArticle(true);
-        else useFallback();
+        else setNotFound(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -59,6 +47,7 @@ export default function StoryDetail() {
   if (loading) return <LoadingScreen message="Opening story..." />;
   if (redirectToArticle) return <Navigate to={`/articles/${slug}`} replace />;
   if (notFound || !story) return <Navigate to="/stories" replace />;
+  if (story.premiumRequired) return <PremiumContentBoundary content={story} kind="Story" />;
 
   const handleShare = async () => {
     try {

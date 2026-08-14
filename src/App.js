@@ -43,12 +43,16 @@ import DynamicPage from "./components/DynamicPage";
 import NewsletterVerificationPage from "./components/NewsletterVerificationPage";
 import NewsletterPreferencesPage from "./components/NewsletterPreferencesPage";
 import LoadingScreen from "./components/LoadingScreen";
+import { registerLifePwa } from "./pwa/registerLifePwa";
 import { playWithFriendsEnabled } from "./features/play-with-friends/config";
 
 import AskMyJourneyWidget from "./components/shared/AskMyJourneyWidget.jsx";
 import ReaderDashboard from "./components/ReaderDashboard.jsx";
 import SubscriptionDashboard from "./components/SubscriptionDashboard.jsx";
 import CommunityFeed from "./components/CommunityFeed.jsx";
+import PremiumPage from "./features/premium/PremiumPage.jsx";
+import LifePremiumGate from "./features/premium/LifePremiumGate.jsx";
+import "./features/premium/premium.css";
 
 const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"));
 const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));
@@ -275,6 +279,10 @@ const appRouter = createBrowserRouter([
         element: <ResetPasswordSuccess />,
       },
       {
+        path: "premium",
+        element: <PremiumPage />,
+      },
+      {
         path: "profile",
         element: (
           <ProtectedRoute>
@@ -286,9 +294,11 @@ const appRouter = createBrowserRouter([
         path: "life/*",
         element: (
           <ProtectedRoute>
-            <Suspense fallback={<LoadingScreen message="Opening Life..." />}>
-              <LifeApp />
-            </Suspense>
+            <LifePremiumGate>
+              <Suspense fallback={<LoadingScreen message="Opening Life..." />}>
+                <LifeApp />
+              </Suspense>
+            </LifePremiumGate>
           </ProtectedRoute>
         ),
       },
@@ -298,7 +308,11 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "profile/subscription",
-        element: <Navigate to="/profile?tab=overview" replace />,
+        element: (
+          <ProtectedRoute>
+            <SubscriptionDashboard />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "profile/community",
@@ -322,5 +336,6 @@ const appRouter = createBrowserRouter([
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
+registerLifePwa();
 root.render(<RouterProvider router={appRouter} />);
 // Stories feature architecture updated

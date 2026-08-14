@@ -21,7 +21,7 @@ const formatDate = (value) => {
 };
 
 const ProfileDetailsTab = () => {
-  const { user } = useAuth();
+  const { user, accountAccess } = useAuth();
   const profile = user?.profile || {};
   const fullName = getFullName(user);
   const skills = profile.skills || [];
@@ -98,6 +98,13 @@ const ProfileDetailsTab = () => {
               </div>
 
               <div className="rp-info-row" style={{ gridTemplateColumns: "110px 1fr" }}>
+                <div className="rp-info-label">Membership</div>
+                <div className="rp-info-value" style={{ fontWeight: 700, color: "var(--teal, #426c67)" }}>
+                  {accountAccess?.plan === "premium" ? "MyJourney Premium" : "MyJourney Free"}
+                </div>
+              </div>
+
+              <div className="rp-info-row" style={{ gridTemplateColumns: "110px 1fr" }}>
                 <div className="rp-info-label"><FiCalendar /> Joined</div>
                 <div className="rp-info-value">{formatDate(user.createdAt)}</div>
               </div>
@@ -116,6 +123,7 @@ const ProfileDetailsTab = () => {
                 </div>
               </div>
             </div>
+            <Link to="/profile/subscription" className="rp-edit-btn" style={{ marginTop: 16 }}>Manage membership</Link>
           </div>
         </div>
       </div>

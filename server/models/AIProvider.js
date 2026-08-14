@@ -136,7 +136,4 @@ const AIProviderSchema = new mongoose.Schema(
   }
 );
 
-// Ensure only one active provider at a time via index
-AIProviderSchema.index({ isActive: 1 });
-
 module.exports = mongoose.model('AIProvider', AIProviderSchema);

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { FiArchive, FiPause, FiPlay, FiPlus, FiRepeat } from "react-icons/fi";
+import { FiArchive, FiGrid, FiPause, FiPlay, FiPlus, FiRepeat } from "react-icons/fi";
 import lifeApi from "../api/lifeApi";
 import useLifeQuery from "../hooks/useLifeQuery";
 import { localDateInput } from "../utils/lifeFormat";
 import { LifeDialog, LifeEmpty, LifeError, LifeLoading, LifeNotice, LifePageHeader } from "../components/LifeUI";
+import LifeTemplates from "../components/LifeTemplates";
 
 const emptyHabit = () => ({ name: "", why: "", intent: "build", measurementType: "boolean", target: 1, unit: "completion", preferredPeriod: "morning", scheduleType: "daily", weekdays: [], time: "08:00", reminder: false, linkedGoal: "", replacementBehavior: "" });
 const weekdayOptions = [[1, "M"], [2, "T"], [3, "W"], [4, "T"], [5, "F"], [6, "S"], [0, "S"]];
@@ -15,6 +16,7 @@ export default function HabitsPage() {
   }, []);
   const [open, setOpen] = useState(false);
   const [routineOpen, setRoutineOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [form, setForm] = useState(emptyHabit());
   const [routine, setRoutine] = useState({ name: "", items: "", time: "07:30", reminder: false });
   const [busy, setBusy] = useState(false);
@@ -68,7 +70,7 @@ export default function HabitsPage() {
   const routines = query.data.routines.items || [];
   return (
     <div>
-      <LifePageHeader eyebrow="Practice, not perfection" title="Habits & routines" description="Build, maintain, reduce, or quit—without turning one difficult day into a verdict." actions={<div className="life-page-actions"><button className="life-secondary-button" type="button" onClick={() => setRoutineOpen(true)}><FiRepeat /> New routine</button><button className="life-primary-button" type="button" onClick={() => setOpen(true)}><FiPlus /> New habit</button></div>} />
+      <LifePageHeader eyebrow="Practice, not perfection" title="Habits & routines" description="Build, maintain, reduce, or quit—without turning one difficult day into a verdict." actions={<div className="life-page-actions"><button className="life-secondary-button" type="button" onClick={() => setTemplatesOpen(true)}><FiGrid /> Templates</button><button className="life-secondary-button" type="button" onClick={() => setRoutineOpen(true)}><FiRepeat /> New routine</button><button className="life-primary-button" type="button" onClick={() => setOpen(true)}><FiPlus /> New habit</button></div>} />
       <LifeNotice tone={notice?.includes("Couldn't") ? "error" : "success"}>{notice}</LifeNotice>
       {habits.length === 0 ? <LifeEmpty title="Choose one small repeatable thing." message="Start with something that would make daily life a little easier—not an idealized version of yourself." action={<button type="button" className="life-primary-button" onClick={() => setOpen(true)}>Create your first habit</button>} /> : (
         <section className="life-list-section"><div className="life-section-heading"><div><span>Your practices</span><h2>Active and remembered</h2></div></div><ul className="life-definition-list">{habits.map((habit) => <li key={habit._id} className={`life-definition-row${habit.status !== "active" ? " is-muted" : ""}`}><div className="life-definition-mark" aria-hidden="true">{habit.intent.slice(0, 1).toUpperCase()}</div><div className="life-definition-copy"><div><strong>{habit.name}</strong><span>{habit.status}</span></div><p>{habit.why || "A personal practice."}</p><small>{habit.intent} · {habit.measurementType} · {habit.target} {habit.unit} · {habit.schedule?.type?.replaceAll("_", " ")}</small></div><div className="life-definition-actions">{habit.status === "paused" ? <button type="button" onClick={() => setStatus(habit, "active")} disabled={busy}><FiPlay /> Resume</button> : habit.status === "active" ? <button type="button" onClick={() => setStatus(habit, "paused")} disabled={busy}><FiPause /> Pause</button> : null}{habit.status !== "archived" && <button type="button" onClick={() => setStatus(habit, "archived")} disabled={busy}><FiArchive /> Archive</button>}</div></li>)}</ul></section>
@@ -94,6 +96,7 @@ export default function HabitsPage() {
       </form></LifeDialog>
 
       <LifeDialog open={routineOpen} title="Create a routine" onClose={() => setRoutineOpen(false)}><form className="life-form" onSubmit={createRoutine}><label>Name<input value={routine.name} onChange={(event) => setRoutine((current) => ({ ...current, name: event.target.value }))} placeholder="Morning routine" required /></label><label>Steps, one per line<textarea value={routine.items} onChange={(event) => setRoutine((current) => ({ ...current, items: event.target.value }))} placeholder={'Water\nStretch\nPlan the day'} required /></label><label>Preferred time<input type="time" value={routine.time} onChange={(event) => setRoutine((current) => ({ ...current, time: event.target.value }))} /></label><label className="life-check"><input type="checkbox" checked={routine.reminder} onChange={(event) => setRoutine((current) => ({ ...current, reminder: event.target.checked }))} /> Send a calm in-app reminder</label><div className="life-dialog-actions"><button type="button" className="life-secondary-button" onClick={() => setRoutineOpen(false)}>Cancel</button><button className="life-primary-button" disabled={busy}>Create routine</button></div></form></LifeDialog>
+      <LifeTemplates open={templatesOpen} onClose={() => setTemplatesOpen(false)} onApplied={() => query.refresh({ quiet: true })} />
     </div>
   );
 }

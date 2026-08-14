@@ -74,7 +74,7 @@ const archiveGoal = async (userId, goalId) => updateGoal(userId, goalId, { statu
 const createTask = async (userId, input = {}) => {
   if (!String(input.title || "").trim()) throw new LifeError("Give this action a title.", 422);
   const profile = await profileService.getOrCreateProfile(userId);
-  return LifeTask.create({
+  const payload = {
     user: userId,
     title: input.title,
     localDate: assertDateKey(input.localDate || localDateKey(new Date(), profile.timezone)),
@@ -85,7 +85,10 @@ const createTask = async (userId, input = {}) => {
     lifeAreaId: input.lifeAreaId || "",
     durationEstimateMinutes: input.durationEstimateMinutes ?? null,
     notes: input.notes || "",
-  });
+    clientMutationId: input.clientMutationId || undefined,
+  };
+  try { return await LifeTask.create(payload); }
+  catch (error) { if (error.code === 11000 && payload.clientMutationId) return LifeTask.findOne({ user: userId, clientMutationId: payload.clientMutationId }); throw error; }
 };
 
 const listTasks = (userId, query = {}) => listOwned(LifeTask, userId, {
@@ -173,9 +176,11 @@ const createHealthEntry = async (userId, input = {}) => {
     entry.canonicalUnit = "ml";
   }
   if (type === "sleep") {
-    entry.startedAt = new Date(input.startedAt);
-    entry.endedAt = new Date(input.endedAt);
-    entry.durationMinutes = sleepDurationMinutes(entry.startedAt, entry.endedAt);
+    if (input.startedAt && input.endedAt) {
+      entry.startedAt = new Date(input.startedAt);
+      entry.endedAt = new Date(input.endedAt);
+      entry.durationMinutes = sleepDurationMinutes(entry.startedAt, entry.endedAt);
+    } else entry.durationMinutes = Math.max(0, Number(input.durationMinutes) || 0);
   }
   if (type === "workout") entry.durationMinutes = Math.max(0, Number(input.durationMinutes) || 0);
   try {
@@ -269,12 +274,26 @@ const financeSummary = async (userId, query = {}) => {
     } else if (entry.type === "income") bucket.incomeMinor += entry.amountMinor;
     else bucket.savingsMinor += entry.amountMinor;
   });
-  const budgets = await LifeFinancePlan.find({ user: userId, type: "budget", status: "active", currency: { $in: Object.keys(grouped).concat(profile.currency) } }).lean();
+  const plans = await LifeFinancePlan.find({ user: userId, status: "active", type: { $in: ["budget", "bill", "subscription"] } }).lean();
+  const budgets = plans.filter((plan) => plan.type === "budget" && Object.keys(grouped).concat(profile.currency).includes(plan.currency));
+  const recurring = plans.filter((plan) => ["bill", "subscription"].includes(plan.type));
+  const recurringByCurrency = recurring.reduce((map, plan) => {
+    if (!map[plan.currency]) map[plan.currency] = { knownMonthlyMinor: 0, unknownCadence: 0, subscriptions: 0, bills: 0 };
+    const bucket = map[plan.currency];
+    bucket[plan.type === "subscription" ? "subscriptions" : "bills"] += 1;
+    if (plan.period === "monthly") bucket.knownMonthlyMinor += plan.amountMinor;
+    else if (plan.period === "weekly") bucket.knownMonthlyMinor += Math.round(plan.amountMinor * 52 / 12);
+    else bucket.unknownCadence += 1;
+    return map;
+  }, {});
+  const upcomingEnd = addLocalDays(end, 30);
   return {
     start,
     end,
     currencies: grouped,
     budgets: budgets.map((budget) => ({ ...budget, summary: summarizeBudget({ limitMinor: budget.amountMinor, spentMinor: grouped[budget.currency]?.expenseMinor || 0 }) })),
+    recurring: recurringByCurrency,
+    upcomingBills: recurring.filter((plan) => plan.dueDate && plan.dueDate >= end && plan.dueDate <= upcomingEnd).sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 30).map((plan) => ({ id: plan._id, name: plan.name, type: plan.type, dueDate: plan.dueDate, amountMinor: plan.amountMinor, currency: plan.currency })),
     conversionApplied: false,
   };
 };
@@ -314,11 +333,13 @@ const createJournalEntry = async (userId, input = {}) => {
   if (!String(input.body || "").trim()) throw new LifeError("Write a few words before saving.", 422);
   const profile = await profileService.getOrCreateProfile(userId);
   const occurredAt = input.occurredAt ? new Date(input.occurredAt) : new Date();
-  return LifeJournalEntry.create({
+  const payload = {
     user: userId, type, localDate: assertDateKey(input.localDate || localDateKey(occurredAt, profile.timezone)),
     title: input.title || "", body: input.body, promptResponses: Array.isArray(input.promptResponses) ? input.promptResponses.slice(0, 20) : [],
-    occurredAt, pinnedToTimeline: Boolean(input.pinnedToTimeline),
-  });
+    occurredAt, pinnedToTimeline: Boolean(input.pinnedToTimeline), dedupeKey: input.dedupeKey || undefined,
+  };
+  try { return await LifeJournalEntry.create(payload); }
+  catch (error) { if (error.code === 11000 && payload.dedupeKey) return LifeJournalEntry.findOne({ user: userId, dedupeKey: payload.dedupeKey }); throw error; }
 };
 
 const listJournalEntries = (userId, query = {}) => listOwned(LifeJournalEntry, userId, {

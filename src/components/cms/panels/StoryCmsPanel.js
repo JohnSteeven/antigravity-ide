@@ -51,6 +51,7 @@ const newStoryDraft = () => ({
   description: "",
   contentType: "story",
   status: "draft",
+  accessLevel: "free",
   author: "Noble John Steeven",
   coverImage: "",
   coverImageAlt: "",
@@ -342,6 +343,7 @@ export default function StoryCmsPanel() {
         description: draft.description,
         contentType: "story",
         status: draft.status,
+        accessLevel: draft.accessLevel || "free",
         author: draft.author,
         coverImage: draft.coverImage,
         coverImageAlt: draft.coverImageAlt,
@@ -424,6 +426,13 @@ export default function StoryCmsPanel() {
                     <option value="draft">Draft / Unpublished</option>
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <label className="story-cms-field">
+                  Access
+                  <select value={draft.accessLevel || "free"} onChange={(event) => updateDraft({ accessLevel: event.target.value })} aria-label="Story access">
+                    <option value="free">Free</option>
+                    <option value="premium">Premium</option>
                   </select>
                 </label>
                 <label className="story-cms-field story-cms-field--wide">

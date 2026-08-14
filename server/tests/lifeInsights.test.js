@@ -12,7 +12,7 @@ const lean = (rows) => ({ lean: jest.fn().mockResolvedValue(rows) });
 describe("Life deterministic insight rules", () => {
   afterEach(() => jest.restoreAllMocks());
 
-  test("builds auditable observations from historical events and keeps advisory boundaries", async () => {
+  test("builds auditable observations, suppresses weak samples, and keeps advisory boundaries", async () => {
     jest.spyOn(profileService, "getOrCreateProfile").mockResolvedValue({ timezone: "UTC" });
     jest.spyOn(LifeScheduleVersion, "find").mockReturnValue(lean([{ effectiveFrom: "2026-08-01", effectiveTo: null, schedule: { type: "daily", startDate: "2026-08-01" } }]));
     jest.spyOn(LifeEvent, "find").mockImplementation((filter) => lean(filter.scheduledDate.$gte === "2026-08-05" ? [{ itemType: "habit", itemId: "habit-a", scheduledDate: "2026-08-11", status: "completed", occurredAt: new Date("2026-08-11T08:00:00Z") }] : []));
@@ -23,7 +23,9 @@ describe("Life deterministic insight rules", () => {
 
     const result = await insightService.buildInsights("user-a", { start: "2026-08-05", end: "2026-08-11" });
     expect(result.metrics).toMatchObject({ planned: 7, completed: 1, consistency: 14 });
-    expect(result.insights.map((item) => item.type)).toEqual(expect.arrayContaining(["habit_consistency", "sleep_average", "spending_usd", "goal_attention"]));
+    expect(result.insights.map((item) => item.type)).toEqual(expect.arrayContaining(["habit_consistency", "goal_attention"]));
+    expect(result.insights.map((item) => item.type)).not.toEqual(expect.arrayContaining(["sleep_average", "spending_usd"]));
+    expect(result.insights.find((item) => item.type === "habit_consistency")).toMatchObject({ sampleSize: 7, sourceRange: { start: "2026-08-05", end: "2026-08-11" } });
     expect(result.languageBoundary).toMatch(/do not provide medical or financial conclusions/i);
     expect(JSON.stringify(result.insights)).not.toMatch(/diagnos|guarantee|must invest/i);
   });

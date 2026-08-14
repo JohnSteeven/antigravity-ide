@@ -77,7 +77,8 @@ class EnterpriseSearchService {
 
     const indexRecords = [];
     for (const art of articles) {
-      const plainText = (art.body || '').replace(/<[^>]+>/g, ' ').slice(0, 5000);
+      const accessLevel = art.accessLevel === 'premium' ? 'premium' : 'free';
+      const plainText = accessLevel === 'premium' ? '' : (art.body || '').replace(/<[^>]+>/g, ' ').slice(0, 5000);
 
       indexRecords.push({
         entityType: 'article',
@@ -90,6 +91,7 @@ class EnterpriseSearchService {
         tags: art.tags || [],
         author: art.author || 'Publisher',
         url: `/articles/${art.slug}`,
+        accessLevel,
         views: art.views || 0,
         likes: art.likes || 0,
       });

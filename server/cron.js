@@ -1,5 +1,6 @@
 const notificationSchedulerService = require("./services/notificationSchedulerService");
 const lifeNotificationService = require("./life/scheduling/notificationService");
+const accountDeletionService = require("./services/accountDeletionService");
 
 async function runCronJobs() {
   console.log(`[Cron] Running scheduled hourly notifications: ${new Date().toISOString()}`);
@@ -12,6 +13,7 @@ async function runCronJobs() {
     
     // 3. Weekly Summary
     await notificationSchedulerService.handleWeeklySummary();
+    await accountDeletionService.purgeDueAccounts({ limit: 50 });
   } catch (error) {
     console.error("[Cron] Error executing cron jobs:", error);
   }
@@ -28,6 +30,7 @@ async function runLifeNotificationJobs() {
 async function runLifeReminderMaintenance() {
   try {
     await lifeNotificationService.replenishReminderJobs({ daysAhead: 14, batchSize: 200, maximum: 5000 });
+    await lifeNotificationService.scheduleBriefJobs({ daysAhead: 1, batchSize: 200 });
   } catch (error) {
     console.error("[LifeOS Scheduler] Reminder replenishment failed:", error.message);
   }

@@ -11,7 +11,7 @@ const iterations = Math.min(5000, Math.max(1, Number(process.env.LIFE_LOAD_ITERA
 const concurrency = Math.min(50, Math.max(1, Number(process.env.LIFE_LOAD_CONCURRENCY) || 5));
 if (!token) throw new Error("LIFE_LOAD_TOKEN is required for an isolated development test account.");
 
-const paths = ["/api/life/today", "/api/life/history?limit=30", "/api/life/insights"];
+const paths = ["/api/life/today", "/api/life/history?limit=30", "/api/life/reports?days=30", "/api/life/money/summary", "/api/life/notifications"];
 const requests = Array.from({ length: iterations }, (_, index) => {
   if (habitId && index % 4 === 1) return { path: `/api/life/events/habit/${habitId}`, method: "POST", body: { status: "completed", scheduledDate: new Date().toISOString().slice(0, 10), clientMutationId: `load-${index}` } };
   return { path: paths[index % paths.length], method: "GET" };

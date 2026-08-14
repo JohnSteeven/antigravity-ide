@@ -11,6 +11,10 @@ jest.mock("../life/controller", () => ({
   listHealth: send("health"), healthSummary: send("health-summary"), createHealth: send("health-create", 201), deleteHealth: send("health-delete"),
   listFinance: send("money"), financeSummary: send("money-summary"), createFinance: send("money-create", 201), deleteFinance: send("money-delete"), listFinancePlans: send("plans"), createFinancePlan: send("plan-create", 201), updateFinancePlan: send("plan-update"),
   listJournal: send("journal"), createJournal: send("journal-create", 201), deleteJournal: send("journal-delete"), insights: send("weekly-report"), dismissInsight: send("insight-dismiss"), notifications: send("notifications"), exportData: send("export"), deleteData: send("delete-data"),
+  capabilities: send("capabilities"), search: send("search"), templates: send("templates"), applyTemplate: send("template-apply", 201),
+  insightFeedback: send("insight-feedback"), report: send("report"), planTomorrow: send("plan-tomorrow"), aiReview: send("ai-review"), aiAsk: send("ai-ask"),
+  readNotification: send("notification-read"), pushConfig: send("push-config"), pushSubscriptions: send("push-list"), subscribePush: send("push-subscribe", 201), unsubscribePush: send("push-unsubscribe"),
+  financeImportPreview: send("finance-import-preview", 201), financeImportConfirm: send("finance-import-confirm"),
 }));
 
 const lifeRoutes = require("../life/routes");
@@ -32,6 +36,10 @@ describe("Life API route integration", () => {
     ["patch", "/api/life/profile", { timezone: "Asia/Kolkata" }, 200, "profile-update"],
     ["post", "/api/life/onboarding/skip", {}, 200, "onboarding-skip"],
     ["get", "/api/life/today?date=2026-08-11", null, 200, "today"],
+    ["get", "/api/life/capabilities", null, 200, "capabilities"],
+    ["get", "/api/life/search?q=gym", null, 200, "search"],
+    ["get", "/api/life/templates", null, 200, "templates"],
+    ["post", "/api/life/templates/reading/apply", { name: "Read", time: "20:30", reminderEnabled: false }, 201, "template-apply"],
     ["post", "/api/life/habits", { name: "Walk", schedule: { type: "daily", startDate: "2026-08-11" } }, 201, "habit-create"],
     ["patch", `/api/life/habits/${id}`, { name: "Walk gently" }, 200, "habit-update"],
     ["patch", `/api/life/habits/${id}/status`, { status: "archived" }, 200, "habit-status"],
@@ -47,7 +55,16 @@ describe("Life API route integration", () => {
     ["get", "/api/life/money/summary", null, 200, "money-summary"],
     ["post", "/api/life/journal", { type: "weekly_review", body: "A useful week." }, 201, "journal-create"],
     ["get", "/api/life/insights?start=2026-08-05&end=2026-08-11", null, 200, "weekly-report"],
+    ["patch", `/api/life/insights/${id}/feedback`, { action: "useful" }, 200, "insight-feedback"],
+    ["get", "/api/life/reports?days=30", null, 200, "report"],
+    ["get", "/api/life/planning/tomorrow", null, 200, "plan-tomorrow"],
+    ["post", "/api/life/ai/review", { days: 7 }, 200, "ai-review"],
+    ["post", "/api/life/ai/ask", { days: 7, question: "What changed?" }, 200, "ai-ask"],
     ["get", "/api/life/notifications", null, 200, "notifications"],
+    ["get", "/api/life/push/config", null, 200, "push-config"],
+    ["post", "/api/life/push/subscriptions", { endpoint: "https://push.example/sub", keys: { p256dh: "key", auth: "auth" } }, 201, "push-subscribe"],
+    ["post", "/api/life/money/import/preview", { csvText: "date,amount\n2026-08-11,12" }, 201, "finance-import-preview"],
+    ["post", `/api/life/money/import/${id}/confirm`, {}, 200, "finance-import-confirm"],
   ])("%s %s maps through private validation/controller boundary", async (method, path, body, status, operation) => {
     let call = request(app)[method](path).set("Authorization", "Bearer user-a");
     if (body) call = call.send(body);

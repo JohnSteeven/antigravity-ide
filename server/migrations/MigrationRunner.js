@@ -163,6 +163,37 @@ class MigrationRunner {
       status:  applied.has(m.name) ? 'applied' : 'pending',
     }));
   }
+
+  /**
+   * Read-only validation for production change review. This never applies a
+   * migration. Applied migrations may declare named indexes to verify.
+   */
+  async validate() {
+    const migrations = this.loadMigrations();
+    const applied = await this.getApplied();
+    const checks = [];
+    for (const migration of migrations) {
+      const pending = !applied.has(migration.name);
+      const missingIndexes = [];
+      if (!pending && migration.indexes) {
+        for (const [collectionName, specs] of Object.entries(migration.indexes)) {
+          const indexes = await this.db.collection(collectionName).indexes().catch((error) => error.codeName === "NamespaceNotFound" ? [] : Promise.reject(error));
+          specs.forEach(([keys, options]) => {
+            const compatible = indexes.some((index) => index.name === options.name || (
+              JSON.stringify(index.key) === JSON.stringify(keys)
+              && Boolean(index.unique) === Boolean(options.unique)
+              && Boolean(index.sparse) === Boolean(options.sparse)
+              && (options.expireAfterSeconds === undefined || index.expireAfterSeconds === options.expireAfterSeconds)
+            ));
+            if (!compatible) missingIndexes.push(`${collectionName}.${options.name}`);
+          });
+        }
+      }
+      checks.push({ name: migration.name, status: pending ? "pending" : missingIndexes.length ? "invalid" : "valid", missingIndexes });
+    }
+    const unknownApplied = [...applied].filter((name) => !migrations.some((migration) => migration.name === name));
+    return { valid: checks.every((check) => check.status !== "invalid"), checks, unknownApplied };
+  }
 }
 
 module.exports = MigrationRunner;

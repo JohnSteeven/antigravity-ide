@@ -22,4 +22,5 @@ const LifeFinancePlanSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 LifeFinancePlanSchema.index({ user: 1, type: 1, status: 1 });
+LifeFinancePlanSchema.index({ user: 1, status: 1, dueDate: 1 });
 module.exports = mongoose.model("LifeFinancePlan", LifeFinancePlanSchema);

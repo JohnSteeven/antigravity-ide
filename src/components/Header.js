@@ -21,7 +21,7 @@ import { categoryApi } from "../services/apiService";
 
 const Header = () => {
   const { data } = useCms();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, accountAccess } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -415,11 +415,28 @@ const Header = () => {
                               Reader
                             </div>
                           )}
+                          {accountAccess?.plan === "premium" && (
+                            <div className="dropdown-role-tag reader">
+                              <FiShield className="role-shield-icon" /> MyJourney Premium
+                            </div>
+                          )}
                         </div>
                       </div>
                     </li>
 
                     <li className="dropdown-divider" role="none" />
+
+                    <li role="none">
+                      <Link
+                        to="/profile/subscription"
+                        className="dropdown-item"
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <FiShield className="dropdown-item-icon" />
+                        <span className="dropdown-item-label">Membership</span>
+                      </Link>
+                    </li>
 
                     <li role="none">
                       <Link
@@ -675,6 +692,13 @@ const Header = () => {
                         onClick={() => setIsMobileOpen(false)}
                       >
                         <FiBookmark /> Saved / Bookmarks
+                      </Link>
+                      <Link
+                        to="/profile/subscription"
+                        className="mobile-account-link"
+                        onClick={() => setIsMobileOpen(false)}
+                      >
+                        <FiShield /> Membership
                       </Link>
                       <Link
                         to="/edit-profile"

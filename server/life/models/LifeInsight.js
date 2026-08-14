@@ -7,9 +7,12 @@ const LifeInsightSchema = new mongoose.Schema({
   kind: { type: String, enum: ["observation", "correlation", "suggestion"], default: "observation" },
   message: { type: String, required: true, maxlength: 600 },
   sourceMetrics: { type: mongoose.Schema.Types.Mixed, default: {} },
+  sourceRange: { start: { type: String, default: "" }, end: { type: String, default: "" } },
+  sampleSize: { type: Number, default: 0, min: 0 },
   quality: { type: String, enum: ["low", "medium", "high"], default: "medium" },
   generatedAt: { type: Date, default: Date.now },
   dismissedAt: { type: Date, default: null },
+  usefulAt: { type: Date, default: null },
 }, { timestamps: true });
 
 LifeInsightSchema.index({ user: 1, type: 1, windowKey: 1 }, { unique: true });

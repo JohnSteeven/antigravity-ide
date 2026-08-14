@@ -27,5 +27,12 @@ export default function useLifeQuery(loader, dependencies = []) {
     return () => { mounted.current = false; };
   }, [refresh]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const onChanged = () => refresh({ quiet: true }).catch(() => {});
+    window.addEventListener("life:data-changed", onChanged);
+    return () => window.removeEventListener("life:data-changed", onChanged);
+  }, [refresh]);
+
   return { data, error, loading, refresh, setData, setError };
 }

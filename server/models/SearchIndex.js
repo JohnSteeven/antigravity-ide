@@ -24,6 +24,7 @@ const SearchIndexSchema = new mongoose.Schema(
     tags: [{ type: String, lowercase: true, trim: true }],
     author: { type: String, default: '' },
     url: { type: String, required: true },
+    accessLevel: { type: String, enum: ['free', 'premium'], default: 'free', index: true },
 
     // Metrics for relevance boosting
     views: { type: Number, default: 0 },

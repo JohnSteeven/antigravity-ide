@@ -3,6 +3,8 @@ import lifeApi from "../api/lifeApi";
 import useLifeQuery from "../hooks/useLifeQuery";
 import { formatMoney, localDateInput } from "../utils/lifeFormat";
 import { LifeEmpty, LifeError, LifeLoading, LifeNotice, LifePageHeader } from "../components/LifeUI";
+import FinanceImportDialog from "../components/FinanceImportDialog";
+import { FiUploadCloud } from "react-icons/fi";
 
 export default function MoneyPage() {
   const query = useLifeQuery(async () => {
@@ -13,6 +15,7 @@ export default function MoneyPage() {
   const [form, setForm] = useState({ type: "expense", amount: "", currency: "USD", category: "Other", payee: "", localDate: localDateInput(), planType: "budget", name: "", period: "monthly", dueDate: "" });
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const save = async (event) => {
     event.preventDefault(); setBusy(true); setNotice("");
@@ -31,8 +34,10 @@ export default function MoneyPage() {
   const entries = query.data?.entries?.items || [];
   const plans = query.data?.plans?.items || [];
   const currencies = query.data?.summary?.currencies || {};
+  const recurring = query.data?.summary?.recurring || {};
+  const upcomingBills = query.data?.summary?.upcomingBills || [];
   return <div>
-    <LifePageHeader eyebrow="Clarity without shame" title="Money" description="Track what comes in, what goes out, and what you are planning—without silently converting currencies." />
+    <LifePageHeader eyebrow="Clarity without shame" title="Money" description="Track what comes in, what goes out, and what you are planning—without silently converting currencies." actions={<button type="button" className="life-secondary-button" onClick={() => setImportOpen(true)}><FiUploadCloud /> Import CSV</button>} />
     <div className="life-safety-note">This is a personal record and planning aid, not financial advice. Currency totals stay separate unless you explicitly convert them elsewhere.</div>
     <LifeNotice tone={notice.toLowerCase().includes("could") ? "error" : "success"}>{notice}</LifeNotice>
     <section className="life-money-summary">{Object.keys(currencies).length === 0 ? <p>No money entries in the current summary period.</p> : Object.entries(currencies).map(([currency, values]) => <article key={currency}><span>{currency}</span><div><small>Income</small><strong>{formatMoney(values.incomeMinor, currency)}</strong></div><div><small>Spent</small><strong>{formatMoney(values.expenseMinor, currency)}</strong></div><div><small>Saved</small><strong>{formatMoney(values.savingsMinor, currency)}</strong></div></article>)}</section>
@@ -45,8 +50,9 @@ export default function MoneyPage() {
           <button className="life-primary-button life-field-span" disabled={busy}>{mode === "entry" ? "Save entry" : "Create plan"}</button>
         </form>
       </section>
-      <section className="life-card"><h2>Plans</h2>{plans.length === 0 ? <LifeEmpty title="No active plans" message="Budgets, bills, subscriptions, and savings goals can live here." /> : <div className="life-record-list">{plans.map((plan) => <article key={plan._id}><div><strong>{plan.name}</strong><span>{plan.type.replace("_", " ")} · {formatMoney(plan.amountMinor, plan.currency)}</span></div></article>)}</div>}</section>
+      <section className="life-card"><h2>Plans</h2>{Object.entries(recurring).map(([currency, value]) => <p className="life-recurring-total" key={currency}><strong>{formatMoney(value.knownMonthlyMinor, currency)}</strong> known monthly recurring · {value.subscriptions} subscriptions · {value.bills} bills{value.unknownCadence ? ` · ${value.unknownCadence} with another cadence` : ""}</p>)}{upcomingBills.length > 0 && <details className="life-advanced"><summary>Due in the next 30 days</summary>{upcomingBills.map((item) => <p key={item.id}>{item.dueDate} · {item.name} · {formatMoney(item.amountMinor, item.currency)}</p>)}</details>}{plans.length === 0 ? <LifeEmpty title="No active plans" message="Budgets, bills, subscriptions, and savings goals can live here." /> : <div className="life-record-list">{plans.map((plan) => <article key={plan._id}><div><strong>{plan.name}</strong><span>{plan.type.replace("_", " ")} · {formatMoney(plan.amountMinor, plan.currency)}</span></div></article>)}</div>}</section>
     </div>
     <section className="life-card life-card--spaced"><h2>Recent entries</h2>{entries.length === 0 ? <LifeEmpty title="Your record is empty" message="Add an entry only when it helps you see your money more clearly." /> : <div className="life-table-wrap"><table className="life-table"><thead><tr><th>Date</th><th>What</th><th>Category</th><th>Amount</th><th><span className="life-sr-only">Actions</span></th></tr></thead><tbody>{entries.map((entry) => <tr key={entry._id}><td>{entry.localDate}</td><td>{entry.payee || entry.type.replace("_", " ")}</td><td>{entry.category}</td><td className={`life-money--${entry.type}`}>{formatMoney(entry.amountMinor, entry.currency)}</td><td><button type="button" className="life-link-button" disabled={busy} onClick={() => remove(entry._id)}>Remove</button></td></tr>)}</tbody></table></div>}</section>
+    <FinanceImportDialog open={importOpen} onClose={() => setImportOpen(false)} onImported={() => query.refresh({ quiet: true })} />
   </div>;
 }

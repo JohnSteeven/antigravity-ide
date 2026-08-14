@@ -1,7 +1,7 @@
 const express = require("express");
 const { validationResult } = require("express-validator");
 const storyController = require("../controllers/storyController");
-const { authenticate } = require("../middleware/auth");
+const { authenticate, optionalAuthenticate } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { handleValidation } = require("../middleware/errorHandler");
 const { storyWriteValidator } = require("../validators/storyValidator");
@@ -15,7 +15,7 @@ router.put("/:id", authenticate, requireAdmin, storyWriteValidator, validate, st
 router.put("/:id/status", authenticate, requireAdmin, storyController.updateStoryStatus);
 
 // Public Story routes.
-router.get("/", storyController.getStories);
-router.get("/:slug", storyController.getStoryBySlug);
+router.get("/", optionalAuthenticate, storyController.getStories);
+router.get("/:slug", optionalAuthenticate, storyController.getStoryBySlug);
 
 module.exports = router;

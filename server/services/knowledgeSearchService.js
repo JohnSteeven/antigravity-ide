@@ -31,7 +31,7 @@ const CHUNK_SIZE_CHARS     = 600;  // Characters per knowledge chunk during inde
 const CHUNK_OVERLAP_CHARS  = 80;   // Overlap between adjacent chunks
 
 // Safety filter — ALWAYS applied, never bypassed
-const PUBLISHED_ONLY = { status: 'published', isDeleted: false };
+const PUBLISHED_ONLY = { status: 'published', isDeleted: false, accessLevel: { $ne: 'premium' } };
 
 // ─── Intent Detection ─────────────────────────────────────────────────────────
 

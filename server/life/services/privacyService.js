@@ -5,14 +5,18 @@ const LifeGoal = require("../models/LifeGoal");
 const LifeHabit = require("../models/LifeHabit");
 const LifeHealthEntry = require("../models/LifeHealthEntry");
 const LifeInsight = require("../models/LifeInsight");
+const LifeInsightPreference = require("../models/LifeInsightPreference");
+const LifeImportBatch = require("../models/LifeImportBatch");
 const LifeJournalEntry = require("../models/LifeJournalEntry");
 const LifeMedication = require("../models/LifeMedication");
 const LifeNotificationDelivery = require("../models/LifeNotificationDelivery");
 const LifeNotificationJob = require("../models/LifeNotificationJob");
 const LifeProfile = require("../models/LifeProfile");
+const LifePushSubscription = require("../models/LifePushSubscription");
 const LifeRoutine = require("../models/LifeRoutine");
 const LifeScheduleVersion = require("../models/LifeScheduleVersion");
 const LifeTask = require("../models/LifeTask");
+const Notification = require("../../models/Notification");
 
 const EXPORT_MODELS = Object.freeze({
   profile: LifeProfile,
@@ -28,13 +32,17 @@ const EXPORT_MODELS = Object.freeze({
   journal: LifeJournalEntry,
   medications: LifeMedication,
   insights: LifeInsight,
+  insightPreferences: LifeInsightPreference,
+  importBatches: LifeImportBatch,
   notificationJobs: LifeNotificationJob,
   notificationDeliveries: LifeNotificationDelivery,
+  pushSubscriptions: LifePushSubscription,
 });
 
 const exportLifeData = async (userId) => {
   const entries = await Promise.all(Object.entries(EXPORT_MODELS).map(async ([key, Model]) => [key, await Model.find({ user: userId }).lean()]));
-  return { format: "myjourney-life-json", version: 1, exportedAt: new Date().toISOString(), data: Object.fromEntries(entries) };
+  const data = Object.fromEntries(entries);
+  return { format: "myjourney-life-json", schemaVersion: 2, generatedAt: new Date().toISOString(), timezone: data.profile?.[0]?.timezone || "UTC", units: data.profile?.[0] ? { system: data.profile[0].unitSystem, water: data.profile[0].waterUnit, weight: data.profile[0].weightUnit, distance: data.profile[0].distanceUnit, currency: data.profile[0].currency } : {}, data };
 };
 
 const deleteAllLifeData = async (userId) => {
@@ -42,7 +50,8 @@ const deleteAllLifeData = async (userId) => {
     const result = await Model.deleteMany({ user: userId });
     return [key, result.deletedCount || 0];
   }));
-  return { deleted: Object.fromEntries(results) };
+  const notifications = await Notification.deleteMany({ user: userId, source: "life" });
+  return { deleted: { ...Object.fromEntries(results), siteNotifications: notifications.deletedCount || 0 } };
 };
 
-module.exports = { deleteAllLifeData, exportLifeData };
+module.exports = { deleteAllLifeData, exportLifeData, LIFE_OWNED_MODELS: EXPORT_MODELS };

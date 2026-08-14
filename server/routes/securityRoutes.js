@@ -3,6 +3,9 @@ const securityController = require("../controllers/securityController");
 
 const router = express.Router();
 
+router.post("/delete-account", (req, res, next) => securityController.requestAccountDeletion(req, res, next));
+router.post("/delete-account/cancel", (req, res, next) => securityController.cancelAccountDeletion(req, res, next));
+
 router.get("/overview", (req, res, next) => securityController.getOverview(req, res, next));
 router.get("/sessions", (req, res, next) => securityController.getSessions(req, res, next));
 router.delete("/sessions/:id", (req, res, next) => securityController.revokeSession(req, res, next));

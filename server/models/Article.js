@@ -45,6 +45,12 @@ const ArticleSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     description: { type: String, default: "", trim: true },
     excerpt: { type: String, default: "" },
+    accessLevel: {
+      type: String,
+      enum: ["free", "premium"],
+      default: "free",
+      index: true,
+    },
 
     // Content — stored as HTML (contenteditable editor output)
     body: { type: String, default: "" },

@@ -7,6 +7,9 @@ const {
   calculateStoryReadingTime,
   validateStorySections,
 } = require("../utils/storyContent");
+const entitlementService = require("../services/entitlementService");
+const { ENTITLEMENTS } = require("../premium/catalog");
+const { serializePublicContent } = require("../premium/contentPreview");
 
 const slugify = (value = "") => String(value)
   .toLowerCase()
@@ -18,7 +21,7 @@ const STORY_FIELDS = [
   "title", "slug", "description", "body", "coverImage", "coverImageAlt", "author",
   "status", "scheduledAt", "publishedAt", "storyLayout", "storySections", "reflection",
   "takeaway", "introLocation", "introTime", "storyOrigin", "storyFormat", "isFeatured",
-  "isMustRead", "isTrending", "isPinned", "seo",
+  "isMustRead", "isTrending", "isPinned", "seo", "accessLevel",
 ];
 
 const pickStoryFields = (input = {}) => STORY_FIELDS.reduce((result, field) => {
@@ -81,7 +84,7 @@ class StoryController {
     try {
       const query = { ...req.query, contentType: "story", status: "published" };
       const data = await articleService.getArticles(query);
-      res.json({ ...data, articles: data.articles.map(withStoryRuntimeMetadata) });
+      res.json({ ...data, articles: data.articles.map((story) => serializePublicContent(withStoryRuntimeMetadata(story), { listing: true })) });
     } catch (err) {
       next(err);
     }
@@ -94,9 +97,14 @@ class StoryController {
         return res.status(404).json({ message: "Story not found." });
       }
       if (article.contentType && article.contentType !== "story") {
-        return res.status(400).json({ redirect: true, article, message: "Content is an article" });
+        return res.status(400).json({ redirect: true, slug: article.slug, message: "Content is an article" });
       }
-      return res.json({ article: withStoryRuntimeMetadata(article) });
+      const resolution = req.user
+        ? await entitlementService.resolveForUser(req.user._id || req.user.id)
+        : null;
+      const canAccessPremium = entitlementService.hasEntitlement(resolution, ENTITLEMENTS.PREMIUM_CONTENT);
+      res.set({ "Cache-Control": "private, no-store", Vary: "Cookie, Authorization" });
+      return res.json({ article: serializePublicContent(withStoryRuntimeMetadata(article), { canAccessPremium }) });
     } catch (err) {
       return next(err);
     }

@@ -13,8 +13,10 @@ const LifeJournalEntrySchema = new mongoose.Schema({
   }],
   occurredAt: { type: Date, default: Date.now },
   pinnedToTimeline: { type: Boolean, default: false },
+  dedupeKey: { type: String, default: undefined, maxlength: 240 },
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
 LifeJournalEntrySchema.index({ user: 1, localDate: -1, type: 1 });
+LifeJournalEntrySchema.index({ user: 1, dedupeKey: 1 }, { unique: true, sparse: true });
 module.exports = mongoose.model("LifeJournalEntry", LifeJournalEntrySchema);

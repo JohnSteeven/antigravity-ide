@@ -20,6 +20,7 @@ const INDEXES = Object.freeze({
 
 module.exports = {
   version: "1.0.0",
+  indexes: INDEXES,
   async up(db) {
     for (const [collectionName, indexes] of Object.entries(INDEXES)) {
       const collection = db.collection(collectionName);

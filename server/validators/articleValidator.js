@@ -13,6 +13,10 @@ const createArticleValidator = [
     .optional()
     .isIn(["draft", "published", "archived", "scheduled"])
     .withMessage("Invalid status value."),
+  body("accessLevel")
+    .optional()
+    .isIn(["free", "premium"])
+    .withMessage("Access must be Free or Premium."),
 ];
 
 const addCommentValidator = [

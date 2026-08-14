@@ -130,6 +130,7 @@ const request = async (path, options = {}) => {
     const err = new Error(friendlyMsg);
     err.status = status;
     err.code = data.error?.code || data.code;
+    err.requiredEntitlement = data.requiredEntitlement;
     err.retryable = Boolean(data.error?.retryable);
     err.details = data.error?.details;
     // Attach raw data payload so callers can read redirect, article, etc.
@@ -438,6 +439,14 @@ export const userApi = {
   markNotificationAsRead: (id) => patch(`/api/users/notifications/${id}`, {}),
 };
 
+// ─── MyJourney Premium ──────────────────────────────────────────────────────
+export const membershipApi = {
+  catalog: () => get("/api/membership/plans"),
+  me: () => get("/api/membership/me/entitlements"),
+  selectDuration: (billingPeriodMonths) => post("/api/membership/subscribe", { billingPeriodMonths }),
+  cancelRenewal: () => post("/api/membership/cancel", {}),
+};
+
 // ─── Roles ───────────────────────────────────────────────────────────────────
 export const roleApi = {
   list: (params = {}) => {
@@ -488,6 +497,7 @@ const apiService = {
   comments: commentApi,
   settings: settingApi,
   users: userApi,
+  membership: membershipApi,
   roles: roleApi,
   permissions: permissionApi,
   news: newsApi,
@@ -499,6 +509,7 @@ const apiService = {
   commentApi,
   settingApi,
   userApi,
+  membershipApi,
   roleApi,
   permissionApi,
   newsApi,

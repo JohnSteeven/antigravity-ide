@@ -1,166 +1,94 @@
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- *  SubscriptionDashboard.jsx  —  Reader Subscription & Plan Manager
- *  MyJourney Platform  |  Stage 4 — Phase 22: Membership & Monetization
- * ─────────────────────────────────────────────────────────────────────────────
- */
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { membershipApi } from "../services/apiService";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import apiService from '../services/apiService';
-import {
-  FiCreditCard, FiCheckCircle, FiAlertCircle, FiStar,
-  FiZap, FiShield, FiCheck, FiRefreshCw
-} from 'react-icons/fi';
+const labelForDuration = (months) => ({ 1: "1 Month", 3: "3 Months", 6: "6 Months", 12: "1 Year" }[months] || "Not available");
+const formatDate = (value) => {
+  if (!value) return "Not available";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Not available" : date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+};
 
 export default function SubscriptionDashboard() {
-  const [plans, setPlans] = useState([]);
-  const [membership, setMembership] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [upgrading, setUpgrading] = useState(null);
-  const [notification, setNotification] = useState(null);
-
-  const notify = (type, text) => {
-    setNotification({ type, text });
-    setTimeout(() => setNotification(null), 5000);
-  };
-
-  const fetchSubscriptionData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [plansRes, memRes] = await Promise.all([
-        apiService.get('/api/membership/plans'),
-        apiService.get('/api/membership/me').catch(() => null),
-      ]);
-
-      if (plansRes?.data) setPlans(plansRes.data);
-      if (memRes?.data) setMembership(memRes.data);
-    } catch (err) {
-      notify('error', err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { accountAccess, accessLoading, accessError, refreshEntitlements } = useAuth();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const premiumActive = accountAccess?.plan === "premium";
+  const cancelPending = Boolean(accountAccess?.cancelAtPeriodEnd);
+  const expired = accountAccess?.subscriptionStatus === "expired" || accountAccess?.accessReason === "period_expired";
 
   useEffect(() => {
-    fetchSubscriptionData();
-  }, [fetchSubscriptionData]);
+    if (!confirming) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape" && !busy) setConfirming(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [busy, confirming]);
 
-  const handleSubscribe = async (planSlug) => {
-    setUpgrading(planSlug);
+  const cancelRenewal = async () => {
+    setBusy(true);
+    setMessage("");
     try {
-      const res = await apiService.post('/api/membership/subscribe', { planSlug });
-      if (res?.data) {
-        notify('success', `Subscribed to ${planSlug.toUpperCase()} plan!`);
-        fetchSubscriptionData();
-      }
-    } catch (err) {
-      notify('error', err.message);
+      await membershipApi.cancelRenewal();
+      await refreshEntitlements();
+      setConfirming(false);
+      setMessage("Renewal has been canceled. Premium remains available through the current paid period.");
+    } catch (error) {
+      setMessage(error.message || "Subscription management is currently unavailable.");
     } finally {
-      setUpgrading(null);
+      setBusy(false);
     }
   };
 
-  const handleCancel = async () => {
-    if (!window.confirm('Cancel your subscription? You will maintain access until the end of your billing cycle.')) return;
-    try {
-      await apiService.post('/api/membership/cancel');
-      notify('success', 'Subscription canceled.');
-      fetchSubscriptionData();
-    } catch (err) {
-      notify('error', err.message);
-    }
-  };
-
-  if (loading) {
-    return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>Loading Subscription Details...</div>;
-  }
-
-  const currentSlug = membership?.planSlug || 'free';
+  if (accessLoading) return <main className="premium-account"><p role="status">Loading membership…</p></main>;
 
   return (
-    <div className="container" style={{ paddingTop: 32, paddingBottom: 64, maxWidth: 960 }}>
-      {/* Active Membership Status Header */}
-      <div style={{ background: 'var(--panel, #1f2022)', borderRadius: 16, border: '1px solid var(--line, #333)', padding: 28, marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <span className="section-kicker" style={{ color: 'var(--cms-accent, #426c67)', fontWeight: 700 }}>MEMBERSHIP</span>
-            <h1 style={{ margin: '4px 0 0', fontSize: '1.6rem' }}>My Subscription</h1>
-            <div style={{ color: 'var(--muted, #888)', fontSize: '0.88rem', marginTop: 4 }}>
-              Active Plan: <strong style={{ color: 'var(--ink, #fff)', textTransform: 'capitalize' }}>{currentSlug} Plan</strong>
-              {membership?.billingStatus === 'trialing' && <span style={{ color: '#f59e0b', marginLeft: 8 }}>(Trial Active)</span>}
+    <main className="premium-account">
+      <section className="premium-account__card" aria-labelledby="membership-heading">
+        <p className="premium-kicker">Account membership</p>
+        <h1 id="membership-heading">{premiumActive ? "MyJourney Premium" : "MyJourney Free"}</h1>
+        {accessError && <p className="premium-status" role="alert">Subscription state is unavailable. Premium features remain securely locked until it can be verified.</p>}
+
+        {premiumActive ? (
+          <>
+            <p className="premium-account__state">{cancelPending ? "Renewal canceled" : "Active"}</p>
+            <dl>
+              <div><dt>Current membership</dt><dd>{labelForDuration(accountAccess.billingPeriodMonths)}</dd></div>
+              <div><dt>Access until</dt><dd>{formatDate(accountAccess.currentPeriodEnd)}</dd></div>
+              <div><dt>{cancelPending ? "Ends" : "Renews"}</dt><dd>{formatDate(accountAccess.currentPeriodEnd)}</dd></div>
+            </dl>
+            {cancelPending ? (
+              <p>Your Premium access remains active until the date above. Your private MyJourney Life history is not deleted.</p>
+            ) : (
+              <button type="button" className="premium-secondary-action" onClick={() => setConfirming(true)}>Cancel renewal</button>
+            )}
+          </>
+        ) : (
+          <>
+            <p>{expired ? "Your previous Premium period has ended." : "Your account includes MyJourney's free experiences."}</p>
+            <p>Your private Life history remains associated with this account and returns when Premium access is restored.</p>
+            <Link className="premium-primary-action" to="/premium">Explore Premium</Link>
+          </>
+        )}
+        {message && <p className="premium-status" role="status">{message}</p>}
+      </section>
+
+      {confirming && (
+        <div className="premium-dialog-backdrop">
+          <section className="premium-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-premium-heading">
+            <h2 id="cancel-premium-heading">Cancel renewal?</h2>
+            <p>Your MyJourney Premium access will continue until {formatDate(accountAccess.currentPeriodEnd)}. After that, Premium experiences will lock unless you renew.</p>
+            <p>Your private MyJourney Life history will not be deleted.</p>
+            <div className="premium-actions">
+              <button type="button" className="premium-primary-action" onClick={() => setConfirming(false)} autoFocus>Keep Premium</button>
+              <button type="button" className="premium-secondary-action" onClick={cancelRenewal} disabled={busy}>{busy ? "Canceling…" : "Cancel renewal"}</button>
             </div>
-          </div>
-
-          {currentSlug !== 'free' && (
-            <button type="button" className="small-outline-btn" style={{ color: '#ef4444', borderColor: '#ef444450' }} onClick={handleCancel}>
-              Cancel Subscription
-            </button>
-          )}
-        </div>
-      </div>
-
-      {notification && (
-        <div style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8, background: notification.type === 'success' ? '#10b98120' : '#ef444420', color: notification.type === 'success' ? '#10b981' : '#ef4444' }}>
-          {notification.type === 'success' ? <FiCheckCircle /> : <FiAlertCircle />}
-          <span>{notification.text}</span>
+          </section>
         </div>
       )}
-
-      {/* Plans Comparison */}
-      <h3 style={{ margin: '0 0 20px', fontSize: '1.2rem', textAlign: 'center' }}>Choose Your Membership Tier</h3>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
-        {plans.map((p) => {
-          const isCurrent = currentSlug === p.slug;
-          return (
-            <div
-              key={p._id}
-              style={{
-                background: 'var(--panel, #1f2022)',
-                border: isCurrent ? '2px solid var(--cms-accent, #426c67)' : '1px solid var(--line, #333)',
-                borderRadius: 16,
-                padding: 24,
-                display: 'flex',
-                flexDirection: 'column',
-                justify: 'space-between',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{p.name}</h4>
-                  {isCurrent && <span style={{ fontSize: '0.68rem', background: 'var(--cms-accent, #426c67)', color: '#fff', padding: '2px 8px', borderRadius: 100, fontWeight: 700 }}>CURRENT</span>}
-                </div>
-
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: 4 }}>
-                  ${p.monthlyPrice} <span style={{ fontSize: '0.8rem', color: 'var(--muted, #888)', fontWeight: 400 }}>/ mo</span>
-                </div>
-                <p style={{ margin: '0 0 16px', fontSize: '0.82rem', color: 'var(--muted, #888)' }}>{p.description}</p>
-
-                <div style={{ borderTop: '1px solid var(--line, #333)', paddingTop: 12, marginBottom: 20 }}>
-                  {p.features?.map((f, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', marginBottom: 6 }}>
-                      <FiCheck style={{ color: '#10b981', flexShrink: 0 }} />
-                      <span>{f}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className={isCurrent ? 'secondary-btn' : 'primary-btn'}
-                disabled={isCurrent || upgrading === p.slug}
-                onClick={() => handleSubscribe(p.slug)}
-                style={{ width: '100%', justifyContent: 'center' }}
-              >
-                {upgrading === p.slug ? <FiRefreshCw style={{ animation: 'spin 1s linear infinite' }} /> : isCurrent ? 'Active Plan' : `Upgrade to ${p.name}`}
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </main>
   );
 }

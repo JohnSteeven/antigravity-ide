@@ -24,6 +24,7 @@ import { getImageUrl } from "../utils/imageUrlHelper";
 import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
 import ExperienceResolver from "../experiences/ExperienceResolver";
+import PremiumContentBoundary from "../features/premium/PremiumContentBoundary";
 
 const ArticleDetail = () => {
   const { slug } = useParams();
@@ -94,7 +95,7 @@ const ArticleDetail = () => {
   }, [data.articles, apiArticle]);
 
   // Use whichever source resolves first
-  const article = contextArticle || apiArticle;
+  const article = apiArticle || contextArticle;
 
   const relatedArticles = useMemo(() => {
     if (!article) return [];
@@ -198,6 +199,10 @@ const ArticleDetail = () => {
     }
     // Both sources settled with no result — truly not found
     return <Navigate to="/articles" replace />;
+  }
+
+  if (article.premiumRequired) {
+    return <PremiumContentBoundary content={article} kind="Article" />;
   }
 
   const approvedComments = (data.comments || [])

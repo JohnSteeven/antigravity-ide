@@ -34,6 +34,11 @@ const sanitizeProfileUpdates = (input = {}) => {
     }
     if (typeof input.notifications.morningBrief === "boolean") updates["notifications.morningBrief"] = input.notifications.morningBrief;
     if (typeof input.notifications.eveningSummary === "boolean") updates["notifications.eveningSummary"] = input.notifications.eveningSummary;
+    ["habitReminders", "goalReminders", "billReminders", "medicationReminders", "weeklyReviewReminder"].forEach((key) => {
+      if (typeof input.notifications[key] === "boolean") updates[`notifications.${key}`] = input.notifications[key];
+    });
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(input.notifications.morningBriefTime || "")) updates["notifications.morningBriefTime"] = input.notifications.morningBriefTime;
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(input.notifications.eveningSummaryTime || "")) updates["notifications.eveningSummaryTime"] = input.notifications.eveningSummaryTime;
     if (Number.isFinite(Number(input.notifications.dailyCap))) updates["notifications.dailyCap"] = Math.max(0, Math.min(50, Number(input.notifications.dailyCap)));
     if (input.notifications.quietHours && typeof input.notifications.quietHours === "object") {
       const quiet = input.notifications.quietHours;
@@ -41,6 +46,11 @@ const sanitizeProfileUpdates = (input = {}) => {
       if (/^([01]\d|2[0-3]):[0-5]\d$/.test(quiet.start || "")) updates["notifications.quietHours.start"] = quiet.start;
       if (/^([01]\d|2[0-3]):[0-5]\d$/.test(quiet.end || "")) updates["notifications.quietHours.end"] = quiet.end;
     }
+  }
+  if (input.aiReview && typeof input.aiReview === "object") {
+    ["includeJournal", "includeHealth", "includeFinance"].forEach((key) => {
+      if (typeof input.aiReview[key] === "boolean") updates[`aiReview.${key}`] = input.aiReview[key];
+    });
   }
   if (input.vacationMode && typeof input.vacationMode === "object") {
     if (typeof input.vacationMode.enabled === "boolean") updates["vacationMode.enabled"] = input.vacationMode.enabled;

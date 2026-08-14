@@ -7,6 +7,8 @@ const mongoose = require("mongoose");
 const connectDb = require("./config/db");
 const env = require("./config/env");
 const { authenticate } = require("./middleware/auth");
+const { requireEntitlement } = require("./middleware/entitlement");
+const { ENTITLEMENTS } = require("./premium/catalog");
 const {
   csrfProtection,
   globalLimiter,
@@ -158,7 +160,13 @@ app.use("/api/governance", governanceRoutes);
 app.use("/api/infrastructure", infrastructureRoutes);
 app.use("/api/launch", launchRoutes);
 app.use("/api/multiplayer", multiplayerRoutes);
-app.use("/api/life", authenticate, lifeRoutes);
+const requireLifeAccess = requireEntitlement(ENTITLEMENTS.LIFE_ACCESS);
+const lifeAccessPolicy = (req, res, next) => {
+  const privacyRoute = (req.method === "GET" && req.path === "/settings/export")
+    || (req.method === "DELETE" && req.path === "/settings/data");
+  return privacyRoute ? next() : requireLifeAccess(req, res, next);
+};
+app.use("/api/life", authenticate, lifeAccessPolicy, lifeRoutes);
 
 // Serve uploads statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

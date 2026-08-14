@@ -32,6 +32,8 @@ const SourceSchema = new mongoose.Schema({
   type: { type: String, enum: ["manual", "import", "integration", "system"], default: "manual" },
   provider: { type: String, default: "" },
   externalId: { type: String, default: "" },
+  originalTimestamp: { type: Date, default: null },
+  importedAt: { type: Date, default: null },
 }, { _id: false });
 
 module.exports = { ReminderSchema, ScheduleSchema, SourceSchema };
