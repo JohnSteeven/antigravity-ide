@@ -19,8 +19,10 @@ Current ordered migrations:
 5. `005-life-os-advanced`
 6. `006-myjourney-premium-foundation`
 7. `007-creator-learn-foundation`
+8. `008-agent-foundation`
 
 Server startup does not run these automatically.
+
 
 ## Commands
 
@@ -92,7 +94,14 @@ Account deletion:
 
 Permanent deletion removes auth, subscription/billing, Life, Creator application/review, learner progress/events, follows, reports, and notifications. Owned Creator profiles are deactivated and detached; published Creator content is intentionally preserved.
 
+### Agent data lifecycle
+
+- **AgentConversation & AgentMessage**: Soft-deleted via `isDeleted: true` when a user requests account deletion, and excluded by default via pre-find query hooks. Purged during permanent account deletion.
+- **AgentConfirmationToken**: Automatically expired and removed by MongoDB TTL background index on `expiresAt` (`expireAfterSeconds: 0`).
+- **AgentToolExecution**: Persisted for audit and compliance with redacted operational summaries only; retained up to `AGENT_TOOL_AUDIT_RETENTION_DAYS` (default: 90 days).
+
 ## Fixture and test hygiene
+
 
 - Test records must be named unambiguously and cleaned after the suite.
 - Do not delete real user/content data to work around schema errors.

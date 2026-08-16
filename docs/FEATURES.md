@@ -36,5 +36,7 @@ Statuses describe the code in this repository, not a launch or security certific
 | Life Auction | Implemented | Timed auction engine, modes, content packs, realtime, and load/integration tests exist. |
 | Secret Vault | Implemented / requires external configuration | AES-256-GCM storage exists and is disabled without an explicit 32-byte key. |
 | Social login | Deferred | No authentication provider route is configured; the client reports unavailable. |
+| MyJourney Agent | Implemented | Server-authoritative unified Agent (`/api/agent/v1`), persistent conversation state, Zod-validated tool registry, permission & entitlement enforcement, cryptographic single-use confirmation tokens, idempotent message delivery, telemetry & audit redaction, and `MockAgentProvider` / `LocalAgentProvider`. |
+| Agent Voice (Talk to MyJourney) | Implemented | Browser speech-to-text / text-to-speech integration into the same authenticated Agent conversation pipeline with press-to-talk state machine, stop actions, and zero background audio storage. |
 
 When capability status changes, update this inventory in the same change as code and tests.

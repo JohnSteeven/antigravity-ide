@@ -80,6 +80,22 @@ Development OTP responses include a dev code and can log provider-unavailable de
 - `REDIS_URL`, `MULTIPLAYER_REQUIRE_REDIS`
 - `LIFE_AUCTION_ENABLED`, `LIFE_AUCTION_SEALED_ENABLED`, `LIFE_AUCTION_EVENTS_ENABLED`, `LIFE_AUCTION_GROUP_EVENTS_ENABLED`
 
+### MyJourney Agent & AI
+
+- `AGENT_ENABLED`: Enable or disable the entire Agent subsystem (default: `true`).
+- `AGENT_PROVIDER`: Active AI provider (`mock` for deterministic development, `local` for local model server, default: `mock` in development, `""` in production).
+- `AGENT_LOCAL_ENDPOINT`: Base URL for OpenAI-compatible local model endpoint (e.g. `http://localhost:11434/v1`).
+- `AGENT_LOCAL_HEALTH_ENDPOINT`: Health check URL for the local model endpoint (e.g. `http://localhost:11434/api/tags`).
+- `AGENT_LOCAL_MODEL`: Local model identifier (e.g. `llama3`, `mistral`, default: `local-model`).
+- `AGENT_LOCAL_API_KEY`: Optional API key for the local endpoint.
+- `AGENT_PROVIDER_TIMEOUT_MS`: Provider HTTP timeout (default: `15000` ms).
+- `AGENT_CONFIRMATION_TTL_SECONDS`: Expiration window for single-use confirmation tokens (default: `300` s / 5 min).
+- `AGENT_TELEMETRY_SALT`: Server salt for hashing user identifiers in telemetry logs (default: `myjourney-agent`).
+- `AGENT_MESSAGE_MAX_CHARS`: Hard cap on user message length (default: `4000` chars).
+- `AGENT_ASSISTANT_MAX_CHARS`: Hard cap on assistant message length (default: `16000` chars).
+- `AGENT_RATE_LIMIT_MAX`: Max requests per rate window per user (default: `120` dev / `30` prod).
+- `AGENT_CONCURRENCY_PER_USER`: Max concurrent requests per user (default: `2`).
+
 ### Optional platforms/providers
 
 - `LIFE_AI_ENABLED`

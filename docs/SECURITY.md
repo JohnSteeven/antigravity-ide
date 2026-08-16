@@ -62,11 +62,22 @@ Premium is resolved server-side from ReaderMembership and access dates/status. D
 
 ProtectedMediaAsset stores metadata/ownership, not a claim of secure streaming. The default provider reports upload, scanning, adaptive streaming, and signed delivery unavailable. Do not expose external URLs as a substitute for protected Premium delivery.
 
+## MyJourney Agent security and privacy
+
+- **Server-Authoritative Identity**: Conversations require authenticated sessions; identity is never accepted from client payloads. Requests to `/api/agent/v1/conversations*` return 401 for anonymous callers.
+- **Model Isolation**: Models never have direct database access. All data access occurs through registered tools with strict Zod validation schemas.
+- **Defense Against Prompt Injection**: Retrieved RAG document text or model outputs have zero authority over tool permissions or authorization. Tool execution passes through server-side `authorizeTool` which enforces authentication, role, and Premium entitlements independently of model prompt contents.
+- **Tool Execution Privacy**: `AgentToolExecution.outputSummary` is strictly redacted by the orchestrator before storage (e.g. storing item counts or high-level status). Raw health data, journal text, financial figures, private lessons, and full RAG chunks are never stored in audit records or logs.
+- **Cryptographic Confirmation Tokens**: `AgentConfirmationToken` persists only the SHA-256 hash (`tokenHash`). The raw token is returned to the client once. Tokens are short-lived, single-use (consumed atomically via `findOneAndUpdate`), and bound to `(userId, conversationId, toolKey, argsHash)`. Replay or cross-action use is impossible.
+- **Rate & Concurrency Limiting**: User-level token-bucket rate limiting and concurrency locking prevent denial-of-service or runaway model execution.
+- **Voice Privacy**: Voice input uses an explicit press-to-talk action. Speech recognition runs in the user's browser; audio is neither streamed continuously nor stored on the server.
+
 ## Fixtures and production guards
 
 Creator/Learn fixture helpers throw in `NODE_ENV=production`, use unusable password hashes, avoid revenue/payout claims, and scope reset to recognized fixture identities. Operators must also verify the connected database is local/development.
 
 Bootstrap Admin is disabled by default and requires explicit environment enablement plus supplied credentials. Disable it again after first-use bootstrap.
+
 
 ## Account deletion and audit
 

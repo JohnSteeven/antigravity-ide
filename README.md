@@ -16,8 +16,10 @@ The repository is a single npm application: Parcel serves the React client and E
 | Learn | Implemented Topics, Course catalog/detail, lesson previews and gates, enrollment/progress, Continue Learning, and Video/Podcast/Resource catalogs. Secure media delivery is not configured. Exams expose metadata only. |
 | CMS/Admin | Implemented under `/cms/*`, backed by server-side Admin authorization. |
 | Games/multiplayer | Play Life and Play With Friends are implemented; local realtime can run without Redis, while scaled production requires Redis. |
+| MyJourney Agent | Implemented unified assistant platform (`/agent` and floating companion) with server-authoritative tool registry, voice press-to-talk, cryptographic single-use confirmation tokens, and deterministic zero-cost Mock provider. |
 
-See [Features](docs/FEATURES.md) for the engineering status inventory.
+See [Features](docs/FEATURES.md) for the engineering status inventory and [Agent Reference](docs/AGENT.md) for full Agent specifications.
+
 
 ## Technology stack
 

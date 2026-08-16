@@ -109,6 +109,22 @@ Some enterprise/provider-oriented modules are foundations and return 503 when th
 
 Play Life is a client-side game engine. Play With Friends uses Express room APIs plus Socket.IO realtime. Local single-instance mode can use the in-process adapter. Redis is the scaling boundary and is required when `MULTIPLAYER_REQUIRE_REDIS=true`.
 
+## MyJourney Agent
+
+```text
+User / Voice -> AgentContext -> /api/agent/v1/conversations/:id/messages -> Rate / Concurrency -> Orchestrator -> Provider -> Permission -> ToolRegistry -> Domain Services
+```
+
+The MyJourney Agent is the canonical unified assistant across MyJourney. Both the floating `AskMyJourneyWidget` and the full-screen `/agent` page share the same `AgentContext`, persistent `AgentConversation` records, tool registry, and permission engine.
+
+- **Identity & Authorization**: Identity is derived exclusively from the authenticated server context. Unauthenticated requests to conversation endpoints return 401.
+- **Provider & Zero-Cost Execution**: `AgentProviderRegistry` routes turns to `MockAgentProvider` (development default, exercises real tool execution and permissions) or `LocalAgentProvider` (Ollama/OpenAI-compatible endpoints). Unconfigured providers fail closed without crashing server startup.
+- **Tool Registry**: Tools are validated via Zod schemas and bound by timeout budgets. `permissionService` verifies authentication, Premium entitlements, and write-tool feature flags before execution.
+- **Confirmation Tokens**: `AgentConfirmationToken` persists only SHA-256 hashes (`tokenHash`), bound to user, conversation, tool, and argument hash with short TTL expiration and atomic single-use consumption.
+- **Idempotency & Privacy**: Message delivery is deduplicated via unique index on `(userId, conversationId, clientRequestId)`. Audit records in `AgentToolExecution` store redacted summaries only; raw personal records, health data, finances, and journal entries are never logged or persisted in audit records.
+- **Voice Pipeline**: Explicit press-to-talk speech-to-text transcribes in-browser and feeds into the standard `sendMessage` pipeline; assistant responses trigger text-to-speech without persistent or background recording.
+- **Legacy AI Transition**: The legacy `/api/ai/*` route remains mounted temporarily for backwards compatibility; all client surfaces have transitioned to `/api/agent/v1/*`.
+
 ## Background services
 
 After a successful Mongo connection and HTTP startup, `server/cron.js` schedules:
