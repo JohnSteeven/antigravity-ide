@@ -14,6 +14,7 @@ const {
 } = require("./tokenService");
 const {
   createOtpChallenge,
+  resendOtpChallenge,
   verifyOtpChallenge,
 } = require("./otpService");
 
@@ -145,8 +146,10 @@ class AuthService {
     return { session, user };
   }
 
-  async sendOtp({ identifier, channel, purpose = "email-verification" }) {
-    const user = await findUserByIdentifier(identifier);
+  async sendOtp({ identifier, userId, channel, purpose = "register" }) {
+    const user = userId
+      ? await User.findOne({ _id: userId, isDeleted: false })
+      : await findUserByIdentifier(identifier);
     if (!user) {
       const error = new Error("No active user account found matching those details.");
       error.status = 404;
@@ -164,8 +167,12 @@ class AuthService {
       user,
       channel,
       purpose,
-      destination,
+      identifier: destination,
     });
+  }
+
+  async resendOtp(challengeId) {
+    return resendOtpChallenge(challengeId);
   }
 
   async verifyOtp(body, req, res) {

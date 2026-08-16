@@ -17,6 +17,32 @@ const createTransporter = () =>
 
 const getBaseUrl = () => env.clientUrl || "http://localhost:1234";
 
+const sendOtpEmail = async ({ to, code, purpose }) => {
+  const subject = purpose === "password-reset"
+    ? "Your MyJourney password reset code"
+    : "Your MyJourney verification code";
+  const text = `Your MyJourney verification code is ${code}. It expires in 5 minutes.`;
+
+  if (!hasSmtpConfig()) {
+    if (env.nodeEnv !== "production") console.log(`[email:dev] OTP for ${to}: ${code}`);
+    return;
+  }
+
+  try {
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: env.smtp.from,
+      to,
+      subject,
+      text,
+      html: `<p>Your MyJourney verification code is <strong>${code}</strong>.</p><p>It expires in 5 minutes.</p>`,
+    });
+  } catch (error) {
+    if (env.nodeEnv === "production") throw error;
+    console.warn(`[email:dev] SMTP unavailable for OTP delivery to ${to}: ${error.message}`);
+  }
+};
+
 const getEmailFooter = (token = "") => {
   const baseUrl = getBaseUrl();
   const prefUrl = token ? `${baseUrl}/newsletter/preferences?token=${token}` : `${baseUrl}/contact`;
@@ -400,6 +426,7 @@ const handlers = {
 
 module.exports = {
   handlers,
+  sendOtpEmail,
   sendVerificationEmail,
   sendAlreadySubscribedEmail,
   sendWelcomeSubscriberEmail,

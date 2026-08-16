@@ -19,7 +19,7 @@ const signAccessToken = (user) =>
   );
 
 const signRefreshToken = (user, days = env.refreshTokenTtlDays) =>
-  jwt.sign({ sub: user._id.toString() }, env.jwtRefreshSecret, {
+  jwt.sign({ sub: user._id.toString(), jti: crypto.randomUUID() }, env.jwtRefreshSecret, {
     expiresIn: `${days}d`,
   });
 
@@ -76,8 +76,7 @@ const createAuthSession = async ({ user, req, res, remember = false }) => {
   setAuthCookies(res, { accessToken, refreshToken, refreshExpiresAt });
 
   return {
-    accessToken,
-    refreshToken,
+    authenticated: true,
     remember,
     expiresAt: refreshExpiresAt,
   };

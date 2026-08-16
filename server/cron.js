@@ -1,8 +1,12 @@
+const mongoose = require("mongoose");
 const notificationSchedulerService = require("./services/notificationSchedulerService");
 const lifeNotificationService = require("./life/scheduling/notificationService");
 const accountDeletionService = require("./services/accountDeletionService");
 
+const isDbReady = () => mongoose.connection.readyState === 1;
+
 async function runCronJobs() {
+  if (!isDbReady()) return;
   console.log(`[Cron] Running scheduled hourly notifications: ${new Date().toISOString()}`);
   try {
     // 1. Daily Inspirational Quotes
@@ -20,6 +24,7 @@ async function runCronJobs() {
 }
 
 async function runLifeNotificationJobs() {
+  if (!isDbReady()) return;
   try {
     await lifeNotificationService.processDueNotifications({ limit: 100 });
   } catch (error) {
@@ -28,6 +33,7 @@ async function runLifeNotificationJobs() {
 }
 
 async function runLifeReminderMaintenance() {
+  if (!isDbReady()) return;
   try {
     await lifeNotificationService.replenishReminderJobs({ daysAhead: 14, batchSize: 200, maximum: 5000 });
     await lifeNotificationService.scheduleBriefJobs({ daysAhead: 1, batchSize: 200 });

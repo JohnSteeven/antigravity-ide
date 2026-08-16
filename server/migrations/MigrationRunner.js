@@ -14,8 +14,8 @@
  *    004-add-media-folders.js
  *    ...
  *
- *  Run via: npm run migrate
- *  Or automatically on server start (if AUTO_MIGRATE=true)
+ *  Run explicitly via: npm run migrate
+ *  Server startup does not apply migrations automatically.
  *
  *  Each migration file exports:
  *    module.exports = {

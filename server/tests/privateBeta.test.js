@@ -12,6 +12,7 @@ jest.setTimeout(20000);
 
 describe('Private Beta Hardening & Security Suite', () => {
   let adminToken;
+  let createdAdminId = null;
 
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
@@ -24,12 +25,15 @@ describe('Private Beta Hardening & Security Suite', () => {
         lastName: 'Beta',
         username: 'admin_beta_test',
         email: 'admin_beta_test@myjourney.com',
+        countryCode: '+91',
+        mobile: '+919000000001',
         passwordHash: '$2b$12$e0MYzXy5n79Wn.Zz1234567890123456789012345678901234567890',
         role: 'Admin',
         status: 'ACTIVE',
         tokenVersion: 0,
         verified: { email: true, mobile: true },
       });
+      createdAdminId = admin._id;
     }
     adminToken = jwt.sign(
       { sub: String(admin._id), role: admin.role, tokenVersion: admin.tokenVersion || 0 },
@@ -39,6 +43,9 @@ describe('Private Beta Hardening & Security Suite', () => {
   });
 
   afterAll(async () => {
+    const SecretVault = require('../models/SecretVault');
+    await SecretVault.deleteMany({ secretKey: { $in: ['KEY_ONE', 'KEY_TWO', 'TAMPER_KEY'] } });
+    if (createdAdminId) await User.deleteOne({ _id: createdAdminId });
     await mongoose.disconnect();
   });
 

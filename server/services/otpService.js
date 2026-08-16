@@ -61,6 +61,31 @@ const createOtpChallenge = async ({ user, identifier, channel, purpose }) => {
   };
 };
 
+const resendOtpChallenge = async (challengeId) => {
+  const challenge = await OTP.findById(challengeId).populate("user");
+
+  if (!challenge || !challenge.user) {
+    const error = new Error("OTP challenge was not found. Please start again.");
+    error.status = 404;
+    error.code = "OTP_CHALLENGE_NOT_FOUND";
+    throw error;
+  }
+
+  if (challenge.resendAvailableAt.getTime() > Date.now()) {
+    const error = new Error("Please wait before requesting another OTP.");
+    error.status = 429;
+    error.code = "OTP_RESEND_NOT_READY";
+    throw error;
+  }
+
+  return createOtpChallenge({
+    user: challenge.user,
+    identifier: challenge.identifier,
+    channel: challenge.channel,
+    purpose: challenge.purpose,
+  });
+};
+
 const verifyOtpChallenge = async ({ challengeId, code, purpose }) => {
   const challenge = await OTP.findById(challengeId).populate("user");
 
@@ -95,4 +120,4 @@ const verifyOtpChallenge = async ({ challengeId, code, purpose }) => {
   return challenge;
 };
 
-module.exports = { createOtpChallenge, verifyOtpChallenge };
+module.exports = { createOtpChallenge, resendOtpChallenge, verifyOtpChallenge };

@@ -38,12 +38,12 @@ class AuditLogger {
         user: userId || req?.user?.id || null,
         ipAddress: ip,
         userAgent,
-        details: details || `${action} on ${entity} ${entityId || ''}`.trim(),
-        metadata: {
-          entity,
-          entityId,
-          diff,
-        },
+        description: details || `${action} on ${entity} ${entityId || ''}`.trim(),
+        resourceType: entity,
+        resourceId: entityId ? String(entityId) : undefined,
+        newValue: diff || undefined,
+        module: entity,
+        status: /denied|fail|error/i.test(action) ? 'failure' : 'success',
       };
 
       if (ActivityLog) {

@@ -76,7 +76,7 @@ class AuthController {
 
   async resendOtp(req, res, next) {
     try {
-      const challenge = await authService.sendOtp(req.body);
+      const challenge = await authService.resendOtp(req.body.challengeId);
       res.json({
         ...challenge,
         message: `A fresh OTP was sent to ${challenge.maskedIdentifier}.`,
