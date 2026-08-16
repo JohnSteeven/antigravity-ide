@@ -10,6 +10,8 @@
     "dev:server": "node server/index.js",
     "build": "parcel build index.html --no-cache",
     "seed:articles": "node server/scripts/seedArticles.js",
+    "seed:creator-demo": "node server/scripts/seedCreatorDemo.js",
+    "seed:creator-demo:reset": "node server/scripts/seedCreatorDemo.js --reset",
     "check:server": "node -e \"const fs=require('fs'),path=require('path'),cp=require('child_process');function walk(d){fs.readdirSync(d).forEach(f=>{const p=path.join(d,f);if(fs.statSync(p).isDirectory())walk(p);else if(p.endsWith('.js'))cp.execSync('node --check \\\"'+p+'\\\"');});}walk('server');console.log('Server JS syntax check passed.');\"",
     "test": "jest",
     "test:coverage": "jest --coverage",
