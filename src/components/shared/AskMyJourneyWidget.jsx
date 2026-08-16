@@ -1,174 +1,279 @@
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- *  AskMyJourneyWidget.jsx  —  Public Reader AI Assistant Widget
- *  MyJourney CMS  |  Stage 3 — Phase 20B: AI Knowledge Assistant
+ *  AskMyJourneyWidget.jsx  —  Floating AI Companion
+ *  MyJourney CMS  |  Stage 4 — MyJourney Agent Premium UI Pass
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import apiService from '../../services/apiService';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
-  FiZap, FiX, FiSend, FiRefreshCw, FiBookOpen,
-  FiThumbsUp, FiThumbsDown, FiHelpCircle, FiHelpCircle as FiQuiz, FiMinimize2
-} from 'react-icons/fi';
+  FiBookOpen,
+  FiChevronRight,
+  FiLock,
+  FiMaximize2,
+  FiMic,
+  FiMicOff,
+  FiRefreshCw,
+  FiSend,
+  FiX,
+  FiZap,
+} from "react-icons/fi";
 
-export default function AskMyJourneyWidget({ articleSlug = null, categorySlug = null }) {
-  const [isAiAvailable, setIsAiAvailable] = useState(false);
+import { useAgent } from "../../features/agent/AgentContext.jsx";
+import VoiceControls from "../../features/agent/voice/VoiceControls.jsx";
+import { useAuth } from "../../hooks/useAuth";
+import "../../features/agent/agent.css";
+
+const toolHumanLabels = {
+  "account.getProfile": "Account Profile",
+  "account.getSubscription": "Subscription Status",
+  "life.getToday": "Today's Schedule",
+  "life.getHabits": "Life Habits",
+  "life.getGoals": "Life Goals",
+  "life.getRecentProgress": "Recent Progress",
+  "learn.searchCourses": "Course Search",
+  "learn.getEnrollments": "Course Enrollments",
+  "learn.getProgress": "Learning Progress",
+  "learn.getNextLesson": "Next Lesson",
+  "content.searchArticles": "Article Search",
+  "content.searchStories": "Story Search",
+  "creators.search": "Creator Directory",
+  "creators.getProfile": "Creator Profile",
+  "knowledge.search": "Knowledge Base",
+  "life.recordWater": "Water Log",
+  "life.completeHabit": "Habit Completion",
+  "life.createTask": "Life Task",
+};
+
+function formatAssistantText(text) {
+  if (!text) return null;
+  const clean = text.replace(/---\s*SOURCE\s*\d+\s*---/gi, "").trim();
+  const paragraphs = clean.split(/\n\n+/).filter(Boolean);
+
+  return paragraphs.map((para, idx) => {
+    const lines = para.split("\n").map((l) => l.trim()).filter(Boolean);
+    const isList =
+      lines.length > 1 &&
+      lines.every((l) => l.startsWith("- ") || l.startsWith("• ") || l.startsWith("* ") || /^\d+\.\s/.test(l));
+
+    if (isList) {
+      return (
+        <ul key={idx}>
+          {lines.map((item, itemIdx) => (
+            <li key={itemIdx}>{item.replace(/^[-•*]\s+|\d+\.\s+/, "")}</li>
+          ))}
+        </ul>
+      );
+    }
+    return <p key={idx}>{para}</p>;
+  });
+}
+
+function CitationList({ citations }) {
+  if (!citations?.length) return null;
+
+  return (
+    <div className="agent-message__citations">
+      <div className="agent-citations__title">
+        <FiBookOpen aria-hidden="true" /> Sources
+      </div>
+      {citations.map((c, idx) => {
+        const title = c.title || c.slug || "Article Source";
+        const tags = Array.isArray(c.tags)
+          ? c.tags.join(" · ")
+          : c.category || "MyJourney";
+
+        return c.slug ? (
+          <Link
+            key={c.id || c._id || idx}
+            to={`/articles/${encodeURIComponent(c.slug)}`}
+            className="agent-source-card"
+          >
+            <div className="agent-source-card__info">
+              <span className="agent-source-card__title">
+                [{idx + 1}] {title}
+              </span>
+              <span className="agent-source-card__tags">{tags}</span>
+            </div>
+            <span className="agent-source-card__arrow">
+              <FiChevronRight aria-hidden="true" />
+            </span>
+          </Link>
+        ) : (
+          <div key={c.id || c._id || idx} className="agent-source-card">
+            <div className="agent-source-card__info">
+              <span className="agent-source-card__title">
+                [{idx + 1}] {title}
+              </span>
+              <span className="agent-source-card__tags">{tags}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ToolExecutions({ executions }) {
+  if (!executions?.length) return null;
+  const successful = executions.filter((t) => t.status !== "failed");
+  if (!successful.length) return null;
+
+  return (
+    <div className="agent-message__tools" aria-label="Tools used">
+      {successful.slice(0, 3).map((e, idx) => {
+        const key = e.toolKey || e.toolName || e.tool || "";
+        const label = toolHumanLabels[key] || e.displayName || key || "Domain Tool";
+        return (
+          <span key={e.id || e._id || idx} className="agent-tool-chip">
+            <span className="agent-tool-chip__dot" aria-hidden="true" />
+            {label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function EntitlementNotice({ content }) {
+  const readable = String(content || "")
+    .replace(/life(?:\.|\s+)getToday/gi, "Life and Today activities")
+    .replace(/life(?:\.|\s+)getHabits/gi, "Life habits")
+    .replace(/life(?:\.|\s+)getGoals/gi, "Life goals")
+    .replace(/life(?:\.|\s+)[a-zA-Z0-9_]+/gi, "private Life data");
+
+  return (
+    <div className="agent-entitlement-notice">
+      <div className="agent-entitlement-notice__header">
+        <FiLock aria-hidden="true" /> Premium Feature
+      </div>
+      <div className="agent-entitlement-notice__body">{readable}</div>
+      <Link to="/pricing" className="agent-entitlement-notice__action">
+        Upgrade to Premium →
+      </Link>
+    </div>
+  );
+}
+
+function MessageBubble({ message }) {
+  const assistant = message.role === "assistant";
+  const content = String(message.content || "");
+  const isPremiumNotice =
+    assistant &&
+    (content.includes("MyJourney Premium is required") ||
+      content.includes("Upgrade to get full access"));
+
+  const citations = Array.isArray(message.citations) ? message.citations : [];
+  const toolExecutions = Array.isArray(message.toolExecutions)
+    ? message.toolExecutions
+    : [];
+
+  return (
+    <article
+      className={`agent-message agent-message--${assistant ? "assistant" : "user"} ${
+        message.status === "sending" ? "is-sending" : ""
+      }`}
+      aria-label={assistant ? "MyJourney response" : "Your message"}
+    >
+      <div className="agent-message__bubble">
+        {assistant ? formatAssistantText(content) : content}
+      </div>
+
+      {isPremiumNotice && <EntitlementNotice content={content} />}
+
+      {message.status === "failed" && (
+        <span className="agent-message__failed">Message was not delivered.</span>
+      )}
+
+      {toolExecutions.length > 0 && (
+        <ToolExecutions executions={toolExecutions} />
+      )}
+
+      {citations.length > 0 && <CitationList citations={citations} />}
+    </article>
+  );
+}
+
+export default function AskMyJourneyWidget({
+  articleSlug = null,
+  categorySlug = null,
+}) {
+  const {
+    capabilities,
+    messages,
+    sending,
+    error,
+    sendMessage,
+    cancelMessage,
+  } = useAgent();
+  const { isAuthenticated } = useAuth();
+
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [mode, setMode] = useState('hybrid');
-  const [loading, setLoading] = useState(false);
-  const [conversationId, setConversationId] = useState(null);
-  const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-  const [quizLoading, setQuizLoading] = useState(false);
+  const [query, setQuery] = useState("");
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [authPrompt, setAuthPrompt] = useState(false);
 
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
-  // Check AI provider status on mount
-  useEffect(() => {
-    let isMounted = true;
-    apiService
-      .get('/api/ai/status')
-      .then((res) => {
-        if (isMounted && res?.data?.available) {
-          setIsAiAvailable(true);
-        } else if (isMounted) {
-          setIsAiAvailable(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setIsAiAvailable(false);
-      });
+  const agentEnabled = capabilities?.agentEnabled !== false;
 
-    return () => {
-      isMounted = false;
-    };
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   useEffect(() => {
     if (isOpen) scrollToBottom();
-  }, [messages, isOpen]);
-
-  // Load suggested questions when opening
-  const fetchSuggested = useCallback(async () => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (articleSlug) queryParams.append('articleSlug', articleSlug);
-      if (categorySlug) queryParams.append('category', categorySlug);
-
-      const res = await apiService.get(`/api/ai/suggested-questions?${queryParams.toString()}`);
-      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-        setSuggestedQuestions(res.data);
-      } else {
-        setSuggestedQuestions([
-          'How do I learn React?',
-          'Recommend backend articles',
-          'Explain JWT',
-          'What should I read today?',
-        ]);
-      }
-    } catch (err) {
-      setSuggestedQuestions([
-        'How do I learn React?',
-        'Recommend backend articles',
-        'Explain JWT',
-        'What should I read today?',
-      ]);
-    }
-  }, [articleSlug, categorySlug]);
+  }, [messages, isOpen, scrollToBottom]);
 
   useEffect(() => {
-    if (isOpen && suggestedQuestions.length === 0) {
-      fetchSuggested();
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen, fetchSuggested, suggestedQuestions.length]);
+  }, [isOpen]);
 
-  const handleSend = async (textToSend) => {
-    const text = textToSend || query;
-    if (!text.trim() || loading) return;
+  const handleSend = useCallback(
+    async (textToSend) => {
+      const text = String(textToSend || query).trim();
+      if (!text || sending) return;
 
-    const userMsg = { role: 'user', content: text, createdAt: new Date() };
-    setMessages((prev) => [...prev, userMsg]);
-    setQuery('');
-    setLoading(true);
-
-    try {
-      const res = await apiService.post('/api/ai/chat', {
-        query: text,
-        mode,
-        interface: 'reader',
-        conversationId,
-        contextArticleSlug: articleSlug,
-        category: categorySlug,
-      });
-
-      if (res?.data) {
-        const assistantMsg = {
-          role: 'assistant',
-          content: res.data.answer,
-          citations: res.data.citations || [],
-          sourceType: res.data.sourceType,
-          id: res.data.messageId || Date.now().toString(),
-          createdAt: new Date(),
-        };
-
-        if (res.data.conversationId) setConversationId(res.data.conversationId);
-        setMessages((prev) => [...prev, assistantMsg]);
+      if (!isAuthenticated) {
+        setAuthPrompt(true);
+        return;
       }
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Sorry, I hit an error answering that. Please make sure an AI provider is configured in CMS.',
-          isError: true,
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleFeedback = async (messageId, feedback) => {
-    if (!conversationId) return;
-    try {
-      await apiService.post('/api/ai/feedback', { conversationId, messageId, feedback });
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, feedback } : m))
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleGenerateQuiz = async () => {
-    if (!articleSlug || quizLoading) return;
-    setQuizLoading(true);
-    try {
-      const res = await apiService.post('/api/ai/quiz', { articleSlug, questionCount: 5 });
-      if (res?.data?.content) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: `📝 **Article Quiz**\n\n${res.data.content}`,
-            createdAt: new Date(),
+      setAuthPrompt(false);
+      setQuery("");
+      try {
+        await sendMessage(text, {
+          source: "typed",
+          pageContext: {
+            currentRoute: window.location.pathname,
+            articleSlug: articleSlug || undefined,
+            categorySlug: categorySlug || undefined,
           },
-        ]);
+        });
+      } catch (_sendError) {
+        // Handled in AgentContext
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setQuizLoading(false);
-    }
-  };
+    },
+    [query, sending, sendMessage, articleSlug, categorySlug, isAuthenticated]
+  );
 
-  if (!isAiAvailable) return null;
+  const handleVoiceTranscript = useCallback(
+    (transcript) => {
+      if (!transcript) return;
+      if (!isAuthenticated) {
+        setAuthPrompt(true);
+        return;
+      }
+      sendMessage(transcript, { source: "voice" }).catch(() => {});
+    },
+    [sendMessage, isAuthenticated]
+  );
+
+  if (!agentEnabled) return null;
 
   return (
     <>
@@ -176,254 +281,205 @@ export default function AskMyJourneyWidget({ articleSlug = null, categorySlug = 
       {!isOpen && (
         <button
           type="button"
+          id="ask-myjourney-open-btn"
+          className="ask-myjourney-trigger"
           onClick={() => setIsOpen(true)}
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 9999,
-            background: 'var(--paper, #1a1a1a)',
-            color: 'var(--ink, #ffffff)',
-            border: '1px solid var(--line, rgba(255,255,255,0.2))',
-            borderRadius: 100,
-            padding: '12px 20px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            cursor: 'pointer',
-            fontWeight: 700,
-            fontSize: '0.9rem',
-            transition: 'transform 0.2s ease, boxShadow 0.2s ease',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          title="Open Ask MyJourney AI"
         >
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-          <FiZap style={{ color: '#f59e0b' }} />
-          <span>Ask MyJourney AI</span>
+          <span className="ask-myjourney-trigger__dot" aria-hidden="true" />
+          <FiZap className="ask-myjourney-trigger__icon" aria-hidden="true" />
+          <span>Ask MyJourney</span>
         </button>
       )}
 
-      {/* Floating Assistant Drawer / Modal */}
+      {/* Floating Assistant Window */}
       {isOpen && (
         <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            width: 420,
-            maxWidth: 'calc(100vw - 32px)',
-            height: 580,
-            maxHeight: 'calc(100vh - 48px)',
-            background: 'var(--paper, #18181b)',
-            color: 'var(--ink, #f4f4f5)',
-            border: '1px solid var(--line, rgba(255,255,255,0.15))',
-            borderRadius: 16,
-            boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
-            zIndex: 10000,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            fontFamily: 'inherit',
-          }}
+          id="ask-myjourney-panel"
+          className="ask-myjourney-window"
+          role="dialog"
+          aria-labelledby="ask-myjourney-dialog-title"
         >
           {/* Header */}
-          <div
-            style={{
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--line, rgba(255,255,255,0.1))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'var(--panel, #27272a)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#f59e0b20', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+          <header className="agent-panel__header">
+            <div className="agent-panel__identity">
+              <div className="agent-panel__identity-icon" aria-hidden="true">
                 <FiZap />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>MyJourney AI Companion</div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--muted, #a1a1aa)' }}>RAG Knowledge Engine</div>
+                <h2 id="ask-myjourney-dialog-title">Ask MyJourney</h2>
+                <p>Knowledge &amp; Life Assistant</p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Mode Toggle */}
-              <button
-                type="button"
-                onClick={() => setMode(mode === 'hybrid' ? 'knowledge-only' : 'hybrid')}
-                style={{
-                  background: 'none', border: '1px solid var(--line, rgba(255,255,255,0.2))',
-                  borderRadius: 6, padding: '3px 8px', fontSize: '0.7rem', color: 'var(--muted, #a1a1aa)',
-                  cursor: 'pointer',
-                }}
-                title="Toggle Mode"
-              >
-                {mode === 'hybrid' ? 'Hybrid Mode' : 'Knowledge Only'}
-              </button>
-
-              <button
-                type="button"
+            <div className="agent-panel__header-actions">
+              <Link
+                to="/agent"
                 onClick={() => setIsOpen(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--muted, #a1a1aa)', cursor: 'pointer', fontSize: '1.1rem' }}
+                className="agent-panel__header-btn"
+                title="Open full MyJourney Agent"
+                aria-label="Open full Agent page"
               >
-                <FiX />
+                <FiMaximize2 size={15} aria-hidden="true" />
+              </Link>
+              <button
+                type="button"
+                className="agent-panel__header-btn"
+                onClick={() => setIsOpen(false)}
+                title="Close"
+                aria-label="Close Ask MyJourney"
+              >
+                <FiX size={17} aria-hidden="true" />
               </button>
             </div>
-          </div>
+          </header>
 
-          {/* Messages Container */}
-          <div style={{ flex: 1, padding: 16, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Messages Body */}
+          <div className="agent-panel__messages" role="log" aria-live="polite">
             {messages.length === 0 ? (
-              <div style={{ textAlign: 'center', margin: 'auto 0', padding: '12px 8px' }}>
-                <p style={{ fontSize: '0.88rem', color: 'var(--muted, #a1a1aa)', marginBottom: 16 }}>
-                  Ask me anything about articles, topics, or recommendations.
+              <div className="agent-panel__welcome">
+                <div className="agent-panel__welcome-icon" aria-hidden="true">
+                  <FiZap />
+                </div>
+                <h3>What would make today clearer?</h3>
+                <p>
+                  Ask about MyJourney stories, explore courses, or ask about
+                  your Life habits and goals.
                 </p>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-                  {suggestedQuestions.map((q, idx) => (
+                <div className="agent-panel__chips">
+                  {[
+                    "What are today's activities?",
+                    "Show my goals",
+                    "Recommend an article",
+                    "Find courses on React",
+                  ].map((q, idx) => (
                     <button
                       key={idx}
                       type="button"
+                      className="agent-panel__chip"
                       onClick={() => handleSend(q)}
-                      style={{
-                        padding: '8px 12px', borderRadius: 100, border: '1px solid var(--line, rgba(255,255,255,0.15))',
-                        background: 'var(--panel, #27272a)', color: 'var(--ink, #f4f4f5)',
-                        fontSize: '0.78rem', cursor: 'pointer', textAlign: 'left',
-                        transition: 'background 0.15s ease',
-                      }}
+                      disabled={sending}
                     >
                       {q}
                     </button>
                   ))}
-                  {articleSlug && (
-                    <button
-                      type="button"
-                      onClick={handleGenerateQuiz}
-                      disabled={quizLoading}
-                      style={{
-                        padding: '8px 12px', borderRadius: 100, border: '1px solid #f59e0b50',
-                        background: '#f59e0b15', color: '#f59e0b',
-                        fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600,
-                      }}
-                    >
-                      {quizLoading ? 'Generating Quiz...' : '✨ Generate Article Quiz'}
-                    </button>
-                  )}
                 </div>
               </div>
             ) : (
               messages.map((msg, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                  }}
-                >
-                  <div
-                    style={{
-                      maxWidth: '85%',
-                      padding: '10px 14px',
-                      borderRadius: 12,
-                      background: msg.role === 'user' ? '#2563eb' : 'var(--panel, #27272a)',
-                      color: msg.role === 'user' ? '#fff' : 'var(--ink, #f4f4f5)',
-                      border: msg.role === 'user' ? 'none' : '1px solid var(--line, rgba(255,255,255,0.1))',
-                      fontSize: '0.85rem',
-                      lineHeight: 1.5,
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {msg.content}
-                  </div>
-
-                  {/* Sources / Citations */}
-                  {msg.citations && msg.citations.length > 0 && (
-                    <div style={{ maxWidth: '85%', marginTop: 6, padding: '8px 10px', background: 'var(--panel, #27272a)', borderRadius: 8, fontSize: '0.75rem' }}>
-                      <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--muted, #a1a1aa)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <FiBookOpen size={12} /> Sources:
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {msg.citations.map((c, cIdx) => (
-                          <a
-                            key={cIdx}
-                            href={`/articles/${c.slug}`}
-                            style={{ color: '#60a5fa', textDecoration: 'underline', fontSize: '0.75rem' }}
-                          >
-                            ✓ {c.title}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Feedback */}
-                  {msg.role === 'assistant' && !msg.isError && (
-                    <div style={{ display: 'flex', gap: 8, marginTop: 4, fontSize: '0.7rem', color: 'var(--muted, #a1a1aa)' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleFeedback(msg.id, 'helpful')}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: msg.feedback === 'helpful' ? '#10b981' : 'inherit' }}
-                      >
-                        <FiThumbsUp size={12} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleFeedback(msg.id, 'not_helpful')}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: msg.feedback === 'not_helpful' ? '#ef4444' : 'inherit' }}
-                      >
-                        <FiThumbsDown size={12} />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <MessageBubble key={msg._id || msg.id || i} message={msg} />
               ))
             )}
-            {loading && (
-              <div style={{ fontSize: '0.8rem', color: 'var(--muted, #a1a1aa)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <FiRefreshCw style={{ animation: 'spin 1s linear infinite' }} /> Searching knowledge base...
+
+            {sending && (
+              <div className="agent-panel__working" role="status">
+                <FiRefreshCw aria-hidden="true" />
+                <span>MyJourney is thinking…</span>
               </div>
             )}
+
+            {authPrompt && !isAuthenticated && (
+              <div className="agent-page__auth-note" role="status">
+                <strong>Sign in required: </strong>
+                Please{" "}
+                <Link to="/login" style={{ fontWeight: 700, textDecoration: "underline" }}>
+                  sign in
+                </Link>{" "}
+                to ask about your private Life data and chat with MyJourney Agent.
+              </div>
+            )}
+
+            {error && !sending && (
+              <div className="agent-panel__error" role="alert">
+                {error}
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Footer Input */}
-          <form
-            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-            style={{
-              padding: 12, borderTop: '1px solid var(--line, rgba(255,255,255,0.1))',
-              display: 'flex', gap: 8, background: 'var(--panel, #27272a)',
-            }}
-          >
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask a question..."
-              style={{
-                flex: 1, padding: '8px 12px', borderRadius: 8,
-                border: '1px solid var(--line, rgba(255,255,255,0.15))',
-                background: 'var(--paper, #18181b)', color: 'var(--ink, #f4f4f5)',
-                fontSize: '0.85rem',
+          {/* Voice controls drawer */}
+          {voiceOpen && (
+            <div style={{ padding: "0.65rem 1.25rem", borderTop: "1px solid var(--agent-line)", background: "var(--agent-panel)" }}>
+              <VoiceControls
+                onTranscript={handleVoiceTranscript}
+                disabled={sending}
+              />
+            </div>
+          )}
+
+          {/* Composer Footer */}
+          <footer className="agent-composer">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSend();
               }}
-            />
-            <button
-              type="submit"
-              disabled={loading || !query.trim()}
-              style={{
-                padding: '8px 14px', borderRadius: 8, border: 'none',
-                background: '#2563eb', color: '#fff', cursor: 'pointer',
-                fontWeight: 600, fontSize: '0.85rem',
-              }}
+              className="agent-composer__form"
             >
-              <FiSend />
-            </button>
-          </form>
+              <button
+                type="button"
+                onClick={() => setVoiceOpen((v) => !v)}
+                title={voiceOpen ? "Hide voice input" : "Use voice input"}
+                style={{
+                  background: voiceOpen ? "var(--agent-accent-light)" : "transparent",
+                  border: "none",
+                  borderRadius: "var(--agent-radius-md)",
+                  color: voiceOpen ? "var(--agent-accent)" : "var(--agent-muted)",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: 38,
+                  width: 38,
+                  marginBottom: 2,
+                  transition: "all 0.15s ease",
+                }}
+                aria-label="Toggle voice input"
+              >
+                {voiceOpen ? <FiMicOff size={16} /> : <FiMic size={16} />}
+              </button>
+
+              <textarea
+                ref={inputRef}
+                className="agent-composer__textarea"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Ask MyJourney anything…"
+                rows="1"
+                disabled={sending}
+              />
+
+              {sending ? (
+                <button
+                  type="button"
+                  className="agent-composer__cancel"
+                  onClick={cancelMessage}
+                  title="Stop"
+                >
+                  Stop
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="agent-composer__send"
+                  disabled={!query.trim()}
+                  aria-label="Send message"
+                  title="Send"
+                >
+                  <FiSend aria-hidden="true" />
+                </button>
+              )}
+            </form>
+          </footer>
         </div>
       )}
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }

@@ -44,9 +44,11 @@ import NewsletterVerificationPage from "./components/NewsletterVerificationPage"
 import NewsletterPreferencesPage from "./components/NewsletterPreferencesPage";
 import LoadingScreen from "./components/LoadingScreen";
 import { registerLifePwa } from "./pwa/registerLifePwa";
+import { AgentProvider } from "./features/agent/AgentContext.jsx";
 import { playWithFriendsEnabled } from "./features/play-with-friends/config";
 
 import AskMyJourneyWidget from "./components/shared/AskMyJourneyWidget.jsx";
+
 import ReaderDashboard from "./components/ReaderDashboard.jsx";
 import SubscriptionDashboard from "./components/SubscriptionDashboard.jsx";
 import CommunityFeed from "./components/CommunityFeed.jsx";
@@ -66,6 +68,9 @@ const LearnCatalog = lazy(() => import("./features/learn/LearnCatalog.jsx"));
 const CoursePage = lazy(() => import("./features/learn/CoursePage.jsx"));
 const LessonWorkspace = lazy(() => import("./features/learn/LessonWorkspace.jsx"));
 const FormatDetailPage = lazy(() => import("./features/learn/FormatDetailPage.jsx"));
+// MyJourney Agent — full-screen experience
+const AgentPage = lazy(() => import("./features/agent/AgentPage.jsx"));
+
 
 const HomePage = () => (
   <main>
@@ -78,13 +83,17 @@ const HomePage = () => (
   </main>
 );
 
+// AppShell decides which chrome (Header/Footer/Widget) to render per route.
+// The Agent page is a full-screen experience: no header, footer, or floating widget.
 const AppShell = () => {
   const location = useLocation();
   const isCms = location.pathname.startsWith("/cms");
   const isPlayLife = location.pathname.startsWith("/play-life");
   const isPlayWithFriends = location.pathname.startsWith("/play-with-friends");
   const isLife = location.pathname.startsWith("/life");
-  const isImmersive = isPlayLife || isPlayWithFriends;
+  const isAgent = location.pathname.startsWith("/agent");
+  const isImmersive = isPlayLife || isPlayWithFriends || isAgent;
+
   const authRoutes = [
     "/login",
     "/register",
@@ -129,12 +138,18 @@ const Root = () => (
     <FeatureProvider>
       <ThemeProvider>
         <CmsProvider>
-          <AppShell />
+          {/* AgentProvider must be inside AuthProvider to access the authenticated user.
+              It initialises lazily — it does not load conversations until the user is
+              authenticated and navigates to an Agent surface. */}
+          <AgentProvider>
+            <AppShell />
+          </AgentProvider>
         </CmsProvider>
       </ThemeProvider>
     </FeatureProvider>
   </AuthProvider>
 );
+
 
 const appRouter = createBrowserRouter([
   {
@@ -369,6 +384,18 @@ const appRouter = createBrowserRouter([
               </Suspense>
             </LifePremiumGate>
           </ProtectedRoute>
+        ),
+      },
+      {
+        // MyJourney Agent — full-screen experience.
+        // Authentication is NOT enforced at the route level so unauthenticated
+        // users can see a sign-in prompt inside AgentPage. The server enforces
+        // authentication on all conversation endpoints.
+        path: "agent/*",
+        element: (
+          <Suspense fallback={<LoadingScreen message="Opening MyJourney Agent..." />}>
+            <AgentPage />
+          </Suspense>
         ),
       },
       {
