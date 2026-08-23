@@ -1,21 +1,27 @@
 const mongoose = require("mongoose");
 const env = require("../config/env");
 const MongoRoomRepository = require("./persistence/MongoRoomRepository");
-const InMemoryRoomRepository = require("./persistence/InMemoryRoomRepository");
+const MultiplayerError = require("./domain/MultiplayerError");
+const { ERROR_CODES } = require("./domain/constants");
 const MultiplayerAnalyticsService = require("./services/analyticsService");
 const MultiplayerMetrics = require("./observability/metrics");
 const RoomService = require("./services/roomService");
 
-class HybridRoomRepository {
-  constructor() {
-    this.mongoRepo = new MongoRoomRepository();
-    this.memoryRepo = new InMemoryRoomRepository();
+class MongoRequiredRoomRepository {
+  constructor({ connection = mongoose.connection, repository = new MongoRoomRepository() } = {}) {
+    this.connection = connection;
+    this.mongoRepo = repository;
   }
 
   get activeRepo() {
-    return mongoose.connection && mongoose.connection.readyState === 1
-      ? this.mongoRepo
-      : this.memoryRepo;
+    if (this.connection?.readyState !== 1) {
+      throw new MultiplayerError(
+        ERROR_CODES.SERVER_UNAVAILABLE,
+        "Multiplayer storage is temporarily unavailable.",
+        { status: 503, retryable: true }
+      );
+    }
+    return this.mongoRepo;
   }
 
   create(room) { return this.activeRepo.create(room); }
@@ -30,7 +36,7 @@ class HybridRoomRepository {
 }
 
 const createMultiplayerPlatform = ({ repository, analytics, metrics, now } = {}) => {
-  const selectedRepository = repository || new HybridRoomRepository();
+  const selectedRepository = repository || new MongoRequiredRoomRepository();
   const selectedMetrics = metrics || new MultiplayerMetrics();
   const selectedAnalytics = analytics === undefined ? new MultiplayerAnalyticsService() : analytics;
   const roomService = new RoomService({
@@ -51,12 +57,12 @@ const createMultiplayerPlatform = ({ repository, analytics, metrics, now } = {})
       enabled: env.multiplayer.enabled,
       realtime: false,
       redis: false,
-      storage: true,
-      mode: "hybrid",
+      storage: mongoose.connection.readyState === 1,
+      mode: "mongo-required",
     },
   };
 };
 
 const multiplayerPlatform = createMultiplayerPlatform();
 
-module.exports = { createMultiplayerPlatform, multiplayerPlatform };
+module.exports = { createMultiplayerPlatform, MongoRequiredRoomRepository, multiplayerPlatform };

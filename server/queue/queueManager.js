@@ -5,7 +5,8 @@
  * ─────────────────────────────────────────────────────────────────────────────
  *
  *  Abstract background task queue interface.
- *  Supports default in-memory background processing without extra setup.
+ *  Supports explicit in-memory background processing for a single process.
+ *  Unimplemented provider names fail closed rather than pretending to enqueue.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -47,6 +48,12 @@ let _queueInstance = null;
 function getQueue() {
   if (!_queueInstance) {
     const driver = config.get('queue.driver', 'memory');
+    if (driver !== 'memory') {
+      const error = new Error('The configured durable queue adapter is unavailable.');
+      error.status = 503;
+      error.code = 'QUEUE_DRIVER_UNAVAILABLE';
+      throw error;
+    }
     console.info(`[Queue] Initializing background queue driver: ${driver}`);
     _queueInstance = new MemoryQueue();
   }
@@ -56,4 +63,10 @@ function getQueue() {
 module.exports = {
   add: (name, data) => getQueue().add(name, data),
   process: (name, handler) => getQueue().process(name, handler),
+  capability: () => ({
+    driver: config.get('queue.driver', 'memory'),
+    available: config.get('queue.driver', 'memory') === 'memory',
+    durable: false,
+    distributed: false,
+  }),
 };

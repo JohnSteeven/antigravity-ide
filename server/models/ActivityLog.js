@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { redactAuditValue } = require("../utils/logRedaction");
 
 const ActivityLogSchema = new mongoose.Schema(
   {
@@ -27,5 +28,11 @@ const ActivityLogSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+ActivityLogSchema.pre("validate", function redactActivityDiffs(next) {
+  if (this.oldValue !== undefined) this.oldValue = redactAuditValue(this.oldValue);
+  if (this.newValue !== undefined) this.newValue = redactAuditValue(this.newValue);
+  next();
+});
 
 module.exports = mongoose.model("ActivityLog", ActivityLogSchema);

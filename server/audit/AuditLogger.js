@@ -11,6 +11,7 @@
  */
 
 const ActivityLog = require('../models/ActivityLog');
+const { redactAuditValue } = require('../utils/logRedaction');
 
 class AuditLogger {
   /**
@@ -44,15 +45,14 @@ class AuditLogger {
         newValue: diff || undefined,
         module: entity,
         status: /denied|fail|error/i.test(action) ? 'failure' : 'success',
+        requestId: req?.id || undefined,
       };
 
       if (ActivityLog) {
         await ActivityLog.create(logData);
-      } else {
-        console.info('[AuditLog]', JSON.stringify(logData));
       }
     } catch (err) {
-      console.error('[AuditLogger] Failed to write audit log:', err.message);
+      console.error('[AuditLogger] Failed to write audit log.', { errorType: err?.name || 'Error' });
     }
   }
 
@@ -70,7 +70,10 @@ class AuditLogger {
       const valAfter = after ? after[key] : undefined;
 
       if (JSON.stringify(valBefore) !== JSON.stringify(valAfter)) {
-        diff[key] = { before: valBefore, after: valAfter };
+        diff[key] = {
+          before: redactAuditValue(valBefore, key),
+          after: redactAuditValue(valAfter, key),
+        };
       }
     }
 

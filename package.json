@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "description": "article",
   "scripts": {
+    "prestart": "node server/scripts/startupPreflight.js full",
+    "predev": "node server/scripts/startupPreflight.js full",
+    "prestart:ui": "node server/scripts/startupPreflight.js ui",
     "start": "concurrently -k -n \"server,client\" -c \"blue,magenta\" \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
     "dev": "concurrently -k -n \"server,client\" -c \"blue,magenta\" \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
+    "start:ui": "parcel index.html --port 1234 --no-cache",
     "client": "parcel index.html --port 1234 --no-cache",
+    "doctor": "node server/scripts/doctor.js",
+    "clean:parcel-temp": "node server/scripts/clearParcelTemp.js",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
     "build": "parcel build index.html --no-cache",
@@ -40,6 +46,10 @@
   ],
   "author": "NOBLE JOHN STEEVEN",
   "license": "ISC",
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  },
   "bugs": {
     "url": "https://github.com/JohnSteeven/STEEVENWRITES/issues"
   },

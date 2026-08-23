@@ -68,7 +68,6 @@ agentMessageSchema.index(
   { userId: 1, conversationId: 1, clientRequestId: 1 },
   {
     unique: true,
-    sparse: true, // clientRequestId may be null for system/assistant messages
     partialFilterExpression: { clientRequestId: { $type: "string" } },
     name: "agent_msg_idempotency",
   }

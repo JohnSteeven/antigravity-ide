@@ -28,10 +28,10 @@ const OPTIONAL_WITH_DEFAULTS = [
   { key: 'REDIS_URL',      default: null,        description: 'Redis connection URL (required if CACHE_DRIVER=redis)' },
 
   // Queue
-  { key: 'QUEUE_DRIVER',   default: 'memory',   description: 'Queue driver: memory | agenda | bull' },
+  { key: 'QUEUE_DRIVER',   default: 'memory',   description: 'Queue driver: memory (other adapters are not implemented)' },
 
   // Storage
-  { key: 'STORAGE_DRIVER', default: 'local',    description: 'Storage driver: local | s3 | cloudinary | azure' },
+  { key: 'STORAGE_DRIVER', default: 'local',    description: 'Storage driver: local (shared adapters are not implemented)' },
 
   // Search
   { key: 'SEARCH_DRIVER',  default: 'mongo',    description: 'Search driver: mongo | meilisearch | elasticsearch | algolia' },

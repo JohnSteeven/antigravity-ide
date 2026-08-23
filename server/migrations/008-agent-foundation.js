@@ -29,12 +29,12 @@ const INDEXES = Object.freeze({
     // Primary read pattern: load a conversation's messages in chronological order
     [{ conversationId: 1, createdAt: 1 }, { name: "agent_msg_conv_time" }],
     // Idempotency: prevent duplicate messages from client retries
-    // sparse: true so null clientRequestId rows are excluded from the unique constraint
+    // The partial filter excludes null/missing IDs from the unique constraint.
+    // MongoDB forbids combining partialFilterExpression with sparse.
     [
       { userId: 1, conversationId: 1, clientRequestId: 1 },
       {
         unique: true,
-        sparse: true,
         partialFilterExpression: { clientRequestId: { $type: "string" } },
         name: "agent_msg_idempotency",
       },

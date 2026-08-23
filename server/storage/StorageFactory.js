@@ -16,23 +16,31 @@ const config = require('../config/configRegistry');
 function create() {
   const driver = config.get('storage.driver', 'local');
 
+  const loadProvider = (moduleName) => {
+    try {
+      const Provider = require(moduleName);
+      return new Provider();
+    } catch (_error) {
+      const error = new Error('The configured shared storage adapter is unavailable.');
+      error.status = 503;
+      error.code = 'STORAGE_DRIVER_UNAVAILABLE';
+      throw error;
+    }
+  };
+
   switch (driver) {
-    case 's3': {
-      const S3Storage = require('./S3Storage');
-      return new S3Storage();
-    }
-    case 'cloudinary': {
-      const CloudinaryStorage = require('./CloudinaryStorage');
-      return new CloudinaryStorage();
-    }
-    case 'azure': {
-      const AzureStorage = require('./AzureStorage');
-      return new AzureStorage();
-    }
+    case 's3': return loadProvider('./S3Storage');
+    case 'cloudinary': return loadProvider('./CloudinaryStorage');
+    case 'azure': return loadProvider('./AzureStorage');
     case 'local':
-    default:
       const LocalStorage = require('./LocalStorage');
       return new LocalStorage();
+    default: {
+      const error = new Error('The configured storage driver is unsupported.');
+      error.status = 503;
+      error.code = 'STORAGE_DRIVER_UNAVAILABLE';
+      throw error;
+    }
   }
 }
 
@@ -40,6 +48,15 @@ function create() {
 let _instance = null;
 module.exports = {
   create,
+  capability() {
+    const driver = config.get('storage.driver', 'local');
+    return {
+      driver,
+      available: driver === 'local',
+      shared: false,
+      protectedDelivery: false,
+    };
+  },
   get instance() {
     if (!_instance) _instance = create();
     return _instance;

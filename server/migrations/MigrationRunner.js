@@ -33,6 +33,18 @@ const fs   = require('fs');
 const MIGRATIONS_DIR = path.join(__dirname, '../migrations');
 const MIGRATIONS_COLLECTION = '__cms_migrations';
 
+const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+
+const isCompatibleIndex = (index, keys, options = {}) =>
+  same(index.key, keys)
+  && Boolean(index.unique) === Boolean(options.unique)
+  && Boolean(index.sparse) === Boolean(options.sparse)
+  && (options.expireAfterSeconds === undefined
+    || index.expireAfterSeconds === options.expireAfterSeconds)
+  && (options.partialFilterExpression === undefined
+    || same(index.partialFilterExpression, options.partialFilterExpression))
+  && (options.collation === undefined || same(index.collation, options.collation));
+
 class MigrationRunner {
   constructor(db) {
     this.db = db; // MongoDB db instance (from mongoose.connection.db)
@@ -179,12 +191,7 @@ class MigrationRunner {
         for (const [collectionName, specs] of Object.entries(migration.indexes)) {
           const indexes = await this.db.collection(collectionName).indexes().catch((error) => error.codeName === "NamespaceNotFound" ? [] : Promise.reject(error));
           specs.forEach(([keys, options]) => {
-            const compatible = indexes.some((index) => index.name === options.name || (
-              JSON.stringify(index.key) === JSON.stringify(keys)
-              && Boolean(index.unique) === Boolean(options.unique)
-              && Boolean(index.sparse) === Boolean(options.sparse)
-              && (options.expireAfterSeconds === undefined || index.expireAfterSeconds === options.expireAfterSeconds)
-            ));
+            const compatible = indexes.some((index) => isCompatibleIndex(index, keys, options));
             if (!compatible) missingIndexes.push(`${collectionName}.${options.name}`);
           });
         }

@@ -2,20 +2,28 @@ const mongoose = require("mongoose");
 const env = require("./env");
 const seedCmsPermissionsAndRoles = require("./seeder");
 const seedArticles = require("../scripts/seedArticles");
+const { describeMongoTarget } = require("./runtimeDiagnostics");
 
-const connectDb = async () => {
+const connectDb = async ({ runSeeders = true } = {}) => {
   if (mongoose.connection.readyState === 1) return mongoose.connection;
   mongoose.set("strictQuery", true);
   try {
-    await mongoose.connect(env.mongoUri, { serverSelectionTimeoutMS: 3000 });
+    await mongoose.connect(env.mongoUri, {
+      serverSelectionTimeoutMS: env.mongoServerSelectionTimeoutMs,
+    });
     console.log("MongoDB connected");
-    await seedCmsPermissionsAndRoles();
-    if (process.env.SEED_DEMO_DATA === "true") {
-      await seedArticles();
+    if (runSeeders) {
+      await seedCmsPermissionsAndRoles();
+      if (process.env.SEED_DEMO_DATA === "true") {
+        await seedArticles();
+      }
     }
     return mongoose.connection;
   } catch (error) {
-    console.error("MongoDB connection failed; server startup aborted:", error.message);
+    const target = describeMongoTarget(env.mongoUri);
+    console.error(
+      `MongoDB is unavailable at ${target}. Start MongoDB or configure MONGO_URI. Server startup aborted. (${error.name || "ConnectionError"})`
+    );
     throw error;
   }
 };

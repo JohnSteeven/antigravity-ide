@@ -12,6 +12,8 @@ const { requireEntitlement } = require("./middleware/entitlement");
 const { ENTITLEMENTS } = require("./premium/catalog");
 const { csrfProtection, globalLimiter, sanitizeRequest } = require("./middleware/security");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
+const { requestContext } = require("./middleware/requestContext");
+const { getHealth, getReadiness } = require("./health/readiness");
 
 // ── Core routes ────────────────────────────────────────────────────────────────
 const authRoutes = require("./routes/authRoutes");
@@ -87,6 +89,7 @@ const { attachMultiplayerSocketServer } = require("./multiplayer/realtime/socket
 const app = express();
 
 app.set("trust proxy", 1);
+app.use(requestContext);
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -105,9 +108,8 @@ if (env.nodeEnv === "production") app.use(globalLimiter);
 app.use(sanitizeRequest);
 app.use(csrfProtection);
 
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true, service: "myjourney-api" });
-});
+app.get(["/health", "/api/health"], getHealth);
+app.get(["/readiness", "/api/readiness"], getReadiness);
 
 // Auth & user routes
 app.use("/api/auth", authRoutes);
@@ -208,9 +210,10 @@ const startServer = async () => {
   await new Promise((resolve) => httpServer.listen(env.port, resolve));
   console.log(`MyJourney API running on port ${env.port}`);
 
+  let schedulerRuntime = null;
   try {
     const { startScheduler } = require("./cron");
-    startScheduler();
+    schedulerRuntime = startScheduler();
   } catch (err) {
     console.error("Failed to start scheduler:", err);
   }
@@ -220,6 +223,7 @@ const startServer = async () => {
     if (closing) return;
     closing = true;
     console.log(`Received ${signal}; shutting down MyJourney.`);
+    schedulerRuntime?.close();
     await multiplayerRuntime?.close();
     if (httpServer.listening) await new Promise((resolve) => httpServer.close(resolve));
     await mongoose.disconnect();

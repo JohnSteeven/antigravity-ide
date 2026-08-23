@@ -42,19 +42,22 @@ async function runLifeReminderMaintenance() {
   }
 }
 
+let schedulerRuntime = null;
+
 // Start hourly scheduler
 function startScheduler() {
+  if (schedulerRuntime) return schedulerRuntime;
   console.log("[Cron] Initializing hourly notification scheduler...");
   
   // Run once shortly after start (e.g., 5 seconds) to allow server & DB setup to settle
-  setTimeout(() => {
+  const startupTimer = setTimeout(() => {
     runCronJobs();
     runLifeReminderMaintenance();
     runLifeNotificationJobs();
   }, 5000);
 
   // Set interval to run every hour (3600000 ms)
-  setInterval(() => {
+  const hourlyTimer = setInterval(() => {
     runCronJobs();
     runLifeReminderMaintenance();
   }, 60 * 60 * 1000);
@@ -62,9 +65,19 @@ function startScheduler() {
   // Life reminders use persistent, idempotent jobs. The minute poller is a
   // safe local/default worker; a dedicated queue worker can call the same
   // processDueNotifications boundary in production.
-  setInterval(() => {
+  const lifeNotificationTimer = setInterval(() => {
     runLifeNotificationJobs();
   }, 60 * 1000);
+
+  schedulerRuntime = {
+    close() {
+      clearTimeout(startupTimer);
+      clearInterval(hourlyTimer);
+      clearInterval(lifeNotificationTimer);
+      schedulerRuntime = null;
+    },
+  };
+  return schedulerRuntime;
 }
 
 module.exports = { runLifeNotificationJobs, runLifeReminderMaintenance, startScheduler };

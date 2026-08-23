@@ -110,13 +110,13 @@ class NotificationSchedulerService {
       const emailService = require("./emailService");
       const emailDispatches = subscribers.map(sub =>
         emailService.sendNewArticleNotificationEmail({ to: sub.email, article }).catch(err => {
-          console.warn(`Failed sending new article email to ${sub.email}:`, err.message);
+          console.warn('[notifications] New-article email delivery failed.', { errorType: err?.name || 'Error' });
         })
       );
 
       await Promise.all([...userNotifications, ...emailDispatches]);
     } catch (err) {
-      console.error("Error in handleNewArticle:", err);
+      console.error('[notifications] New-article handler failed.', { errorType: err?.name || 'Error' });
     }
   }
 

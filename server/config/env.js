@@ -1,25 +1,50 @@
 require("dotenv").config();
 
 const requiredInProduction = [
-  "MONGO_URI",
+  "CLIENT_URL",
   "JWT_ACCESS_SECRET",
   "JWT_REFRESH_SECRET",
   "MULTIPLAYER_GUEST_SECRET",
+  "REQUEST_LOG_SALT",
 ];
 
 if (process.env.NODE_ENV === "production") {
+  if (!process.env.MONGO_URI && !process.env.MONGODB_URI) {
+    throw new Error("MONGO_URI (or MONGODB_URI) is required in production.");
+  }
   requiredInProduction.forEach((key) => {
     if (!process.env[key]) {
       throw new Error(`${key} is required in production.`);
     }
   });
+  if (process.env.COOKIE_SECURE !== "true") {
+    throw new Error("COOKIE_SECURE=true is required in production.");
+  }
+  if (process.env.CSRF_ENABLED === "false") {
+    throw new Error("CSRF_ENABLED cannot be false in production.");
+  }
+  try {
+    const clientUrl = new URL(process.env.CLIENT_URL);
+    if (clientUrl.protocol !== "https:" || ["localhost", "127.0.0.1"].includes(clientUrl.hostname)) {
+      throw new Error("unsafe");
+    }
+  } catch (error) {
+    throw new Error("CLIENT_URL must be an explicit non-local HTTPS origin in production.");
+  }
 }
 
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.SERVER_PORT || process.env.PORT || 5000),
   clientUrl: process.env.CLIENT_URL || "http://localhost:1234",
-  mongoUri: process.env.MONGO_URI || "mongodb://127.0.0.1:27017/myjourney",
+  mongoUri:
+    process.env.MONGO_URI ||
+    process.env.MONGODB_URI ||
+    "mongodb://127.0.0.1:27017/myjourney",
+  mongoServerSelectionTimeoutMs: Math.max(
+    1000,
+    Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 8000)
+  ),
   jwtAccessSecret:
     process.env.JWT_ACCESS_SECRET || "development-access-secret-change-me",
   jwtRefreshSecret:
@@ -44,6 +69,7 @@ const env = {
   passwordHistoryLimit: Number(process.env.PASSWORD_HISTORY_LIMIT || 5),
   changePasswordRateLimit: Number(process.env.CHANGE_PASSWORD_RATE_LIMIT || 5),
   changePasswordWindowMs: Number(process.env.CHANGE_PASSWORD_WINDOW_MS || 15 * 60 * 1000),
+  requestLogSalt: process.env.REQUEST_LOG_SALT || "development-request-log-salt-change-me",
   passwordMinLength: Number(process.env.PASSWORD_MIN_LENGTH || 8),
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,

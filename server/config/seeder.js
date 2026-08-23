@@ -190,7 +190,7 @@ async function bootstrapAdminIfEnabled() {
   });
 
   // Log confirmation WITHOUT the password
-  console.log(`[Seeder] Bootstrap administrator created. Email: ${email}`);
+  console.log('[Seeder] Bootstrap administrator created.');
   console.log('[Seeder] Set BOOTSTRAP_ADMIN_ENABLED=false once you have logged in.');
 }
 

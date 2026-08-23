@@ -6,7 +6,8 @@
  *
  *  Reads CACHE_DRIVER env to select the appropriate cache backend.
  *  Default: MemoryCache (no external dependencies)
- *  Optional: RedisCache (set CACHE_DRIVER=redis + REDIS_URL)
+ *  Redis is an explicit provider boundary. Selecting it without an installed
+ *  adapter fails closed; it never silently falls back to process memory.
  *
  *  Usage in controllers:
  *    const cache = require('../cache/cacheManager');
@@ -96,9 +97,11 @@ function createCache() {
         const RedisCache = require('./RedisCache');
         console.info('[Cache] Using Redis cache driver');
         return new RedisCache();
-      } catch (err) {
-        console.warn('[Cache] Redis driver unavailable — falling back to memory:', err.message);
-        return new MemoryCache();
+      } catch (_error) {
+        const error = new Error('The configured Redis cache adapter is unavailable.');
+        error.status = 503;
+        error.code = 'CACHE_DRIVER_UNAVAILABLE';
+        throw error;
       }
     }
 
@@ -114,9 +117,14 @@ function createCache() {
       };
 
     case 'memory':
-    default:
       console.info('[Cache] Using in-memory cache driver');
       return new MemoryCache();
+    default: {
+      const error = new Error('The configured cache driver is unsupported.');
+      error.status = 503;
+      error.code = 'CACHE_DRIVER_UNAVAILABLE';
+      throw error;
+    }
   }
 }
 
@@ -134,6 +142,14 @@ const cache = {
   async invalidatePattern(pattern)   { return this.instance.invalidatePattern(pattern); },
   async flush()                      { return this.instance.flush(); },
   async health()                     { return this.instance.health(); },
+  capability() {
+    const driver = config.get('cache.driver', 'memory');
+    return {
+      driver,
+      available: ['memory', 'null', 'none'].includes(driver),
+      distributed: false,
+    };
+  },
 
   /** Get-or-set: fetch from cache, or compute and store. */
   async remember(key, ttl, fetchFn) {

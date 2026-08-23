@@ -3,7 +3,7 @@ const connectDb = require("../config/db");
 const MigrationRunner = require("../migrations/MigrationRunner");
 
 const run = async () => {
-  await connectDb();
+  await connectDb({ runSeeders: false });
   const runner = new MigrationRunner(mongoose.connection.db);
   const command = process.argv[2] || "up";
   if (command === "status") console.table(await runner.status());

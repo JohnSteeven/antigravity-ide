@@ -130,7 +130,7 @@ class NewsletterCampaignService {
         entry.status = "success";
         sentCount++;
       } catch (err) {
-        console.warn(`Campaign send failed for recipient ${sub.email}:`, err.message);
+        console.warn('[newsletter] Campaign delivery failed.', { errorType: err?.name || 'Error' });
         entry.status = "failed";
         failedCount++;
       }
