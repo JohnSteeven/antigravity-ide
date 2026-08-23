@@ -14,7 +14,7 @@ const TestExecutionSchema = new mongoose.Schema(
     passedCount: { type: Number, required: true },
     failedCount: { type: Number, default: 0 },
     durationMs: { type: Number, default: 0 },
-    coveragePercent: { type: Number, default: 100 },
+    coveragePercent: { type: Number, default: null, min: 0, max: 100 },
   },
   { timestamps: true }
 );

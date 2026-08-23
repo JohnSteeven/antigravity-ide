@@ -72,7 +72,9 @@ const SEOMetadataSchema = new mongoose.Schema(
     },
     seoScore: {
       type: Number,
-      default: 85,
+      default: null,
+      min: 0,
+      max: 100,
     },
     issues: [SEOIssueSchema],
     createdBy: {

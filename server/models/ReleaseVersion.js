@@ -12,8 +12,8 @@ const ReleaseVersionSchema = new mongoose.Schema(
     version: { type: String, required: true, unique: true, index: true }, // e.g. 6.0.0
     releaseName: { type: String, required: true },
     releaseNotes: { type: String, default: '' },
-    isProduction: { type: Boolean, default: true },
-    featuresCount: { type: Number, default: 30 }, // 30 completed phases!
+    isProduction: { type: Boolean, default: false },
+    featuresCount: { type: Number, default: 0, min: 0 },
     releasedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

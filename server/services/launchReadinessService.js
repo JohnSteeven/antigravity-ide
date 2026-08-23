@@ -1,86 +1,220 @@
 /**
- * ─────────────────────────────────────────────────────────────────────────────
- *  launchReadinessService.js  —  Production Checklist & Readiness Evaluator
- *  MyJourney Platform  |  Stage 6 — Phase 30: Launch Readiness Platform
- * ─────────────────────────────────────────────────────────────────────────────
+ * Read-only, evidence-based production readiness audit.
+ *
+ * This service deliberately reports unavailable and incomplete dependencies as
+ * failures. Running an audit never creates release, deployment, test, or audit
+ * records and never calls an external provider.
  */
 
+'use strict';
+
 const mongoose = require('mongoose');
-const LaunchReport = require('../models/LaunchReport');
+const env = require('../config/env');
 const Article = require('../models/Article');
 const AIProvider = require('../models/AIProvider');
 const SearchIndex = require('../models/SearchIndex');
+const MigrationRunner = require('../migrations/MigrationRunner');
+const LearnMediaProviderService = require('../learn/mediaProviderService');
+const GovernanceService = require('./governanceService');
+const { getPublicDurationCatalog } = require('../premium/catalog');
+const cache = require('../cache/cacheManager');
+const queue = require('../queue/queueManager');
+const storage = require('../storage/StorageFactory');
+
+const check = (category, name, passed, details, critical = false) => ({
+  category,
+  name,
+  passed: Boolean(passed),
+  critical,
+  details,
+});
+
+const safeCount = async (model, filter = {}) => {
+  try {
+    return { available: true, count: await model.countDocuments(filter) };
+  } catch (_error) {
+    return { available: false, count: null };
+  }
+};
+
+const hasProductionClientOrigin = () => {
+  try {
+    const clientUrl = new URL(env.clientUrl);
+    return clientUrl.protocol === 'https:'
+      && !['localhost', '127.0.0.1'].includes(clientUrl.hostname);
+  } catch (_error) {
+    return false;
+  }
+};
+
+const migrationEvidence = async (databaseConnected) => {
+  if (!databaseConnected || !mongoose.connection.db) {
+    return { passed: false, details: 'Migration status unavailable because MongoDB is not connected.' };
+  }
+
+  try {
+    const runner = new MigrationRunner(mongoose.connection.db);
+    const migrations = runner.loadMigrations();
+    const applied = await runner.getApplied();
+    const pending = migrations.filter((migration) => !applied.has(migration.name));
+    return {
+      passed: pending.length === 0,
+      details: pending.length === 0
+        ? `${migrations.length} registered migrations are applied.`
+        : `${pending.length} of ${migrations.length} registered migrations are pending.`,
+    };
+  } catch (_error) {
+    return { passed: false, details: 'Migration status could not be read.' };
+  }
+};
+
+const vaultEvidence = () => {
+  if (!GovernanceService.isVaultEnabled()) {
+    return { passed: false, details: 'The application secret vault is disabled.' };
+  }
+
+  try {
+    GovernanceService.getVaultKey();
+    return { passed: true, details: 'The secret vault is enabled and its key format is valid.' };
+  } catch (_error) {
+    return { passed: false, details: 'The secret vault is enabled but its key is invalid.' };
+  }
+};
 
 class LaunchReadinessService {
-  /**
-   * Execute full Automated Production Readiness Checklist.
-   */
   static async runReadinessAudit() {
     const checks = [];
+    const databaseConnected = mongoose.connection.readyState === 1;
 
-    // 1. Database Connectivity Check
-    const dbConnected = mongoose.connection.readyState === 1;
-    checks.push({
-      category: 'Database',
-      name: 'MongoDB Connection & Status',
-      passed: dbConnected,
-      details: dbConnected ? 'MongoDB connected and responsive.' : 'Database connection error.',
-    });
+    checks.push(check(
+      'Database',
+      'MongoDB connection',
+      databaseConnected,
+      databaseConnected ? 'MongoDB is connected.' : 'MongoDB is not connected.',
+      true
+    ));
 
-    // 2. Environment Variables Check
-    const envPassed = Boolean(process.env.PORT || true);
-    checks.push({
-      category: 'Environment',
-      name: 'Node Environment & Port Config',
-      passed: envPassed,
-      details: 'Port and environment variables configured correctly.',
-    });
+    const productionEnvironment = env.nodeEnv === 'production'
+      && env.cookieSecure
+      && env.csrfEnabled
+      && hasProductionClientOrigin();
+    checks.push(check(
+      'Environment',
+      'Production security configuration',
+      productionEnvironment,
+      productionEnvironment
+        ? 'Production mode, secure cookies, CSRF, and a non-local HTTPS client origin are configured.'
+        : 'Production mode, secure cookies, CSRF, and a non-local HTTPS client origin are all required.',
+      true
+    ));
 
-    // 3. Article Catalog Check
-    const articleCount = await Article.countDocuments();
-    checks.push({
-      category: 'Publishing',
-      name: 'Article Catalog & Publishing Pipeline',
-      passed: articleCount >= 0,
-      details: `Article catalog verified. Total articles: ${articleCount}.`,
-    });
+    const migrations = await migrationEvidence(databaseConnected);
+    checks.push(check('Database', 'Migration status', migrations.passed, migrations.details, true));
 
-    // 4. AI Provider Check
-    const aiProviderCount = await AIProvider.countDocuments();
-    checks.push({
-      category: 'AI Platform',
-      name: 'AI Provider Abstraction Layer',
-      passed: aiProviderCount >= 0,
-      details: 'AI infrastructure and fallback providers verified.',
-    });
+    const emailConfigured = Boolean(env.smtp.host && env.smtp.user && env.smtp.pass);
+    checks.push(check(
+      'Delivery',
+      'Transactional email provider',
+      emailConfigured,
+      emailConfigured ? 'SMTP configuration is present; provider delivery is not exercised by this audit.' : 'SMTP configuration is incomplete.',
+      true
+    ));
 
-    // 5. Universal Search Index Check
-    const indexedCount = await SearchIndex.countDocuments();
-    checks.push({
-      category: 'Search & Graph',
-      name: 'Universal Search & Knowledge Graph Index',
-      passed: true,
-      details: `Search index operational. Total indexed items: ${indexedCount}.`,
-    });
+    const billingCatalog = getPublicDurationCatalog();
+    const checkoutAvailable = billingCatalog.some((duration) => duration.priceConfigured && duration.checkoutAvailable);
+    checks.push(check(
+      'Billing',
+      'Premium checkout provider',
+      checkoutAvailable,
+      checkoutAvailable ? 'At least one Premium duration has configured pricing and checkout.' : 'No Premium duration currently has provider-backed checkout.',
+      true
+    ));
 
-    // 6. Security & Governance Check
-    checks.push({
-      category: 'Security',
-      name: 'RBAC, AES-256 Secret Vault & Governance',
-      passed: true,
-      details: 'Security policies and secret vault verified.',
-    });
+    const media = LearnMediaProviderService.capability();
+    const protectedMediaAvailable = media.providerConfigured
+      && media.signedDeliveryAvailable
+      && media.malwareScanningAvailable;
+    checks.push(check(
+      'Media',
+      'Protected media delivery',
+      protectedMediaAvailable,
+      protectedMediaAvailable ? 'Provider-backed signed delivery and malware scanning are configured.' : 'Provider-backed signed delivery and malware scanning are unavailable.',
+      true
+    ));
 
-    const passedCount = checks.filter((c) => c.passed).length;
+    const cacheCapability = cache.capability();
+    checks.push(check(
+      'Scale',
+      'Distributed cache',
+      cacheCapability.available && cacheCapability.distributed,
+      cacheCapability.available && cacheCapability.distributed
+        ? `Distributed cache driver ${cacheCapability.driver} is available.`
+        : `Cache driver ${cacheCapability.driver} is process-local or unavailable.`,
+      true
+    ));
+
+    const queueCapability = queue.capability();
+    checks.push(check(
+      'Scale',
+      'Durable background queue',
+      queueCapability.available && queueCapability.durable && queueCapability.distributed,
+      queueCapability.available && queueCapability.durable && queueCapability.distributed
+        ? `Durable queue driver ${queueCapability.driver} is available.`
+        : `Queue driver ${queueCapability.driver} is process-local or unavailable.`,
+      true
+    ));
+
+    const storageCapability = storage.capability();
+    checks.push(check(
+      'Scale',
+      'Shared object storage',
+      storageCapability.available && storageCapability.shared,
+      storageCapability.available && storageCapability.shared
+        ? `Shared storage driver ${storageCapability.driver} is available.`
+        : `Storage driver ${storageCapability.driver} is node-local or unavailable.`,
+      true
+    ));
+
+    const articleResult = databaseConnected ? await safeCount(Article, { status: 'published', isDeleted: { $ne: true } }) : { available: false, count: null };
+    checks.push(check(
+      'Publishing',
+      'Published article catalog',
+      articleResult.available && articleResult.count > 0,
+      articleResult.available ? `${articleResult.count} published articles are recorded.` : 'Article catalog evidence could not be read.'
+    ));
+
+    const aiResult = databaseConnected ? await safeCount(AIProvider, { isActive: true, isEnabled: true }) : { available: false, count: null };
+    checks.push(check(
+      'AI',
+      'Active AI provider configuration',
+      aiResult.available && aiResult.count > 0,
+      aiResult.available
+        ? `${aiResult.count} active provider configurations are recorded; connectivity is not exercised by this audit.`
+        : 'AI provider evidence could not be read.'
+    ));
+
+    const searchResult = databaseConnected ? await safeCount(SearchIndex, { isPublic: true }) : { available: false, count: null };
+    checks.push(check(
+      'Search',
+      'Public search index',
+      searchResult.available && searchResult.count > 0,
+      searchResult.available ? `${searchResult.count} public search entries are recorded.` : 'Search-index evidence could not be read.'
+    ));
+
+    const vault = vaultEvidence();
+    checks.push(check('Security', 'Application secret vault', vault.passed, vault.details));
+
+    const passedCount = checks.filter((entry) => entry.passed).length;
     const readinessScore = Math.round((passedCount / checks.length) * 100);
+    const criticalFailure = checks.some((entry) => entry.critical && !entry.passed);
 
-    const report = await LaunchReport.create({
+    return {
       readinessScore,
-      status: readinessScore >= 90 ? 'ready' : 'warning',
+      status: criticalFailure ? 'blocked' : (passedCount === checks.length ? 'ready' : 'warning'),
+      evidenceSource: 'live_configuration_and_database',
+      generatedAt: new Date().toISOString(),
       checks,
-    });
-
-    return report;
+    };
   }
 }
 

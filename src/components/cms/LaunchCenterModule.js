@@ -59,7 +59,10 @@ export default function LaunchCenterModule() {
       const res = await apiService.get('/api/launch/audit');
       if (res?.data) {
         setReport(res.data);
-        notify('success', `Production Checklist Audit complete! Overall Score: ${res.data.readinessScore}%`);
+        notify(
+          res.data.status === 'ready' ? 'success' : 'error',
+          `Live readiness audit: ${res.data.status} (${res.data.readinessScore}%).`
+        );
       }
     } catch (err) {
       notify('error', err.message);
@@ -75,13 +78,13 @@ export default function LaunchCenterModule() {
           <span className="section-kicker">Stage 6 · Commercial Launch Platform</span>
           <h2>Production Launch Readiness Console</h2>
           <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.85rem' }}>
-            Inspect production readiness score, automated test suites, CI/CD deployments, and release notes.
+            Inspect live configuration evidence and separately recorded test, deployment, and release history.
           </p>
         </div>
 
         <button className="primary-btn" onClick={handleRunAudit} disabled={auditing}>
           <FiRefreshCw style={{ animation: auditing ? 'spin 1s linear infinite' : 'none' }} />
-          {auditing ? 'Auditing Platform...' : 'Re-Run Production Audit'}
+          {auditing ? 'Reading Evidence...' : 'Run Live Readiness Audit'}
         </button>
       </div>
 
@@ -95,17 +98,24 @@ export default function LaunchCenterModule() {
       <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 16, padding: 24, marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
         <div>
           <span style={{ fontSize: '0.75rem', background: '#3b82f620', color: '#3b82f6', padding: '3px 10px', borderRadius: 100, fontWeight: 700 }}>
-            DEVELOPMENT STABILIZATION (v1.0.0-stabilizing)
+            EVIDENCE-BASED READINESS
           </span>
           <h3 style={{ margin: '8px 0 4px', fontSize: '1.4rem' }}>MyJourney Platform Readiness</h3>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>30 Completed Phases · Zero Regressions · Production Hardened</p>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
+            Missing providers, migrations, or production controls are reported as blockers.
+          </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'var(--soft)', padding: '14px 24px', borderRadius: 12, border: '1px solid var(--line)' }}>
-          <FiAward size={36} style={{ color: '#10b981' }} />
+          {report?.status === 'ready'
+            ? <FiAward size={36} style={{ color: '#10b981' }} />
+            : <FiAlertCircle size={36} style={{ color: '#b45309' }} />}
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textTransform: 'uppercase' }}>Launch Readiness</div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#10b981' }}>{report?.readinessScore || 100}%</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: report?.status === 'ready' ? '#10b981' : '#b45309' }}>
+              {report ? `${report.readinessScore}%` : 'Not run'}
+            </div>
+            {report?.status && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', textTransform: 'uppercase' }}>{report.status}</div>}
           </div>
         </div>
       </div>
@@ -123,7 +133,9 @@ export default function LaunchCenterModule() {
             <div key={i} style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 10, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontSize: '0.72rem', color: 'var(--cms-accent)', fontWeight: 700, textTransform: 'uppercase' }}>{c.category}</span>
-                <FiCheck style={{ color: '#10b981' }} />
+                {c.passed
+                  ? <FiCheck style={{ color: '#10b981' }} aria-label="Passed" />
+                  : <FiAlertCircle style={{ color: '#b45309' }} aria-label={c.critical ? 'Blocking failure' : 'Warning'} />}
               </div>
               <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>{c.name}</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{c.details}</div>
@@ -138,11 +150,16 @@ export default function LaunchCenterModule() {
       </h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
+        {tests.length === 0 && (
+          <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>No recorded test executions. This console does not manufacture sample results.</div>
+        )}
         {tests.map((t) => (
           <div key={t._id} style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 10, padding: 16 }}>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>{t.suiteName}</div>
             <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>{t.passedCount} / {t.totalTests} Passed</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 4 }}>Code Coverage: {t.coveragePercent}% · Execution: {t.durationMs}ms</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 4 }}>
+              Code Coverage: {t.coveragePercent == null ? 'Not recorded' : `${t.coveragePercent}%`} · Execution: {t.durationMs}ms
+            </div>
           </div>
         ))}
       </div>

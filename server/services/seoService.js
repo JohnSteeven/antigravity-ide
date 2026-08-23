@@ -83,10 +83,12 @@ class SEOService {
         image: data.image ? [data.image] : [],
         datePublished: data.createdAt,
         dateModified: data.updatedAt,
-        author: {
-          '@type': 'Person',
-          name: data.authorName || 'MyJourney Editorial Team',
-        },
+        ...(data.authorName || data.author ? {
+          author: {
+            '@type': 'Person',
+            name: data.authorName || data.author,
+          },
+        } : {}),
         publisher: {
           '@type': 'Organization',
           name: 'MyJourney CMS',
@@ -111,8 +113,8 @@ class SEOService {
    */
   static async generateSitemap() {
     const baseUrl = process.env.CLIENT_URL || 'https://myjourney.com';
-    const articles = await Article.find({ status: 'published' }).select('slug updatedAt').lean();
-    const pages = await Page.find({ status: 'published' }).select('slug updatedAt').lean();
+    const articles = await Article.find({ status: 'published', isDeleted: { $ne: true } }).select('slug updatedAt').lean();
+    const pages = await Page.find({ status: 'published', visibility: 'public' }).select('slug updatedAt').lean();
     const categories = await Category.find({
       isDeleted: false,
       isActive: true,

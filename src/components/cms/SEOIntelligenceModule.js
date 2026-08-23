@@ -161,7 +161,9 @@ export default function SEOIntelligenceModule() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
           <div style={{ background: '#fff', border: '1px solid #e4ded4', borderRadius: '12px', padding: '20px' }}>
             <span style={{ fontSize: '0.75rem', color: '#888', fontWeight: '700', textTransform: 'uppercase' }}>Overall SEO Health Score</span>
-            <h3 style={{ margin: '6px 0 0', fontSize: '1.8rem', color: '#2e7d5a' }}>{dashboardData?.seoScore || 88}%</h3>
+            <h3 style={{ margin: '6px 0 0', fontSize: '1.8rem', color: '#2e7d5a' }}>
+              {dashboardData?.seoScore == null ? 'Not calculated' : `${dashboardData.seoScore}%`}
+            </h3>
           </div>
 
           <div style={{ background: '#fff', border: '1px solid #e4ded4', borderRadius: '12px', padding: '20px' }}>
@@ -171,7 +173,9 @@ export default function SEOIntelligenceModule() {
 
           <div style={{ background: '#fff', border: '1px solid #e4ded4', borderRadius: '12px', padding: '20px' }}>
             <span style={{ fontSize: '0.75rem', color: '#888', fontWeight: '700', textTransform: 'uppercase' }}>JSON-LD Schema Coverage</span>
-            <h3 style={{ margin: '6px 0 0', fontSize: '1.8rem', color: '#2e7d5a' }}>{dashboardData?.schemaCoverage || '95%'}</h3>
+            <h3 style={{ margin: '6px 0 0', fontSize: '1.8rem', color: '#2e7d5a' }}>
+              {dashboardData?.schemaCoverage == null ? 'Not calculated' : `${dashboardData.schemaCoverage}%`}
+            </h3>
           </div>
         </div>
       )}
