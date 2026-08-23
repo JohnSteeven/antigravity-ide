@@ -35,6 +35,7 @@ jest.mock('../middleware/auth', () => ({
     }
     return res.status(401).json({ message: 'Invalid token.' });
   },
+  optionalAuthenticate: (req, res, next) => next(),
 }));
 
 // Mock controllers to avoid needing DB or AI dependencies
@@ -246,6 +247,19 @@ describe('Route Security & Authorization Tests', () => {
       expect(res.status).toBe(401);
     });
 
+    it('rejects unauthenticated access to legacy AI completions with 401', async () => {
+      const res = await request(app).post('/api/ai/chat').send({ query: 'hello' });
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects non-admin access to legacy AI completions with 403', async () => {
+      const res = await request(app)
+        .post('/api/ai/chat')
+        .set('Authorization', 'Bearer reader-token')
+        .send({ query: 'hello' });
+      expect(res.status).toBe(403);
+    });
+
     it('rejects non-admin access to RAG reindex with 403', async () => {
       const res = await request(app)
         .post('/api/ai/index/reindex')
@@ -308,6 +322,19 @@ describe('Route Security & Authorization Tests', () => {
       const res = await request(app)
         .get('/api/community/moderation')
         .set('Authorization', 'Bearer reader-token');
+      expect(res.status).toBe(403);
+    });
+
+    it('rejects anonymous community reports with 401', async () => {
+      const res = await request(app).post('/api/community/report').send({ commentId: 'comment-1', reason: 'spam' });
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects non-admin AI caption generation with 403', async () => {
+      const res = await request(app)
+        .post('/api/distribution/social/captions')
+        .set('Authorization', 'Bearer reader-token')
+        .send({ articleId: 'article-1' });
       expect(res.status).toBe(403);
     });
   });

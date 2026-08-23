@@ -9,13 +9,14 @@ const express = require('express');
 const router = express.Router();
 const analyticsController = require('../controllers/analyticsController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public Event Tracking
 router.post('/track', analyticsController.trackEvent);
 
 // Authenticated CMS Read
-router.get('/overview', authenticate, analyticsController.getOverview);
+router.get('/overview', authenticate, requireAdmin, analyticsController.getOverview);
 
 apiRegistry.register({
   name: 'AnalyticsEngine',

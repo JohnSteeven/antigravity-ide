@@ -9,22 +9,23 @@ const express = require('express');
 const router = express.Router();
 const componentController = require('../controllers/componentController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
-// Public reads
+// Component manifests are CMS builder metadata, not a public content API.
+router.use(authenticate, requireAdmin);
 router.get('/', componentController.getComponents);
 router.get('/:id', componentController.getComponentById);
 
-// Authenticated writes
-router.post('/', authenticate, componentController.createComponent);
-router.patch('/:id', authenticate, componentController.updateComponent);
-router.delete('/:id', authenticate, componentController.deleteComponent);
+router.post('/', componentController.createComponent);
+router.patch('/:id', componentController.updateComponent);
+router.delete('/:id', componentController.deleteComponent);
 
 apiRegistry.register({
   name: 'ComponentLibrary',
   prefix: '/api/components',
   router,
-  public: true,
+  public: false,
 });
 
 module.exports = router;

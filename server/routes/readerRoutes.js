@@ -8,13 +8,13 @@
 const express = require('express');
 const router = express.Router();
 const readerController = require('../controllers/readerController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate } = require('../middleware/auth');
 const apiRegistry = require('../core/apiRegistry');
 
 // ── Public / Anonymous Endpoints ──────────────────────────────────────────────
-router.get('/feed', readerController.getPersonalizedFeed);
-router.post('/progress', readerController.updateProgress);
-router.get('/continue-reading', readerController.getContinueReading);
+router.get('/feed', optionalAuthenticate, readerController.getPersonalizedFeed);
+router.post('/progress', authenticate, readerController.updateProgress);
+router.get('/continue-reading', authenticate, readerController.getContinueReading);
 router.get('/learning-paths', readerController.getLearningPaths);
 
 // ── Authenticated Reader Endpoints ────────────────────────────────────────────

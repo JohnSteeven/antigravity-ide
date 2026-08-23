@@ -26,7 +26,7 @@ apiRegistry.register({
   name: 'InfrastructurePlatform',
   prefix: '/api/infrastructure',
   router,
-  public: true,
+  public: false,
   version: '6.0.0',
 });
 

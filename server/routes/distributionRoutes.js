@@ -19,7 +19,7 @@ router.get('/podcasts', distributionController.getPodcasts);
 // Authenticated CMS Distribution Endpoints
 router.get('/campaigns', authenticate, requireAdmin, distributionController.getCampaigns);
 router.post('/campaigns', authenticate, requireAdmin, distributionController.launchCampaign);
-router.post('/social/captions', authenticate, distributionController.generateSocialCaptions);
+router.post('/social/captions', authenticate, requireAdmin, distributionController.generateSocialCaptions);
 router.get('/social/accounts', authenticate, requireAdmin, distributionController.getSocialAccounts);
 router.post('/social/accounts', authenticate, requireAdmin, distributionController.connectSocialAccount);
 router.post('/podcasts', authenticate, requireAdmin, distributionController.createPodcast);

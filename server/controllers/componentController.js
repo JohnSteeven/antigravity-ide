@@ -53,7 +53,7 @@ exports.createComponent = async (req, res) => {
       category: category || 'Content',
       icon: icon || 'Box',
       description: description || '',
-      propSchema: propSchema || { props: [] },
+      propSchema: schema || { props: [] },
       defaultProps: defaultProps || {},
       supportedRegions: supportedRegions || ['mainContent'],
       isBuiltIn: false,
@@ -79,7 +79,7 @@ exports.updateComponent = async (req, res) => {
     if (category !== undefined) component.category = category;
     if (icon !== undefined) component.icon = icon;
     if (description !== undefined) component.description = description;
-    if (schema !== undefined) component.schema = schema;
+    if (schema !== undefined) component.propSchema = schema;
     if (defaultProps !== undefined) component.defaultProps = defaultProps;
     if (status !== undefined) component.status = status;
     if (featureFlag !== undefined) component.featureFlag = featureFlag;

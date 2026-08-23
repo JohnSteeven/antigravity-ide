@@ -27,7 +27,7 @@ apiRegistry.register({
   name: 'DeveloperPlatform',
   prefix: '/api/developer',
   router,
-  public: true,
+  public: false,
   version: '5.0.0',
 });
 

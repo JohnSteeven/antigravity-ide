@@ -8,23 +8,25 @@
 const express = require('express');
 const router = express.Router();
 const navigationController = require('../controllers/navigationController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public reads
-router.get('/', navigationController.getNavTree);
-router.get('/zones', navigationController.getZones);
+router.get('/', optionalAuthenticate, navigationController.getNavTree);
 router.get('/breadcrumb', navigationController.getBreadcrumb);
-router.get('/analytics', navigationController.getAnalytics);
 router.post('/click/:id', navigationController.recordClick);
-router.get('/:id', navigationController.getItemById);
 
-// Authenticated writes
-router.post('/', authenticate, navigationController.createItem);
-router.patch('/:id', authenticate, navigationController.updateItem);
-router.delete('/:id', authenticate, navigationController.deleteItem);
-router.post('/validate', authenticate, navigationController.validateLinks);
-router.post('/zones', authenticate, navigationController.createZone);
+// CMS/Admin reads and writes
+router.use(authenticate, requireAdmin);
+router.get('/zones', navigationController.getZones);
+router.get('/analytics', navigationController.getAnalytics);
+router.get('/:id', navigationController.getItemById);
+router.post('/', navigationController.createItem);
+router.patch('/:id', navigationController.updateItem);
+router.delete('/:id', navigationController.deleteItem);
+router.post('/validate', navigationController.validateLinks);
+router.post('/zones', navigationController.createZone);
 
 apiRegistry.register({
   name: 'NavigationEngine',

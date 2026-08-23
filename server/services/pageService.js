@@ -136,12 +136,30 @@ class PageService {
     Page.findByIdAndUpdate(page._id, { $inc: { views: 1 } }).catch(() => {});
 
     // Retrieve associated layout document
-    const layout = (await Layout.findOne({ key: page.layoutKey }).lean()) || null;
+    const layout = (await Layout.findOne({ key: page.layoutKey, status: 'published' }).lean()) || null;
+
+    const {
+      history: _history,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      __v: _pageVersionKey,
+      ...publicPage
+    } = page;
+    let publicLayout = null;
+    if (layout) {
+      const {
+        createdBy: _layoutCreatedBy,
+        updatedBy: _layoutUpdatedBy,
+        __v: _layoutVersionKey,
+        ...safeLayout
+      } = layout;
+      publicLayout = safeLayout;
+    }
 
     return {
-      ...page,
+      ...publicPage,
       blocks: validBlocks,
-      layout,
+      layout: publicLayout,
     };
   }
 

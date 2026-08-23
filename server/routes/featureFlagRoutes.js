@@ -8,18 +8,21 @@
 const express = require('express');
 const router = express.Router();
 const featureFlagController = require('../controllers/featureFlagController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
-// Public reads, authenticated writes
-router.get('/', featureFlagController.getAllFeatures);
-router.get('/:key', featureFlagController.getFeatureByKey);
+// Public callers receive evaluated status only; Admin callers receive the
+// management document. The single-flag management endpoint is Admin-only.
+router.get('/', optionalAuthenticate, featureFlagController.getAllFeatures);
+router.get('/:key', authenticate, requireAdmin, featureFlagController.getFeatureByKey);
 
-router.post('/', authenticate, featureFlagController.createFeature);
-router.patch('/:id', authenticate, featureFlagController.updateFeature);
-router.delete('/:id', authenticate, featureFlagController.deleteFeature);
-router.post('/:id/toggle', authenticate, featureFlagController.toggleFeature);
-router.post('/:id/rollout', authenticate, featureFlagController.updateRollout);
+router.use(authenticate, requireAdmin);
+router.post('/', featureFlagController.createFeature);
+router.patch('/:id', featureFlagController.updateFeature);
+router.delete('/:id', featureFlagController.deleteFeature);
+router.post('/:id/toggle', featureFlagController.toggleFeature);
+router.post('/:id/rollout', featureFlagController.updateRollout);
 
 // Self-register with server apiRegistry
 apiRegistry.register({

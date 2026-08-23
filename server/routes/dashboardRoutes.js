@@ -9,21 +9,24 @@ const express = require('express');
 const router = express.Router();
 const dashboardController = require('../controllers/dashboardController');
 const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
+router.use(authenticate, requireAdmin);
+
 // Reads
-router.get('/layout', authenticate, dashboardController.getLayout);
-router.get('/widgets', authenticate, dashboardController.getWidgets);
+router.get('/layout', dashboardController.getLayout);
+router.get('/widgets', dashboardController.getWidgets);
 
 // Writes
-router.post('/layout', authenticate, dashboardController.saveLayout);
-router.post('/reset', authenticate, dashboardController.resetLayout);
+router.post('/layout', dashboardController.saveLayout);
+router.post('/reset', dashboardController.resetLayout);
 
 apiRegistry.register({
   name: 'DashboardEngine',
   prefix: '/api/dashboard',
   router,
-  public: true,
+  public: false,
 });
 
 module.exports = router;

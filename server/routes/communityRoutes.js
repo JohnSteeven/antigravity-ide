@@ -6,11 +6,13 @@
  */
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const communityController = require('../controllers/communityController');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
+const reportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 12, standardHeaders: true, legacyHeaders: false });
 
 // Public endpoints
 router.get('/feed', communityController.getFeed);
@@ -20,7 +22,7 @@ router.post('/follow', authenticate, communityController.toggleFollow);
 router.get('/follows', authenticate, communityController.getFollows);
 router.get('/reputation', authenticate, communityController.getReputation);
 router.post('/polls/:id/vote', authenticate, communityController.votePoll);
-router.post('/report', communityController.reportComment);
+router.post('/report', authenticate, reportLimiter, communityController.reportComment);
 
 // Admin CMS endpoints
 router.get('/moderation', authenticate, requireAdmin, communityController.getModerationQueue);

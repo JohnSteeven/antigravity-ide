@@ -14,8 +14,7 @@ const ReaderProfileService    = require('../services/readerProfileService');
 exports.getPersonalizedFeed = async (req, res) => {
   try {
     const userId = req.user?.id || null;
-    const sessionId = req.query.sessionId || null;
-    const feed = await PersonalizationService.getPersonalizedFeed(userId, sessionId);
+    const feed = await PersonalizationService.getPersonalizedFeed(userId, null);
     res.json({ success: true, data: feed });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch personalized feed', message: err.message });
@@ -48,7 +47,7 @@ exports.updateProfile = async (req, res) => {
 
 exports.updateProgress = async (req, res) => {
   try {
-    const userId = req.user?.id || null;
+    const userId = req.user.id;
     const progress = await ReadingProgressService.updateProgress({ ...req.body, userId });
     res.json({ success: true, data: progress });
   } catch (err) {
@@ -58,9 +57,8 @@ exports.updateProgress = async (req, res) => {
 
 exports.getContinueReading = async (req, res) => {
   try {
-    const userId = req.user?.id || null;
-    const sessionId = req.query.sessionId || null;
-    const list = await ReadingProgressService.getContinueReading(userId, sessionId);
+    const userId = req.user.id;
+    const list = await ReadingProgressService.getContinueReading(userId, null);
     res.json({ success: true, data: list });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch continue reading list', message: err.message });

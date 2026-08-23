@@ -24,11 +24,19 @@ exports.getAllFeatures = async (req, res) => {
     // Attach evaluated status for caller
     const evaluatedFlags = await Promise.all(
       flags.map(async (flag) => {
-        const doc = flag.toObject();
         const evalResult = await FeatureFlagService.evaluate(flag.key, { userRole, userId });
-        doc.isAvailable = evalResult.allowed;
-        doc.evalReason = evalResult.reason;
-        return doc;
+        if (userRole === 'Admin') {
+          return {
+            ...flag.toObject(),
+            isAvailable: evalResult.allowed,
+            evalReason: evalResult.reason,
+          };
+        }
+        return {
+          key: flag.key,
+          status: evalResult.status,
+          isAvailable: evalResult.allowed,
+        };
       })
     );
 

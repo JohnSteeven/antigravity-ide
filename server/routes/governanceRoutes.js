@@ -31,7 +31,7 @@ apiRegistry.register({
   name: 'GovernancePlatform',
   prefix: '/api/governance',
   router,
-  public: true,
+  public: false,
   version: '6.0.0',
 });
 

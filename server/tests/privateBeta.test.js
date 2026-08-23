@@ -202,6 +202,7 @@ describe('Private Beta Hardening & Security Suite', () => {
     test('AI chat returns 503 when no active AI provider is configured', async () => {
       const res = await request(app)
         .post('/api/ai/chat')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ query: 'How do I learn React?' });
 
       expect(res.status).toBe(503);
