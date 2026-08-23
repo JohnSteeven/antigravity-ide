@@ -18,7 +18,7 @@ const ARTICLE_HTML_OPTIONS = {
   ]),
   allowedAttributes: {
     ...sanitizeHtml.defaults.allowedAttributes,
-    "*": ["class", "id", "style"],
+    "*": ["class", "id"],
     a: ["href", "name", "target", "rel"],
     img: ["src", "alt", "width", "height", "loading"],
     iframe: ["src", "width", "height", "frameborder", "allowfullscreen", "allow"],
@@ -28,8 +28,22 @@ const ARTICLE_HTML_OPTIONS = {
   },
   allowedSchemes: ["http", "https"],
   allowedSchemesByTag: {
-    img: ["http", "https", "data"]
-  }
+    img: ["http", "https"]
+  },
+  allowedIframeHostnames: [
+    "www.youtube.com",
+    "www.youtube-nocookie.com",
+    "player.vimeo.com",
+  ],
+  transformTags: {
+    a: (tagName, attribs) => ({
+      tagName,
+      attribs: attribs.target === "_blank"
+        ? { ...attribs, rel: "noopener noreferrer" }
+        : attribs,
+    }),
+  },
+  exclusiveFilter: (frame) => frame.tag === "iframe" && !frame.attribs.src,
 };
 
 const decodeHtmlEntities = (str) => {
@@ -42,6 +56,10 @@ const decodeHtmlEntities = (str) => {
     .replace(/&#039;/g, "'")
     .replace(/&#x27;/g, "'");
 };
+
+const sanitizeRichHtml = (value) => typeof value === "string"
+  ? sanitizeHtml(value, ARTICLE_HTML_OPTIONS)
+  : value;
 
 const sanitizePlainText = (value) => {
   if (typeof value === "string") {
@@ -61,19 +79,27 @@ const sanitizePlainText = (value) => {
   return value;
 };
 
+const sanitizeRequestObject = (value, depth = 0) => Object.entries(value || {}).reduce((acc, [key, child]) => {
+  if (key.startsWith("$") || key.includes(".")) return acc;
+  if (typeof child === "string") {
+    const isRichHtml = HTML_FIELDS.has(key)
+      && (key !== "description" || depth === 0);
+    acc[key] = isRichHtml ? sanitizeRichHtml(child) : sanitizePlainText(child);
+  } else if (Array.isArray(child)) {
+    acc[key] = child.map((item) => item && typeof item === "object"
+      ? sanitizeRequestObject(item, depth + 1)
+      : sanitizePlainText(item));
+  } else if (child && typeof child === "object") {
+    acc[key] = sanitizeRequestObject(child, depth + 1);
+  } else {
+    acc[key] = child;
+  }
+  return acc;
+}, {});
+
 const sanitizeRequest = (req, res, next) => {
   if (req.body && typeof req.body === "object") {
-    const sanitized = {};
-    for (const [key, value] of Object.entries(req.body)) {
-      if (key.startsWith("$") || key.includes(".")) continue; // block NoSQL injection
-      if (HTML_FIELDS.has(key) && typeof value === "string") {
-        // Preserve HTML for rich content fields
-        sanitized[key] = sanitizeHtml(value, ARTICLE_HTML_OPTIONS);
-      } else {
-        sanitized[key] = sanitizePlainText(value);
-      }
-    }
-    req.body = sanitized;
+    req.body = sanitizeRequestObject(req.body);
   }
   req.params = sanitizePlainText(req.params);
   req.query = sanitizePlainText(req.query);
@@ -95,6 +121,20 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many authentication attempts. Please wait." },
+});
+
+const otpAccountLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: env.nodeEnv === "production" ? 5 : 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const accountKey = String(
+      req.body?.userId || req.body?.identifier || req.body?.email || req.body?.challengeId || req.ip || "unknown"
+    ).trim().toLowerCase();
+    return `otp_${crypto.createHash("sha256").update(accountKey).digest("hex")}`;
+  },
+  message: { message: "Too many OTP requests. Please wait before trying again." },
 });
 
 const issueCsrfToken = (req, res) => {
@@ -152,5 +192,7 @@ module.exports = {
   emailRateLimiter,
   globalLimiter,
   issueCsrfToken,
+  otpAccountLimiter,
+  sanitizeRichHtml,
   sanitizeRequest,
 };

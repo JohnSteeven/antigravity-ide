@@ -4,8 +4,10 @@
  */
 
 const Session = require("../models/Session");
+const RefreshToken = require("../models/RefreshToken");
 const ActivityLog = require("../models/ActivityLog");
 const { SESSION_RISK, ACTIONS } = require("../config/security");
+const { hashToken } = require("./tokenService");
 
 /** Extract useful metadata from an express request */
 const extractMeta = (req) => ({
@@ -16,57 +18,51 @@ const extractMeta = (req) => ({
 });
 
 /** Determine session risk level */
-const getRiskLevel = (sess, currentToken, knownIPs) => {
-  if (currentToken && sess.refreshToken === currentToken) return SESSION_RISK.CURRENT;
+const getRiskLevel = (sess, currentRefreshRecordId) => {
+  if (
+    currentRefreshRecordId &&
+    String(sess.refreshToken) === String(currentRefreshRecordId)
+  ) return SESSION_RISK.CURRENT;
 
-  const ipKnown = knownIPs.includes(sess.ipAddress);
   const ageMs = Date.now() - new Date(sess.createdAt).getTime();
   const isNew = ageMs < 24 * 60 * 60 * 1000; // less than 24h old
 
-  if (!ipKnown && isNew) return SESSION_RISK.NEW_DEVICE;
-  if (ipKnown) return SESSION_RISK.TRUSTED;
-  return SESSION_RISK.NEW_DEVICE;
+  return isNew ? SESSION_RISK.NEW_DEVICE : SESSION_RISK.TRUSTED;
+};
+
+const getCurrentRefreshRecordId = async (req) => {
+  const token = req?.cookies?.refreshToken;
+  if (!token) return null;
+  const record = await RefreshToken.findOne({
+    tokenHash: hashToken(token),
+    revokedAt: null,
+    expiresAt: { $gt: new Date() },
+  }).select("_id").lean();
+  return record?._id || null;
 };
 
 const sessionService = {
   async getActiveSessions(user, req) {
-    const rawSessions = await Session.find({ user: user._id, isActive: true })
+    const rawSessions = await Session.find({
+      user: user._id,
+      isActive: true,
+      expiresAt: { $gt: new Date() },
+    })
       .sort({ lastActiveAt: -1 })
       .lean();
 
-    const currentRefreshToken = req?.cookies?.refreshToken || "";
-
-    if (rawSessions.length === 0) {
-      return [
-        {
-          id: "current-session-stub",
-          browser: "Chrome",
-          os: "Windows",
-          device: "Desktop",
-          ipAddress: req?.ip || "127.0.0.1",
-          country: "Localhost",
-          city: "Development",
-          isCurrent: true,
-          riskLevel: SESSION_RISK.CURRENT,
-          lastActiveAt: new Date(),
-          createdAt: new Date(),
-        },
-      ];
-    }
-
-    // Collect all known IPs for this user across sessions (trusted detection)
-    const knownIPs = rawSessions.map((s) => s.ipAddress).filter(Boolean);
+    const currentRefreshRecordId = await getCurrentRefreshRecordId(req);
 
     return rawSessions.map((sess) => {
-      const riskLevel = getRiskLevel(sess, currentRefreshToken, knownIPs);
+      const riskLevel = getRiskLevel(sess, currentRefreshRecordId);
       return {
         id: sess._id.toString(),
-        browser: sess.browser || "Browser",
-        os: sess.os || "OS",
-        device: sess.device || "Desktop",
-        ipAddress: sess.ipAddress || "127.0.0.1",
-        country: sess.country || "Localhost",
-        city: sess.city || "Development",
+        browser: sess.browser || "Unknown browser",
+        os: sess.os || "Unknown OS",
+        device: sess.device || "Unknown device",
+        ipAddress: sess.ipAddress || "unknown",
+        country: sess.country || "Unknown",
+        city: sess.city || "Unknown",
         isCurrent: riskLevel === SESSION_RISK.CURRENT,
         riskLevel,
         lastActiveAt: sess.lastActiveAt || sess.createdAt,
@@ -76,7 +72,11 @@ const sessionService = {
   },
 
   async revokeSession(userId, sessionId, req) {
-    const session = await Session.findOne({ _id: sessionId, user: userId });
+    const session = await Session.findOneAndUpdate(
+      { _id: sessionId, user: userId, isActive: true },
+      { $set: { isActive: false } },
+      { new: true }
+    );
     if (!session) {
       const err = new Error("Session not found or already revoked.");
       err.status = 404;
@@ -84,8 +84,10 @@ const sessionService = {
     }
 
     const meta = extractMeta(req);
-    session.isActive = false;
-    await session.save();
+    await RefreshToken.findOneAndUpdate(
+      { _id: session.refreshToken, user: userId, revokedAt: null },
+      { $set: { revokedAt: new Date() } }
+    );
 
     await ActivityLog.create({
       userId,
@@ -101,15 +103,23 @@ const sessionService = {
   },
 
   async revokeAllOtherSessions(userId, req) {
-    const currentRefreshToken = req?.cookies?.refreshToken || "";
+    const currentRefreshRecordId = await getCurrentRefreshRecordId(req);
     const meta = extractMeta(req);
 
     const filter = { user: userId, isActive: true };
-    if (currentRefreshToken) {
-      filter.refreshToken = { $ne: currentRefreshToken };
+    if (currentRefreshRecordId) {
+      filter.refreshToken = { $ne: String(currentRefreshRecordId) };
     }
 
+    const sessions = await Session.find(filter).select("refreshToken").lean();
     const result = await Session.updateMany(filter, { $set: { isActive: false } });
+    const refreshTokenIds = sessions.map((session) => session.refreshToken).filter(Boolean);
+    if (refreshTokenIds.length) {
+      await RefreshToken.updateMany(
+        { _id: { $in: refreshTokenIds }, user: userId, revokedAt: null },
+        { $set: { revokedAt: new Date() } }
+      );
+    }
 
     await ActivityLog.create({
       userId,

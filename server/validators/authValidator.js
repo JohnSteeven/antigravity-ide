@@ -59,6 +59,15 @@ const sendOtpValidator = [
     .trim()
     .notEmpty()
     .withMessage("Identifier cannot be empty."),
+  body().custom((value) => {
+    if (value.purpose === "register" && !value.userId) {
+      throw new Error("Registration user ID is required.");
+    }
+    if (value.purpose !== "register" && !String(value.identifier || "").trim()) {
+      throw new Error("Identifier is required for this OTP purpose.");
+    }
+    return true;
+  }),
 ];
 
 const resendOtpValidator = [

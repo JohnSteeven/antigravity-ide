@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 jest.mock("../services/emailService", () => ({
   sendOtpEmail: jest.fn().mockResolvedValue(undefined),
@@ -11,6 +12,8 @@ jest.mock("../models/OTP", () => ({
   deleteMany: jest.fn(),
   create: jest.fn(),
   findById: jest.fn(),
+  findOneAndDelete: jest.fn(),
+  findOneAndUpdate: jest.fn(),
   deleteOne: jest.fn(),
 }));
 
@@ -23,14 +26,23 @@ describe("authentication OTP delivery", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    OTP.countDocuments.mockResolvedValue(0);
     OTP.deleteMany.mockResolvedValue({ deletedCount: 0 });
+    OTP.deleteOne.mockResolvedValue({ deletedCount: 1 });
+    OTP.findOneAndDelete.mockResolvedValue({ _id: "64b000000000000000000002" });
     OTP.create.mockImplementation(async (input) => ({
       _id: "64b000000000000000000002",
       ...input,
       resendAvailableAt: input.resendAvailableAt,
       expiresAt: input.expiresAt,
     }));
+  });
+
+  test("uses a cryptographically secure random integer and zero-pads the code", async () => {
+    const randomSpy = jest.spyOn(crypto, "randomInt").mockReturnValue(42);
+    const { generateCode } = require("../services/otpService");
+
+    expect(generateCode()).toBe("000042");
+    expect(randomSpy).toHaveBeenCalledWith(0, 1_000_000);
   });
 
   test("sends an email OTP and returns only the development challenge contract", async () => {
@@ -57,11 +69,13 @@ describe("authentication OTP delivery", () => {
   test("resend preserves the original account, destination, channel, and purpose", async () => {
     OTP.findById.mockReturnValue({
       populate: jest.fn().mockResolvedValue({
+        _id: "64b000000000000000000002",
         user,
         identifier: "reader@example.test",
         channel: "email",
         purpose: "register",
         resendAvailableAt: new Date(Date.now() - 1000),
+        expiresAt: new Date(Date.now() + 60_000),
       }),
     });
 
@@ -78,6 +92,7 @@ describe("authentication OTP delivery", () => {
   test("rejects resend attempts made before the cooldown expires", async () => {
     OTP.findById.mockReturnValue({
       populate: jest.fn().mockResolvedValue({
+        _id: "64b000000000000000000002",
         user,
         identifier: "reader@example.test",
         channel: "email",
@@ -90,6 +105,32 @@ describe("authentication OTP delivery", () => {
       status: 429,
       code: "OTP_RESEND_NOT_READY",
     });
+  });
+
+  test("atomically consumes a valid OTP so replay cannot succeed", async () => {
+    const otpHash = await bcrypt.hash("123456", 4);
+    const challenge = {
+      _id: "64b000000000000000000002",
+      user,
+      purpose: "login-otp",
+      otpHash,
+      attempts: 0,
+      expiresAt: new Date(Date.now() + 60_000),
+    };
+    OTP.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(challenge) });
+    OTP.findOneAndDelete.mockResolvedValueOnce(challenge).mockResolvedValueOnce(null);
+    const { verifyOtpChallenge } = require("../services/otpService");
+
+    await expect(verifyOtpChallenge({
+      challengeId: challenge._id,
+      code: "123456",
+      purpose: "login-otp",
+    })).resolves.toBe(challenge);
+    await expect(verifyOtpChallenge({
+      challengeId: challenge._id,
+      code: "123456",
+      purpose: "login-otp",
+    })).rejects.toMatchObject({ code: "OTP_CHALLENGE_CONSUMED" });
   });
 });
 

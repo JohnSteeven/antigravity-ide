@@ -225,7 +225,7 @@ class AuthController {
 
   async refreshToken(req, res, next) {
     try {
-      const token = req.cookies.refreshToken || req.body.refreshToken;
+      const token = req.cookies.refreshToken;
       if (!token) return res.status(401).json({ message: "Refresh token required." });
 
       const { session, user } = await authService.refreshToken(token, req, res);
@@ -267,7 +267,7 @@ class AuthController {
 
   async logout(req, res, next) {
     try {
-      const token = req.cookies.refreshToken || req.body.refreshToken;
+      const token = req.cookies.refreshToken;
       await authService.logout(token, res);
       res.json({ message: "Logged out." });
     } catch (err) {

@@ -4,11 +4,29 @@ import {
 } from "../utils/constants";
 import {
   clearAuthCookies,
+  readStorage,
   removeStorage,
+  writeStorage,
 } from "../utils/helpers";
 let csrfToken = "";
 let csrfTokenRequest = null;
 const REQUEST_TIMEOUT_MS = 8000;
+
+const persistServerChallenge = (challenge) => {
+  if (!challenge?.id) return challenge;
+  writeStorage(AUTH_STORAGE_KEYS.currentChallenge, {
+    id: challenge.id,
+    channel: challenge.channel,
+    purpose: challenge.purpose,
+    maskedIdentifier: challenge.maskedIdentifier,
+    expiresAt: challenge.expiresAt,
+    resendAfter: challenge.resendAfter,
+  });
+  return challenge;
+};
+
+export const getPersistedServerChallenge = () =>
+  readStorage(AUTH_STORAGE_KEYS.currentChallenge, null);
 
 const fetchWithTimeout = async (url, options = {}) => {
   if (typeof AbortController === "undefined") {
@@ -160,24 +178,26 @@ export const authService = {
   },
 
   async sendRegistrationOtp({ userId, channel }) {
-    return apiRequest("/api/auth/send-otp", {
+    return persistServerChallenge(await apiRequest("/api/auth/send-otp", {
       method: "POST",
       body: JSON.stringify({ userId, channel, purpose: "register" }),
-    });
+    }));
   },
 
   async verifyOtp({ challengeId, code, purpose }) {
-    return apiRequest("/api/auth/verify-otp", {
+    const result = await apiRequest("/api/auth/verify-otp", {
       method: "POST",
       body: JSON.stringify({ challengeId, code, purpose }),
     });
+    removeStorage(AUTH_STORAGE_KEYS.currentChallenge);
+    return result;
   },
 
   async resendOtp({ challengeId }) {
-    return apiRequest("/api/auth/resend-otp", {
+    return persistServerChallenge(await apiRequest("/api/auth/resend-otp", {
       method: "POST",
       body: JSON.stringify({ challengeId }),
-    });
+    }));
   },
 
   async loginWithPassword({ identifier, password, remember }) {
@@ -188,10 +208,10 @@ export const authService = {
   },
 
   async requestLoginOtp({ identifier, channel }) {
-    return apiRequest("/api/auth/login/otp/request", {
+    return persistServerChallenge(await apiRequest("/api/auth/login/otp/request", {
       method: "POST",
       body: JSON.stringify({ identifier, channel }),
-    });
+    }));
   },
 
   async requestPasswordReset({ email, identifier }) {
@@ -222,10 +242,10 @@ export const authService = {
     throw error;
   },
 
-  async changePassword({ currentPassword, newPassword }) {
+  async changePassword({ currentPassword, newPassword, confirmPassword }) {
     return apiRequest("/api/auth/change-password", {
       method: "POST",
-      body: JSON.stringify({ currentPassword, newPassword }),
+      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
     });
   },
 

@@ -3,10 +3,11 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
-const PasswordReset = require("../models/PasswordReset");
 const RefreshToken = require("../models/RefreshToken");
 const Session = require("../models/Session");
 const env = require("../config/env");
+const activityLogService = require("./activityLogService");
+const emailService = require("./emailService");
 const {
   createAuthSession,
   clearAuthCookies,
@@ -20,6 +21,19 @@ const {
 
 const MAX_FAILED_LOGINS = 5;
 const LOGIN_LOCK_MS = 15 * 60 * 1000;
+const DUMMY_PASSWORD_HASH = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6Ttxz7B3ceqHc4e/ANd7bYNbUimG2";
+const PASSWORD_RESET_MESSAGE = "If the email exists and delivery is available, a password reset link will be sent.";
+
+const extractRequestMeta = (req) => ({
+  ip: req?.ip || req?.headers?.["x-forwarded-for"] || "unknown",
+  userAgent: req?.headers?.["user-agent"] || "unknown",
+  browser: "Web Browser",
+  device: "Unknown Device",
+  time: new Date().toUTCString(),
+  requestId: req?.id || req?.headers?.["x-request-id"],
+});
+
+const safeAudit = (data) => activityLogService.createLog(data).catch(() => {});
 
 const resetTokenHash = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
@@ -35,7 +49,7 @@ const findUserByIdentifier = (identifier) => {
     conditions.push({ mobile: { $regex: `${mobileDigits}$` } });
   }
 
-  return User.findOne({ $or: conditions });
+  return User.findOne({ $or: conditions, isDeleted: false });
 };
 
 class AuthService {
@@ -74,6 +88,7 @@ class AuthService {
       countryCode,
       mobile: normalizedMobile,
       passwordHash: await bcrypt.hash(password, 12),
+      status: "PENDING_VERIFICATION",
       newsletter: Boolean(newsletter),
       profile: {
         avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
@@ -99,6 +114,7 @@ class AuthService {
   async login(identifier, password, remember, req, res) {
     const user = await findUserByIdentifier(identifier);
     if (!user) {
+      await bcrypt.compare(String(password || ""), DUMMY_PASSWORD_HASH);
       const error = new Error("Invalid email/mobile or password.");
       error.status = 401;
       throw error;
@@ -111,17 +127,45 @@ class AuthService {
       throw error;
     }
 
+    if (user.lockUntil) {
+      await User.updateOne(
+        { _id: user._id, lockUntil: { $lte: new Date() } },
+        { $set: { failedLoginAttempts: 0 }, $unset: { lockUntil: 1 } }
+      );
+      user.failedLoginAttempts = 0;
+      user.lockUntil = undefined;
+    }
+
     const matches = await bcrypt.compare(password, user.passwordHash);
     if (!matches) {
-      user.failedLoginAttempts = Number(user.failedLoginAttempts || 0) + 1;
-      if (user.failedLoginAttempts >= MAX_FAILED_LOGINS) {
-        user.lockUntil = new Date(Date.now() + LOGIN_LOCK_MS);
+      const failedUser = await User.findOneAndUpdate(
+        { _id: user._id },
+        { $inc: { failedLoginAttempts: 1 } },
+        { new: true }
+      );
+      if (Number(failedUser?.failedLoginAttempts || 0) >= MAX_FAILED_LOGINS) {
+        await User.updateOne(
+          { _id: user._id },
+          { $set: { lockUntil: new Date(Date.now() + LOGIN_LOCK_MS) } }
+        );
       }
-      await user.save();
 
-      const error = new Error(user.lockUntil ? "Too many failed attempts. Please try again later." : "Incorrect password.");
-      error.status = 401;
-      error.code = "INCORRECT_PASSWORD";
+      const error = new Error(
+        Number(failedUser?.failedLoginAttempts || 0) >= MAX_FAILED_LOGINS
+          ? "Too many failed attempts. Please try again later."
+          : "Invalid email/mobile or password."
+      );
+      error.status = Number(failedUser?.failedLoginAttempts || 0) >= MAX_FAILED_LOGINS ? 423 : 401;
+      error.code = Number(failedUser?.failedLoginAttempts || 0) >= MAX_FAILED_LOGINS
+        ? "ACCOUNT_LOCKED"
+        : "INVALID_CREDENTIALS";
+      throw error;
+    }
+
+    if (user.status !== "ACTIVE" || user.isDeleted) {
+      const error = new Error("This account is not available for sign in.");
+      error.status = 403;
+      error.code = "ACCOUNT_UNAVAILABLE";
       throw error;
     }
 
@@ -131,10 +175,16 @@ class AuthService {
       throw error;
     }
 
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: { lastLoginAt: new Date(), failedLoginAttempts: 0 },
+        $unset: { lockUntil: 1 },
+      }
+    );
     user.lastLoginAt = new Date();
     user.failedLoginAttempts = 0;
     user.lockUntil = undefined;
-    await user.save();
 
     const session = await createAuthSession({
       user,
@@ -147,13 +197,40 @@ class AuthService {
   }
 
   async sendOtp({ identifier, userId, channel, purpose = "register" }) {
-    const user = userId
+    const user = purpose === "register" && userId
       ? await User.findOne({ _id: userId, isDeleted: false })
       : await findUserByIdentifier(identifier);
     if (!user) {
-      const error = new Error("No active user account found matching those details.");
-      error.status = 404;
-      throw error;
+      if (purpose === "register") {
+        const error = new Error("Registration could not be verified. Please start again.");
+        error.status = 400;
+        throw error;
+      }
+      await bcrypt.hash("dummy_otp_timing_workload", 10);
+      const now = Date.now();
+      return {
+        id: crypto.randomBytes(12).toString("hex"),
+        channel,
+        purpose,
+        maskedIdentifier: channel === "email" ? "your email" : "your mobile number",
+        expiresAt: now + 5 * 60 * 1000,
+        resendAfter: now + 60 * 1000,
+        message: "If an eligible account exists, an OTP will be sent.",
+      };
+    }
+
+    if (purpose !== "register" && (user.status !== "ACTIVE" || user.isDeleted)) {
+      await bcrypt.hash("dummy_otp_timing_workload", 10);
+      const now = Date.now();
+      return {
+        id: crypto.randomBytes(12).toString("hex"),
+        channel,
+        purpose,
+        maskedIdentifier: channel === "email" ? "your email" : "your mobile number",
+        expiresAt: now + 5 * 60 * 1000,
+        resendAfter: now + 60 * 1000,
+        message: "If an eligible account exists, an OTP will be sent.",
+      };
     }
 
     const destination = channel === "mobile" ? user.mobile : user.email;
@@ -163,12 +240,17 @@ class AuthService {
       throw error;
     }
 
-    return createOtpChallenge({
+    const challenge = await createOtpChallenge({
       user,
       channel,
       purpose,
       identifier: destination,
     });
+    return purpose === "register" ? challenge : {
+      ...challenge,
+      maskedIdentifier: channel === "email" ? "your email" : "your mobile number",
+      message: "If an eligible account exists, an OTP will be sent.",
+    };
   }
 
   async resendOtp(challengeId) {
@@ -179,18 +261,39 @@ class AuthService {
     const challenge = await verifyOtpChallenge(body);
     const user = challenge.user;
 
+    if (!user || user.isDeleted) {
+      const error = new Error("OTP challenge is no longer valid.");
+      error.status = 400;
+      throw error;
+    }
+
     if (body.purpose === "password-reset") {
+      if (user.status !== "ACTIVE") {
+        const error = new Error("OTP challenge is no longer valid.");
+        error.status = 400;
+        throw error;
+      }
       const resetToken = crypto.randomBytes(32).toString("hex");
-      await PasswordReset.create({
-        user: user._id,
-        tokenHash: resetTokenHash(resetToken),
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      });
+      await User.updateOne(
+        { _id: user._id, status: "ACTIVE", isDeleted: false },
+        {
+          $set: {
+            passwordResetToken: resetTokenHash(resetToken),
+            passwordResetExpires: new Date(Date.now() + 10 * 60 * 1000),
+          },
+        }
+      );
 
       return { user, resetToken, isPasswordReset: true };
     }
 
+    if (body.purpose === "login-otp" && user.status !== "ACTIVE") {
+      const error = new Error("OTP challenge is no longer valid.");
+      error.status = 400;
+      throw error;
+    }
     user.verified[challenge.channel] = true;
+    if (body.purpose === "register") user.status = "ACTIVE";
     user.lastLoginAt = new Date();
     await user.save();
 
@@ -210,16 +313,16 @@ class AuthService {
     if (!user) {
       await bcrypt.hash("dummy_timing_workload", 10);
 
-      await activityLogService.createLog({
+      await safeAudit({
         action: "PASSWORD_RESET_FAILED",
-        description: `Password reset requested for non-existent address: ${emailInput}`,
+        description: "Password reset requested for an unknown account identifier.",
         module: "auth",
         status: "failure",
         ipAddress: requestMeta.ip,
         userAgent: requestMeta.userAgent,
       });
 
-      return { success: true, message: "If the email exists, a password reset link has been sent." };
+      return { success: true, message: PASSWORD_RESET_MESSAGE };
     }
 
     if (user.passwordResetExpires && user.passwordResetExpires < new Date()) {
@@ -235,43 +338,56 @@ class AuthService {
     await user.save();
 
     try {
-      await emailService.sendPasswordResetEmail({
+      const delivery = await emailService.sendPasswordResetEmail({
         to: user.email,
         token: rawToken,
         name: user.firstName,
         requestMeta,
       });
+      if (delivery?.delivered === false) {
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+        await safeAudit({
+          userId: user._id,
+          action: "PASSWORD_RESET_DELIVERY_UNAVAILABLE",
+          description: "Password reset delivery provider was unavailable.",
+          module: "auth",
+          status: "failure",
+          ipAddress: requestMeta.ip,
+          userAgent: requestMeta.userAgent,
+        });
+        return { success: true, message: PASSWORD_RESET_MESSAGE };
+      }
     } catch (err) {
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save();
 
-      await activityLogService.createLog({
+      await safeAudit({
         userId: user._id,
-        userEmail: user.email,
         action: "PASSWORD_RESET_FAILED",
-        description: `Failed to dispatch reset email: ${err.message}`,
+        description: "Password reset email dispatch failed.",
         module: "auth",
         status: "failure",
         ipAddress: requestMeta.ip,
         userAgent: requestMeta.userAgent,
       });
 
-      return { success: true, message: "If the email exists, a password reset link has been sent." };
+      return { success: true, message: PASSWORD_RESET_MESSAGE };
     }
 
-    await activityLogService.createLog({
+    await safeAudit({
       userId: user._id,
-      userEmail: user.email,
       action: "PASSWORD_RESET_REQUESTED",
-      description: `Password reset link dispatched to ${user.email}`,
+      description: "Password reset link dispatched.",
       module: "auth",
       status: "success",
       ipAddress: requestMeta.ip,
       userAgent: requestMeta.userAgent,
     });
 
-    return { success: true, message: "If the email exists, a password reset link has been sent." };
+    return { success: true, message: PASSWORD_RESET_MESSAGE };
   }
 
   async validateResetToken(rawToken) {
@@ -306,7 +422,7 @@ class AuthService {
         { $unset: { passwordResetToken: 1, passwordResetExpires: 1 } }
       );
     } catch (err) {
-      console.error("[authService] Failed to cleanup expired tokens:", err.message);
+      console.error('[authService] Failed to clean up expired tokens.', { errorType: err?.name || 'Error' });
     }
   }
 
@@ -327,7 +443,7 @@ class AuthService {
     }).select("+passwordHash +passwordHistory +passwordResetToken +passwordResetExpires");
 
     if (!user) {
-      await activityLogService.createLog({
+      await safeAudit({
         action: "PASSWORD_RESET_FAILED",
         description: "Attempted password reset with invalid or non-existent token",
         module: "auth",
@@ -347,9 +463,8 @@ class AuthService {
       user.passwordResetExpires = undefined;
       await user.save();
 
-      await activityLogService.createLog({
+      await safeAudit({
         userId: user._id,
-        userEmail: user.email,
         action: "PASSWORD_RESET_TOKEN_EXPIRED",
         description: "Attempted password reset with an expired token",
         module: "auth",
@@ -425,12 +540,11 @@ class AuthService {
         requestMeta,
       });
     } catch (emailErr) {
-      console.error("[authService] Failed to send password changed notification:", emailErr.message);
+      console.error('[authService] Password-change notification failed.', { errorType: emailErr?.name || 'Error' });
     }
 
-    await activityLogService.createLog({
+    await safeAudit({
       userId: updatedUser._id,
-      userEmail: updatedUser.email,
       action: "PASSWORD_RESET_COMPLETED",
       description: "Password reset completed successfully via atomic update. All active sessions revoked.",
       module: "auth",
@@ -450,11 +564,26 @@ class AuthService {
   }
 
   async refreshToken(token, req, res) {
-    const tokenRecord = await RefreshToken.findOne({
-      tokenHash: hashToken(token),
-      revokedAt: null,
-      expiresAt: { $gt: new Date() },
-    });
+    let decoded;
+    try {
+      decoded = jwt.verify(token, env.jwtRefreshSecret, { algorithms: ["HS256"] });
+    } catch (error) {
+      clearAuthCookies(res);
+      const invalid = new Error("Refresh token expired.");
+      invalid.status = 401;
+      throw invalid;
+    }
+
+    const tokenRecord = await RefreshToken.findOneAndUpdate(
+      {
+        tokenHash: hashToken(token),
+        user: decoded.sub,
+        revokedAt: null,
+        expiresAt: { $gt: new Date() },
+      },
+      { $set: { revokedAt: new Date() } },
+      { new: false }
+    );
 
     if (!tokenRecord) {
       clearAuthCookies(res);
@@ -463,21 +592,24 @@ class AuthService {
       throw error;
     }
 
-    const decoded = jwt.verify(token, env.jwtRefreshSecret);
     const user = await User.findById(decoded.sub);
 
-    if (!user) {
+    if (!user || user.status !== "ACTIVE" || user.isDeleted) {
       clearAuthCookies(res);
-      const error = new Error("User no longer exists.");
+      const error = new Error("Account is unavailable.");
       error.status = 401;
       throw error;
     }
 
-    tokenRecord.revokedAt = new Date();
-    await tokenRecord.save();
     await Session.updateMany({ refreshToken: tokenRecord._id }, { isActive: false });
 
-    const session = await createAuthSession({ user, req, res });
+    const remainingMs = (Number(decoded.exp || 0) * 1000) - Date.now();
+    const session = await createAuthSession({
+      user,
+      req,
+      res,
+      remember: remainingMs > 2 * 24 * 60 * 60 * 1000,
+    });
     return { session, user };
   }
 
@@ -495,8 +627,8 @@ class AuthService {
           { isActive: false }
         );
       }
-      clearAuthCookies(res);
     }
+    clearAuthCookies(res);
   }
 
   async changePassword(userId, currentPassword, newPassword, req, res) {
@@ -510,9 +642,8 @@ class AuthService {
 
     const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!isMatch) {
-      await activityLogService.createLog({
+      await safeAudit({
         userId: user._id,
-        userEmail: user.email,
         action: "INVALID_CURRENT_PASSWORD",
         description: "Failed password change attempt: Incorrect current password",
         module: "auth",
@@ -536,9 +667,8 @@ class AuthService {
 
     const isSameCurrent = await bcrypt.compare(newPassword, user.passwordHash);
     if (isSameCurrent) {
-      await activityLogService.createLog({
+      await safeAudit({
         userId: user._id,
-        userEmail: user.email,
         action: "PASSWORD_REUSED",
         description: "Failed password change attempt: Proposed password matches current password",
         module: "auth",
@@ -556,9 +686,8 @@ class AuthService {
     for (const oldHash of historyHashes) {
       const isHistoricalMatch = await bcrypt.compare(newPassword, oldHash);
       if (isHistoricalMatch) {
-        await activityLogService.createLog({
+        await safeAudit({
           userId: user._id,
-          userEmail: user.email,
           action: "PASSWORD_REUSED",
           description: "Failed password change attempt: Proposed password exists in recent password history",
           module: "auth",
@@ -605,12 +734,11 @@ class AuthService {
         requestMeta,
       });
     } catch (emailErr) {
-      console.error("[authService] Failed to send password changed notification email:", emailErr.message);
+      console.error('[authService] Password-change notification failed.', { errorType: emailErr?.name || 'Error' });
     }
 
-    await activityLogService.createLog({
+    await safeAudit({
       userId: updatedUser._id,
-      userEmail: updatedUser.email,
       action: "PASSWORD_CHANGED",
       description: "User successfully updated password from account security. All active sessions revoked.",
       module: "auth",

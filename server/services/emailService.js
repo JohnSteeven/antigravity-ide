@@ -24,8 +24,13 @@ const sendOtpEmail = async ({ to, code, purpose }) => {
   const text = `Your MyJourney verification code is ${code}. It expires in 5 minutes.`;
 
   if (!hasSmtpConfig()) {
-    if (env.nodeEnv !== "production") console.log(`[email:dev] OTP for ${to}: ${code}`);
-    return;
+    if (env.nodeEnv === "production") {
+      const error = new Error("Email OTP delivery is unavailable.");
+      error.status = 503;
+      error.code = "OTP_DELIVERY_UNAVAILABLE";
+      throw error;
+    }
+    return { delivered: false, provider: "development" };
   }
 
   try {
@@ -37,9 +42,16 @@ const sendOtpEmail = async ({ to, code, purpose }) => {
       text,
       html: `<p>Your MyJourney verification code is <strong>${code}</strong>.</p><p>It expires in 5 minutes.</p>`,
     });
+    return { delivered: true, provider: "smtp" };
   } catch (error) {
-    if (env.nodeEnv === "production") throw error;
-    console.warn(`[email:dev] SMTP unavailable for OTP delivery to ${to}: ${error.message}`);
+    if (env.nodeEnv === "production") {
+      const unavailable = new Error("Email OTP delivery is unavailable.");
+      unavailable.status = 503;
+      unavailable.code = "OTP_DELIVERY_UNAVAILABLE";
+      throw unavailable;
+    }
+    console.warn("[email:dev] SMTP unavailable for OTP delivery; using the explicit development response code.");
+    return { delivered: false, provider: "development" };
   }
 };
 
@@ -94,12 +106,7 @@ const sendVerificationEmail = async ({ to, token }) => {
   const text = `MyJourney Email Verification\n\nPlease confirm your email address by visiting this link:\n${verifyUrl}\n\nThis link expires in 24 hours.`;
 
   if (!hasSmtpConfig()) {
-    console.log(`\n📧 [EMAIL DEV LOG] ----------------------------------------`);
-    console.log(`Type: Verification Email`);
-    console.log(`To: ${to}`);
-    console.log(`Verify URL: ${verifyUrl}`);
-    console.log(`-----------------------------------------------------------\n`);
-    return;
+    return { delivered: false, provider: "unavailable" };
   }
 
   try {
@@ -111,14 +118,12 @@ const sendVerificationEmail = async ({ to, token }) => {
       html,
       text,
     });
-    console.log(`[emailService] Real verification email successfully sent to ${to}`);
+    console.info("[emailService] Verification email dispatched.");
+    return { delivered: true, provider: "smtp" };
   } catch (err) {
-    console.error(`[emailService] SMTP dispatch to ${to} failed: ${err.message}`);
-    console.log(`\n📧 [EMAIL DEV LOG FALLBACK] ----------------------------------------`);
-    console.log(`Type: Verification Email (SMTP Fallback)`);
-    console.log(`To: ${to}`);
-    console.log(`Verify URL: ${verifyUrl}`);
-    console.log(`-----------------------------------------------------------\n`);
+    console.error("[emailService] Verification email dispatch failed.");
+    if (env.nodeEnv === "production") throw err;
+    return { delivered: false, provider: "unavailable" };
   }
 };
 
@@ -144,7 +149,7 @@ const sendAlreadySubscribedEmail = async ({ to }) => {
   const text = `MyJourney\n\nYou are already subscribed with email ${to}. You will continue to receive updates.`;
 
   if (!hasSmtpConfig()) {
-    console.log(`\n📧 [EMAIL DEV LOG] Already Subscribed alert for ${to}`);
+    console.info('[email:dev] Already-subscribed notification suppressed because SMTP is unavailable.');
     return;
   }
 
@@ -187,7 +192,7 @@ const sendWelcomeSubscriberEmail = async ({ to, token }) => {
   const text = `Welcome to MyJourney!\n\nYour subscription is verified. You will receive stories and updates.\nVisit: ${baseUrl}`;
 
   if (!hasSmtpConfig()) {
-    console.log(`\n📧 [EMAIL DEV LOG] Welcome Email sent to ${to}`);
+    console.info('[email:dev] Welcome notification suppressed because SMTP is unavailable.');
     return;
   }
 
@@ -238,7 +243,7 @@ const sendNewArticleNotificationEmail = async ({ to, article, token }) => {
   const text = `New Story Published: ${article.title}\n\n${article.description || ""}\n\nRead here: ${articleUrl}`;
 
   if (!hasSmtpConfig()) {
-    console.log(`\n📧 [EMAIL DEV LOG] New Article email "${article.title}" dispatched to ${to}`);
+    console.info('[email:dev] New-article notification suppressed because SMTP is unavailable.');
     return;
   }
 
@@ -275,7 +280,7 @@ const sendCampaignEmail = async ({ to, campaign, token }) => {
   const text = `${campaign.title}\n\n${campaign.body.replace(/<[^>]+>/g, "")}`;
 
   if (!hasSmtpConfig()) {
-    console.log(`\n📧 [EMAIL DEV LOG] Campaign email "${campaign.title}" dispatched to ${to}`);
+    console.info('[email:dev] Campaign notification suppressed because SMTP is unavailable.');
     return;
   }
 
@@ -339,12 +344,7 @@ const sendPasswordResetEmail = async ({ to, token, name, requestMeta = {} }) => 
   const text = `MyJourney Password Reset\n\nHello ${name || "there"},\n\nReset your password by visiting this link:\n${resetUrl}\n\nThis link expires in 15 minutes.\n\nRequest Details:\nIP: ${ip}\nDevice: ${device}\nBrowser: ${browser}\nTime: ${time}`;
 
   if (!hasSmtpConfig()) {
-    console.log(`\n📧 [EMAIL DEV LOG] ----------------------------------------`);
-    console.log(`Type: Password Reset Email`);
-    console.log(`To: ${to}`);
-    console.log(`Reset URL: ${resetUrl}`);
-    console.log(`-----------------------------------------------------------\n`);
-    return;
+    return { delivered: false, provider: "unavailable" };
   }
 
   const transporter = createTransporter();
@@ -355,6 +355,7 @@ const sendPasswordResetEmail = async ({ to, token, name, requestMeta = {} }) => 
     html,
     text,
   });
+  return { delivered: true, provider: "smtp" };
 };
 
 // ─── Password Changed Notification Email ─────────────────────────────────────
@@ -400,8 +401,7 @@ const sendPasswordChangedNotificationEmail = async ({ to, name, requestMeta = {}
   const text = `MyJourney Security Alert: Your password was successfully changed.\n\nTime: ${time}\nIP: ${ip}\nDevice: ${device}\nBrowser: ${browser}\n\nIf you did not request this, please contact support immediately: ${contactUrl}`;
 
   if (!hasSmtpConfig()) {
-    console.log(`\n📧 [EMAIL DEV LOG] Password Changed Notification dispatched to ${to}`);
-    return;
+    return { delivered: false, provider: "unavailable" };
   }
 
   const transporter = createTransporter();
@@ -412,6 +412,7 @@ const sendPasswordChangedNotificationEmail = async ({ to, name, requestMeta = {}
     html,
     text,
   });
+  return { delivered: true, provider: "smtp" };
 };
 
 const handlers = {

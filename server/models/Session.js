@@ -49,12 +49,17 @@ const sessionSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    expiresAt: {
+      type: Date,
+      required: true,
+      index: { expires: 0 },
+    },
   },
   {
     timestamps: true,
   }
 );
 
-sessionSchema.index({ user: 1, isActive: 1 });
+sessionSchema.index({ user: 1, isActive: 1, expiresAt: -1 });
 
 module.exports = mongoose.models.Session || mongoose.model("Session", sessionSchema);
