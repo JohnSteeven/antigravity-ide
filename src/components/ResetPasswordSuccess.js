@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiCheckCircle, FiCompass, FiShield } from "react-icons/fi";
 import { motion } from "framer-motion";
 

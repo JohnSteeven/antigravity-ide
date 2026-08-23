@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import { membershipApi } from "../../services/apiService";
 import { useAuth } from "../../hooks/useAuth";
 import "./premium.css";

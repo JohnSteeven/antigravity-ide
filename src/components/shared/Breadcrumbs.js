@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 const Breadcrumbs = ({ items = [] }) => (
   <nav className="breadcrumbs" aria-label="Breadcrumb">

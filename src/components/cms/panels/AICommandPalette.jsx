@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import apiService from '../../../services/apiService';
 import {
   FiCommand, FiSearch, FiZap, FiEdit3, FiFolder, FiImage,

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FiActivity, FiBookOpen, FiCheckSquare, FiChevronDown, FiDollarSign, FiDroplet, FiHeart, FiMic, FiMoon, FiRepeat, FiTarget } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import lifeApi from "../api/lifeApi";
 import { LifeDialog, LifeNotice } from "./LifeUI";
 import { localDateInput } from "../utils/lifeFormat";

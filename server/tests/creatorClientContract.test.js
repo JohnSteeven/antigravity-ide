@@ -27,7 +27,7 @@ const renderCreatorApplication = ({ application, creatorAccess }) => {
   const applicationModule = { exports: {} };
   const localRequire = (id) => {
     if (id === "react") return reactMock;
-    if (id === "react-router-dom") return { Link };
+    if (id === "react-router") return { Link };
     if (id === "../../hooks/useAuth") return { useAuth: () => ({ creatorAccess }) };
     if (id === "../../services/apiService") return { creatorApi: {} };
     if (id === "../../utils/countryCodes") return { ALL_COUNTRY_CODES: [] };

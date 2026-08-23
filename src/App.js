@@ -6,7 +6,7 @@ import {
   RouterProvider,
   createBrowserRouter,
   useLocation,
-} from "react-router-dom";
+} from "react-router";
 import { CmsProvider } from "./context/CmsContext";
 import { AuthProvider } from "./context/AuthContext";
 import { FeatureProvider } from "./context/FeatureContext";
@@ -19,29 +19,8 @@ import FeaturedArticles from "./components/FeaturedArticles";
 import ArticlesBody from "./components/ArticlesBody";
 import QuoteSection from "./components/QuoteSection";
 import Footer from "./components/Footer";
-import ArticlesPage from "./components/ArticlesPage";
-import ArticleDetail from "./components/ArticleDetail";
-import StoriesPage from "./stories/StoriesPage";
-import StoryDetail from "./stories/StoryDetail";
-import CategoryPage from "./components/CategoryPage";
-import AllCategoriesPage from "./components/AllCategoriesPage";
-import Error from "./components/Error";
-import AdminDashboard from "./components/AdminDashboard";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import VerifyOTP from "./components/VerifyOTP";
-import ForgotPassword from "./components/ForgotPassword";
-import ResetPassword from "./components/ResetPassword";
-import ResetPasswordSuccess from "./components/ResetPasswordSuccess";
-import Profile from "./components/Profile";
-import EditProfile from "./components/EditProfile";
-import ReadMyStory from "./components/ReadMyStory.js";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
-import Contact from "./components/Contact";
-import DynamicPage from "./components/DynamicPage";
-import NewsletterVerificationPage from "./components/NewsletterVerificationPage";
-import NewsletterPreferencesPage from "./components/NewsletterPreferencesPage";
 import LoadingScreen from "./components/LoadingScreen";
 import { registerLifePwa } from "./pwa/registerLifePwa";
 import { AgentProvider } from "./features/agent/AgentContext.jsx";
@@ -49,15 +28,34 @@ import { playWithFriendsEnabled } from "./features/play-with-friends/config";
 
 import AskMyJourneyWidget from "./components/shared/AskMyJourneyWidget.jsx";
 
-import ReaderDashboard from "./components/ReaderDashboard.jsx";
-import SubscriptionDashboard from "./components/SubscriptionDashboard.jsx";
-import CommunityFeed from "./components/CommunityFeed.jsx";
-import PremiumPage from "./features/premium/PremiumPage.jsx";
 import LifePremiumGate from "./features/premium/LifePremiumGate.jsx";
 import "./features/premium/premium.css";
 
 const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"));
 const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));
+const ArticlesPage = lazy(() => import("./components/ArticlesPage.js"));
+const ArticleDetail = lazy(() => import("./components/ArticleDetail.js"));
+const StoriesPage = lazy(() => import("./stories/StoriesPage.js"));
+const StoryDetail = lazy(() => import("./stories/StoryDetail.js"));
+const CategoryPage = lazy(() => import("./components/CategoryPage.js"));
+const AllCategoriesPage = lazy(() => import("./components/AllCategoriesPage.js"));
+const Error = lazy(() => import("./components/Error.js"));
+const AdminDashboard = lazy(() => import("./components/AdminDashboard.js"));
+const Login = lazy(() => import("./components/Login.js"));
+const Register = lazy(() => import("./components/Register.js"));
+const VerifyOTP = lazy(() => import("./components/VerifyOTP.js"));
+const ForgotPassword = lazy(() => import("./components/ForgotPassword.js"));
+const ResetPassword = lazy(() => import("./components/ResetPassword.js"));
+const ResetPasswordSuccess = lazy(() => import("./components/ResetPasswordSuccess.js"));
+const Profile = lazy(() => import("./components/Profile.js"));
+const EditProfile = lazy(() => import("./components/EditProfile.js"));
+const ReadMyStory = lazy(() => import("./components/ReadMyStory.js"));
+const Contact = lazy(() => import("./components/Contact.js"));
+const DynamicPage = lazy(() => import("./components/DynamicPage.js"));
+const NewsletterVerificationPage = lazy(() => import("./components/NewsletterVerificationPage.js"));
+const NewsletterPreferencesPage = lazy(() => import("./components/NewsletterPreferencesPage.js"));
+const SubscriptionDashboard = lazy(() => import("./components/SubscriptionDashboard.jsx"));
+const PremiumPage = lazy(() => import("./features/premium/PremiumPage.jsx"));
 const LifeApp = lazy(() => import("./features/life/LifeApp.jsx"));
 const CreatorDirectory = lazy(() => import("./features/creators/CreatorDirectory.jsx"));
 const CreatorProfile = lazy(() => import("./features/creators/CreatorProfile.jsx"));
@@ -70,6 +68,12 @@ const LessonWorkspace = lazy(() => import("./features/learn/LessonWorkspace.jsx"
 const FormatDetailPage = lazy(() => import("./features/learn/FormatDetailPage.jsx"));
 // MyJourney Agent — full-screen experience
 const AgentPage = lazy(() => import("./features/agent/AgentPage.jsx"));
+
+const withRouteFallback = (element, message) => (
+  <Suspense fallback={<LoadingScreen message={message} />}>
+    {element}
+  </Suspense>
+);
 
 
 const HomePage = () => (
@@ -155,7 +159,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/",
     element: <Root />,
-    errorElement: <Error />,
+    errorElement: withRouteFallback(<Error />, "Opening MyJourney..."),
     children: [
       {
         index: true,
@@ -163,31 +167,31 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "articles",
-        element: <ArticlesPage />,
+        element: withRouteFallback(<ArticlesPage />, "Opening Articles..."),
       },
       {
         path: "articles/:slug",
-        element: <ArticleDetail />,
+        element: withRouteFallback(<ArticleDetail />, "Opening Article..."),
       },
       {
         path: "stories",
-        element: <StoriesPage />,
+        element: withRouteFallback(<StoriesPage />, "Opening Stories..."),
       },
       {
         path: "stories/:slug",
-        element: <StoryDetail />,
+        element: withRouteFallback(<StoryDetail />, "Opening Story..."),
       },
       {
         path: "categories",
-        element: <AllCategoriesPage />,
+        element: withRouteFallback(<AllCategoriesPage />, "Opening Categories..."),
       },
       {
         path: "category/:slug",
-        element: <CategoryPage />,
+        element: withRouteFallback(<CategoryPage />, "Opening Category..."),
       },
       {
         path: "about",
-        element: <ReadMyStory />,
+        element: withRouteFallback(<ReadMyStory />, "Opening About..."),
       },
       {
         path: "play-life",
@@ -223,7 +227,7 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "read-my-story",
-        element: <ReadMyStory />,
+        element: withRouteFallback(<ReadMyStory />, "Opening About..."),
       },
       {
         path: "readmystory",
@@ -231,22 +235,22 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "contact",
-        element: <Contact />,
+        element: withRouteFallback(<Contact />, "Opening Contact..."),
       },
       {
         path: "newsletter/verify",
-        element: <NewsletterVerificationPage />,
+        element: withRouteFallback(<NewsletterVerificationPage />, "Verifying newsletter..."),
       },
       {
         path: "newsletter/preferences",
-        element: <NewsletterPreferencesPage />,
+        element: withRouteFallback(<NewsletterPreferencesPage />, "Opening newsletter preferences..."),
       },
       {
         // Admin-only: requires login + role === admin
         path: "cms/*",
         element: (
           <ProtectedRoute requireAdmin>
-            <AdminDashboard />
+            {withRouteFallback(<AdminDashboard />, "Opening CMS...")}
           </ProtectedRoute>
         ),
       },
@@ -254,7 +258,7 @@ const appRouter = createBrowserRouter([
         path: "login",
         element: (
           <GuestRoute>
-            <Login />
+            {withRouteFallback(<Login />, "Opening sign in...")}
           </GuestRoute>
         ),
       },
@@ -262,7 +266,7 @@ const appRouter = createBrowserRouter([
         path: "register",
         element: (
           <GuestRoute>
-            <Register />
+            {withRouteFallback(<Register />, "Opening registration...")}
           </GuestRoute>
         ),
       },
@@ -270,7 +274,7 @@ const appRouter = createBrowserRouter([
         path: "verify-otp",
         element: (
           <GuestRoute>
-            <VerifyOTP />
+            {withRouteFallback(<VerifyOTP />, "Opening verification...")}
           </GuestRoute>
         ),
       },
@@ -278,7 +282,7 @@ const appRouter = createBrowserRouter([
         path: "forgot-password",
         element: (
           <GuestRoute>
-            <ForgotPassword />
+            {withRouteFallback(<ForgotPassword />, "Opening password recovery...")}
           </GuestRoute>
         ),
       },
@@ -286,7 +290,7 @@ const appRouter = createBrowserRouter([
         path: "reset-password",
         element: (
           <GuestRoute>
-            <ResetPassword />
+            {withRouteFallback(<ResetPassword />, "Opening password reset...")}
           </GuestRoute>
         ),
       },
@@ -294,17 +298,17 @@ const appRouter = createBrowserRouter([
         path: "reset-password/:token",
         element: (
           <GuestRoute>
-            <ResetPassword />
+            {withRouteFallback(<ResetPassword />, "Opening password reset...")}
           </GuestRoute>
         ),
       },
       {
         path: "reset-password-success",
-        element: <ResetPasswordSuccess />,
+        element: withRouteFallback(<ResetPasswordSuccess />, "Opening confirmation..."),
       },
       {
         path: "premium",
-        element: <PremiumPage />,
+        element: withRouteFallback(<PremiumPage />, "Opening Premium..."),
       },
       {
         path: "creators",
@@ -370,7 +374,7 @@ const appRouter = createBrowserRouter([
         path: "profile",
         element: (
           <ProtectedRoute>
-            <Profile />
+            {withRouteFallback(<Profile />, "Opening profile...")}
           </ProtectedRoute>
         ),
       },
@@ -406,7 +410,7 @@ const appRouter = createBrowserRouter([
         path: "profile/subscription",
         element: (
           <ProtectedRoute>
-            <SubscriptionDashboard />
+            {withRouteFallback(<SubscriptionDashboard />, "Opening membership...")}
           </ProtectedRoute>
         ),
       },
@@ -418,13 +422,13 @@ const appRouter = createBrowserRouter([
         path: "edit-profile",
         element: (
           <ProtectedRoute>
-            <EditProfile />
+            {withRouteFallback(<EditProfile />, "Opening profile settings...")}
           </ProtectedRoute>
         ),
       },
       {
         path: ":pageSlug",
-        element: <DynamicPage />,
+        element: withRouteFallback(<DynamicPage />, "Opening page..."),
       },
     ],
   },

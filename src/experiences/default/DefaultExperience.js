@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiCheckCircle, FiCompass, FiActivity, FiStar, FiCalendar } from "react-icons/fi";
 import { getImageUrl } from "../../utils/imageUrlHelper";
 import Breadcrumbs from "../../components/shared/Breadcrumbs";

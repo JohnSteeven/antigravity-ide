@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiArrowLeft, FiCheckCircle, FiCompass, FiLock, FiMail } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";

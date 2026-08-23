@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiArrowRight, FiCompass, FiUsers } from "react-icons/fi";
 import { motion, useReducedMotion } from "framer-motion";
 import { aboutProjectsData } from "./aboutProjectsData";

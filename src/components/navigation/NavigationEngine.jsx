@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router';
 import apiService from '../../services/apiService';
 
 export default function NavigationEngine({ zoneKey = 'primary-header', className = '', onItemClick }) {

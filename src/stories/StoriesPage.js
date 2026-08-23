@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FiArrowRight } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import StoryHero from "./components/StoryHero";
 import FeaturedStory from "./components/FeaturedStory";
 import StoryCard from "./components/StoryCard";

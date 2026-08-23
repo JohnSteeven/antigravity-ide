@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { creatorApi, creatorStudioApi } from "../../services/apiService";
 import { useAuth } from "../../hooks/useAuth";
 import "./creators.css";

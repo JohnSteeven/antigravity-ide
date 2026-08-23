@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import apiService from '../../../services/apiService';
 import {
   FiZap, FiX, FiSend, FiRefreshCw, FiCheckCircle,

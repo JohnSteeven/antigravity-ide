@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, NavLink, Route, Routes } from "react-router-dom";
+import { Navigate, NavLink, Route, Routes } from "react-router";
 import { FiActivity, FiBell, FiBookOpen, FiCalendar, FiDollarSign, FiHeart, FiPlus, FiRepeat, FiSearch, FiSettings, FiTarget, FiTrendingUp } from "react-icons/fi";
 import lifeApi from "./api/lifeApi";
 import LifeOnboarding from "./components/LifeOnboarding";

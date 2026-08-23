@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router";
 import { useCms } from "../context/CmsContext";
 import CmsLayout from "./layout/CmsLayout";
 

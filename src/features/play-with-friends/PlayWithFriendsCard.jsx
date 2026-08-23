@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiArrowRight, FiUsers } from "react-icons/fi";
 import "./play-with-friends-card.css";
 

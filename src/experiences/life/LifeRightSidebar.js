@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiBookOpen, FiMic, FiCompass, FiAward } from "react-icons/fi";
 import AuthorCard from "../shared/widgets/AuthorCard";
 import ShareButtons from "../shared/widgets/ShareButtons";

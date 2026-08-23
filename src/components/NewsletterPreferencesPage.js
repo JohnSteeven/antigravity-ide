@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router";
 import { subscriberApi } from "../services/apiService";
 import { FiSliders, FiCheckCircle, FiXCircle, FiLoader } from "react-icons/fi";
 

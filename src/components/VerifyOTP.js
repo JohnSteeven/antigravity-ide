@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import { FiRefreshCw, FiShield } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";

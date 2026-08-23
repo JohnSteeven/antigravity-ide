@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiBookmark, FiCalendar, FiEye, FiHeart, FiFeather } from "react-icons/fi";
 import { getImageUrl, handleImageError } from "../../../utils/imageUrlHelper";
 

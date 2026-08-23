@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { FiArrowLeft, FiSave } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { ALL_COUNTRY_CODES } from "../utils/countryCodes";

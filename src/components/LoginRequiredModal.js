@@ -1,5 +1,5 @@
 import { FiLogIn, FiX } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
 
 const LoginRequiredModal = ({ open, onClose, returnTo }) => {

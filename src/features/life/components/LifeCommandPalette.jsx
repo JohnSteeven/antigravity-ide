@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FiCommand, FiSearch } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import lifeApi from "../api/lifeApi";
 import { LifeDialog, LifeNotice } from "./LifeUI";
 

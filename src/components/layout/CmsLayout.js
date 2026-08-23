@@ -39,7 +39,7 @@ import {
 } from "react-icons/fi";
 import { cmsNavigation } from "../../domain/knowledgeArchitecture";
 import { useCms } from "../../context/CmsContext";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import AICommandPalette from "../cms/panels/AICommandPalette";
 import AICopilotPanel from "../cms/panels/AICopilotPanel";
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { FiChevronDown, FiFilter, FiSearch, FiTag } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";

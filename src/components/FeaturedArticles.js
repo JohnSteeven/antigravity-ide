@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";

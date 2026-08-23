@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiCode, FiTerminal, FiArrowRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import CommentsSection from "../shared/widgets/CommentsSection";
 

@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router';
 import apiService from '../../services/apiService';
 import { FiChevronRight, FiHome } from 'react-icons/fi';
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useAuth } from "../../hooks/useAuth";
 import { creatorApi } from "../../services/apiService";
 import { ALL_COUNTRY_CODES } from "../../utils/countryCodes";

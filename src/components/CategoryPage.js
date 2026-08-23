@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router";
 import { categoryBlueprintBySlug } from "../domain/knowledgeArchitecture";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";

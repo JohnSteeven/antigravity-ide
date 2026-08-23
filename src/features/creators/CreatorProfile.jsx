@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router";
 import { creatorApi } from "../../services/apiService";
 import { useAuth } from "../../hooks/useAuth";
 import "./creators.css";

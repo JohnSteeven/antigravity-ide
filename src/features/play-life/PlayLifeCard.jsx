@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { FiArrowRight, FiCompass } from "react-icons/fi";
 import "./play-life.css";

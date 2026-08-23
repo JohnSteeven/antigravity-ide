@@ -25,7 +25,7 @@ import {
 } from "react-icons/fi";
 import { mediaApi, default as apiService } from "../../services/apiService";
 import { useCms } from "../../context/CmsContext";
-import { useBlocker } from "react-router-dom";
+import { useBlocker } from "react-router";
 import CmsPanelResolver from "./panels/CmsPanelResolver";
 
 const ITEMS_PER_PAGE = 8;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FiArrowLeft, FiArrowRight, FiCalendar, FiCheck, FiClock, FiPlus, FiSkipForward, FiSun } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useAuth } from "../../../hooks/useAuth";
 import lifeApi from "../api/lifeApi";
 import useLifeQuery from "../hooks/useLifeQuery";

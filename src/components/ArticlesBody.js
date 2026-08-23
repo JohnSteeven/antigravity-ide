@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";
 import ArticlesCard from "./ArticlesCard";

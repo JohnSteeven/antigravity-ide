@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiArrowLeft, FiBookmark, FiShare2 } from "react-icons/fi";
 import StoryLayoutRenderer from "./StoryLayoutRenderer";
 import { calculateStoryReadingTime, normalizeStorySections, STORY_SECTION_TYPES } from "../storySections";

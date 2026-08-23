@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router";
 import { FiArrowLeft } from "react-icons/fi";
 import { storyApi } from "../services/apiService";
 import RelatedStories from "./components/RelatedStories";

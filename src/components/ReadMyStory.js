@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiAward, FiBriefcase, FiCompass, FiStar } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import AboutProjectsSection from "../features/about/AboutProjectsSection";
