@@ -42,11 +42,12 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export const ContentCmsProvider = ({ children }) => {
   const [syncStatus, setSyncStatus] = useState("loading");
-  // Pre-populate with cmsSeed so the homepage is never blank on first render
-  const [articles, setArticles] = useState(cmsSeed.articles || []);
-  const [categories, setCategories] = useState(cmsSeed.categories || []);
-  const [subcategories, setSubcategories] = useState(cmsSeed.subcategories || []);
-  const [tags, setTags] = useState(cmsSeed.tags || []);
+  // Persistent content is server-authoritative. Bundled fixtures are never a
+  // substitute for MongoDB-backed Articles, Stories, or taxonomy.
+  const [articles, setArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [tags, setTags] = useState([]);
 
   // Portfolio & site settings slices
   const [site, setSite] = useState(cmsSeed.site);
@@ -66,10 +67,6 @@ export const ContentCmsProvider = ({ children }) => {
         if (parsed.__version !== CACHE_VERSION) {
           window.localStorage.removeItem(STORAGE_KEY);
         } else {
-          if (parsed.articles?.length) setArticles(parsed.articles);
-          if (parsed.categories?.length) setCategories(parsed.categories);
-          if (parsed.subcategories?.length) setSubcategories(parsed.subcategories);
-          if (parsed.tags?.length) setTags(parsed.tags);
           if (parsed.site) setSite(parsed.site);
           if (parsed.story) setStory(parsed.story);
           if (parsed.timeline) setTimeline(parsed.timeline);
@@ -88,61 +85,60 @@ export const ContentCmsProvider = ({ children }) => {
     const timer = setTimeout(() => {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ __version: CACHE_VERSION, articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats })
+        JSON.stringify({ __version: CACHE_VERSION, site, story, timeline, projects, skills, stats })
       );
     }, 1000);
     return () => clearTimeout(timer);
-  }, [articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats]);
+  }, [site, story, timeline, projects, skills, stats]);
 
-  const fetchContentData = async (isAdminOrEditor = false) => {
+  const fetchContentData = async (isAdmin = false) => {
     setSyncStatus("loading");
     try {
       let articlesRes, categoriesRes, subcategoriesRes, tagsRes;
-      if (isAdminOrEditor) {
+      if (isAdmin) {
         [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
-          articleApi.adminList({ limit: 1000 }).catch(() => articleApi.list({ limit: 1000 })),
-          categoryApi.list({ includeDeleted: true }).catch(() => ({ categories: [] })),
-          subCategoryApi.list({ includeDeleted: true }).catch(() => ({ subCategories: [] })),
-          tagApi.list({ includeDeleted: true }).catch(() => ({ tags: [] })),
+          articleApi.adminList({ limit: 1000 }),
+          categoryApi.list({ includeDeleted: true }),
+          subCategoryApi.list({ includeDeleted: true }),
+          tagApi.list({ includeDeleted: true }),
         ]);
       } else {
+        // Clear any full CMS records immediately on privilege loss. A failed
+        // public refresh must never retain an Admin-fetched body in memory.
+        setArticles([]);
         [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
-          articleApi.list({ limit: 1000 }).catch(() => ({ articles: [] })),
-          categoryApi.list({ includeDeleted: false }).catch(() => ({ categories: [] })),
-          subCategoryApi.list({ includeDeleted: false }).catch(() => ({ subCategories: [] })),
-          tagApi.list({ includeDeleted: false }).catch(() => ({ tags: [] })),
+          articleApi.list({ limit: 1000 }),
+          categoryApi.list({ includeDeleted: false }),
+          subCategoryApi.list({ includeDeleted: false }),
+          tagApi.list({ includeDeleted: false }),
         ]);
       }
 
-      if (articlesRes && Array.isArray(articlesRes.articles) && articlesRes.articles.length > 0) {
-        setArticles(articlesRes.articles.map(withClientId));
-      }
-      if (categoriesRes && Array.isArray(categoriesRes.categories) && categoriesRes.categories.length > 0) {
-        setCategories(categoriesRes.categories.map(withClientId));
-      }
-      if (subcategoriesRes && Array.isArray(subcategoriesRes.subCategories) && subcategoriesRes.subCategories.length > 0) {
-        setSubcategories(subcategoriesRes.subCategories.map(withClientId));
-      }
-      if (tagsRes && Array.isArray(tagsRes.tags) && tagsRes.tags.length > 0) {
-        setTags(tagsRes.tags.map(withClientId));
-      }
+      setArticles(Array.isArray(articlesRes?.articles) ? articlesRes.articles.map(withClientId) : []);
+      setCategories(Array.isArray(categoriesRes?.categories) ? categoriesRes.categories.map(withClientId) : []);
+      setSubcategories(Array.isArray(subcategoriesRes?.subCategories) ? subcategoriesRes.subCategories.map(withClientId) : []);
+      setTags(Array.isArray(tagsRes?.tags) ? tagsRes.tags.map(withClientId) : []);
       setSyncStatus("live");
     } catch (err) {
-      console.warn("Failed to fetch live content, using stale fallback", err);
-      setSyncStatus("stale-fallback");
+      console.warn("Failed to fetch persistent content", err);
+      setArticles([]);
+      setCategories([]);
+      setSubcategories([]);
+      setTags([]);
+      setSyncStatus("unavailable");
     }
   };
 
   const { isAuthenticated, user } = useAuth();
-  const isAdminOrEditor = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
+  const isAdmin = isAuthenticated && user?.role === "Admin";
 
   useEffect(() => {
-    fetchContentData(isAdminOrEditor);
-  }, [isAdminOrEditor]);
+    fetchContentData(isAdmin);
+  }, [isAdmin]);
 
   const actions = useMemo(() => ({
     async refreshContent() {
-      await fetchContentData(isAdminOrEditor);
+      await fetchContentData(isAdmin);
     },
     updateSiteSection(section, value) {
       setSite((current) => ({
@@ -227,6 +223,7 @@ export const ContentCmsProvider = ({ children }) => {
         subcategory: article.subcategory,
         tags: article.tags,
         status: article.status,
+        seo: article.seo || {},
         accessLevel: article.accessLevel || "free",
         isFeatured: article.featured,
         isMustRead: article.mustRead,
@@ -277,66 +274,36 @@ export const ContentCmsProvider = ({ children }) => {
         );
       };
 
-      const applyDelta = (delta) => {
-        setArticles((prev) =>
-          prev.map((article) =>
-            article.id === id || article._id === id
-              ? { ...article, [metric]: Math.max(0, Number(article[metric] || 0) + delta) }
-              : article
-          )
-        );
-      };
+      const isServerArticle = id && !String(id).startsWith("article-");
 
-      const isServerArticle = id && !String(id).startsWith("article-") && syncStatus === "live";
+      if (!isServerArticle) {
+        const error = new Error("This Article is not backed by the persistent content API.");
+        error.code = "ARTICLE_NOT_PERSISTED";
+        throw error;
+      }
 
       if (metric === "views") {
-        applyDelta(1);
-        if (!isServerArticle) return;
-        try {
-          await articleApi.incrementViews(id);
-        } catch (err) {
-          applyDelta(-1);
-          console.warn("Failed to increment article views", err);
-        }
-        return;
+        const response = await articleApi.incrementViews(id);
+        if (response?.views !== undefined) applyUpdate(response.views);
+        return response;
       }
 
       if (metric === "likes") {
-        applyDelta(1);
-        if (!isServerArticle) return;
-        try {
-          const res = await articleApi.like(id);
-          if (res && res.likes !== undefined) applyUpdate(res.likes);
-        } catch (err) {
-          applyDelta(-1);
-          console.warn("Failed to persist article like", err);
-        }
-        return;
+        const response = await articleApi.like(id);
+        if (response?.likes !== undefined) applyUpdate(response.likes);
+        return response;
       }
 
       if (metric === "bookmarks") {
-        applyDelta(1);
-        if (!isServerArticle) return;
-        try {
-          const res = await articleApi.bookmark(id);
-          if (res && res.bookmarks !== undefined) applyUpdate(res.bookmarks);
-        } catch (err) {
-          applyDelta(-1);
-          console.warn("Failed to persist article bookmark", err);
-        }
-        return;
+        const response = await articleApi.bookmark(id);
+        if (response?.bookmarks !== undefined) applyUpdate(response.bookmarks);
+        return response;
       }
 
       if (metric === "saved") {
-        applyDelta(1);
-        if (!isServerArticle) return;
-        try {
-          const res = await articleApi.save(id);
-          if (res && res.saved !== undefined) applyUpdate(res.saved);
-        } catch (err) {
-          applyDelta(-1);
-          console.warn("Failed to persist article save", err);
-        }
+        const response = await articleApi.save(id);
+        if (response?.saved !== undefined) applyUpdate(response.saved);
+        return response;
       }
     },
     async toggleArticleStatus(id) {
@@ -508,7 +475,7 @@ export const ContentCmsProvider = ({ children }) => {
       });
       return normalized;
     },
-  }), [articles, categories, subcategories, tags, syncStatus, isAdminOrEditor]);
+  }), [articles, categories, subcategories, tags, syncStatus, isAdmin]);
 
   const value = useMemo(() => ({
     articles,

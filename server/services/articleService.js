@@ -8,7 +8,7 @@ class ArticleService {
   async getArticles(query = {}) {
     const filter = {};
     if (query.contentType) filter.contentType = query.contentType;
-    if (query.status) filter.status = { $regex: new RegExp(`^${query.status}$`, "i") };
+    if (query.status) filter.status = String(query.status).toLowerCase();
     if (query.accessLevel) filter.accessLevel = query.accessLevel;
     if (query.category) filter.category = query.category;
     if (query.subcategory) filter.subcategory = query.subcategory;
@@ -33,12 +33,14 @@ class ArticleService {
     }
 
     if (query.search) {
-      filter.$text = { $search: query.search };
+      filter.$text = { $search: String(query.search).slice(0, 100) };
     }
 
     const sort = {};
     if (query.sort === "popular") {
       sort.views = -1;
+    } else if (query.sort === "rated") {
+      sort.rating = -1;
     } else if (query.sort === "oldest") {
       sort.publishedAt = 1;
     } else {
@@ -46,7 +48,7 @@ class ArticleService {
     }
 
     const page = Math.max(1, parseInt(query.page) || 1);
-    const limit = Math.min(1000, parseInt(query.limit) || 1000);
+    const limit = Math.min(1000, Math.max(1, parseInt(query.limit) || 1000));
     const skip = (page - 1) * limit;
 
     const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
@@ -118,7 +120,7 @@ class ArticleService {
     if (article.status === "published") {
       const notificationSchedulerService = require("./notificationSchedulerService");
       notificationSchedulerService.handleNewArticle(article).catch((err) => {
-        console.error("Failed to trigger new article notifications:", err);
+        console.error('[articles] Notification trigger failed.', { errorType: err?.name || 'Error' });
       });
     }
 
@@ -156,7 +158,7 @@ class ArticleService {
     if (article.status === "published" && !wasPublished) {
       const notificationSchedulerService = require("./notificationSchedulerService");
       notificationSchedulerService.handleNewArticle(article).catch((err) => {
-        console.error("Failed to trigger new article notifications:", err);
+        console.error('[articles] Notification trigger failed.', { errorType: err?.name || 'Error' });
       });
     }
 

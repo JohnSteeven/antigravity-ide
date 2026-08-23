@@ -33,6 +33,12 @@ const StorySectionSchema = new mongoose.Schema(
     chapterTitle: { type: String, default: "" },
     quote: { type: String, default: "" },
     attribution: { type: String, default: "" },
+    quoteSource: { type: String, default: "" },
+    quoteStyle: {
+      type: String,
+      enum: ["classic", "pull-quote", "aside"],
+      default: "classic",
+    },
     // Retained only so historical multi-image data can be linearized safely.
     images: [{ type: mongoose.Schema.Types.Mixed }],
   },
@@ -141,6 +147,7 @@ const ArticleSchema = new mongoose.Schema(
     storyLayout: { type: String, default: "classic-reader" },
     storySections: { type: [StorySectionSchema], default: undefined },
     coverImageAlt: { type: String, default: "" },
+    coverImageCaption: { type: String, default: "" },
 
     // Status
     status: {

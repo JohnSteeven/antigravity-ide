@@ -4,10 +4,41 @@ import { STORY_SECTION_TYPES, stripStoryHtml } from "../storySections";
 
 const hasHtmlMarkup = (value = "") => /<[a-z][\s\S]*>/i.test(String(value));
 
+const sanitizeClientStoryHtml = (value = "") => {
+  if (typeof document === "undefined") {
+    return String(value).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[char]));
+  }
+  const template = document.createElement("template");
+  template.innerHTML = String(value);
+  template.content.querySelectorAll("script,style,object,embed,meta,link,base,form,input,button,svg,math").forEach((node) => node.remove());
+  template.content.querySelectorAll("*").forEach((node) => {
+    [...node.attributes].forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      const raw = attribute.value.trim();
+      if (name.startsWith("on") || ["style", "srcdoc"].includes(name)) node.removeAttribute(attribute.name);
+      if (["href", "src"].includes(name) && /^(?:javascript|data|vbscript):/i.test(raw)) node.removeAttribute(attribute.name);
+    });
+    if (node.tagName === "IFRAME") {
+      try {
+        const url = new URL(node.getAttribute("src"), window.location.origin);
+        if (!["www.youtube.com", "www.youtube-nocookie.com", "player.vimeo.com"].includes(url.hostname)) node.remove();
+      } catch (_error) {
+        node.remove();
+      }
+    }
+    if (node.tagName === "A" && node.getAttribute("target") === "_blank") {
+      node.setAttribute("rel", "noopener noreferrer");
+    }
+  });
+  return template.innerHTML;
+};
+
 const StoryBody = ({ body, className = "" }) => {
   if (!body) return null;
   if (hasHtmlMarkup(body)) {
-    return <div className={`story-reader__body ${className}`.trim()} dangerouslySetInnerHTML={{ __html: body }} />;
+    return <div className={`story-reader__body ${className}`.trim()} dangerouslySetInnerHTML={{ __html: sanitizeClientStoryHtml(body) }} />;
   }
 
   return (
@@ -174,9 +205,14 @@ export default function StorySectionRenderer({ section, index = 0, mode = "publi
     case STORY_SECTION_TYPES.QUOTE:
       if (!section.quote) return null;
       return (
-        <blockquote className="story-reader__quote">
+        <blockquote className={`story-reader__quote story-reader__quote--${section.quoteStyle || "classic"}`}>
           <p>{section.quote}</p>
-          {section.attribution && <cite>{section.attribution}</cite>}
+          {(section.attribution || section.quoteSource) && (
+            <cite>
+              {section.attribution && <span>{section.attribution}</span>}
+              {section.quoteSource && <span className="story-reader__quote-source">{section.quoteSource}</span>}
+            </cite>
+          )}
         </blockquote>
       );
 

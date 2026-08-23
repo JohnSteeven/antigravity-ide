@@ -1,6 +1,7 @@
 jest.mock("../services/articleService", () => ({
   getArticleBySlug: jest.fn(),
   getArticles: jest.fn(),
+  incrementMetric: jest.fn(),
 }));
 jest.mock("../services/entitlementService", () => ({
   resolveForUser: jest.fn(async (userId) => ({ entitlements: { premium_content: userId === "premium-user" } })),
@@ -84,5 +85,38 @@ describe("Premium content controllers", () => {
     expect(res.payload.redirect).toBe(true);
     expect(res.payload.article).toBeUndefined();
     expect(JSON.stringify(res.payload)).not.toContain("ARTICLE BODY MUST STAY SERVER SIDE");
+  });
+
+  test("public Article listings enforce published, bounded, server-side filters", async () => {
+    articleService.getArticles.mockResolvedValue({
+      articles: [{ title: "Public", slug: "public", body: "FULL BODY", status: "published" }],
+      pagination: { page: 1, limit: 48, total: 1, pages: 1 },
+    });
+
+    const res = await call(articleController.getArticles.bind(articleController), {
+      query: { status: "draft", limit: "9999", featured: "true", search: "journey" },
+    });
+
+    expect(articleService.getArticles).toHaveBeenCalledWith(expect.objectContaining({
+      status: "published",
+      limit: 48,
+      isFeatured: "true",
+      accessLevel: "free",
+    }));
+    expect(res.payload.articles[0].body).toBeUndefined();
+  });
+
+  test("view increments return the persisted count and report missing Articles", async () => {
+    articleService.incrementMetric.mockResolvedValueOnce({ views: 17 });
+    const updated = await call(articleController.incrementViews.bind(articleController), {
+      params: { id: "article-id" },
+    });
+    expect(updated.payload).toEqual({ views: 17 });
+
+    articleService.incrementMetric.mockResolvedValueOnce(null);
+    const missing = await call(articleController.incrementViews.bind(articleController), {
+      params: { id: "missing-id" },
+    });
+    expect(missing.statusCode).toBe(404);
   });
 });

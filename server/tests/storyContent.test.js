@@ -90,4 +90,25 @@ describe("Story content architecture", () => {
     const [section] = normalizeStorySections([{ type: "wide-image", image: "/wide.jpg", alt: "Wide scene", imageSize: "wide" }]);
     expect(section.imageSize).toBe("medium");
   });
+
+  test("normalizes structured quote source and style without accepting arbitrary style code", () => {
+    const [quote] = normalizeStorySections([{
+      type: "quote",
+      quote: "The journey changes the traveler.",
+      attribution: "A. Writer",
+      source: "Collected Letters",
+      stylePreset: "pull-quote",
+    }]);
+    const [unsafeStyle] = normalizeStorySections([{
+      type: "quote",
+      quote: "Still readable.",
+      quoteStyle: "position:fixed",
+    }]);
+
+    expect(quote).toMatchObject({
+      quoteSource: "Collected Letters",
+      quoteStyle: "pull-quote",
+    });
+    expect(unsafeStyle.quoteStyle).toBe("classic");
+  });
 });

@@ -60,6 +60,8 @@ class ArticleController {
       const query = {
         ...req.query,
         status: "published",
+        limit: Math.min(48, Math.max(1, Number.parseInt(req.query.limit, 10) || 12)),
+        ...(req.query.featured !== undefined ? { isFeatured: req.query.featured } : {}),
         ...(req.query.search ? { accessLevel: "free" } : {}),
       };
       const data = await articleService.getArticles(query);
@@ -84,8 +86,9 @@ class ArticleController {
 
   async incrementViews(req, res, next) {
     try {
-      await articleService.incrementMetric(req.params.id, "views");
-      res.json({ ok: true });
+      const article = await articleService.incrementMetric(req.params.id, "views");
+      if (!article) return res.status(404).json({ message: "Article not found." });
+      res.json({ views: article.views });
     } catch (err) {
       next(err);
     }

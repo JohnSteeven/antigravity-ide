@@ -25,11 +25,12 @@ import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
 import ExperienceResolver from "../experiences/ExperienceResolver";
 import PremiumContentBoundary from "../features/premium/PremiumContentBoundary";
+import DocumentMetadata from "./shared/DocumentMetadata";
 
 const ArticleDetail = () => {
   const { slug } = useParams();
   const location = useLocation();
-  const { data, syncStatus, addComment, incrementArticle } = useCms();
+  const { data, addComment, incrementArticle } = useCms();
   const { isAuthenticated, loading: authLoading, updateProfile, user, refreshSession } = useAuth();
   const [comment, setComment] = useState({ text: "" });
   const [commentMessage, setCommentMessage] = useState("");
@@ -43,12 +44,8 @@ const ArticleDetail = () => {
   const [apiArticle, setApiArticle] = useState(null);
   const [apiLoading, setApiLoading] = useState(true);
 
-  // Path 1: fast lookup from CMS context in-memory list
-  const contextArticle = data.articles.find(
-    (item) => item.slug === slug && item.status === "published"
-  );
-
-  // Path 2: authoritative DB lookup by slug — handles articles not yet in context
+  // Detail content always comes from the authoritative slug API. Shared CMS
+  // context may contain Admin bodies and is never a public detail fallback.
   useEffect(() => {
     let cancelled = false;
     setApiArticle(null);
@@ -69,33 +66,7 @@ const ArticleDetail = () => {
     return () => { cancelled = true; };
   }, [slug]);
 
-  // Keep local apiArticle state synchronized with context data.articles updates
-  useEffect(() => {
-    if (apiArticle) {
-      const match = data.articles.find(
-        (item) => item.id === apiArticle.id || item._id === apiArticle._id
-      );
-      if (match) {
-        if (
-          match.likes !== apiArticle.likes ||
-          match.bookmarks !== apiArticle.bookmarks ||
-          match.views !== apiArticle.views ||
-          match.saved !== apiArticle.saved
-        ) {
-          setApiArticle((prev) => prev ? {
-            ...prev,
-            likes: match.likes,
-            bookmarks: match.bookmarks,
-            views: match.views,
-            saved: match.saved,
-          } : null);
-        }
-      }
-    }
-  }, [data.articles, apiArticle]);
-
-  // Use whichever source resolves first
-  const article = apiArticle || contextArticle;
+  const article = apiArticle;
 
   const relatedArticles = useMemo(() => {
     if (!article) return [];
@@ -129,9 +100,10 @@ const ArticleDetail = () => {
     if (!article || !article.body) return "";
     let cleanBody = article.body.replace(/<button[^>]*class=["']?remove-image-btn["']?[^>]*>[\s\S]*?<\/button>/gi, "");
     cleanBody = cleanBody.replace(/(<(figure|div|p)[^>]*>[\s\S]*?)(?:x|×|\s)*(<\/\2>)/gi, "$1$3");
-    const bodyWithAbsoluteImages = cleanBody
-      .replace(/(src|href)="\/uploads/g, '$1="http://localhost:5000/uploads')
-      .replace(/(src|href)="uploads/g, '$1="http://localhost:5000/uploads');
+    const bodyWithAbsoluteImages = cleanBody.replace(
+      /(src|href)=["'](\/?uploads[^"']*)["']/gi,
+      (_match, attribute, path) => `${attribute}="${getImageUrl(path)}"`
+    );
     let index = 0;
     return bodyWithAbsoluteImages.replace(/<(h2|h3)([^>]*)>/gi, (match, tag, attrs) => {
       const replacement = `<${tag} id="heading-${index}"${attrs}>`;
@@ -147,13 +119,13 @@ const ArticleDetail = () => {
       const hasViewed = sessionStorage.getItem(viewedKey);
       if (!hasViewed) {
         sessionStorage.setItem(viewedKey, "true");
-        if (apiArticle) {
-          setApiArticle((prev) => prev ? {
-            ...prev,
-            views: (prev.views || 0) + 1
-          } : null);
-        }
-        incrementArticle(articleId, "views");
+        incrementArticle(articleId, "views")
+          .then((response) => {
+            if (response?.views !== undefined) {
+              setApiArticle((current) => current ? { ...current, views: response.views } : null);
+            }
+          })
+          .catch(() => sessionStorage.removeItem(viewedKey));
       }
     }
   }, [article?.id, article?._id]);
@@ -193,8 +165,7 @@ const ArticleDetail = () => {
   }, [headings]);
 
   if (!article) {
-    // Show loading screen while EITHER the CMS context OR the API slug fetch is still in-flight
-    if (syncStatus === "loading" || apiLoading) {
+    if (apiLoading) {
       return <LoadingScreen message="Loading article..." />;
     }
     // Both sources settled with no result — truly not found
@@ -202,7 +173,12 @@ const ArticleDetail = () => {
   }
 
   if (article.premiumRequired) {
-    return <PremiumContentBoundary content={article} kind="Article" />;
+    return (
+      <>
+        <DocumentMetadata content={article} kind="Article" />
+        <PremiumContentBoundary content={article} kind="Article" />
+      </>
+    );
   }
 
   const approvedComments = (data.comments || [])
@@ -235,13 +211,10 @@ const ArticleDetail = () => {
     if (!requireLogin()) return;
     try {
       const articleId = article.id || article._id;
-      if (apiArticle) {
-        setApiArticle((prev) => prev ? {
-          ...prev,
-          likes: Math.max(0, (prev.likes || 0) + (isLiked ? -1 : 1))
-        } : null);
+      const response = await incrementArticle(articleId, "likes");
+      if (response?.likes !== undefined) {
+        setApiArticle((current) => current ? { ...current, likes: response.likes } : null);
       }
-      await incrementArticle(articleId, "likes");
       await refreshSession();
       setCommentMessage(isLiked ? "Article unliked." : "Article liked.");
     } catch (error) {
@@ -253,13 +226,10 @@ const ArticleDetail = () => {
     if (!requireLogin()) return;
     try {
       const articleId = article.id || article._id;
-      if (apiArticle) {
-        setApiArticle((prev) => prev ? {
-          ...prev,
-          bookmarks: Math.max(0, (prev.bookmarks || 0) + (isBookmarked ? -1 : 1))
-        } : null);
+      const response = await incrementArticle(articleId, "bookmarks");
+      if (response?.bookmarks !== undefined) {
+        setApiArticle((current) => current ? { ...current, bookmarks: response.bookmarks } : null);
       }
-      await incrementArticle(articleId, "bookmarks");
       await refreshSession();
       setCommentMessage(isBookmarked ? "Article removed from bookmarks." : "Article bookmarked.");
     } catch (error) {
@@ -271,13 +241,10 @@ const ArticleDetail = () => {
     if (!requireLogin()) return;
     try {
       const articleId = article.id || article._id;
-      if (apiArticle) {
-        setApiArticle((prev) => prev ? {
-          ...prev,
-          saved: !isSaved
-        } : null);
+      const response = await incrementArticle(articleId, "saved");
+      if (response?.saved !== undefined) {
+        setApiArticle((current) => current ? { ...current, saved: response.saved } : null);
       }
-      await incrementArticle(articleId, "saved");
       await refreshSession();
       setCommentMessage(isSaved ? "Article removed from saved articles." : "Article saved to your profile.");
     } catch (error) {
@@ -338,6 +305,7 @@ const ArticleDetail = () => {
 
   return (
     <>
+      <DocumentMetadata content={article} kind="Article" />
       <ExperienceResolver
         article={article}
         processedBody={processedBody}

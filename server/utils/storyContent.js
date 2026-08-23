@@ -56,6 +56,11 @@ const normalizeImageSize = (size) => {
   return ["small", "medium", "portrait"].includes(normalized) ? normalized : "medium";
 };
 
+const normalizeQuoteStyle = (style) => {
+  const normalized = cleanString(style || "classic").trim().toLowerCase();
+  return ["classic", "pull-quote", "aside"].includes(normalized) ? normalized : "classic";
+};
+
 const normalizeStorySections = (sections) => {
   if (!Array.isArray(sections)) return [];
 
@@ -81,6 +86,8 @@ const normalizeStorySections = (sections) => {
       imageSide: (raw.imageSide || raw.imagePosition) === "left" ? "left" : "right",
       quote: cleanString(raw.quote),
       attribution: cleanString(raw.attribution),
+      quoteSource: cleanString(raw.quoteSource || raw.source),
+      quoteStyle: normalizeQuoteStyle(raw.quoteStyle || raw.stylePreset),
     };
 
     // Historical three-column/multi-image sections are always linearized.
@@ -100,6 +107,8 @@ const normalizeStorySections = (sections) => {
       imageSide: "right",
       quote: "",
       attribution: "",
+      quoteSource: "",
+      quoteStyle: "classic",
     }));
 
     return [section, ...extras];
@@ -109,7 +118,7 @@ const normalizeStorySections = (sections) => {
 const getStoryWordCount = (story = {}) => {
   const sections = Array.isArray(story.storySections) ? normalizeStorySections(story.storySections) : [];
   const content = sections.length
-    ? sections.map((section) => [section.heading, section.chapterTitle, section.body, section.quote, section.attribution].join(" ")).join(" ")
+    ? sections.map((section) => [section.heading, section.chapterTitle, section.body, section.quote, section.attribution, section.quoteSource].join(" ")).join(" ")
     : story.body || "";
   return stripHtml([story.title, story.description, story.reflection, content].join(" "))
     .split(/\s+/)

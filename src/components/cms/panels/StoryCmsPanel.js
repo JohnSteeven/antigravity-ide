@@ -55,10 +55,19 @@ const newStoryDraft = () => ({
   author: "Noble John Steeven",
   coverImage: "",
   coverImageAlt: "",
+  coverImageCaption: "",
   storyLayout: "classic-reader",
   storySections: [createStorySection(STORY_SECTION_TYPES.TEXT)],
   reflection: "",
   body: "",
+  seo: {
+    title: "",
+    description: "",
+    keywords: [],
+    canonicalUrl: "",
+    openGraphImage: "",
+    metaRobots: "index,follow",
+  },
   _storyLayoutWasUnset: false,
 });
 
@@ -193,6 +202,18 @@ const StorySectionEditor = ({ section, index, total, updateSection, moveSection,
             <label className="story-cms-field story-cms-field--wide">
               Attribution <span className="story-cms-optional">optional</span>
               <input type="text" value={section.attribution || ""} onChange={(event) => updateSection({ attribution: event.target.value })} />
+            </label>
+            <label className="story-cms-field">
+              Source <span className="story-cms-optional">optional</span>
+              <input type="text" value={section.quoteSource || ""} onChange={(event) => updateSection({ quoteSource: event.target.value })} />
+            </label>
+            <label className="story-cms-field">
+              Quote style
+              <select value={section.quoteStyle || "classic"} onChange={(event) => updateSection({ quoteStyle: event.target.value })}>
+                <option value="classic">Classic</option>
+                <option value="pull-quote">Pull quote</option>
+                <option value="aside">Aside</option>
+              </select>
             </label>
           </>
         )}
@@ -347,10 +368,12 @@ export default function StoryCmsPanel() {
         author: draft.author,
         coverImage: draft.coverImage,
         coverImageAlt: draft.coverImageAlt,
+        coverImageCaption: draft.coverImageCaption,
         storyLayout: draft.storyLayout,
         storySections: draft.storySections,
         reflection: draft.reflection,
         body: draft.body || "",
+        seo: draft.seo || {},
       };
       const serverId = draft._id || (draft.id && !/^(story|article)-/.test(String(draft.id)) ? draft.id : null);
       const response = serverId ? await storyApi.update(serverId, payload) : await storyApi.create(payload);
@@ -472,6 +495,50 @@ export default function StoryCmsPanel() {
                 <label className="story-cms-field story-cms-field--wide">
                   {isLegacyStory ? "Legacy Story image alt text" : "Listing / rail image alt text"}
                   <input type="text" value={draft.coverImageAlt || ""} onChange={(event) => updateDraft({ coverImageAlt: event.target.value })} />
+                </label>
+                <label className="story-cms-field story-cms-field--wide">
+                  Listing / rail image caption <span className="story-cms-optional">optional</span>
+                  <input type="text" value={draft.coverImageCaption || ""} onChange={(event) => updateDraft({ coverImageCaption: event.target.value })} />
+                </label>
+                {isLegacyStory && (
+                  <label className="story-cms-field story-cms-field--wide">
+                    Legacy Story body
+                    <textarea rows="12" value={draft.body || ""} onChange={(event) => updateDraft({ body: event.target.value })} />
+                  </label>
+                )}
+              </div>
+            </section>
+
+            <section className="story-cms-basics">
+              <h3>Search and sharing</h3>
+              <div className="story-cms-field-grid">
+                <label className="story-cms-field story-cms-field--wide">
+                  SEO title
+                  <input type="text" value={draft.seo?.title || ""} onChange={(event) => updateDraft({ seo: { ...(draft.seo || {}), title: event.target.value } })} />
+                </label>
+                <label className="story-cms-field story-cms-field--wide">
+                  SEO description
+                  <textarea rows="3" value={draft.seo?.description || ""} onChange={(event) => updateDraft({ seo: { ...(draft.seo || {}), description: event.target.value } })} />
+                </label>
+                <label className="story-cms-field story-cms-field--wide">
+                  Keywords <span className="story-cms-optional">comma separated</span>
+                  <input type="text" value={(draft.seo?.keywords || []).join(", ")} onChange={(event) => updateDraft({ seo: { ...(draft.seo || {}), keywords: event.target.value.split(",").map((value) => value.trim()).filter(Boolean) } })} />
+                </label>
+                <label className="story-cms-field story-cms-field--wide">
+                  Canonical URL
+                  <input type="url" value={draft.seo?.canonicalUrl || ""} onChange={(event) => updateDraft({ seo: { ...(draft.seo || {}), canonicalUrl: event.target.value } })} />
+                </label>
+                <label className="story-cms-field story-cms-field--wide">
+                  OpenGraph image URL
+                  <input type="text" value={draft.seo?.openGraphImage || ""} onChange={(event) => updateDraft({ seo: { ...(draft.seo || {}), openGraphImage: event.target.value } })} />
+                </label>
+                <label className="story-cms-field">
+                  Search indexing
+                  <select value={draft.seo?.metaRobots || "index,follow"} onChange={(event) => updateDraft({ seo: { ...(draft.seo || {}), metaRobots: event.target.value } })}>
+                    <option value="index,follow">Index and follow</option>
+                    <option value="noindex,follow">Do not index</option>
+                    <option value="noindex,nofollow">Private preview</option>
+                  </select>
                 </label>
               </div>
             </section>

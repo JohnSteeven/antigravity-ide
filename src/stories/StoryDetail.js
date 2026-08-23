@@ -7,6 +7,7 @@ import StoryEngine from "./components/StoryEngine";
 import LegacyStoryReader from "./components/LegacyStoryReader";
 import LoadingScreen from "../components/LoadingScreen";
 import PremiumContentBoundary from "../features/premium/PremiumContentBoundary";
+import DocumentMetadata from "../components/shared/DocumentMetadata";
 import "./stories.css";
 
 export default function StoryDetail() {
@@ -47,7 +48,14 @@ export default function StoryDetail() {
   if (loading) return <LoadingScreen message="Opening story..." />;
   if (redirectToArticle) return <Navigate to={`/articles/${slug}`} replace />;
   if (notFound || !story) return <Navigate to="/stories" replace />;
-  if (story.premiumRequired) return <PremiumContentBoundary content={story} kind="Story" />;
+  if (story.premiumRequired) {
+    return (
+      <>
+        <DocumentMetadata content={story} kind="Story" />
+        <PremiumContentBoundary content={story} kind="Story" />
+      </>
+    );
+  }
 
   const handleShare = async () => {
     try {
@@ -70,6 +78,7 @@ export default function StoryDetail() {
 
   return (
     <main className="story-detail-route">
+      <DocumentMetadata content={story} kind="Story" />
       {hasStructuredSections ? <StoryEngine {...readerProps} /> : <LegacyStoryReader {...readerProps} />}
 
       <div className="story-reader-related">

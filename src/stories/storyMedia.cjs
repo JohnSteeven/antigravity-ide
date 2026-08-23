@@ -49,7 +49,7 @@ const coverMediaCandidate = (story = {}) => {
   return {
     src,
     alt: cleanString(story.coverImageAlt),
-    caption: "",
+    caption: cleanString(story.coverImageCaption),
     source: "cover",
     field: "coverImage",
     sectionIndex: null,

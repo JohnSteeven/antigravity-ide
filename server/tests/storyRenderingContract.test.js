@@ -105,6 +105,19 @@ describe("Story rendering contract", () => {
     expect(source).toContain("legacyMedia.altMissing");
   });
 
+  test("CMS and the shared renderer support SEO, legacy body, and structured quote metadata", () => {
+    const cms = fs.readFileSync(workspaceFile("src", "components", "cms", "panels", "StoryCmsPanel.js"), "utf8");
+    const renderer = fs.readFileSync(workspaceFile("src", "stories", "components", "StorySectionRenderer.js"), "utf8");
+
+    expect(cms).toContain("Legacy Story body");
+    expect(cms).toContain("SEO title");
+    expect(cms).toContain("Canonical URL");
+    expect(cms).toContain("quoteSource");
+    expect(cms).toContain("quoteStyle");
+    expect(renderer).toContain("sanitizeClientStoryHtml");
+    expect(renderer).toContain("story-reader__quote--${section.quoteStyle");
+  });
+
   test("public routing selects structured engine or explicit legacy reader", () => {
     const source = fs.readFileSync(workspaceFile("src", "stories", "StoryDetail.js"), "utf8");
     expect(source).toContain("hasStructuredSections ? <StoryEngine");

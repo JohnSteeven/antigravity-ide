@@ -18,7 +18,7 @@ const slugify = (value = "") => String(value)
   .replace(/^-+|-+$/g, "");
 
 const STORY_FIELDS = [
-  "title", "slug", "description", "body", "coverImage", "coverImageAlt", "author",
+  "title", "slug", "description", "body", "coverImage", "coverImageAlt", "coverImageCaption", "author",
   "status", "scheduledAt", "publishedAt", "storyLayout", "storySections", "reflection",
   "takeaway", "introLocation", "introTime", "storyOrigin", "storyFormat", "isFeatured",
   "isMustRead", "isTrending", "isPinned", "seo", "accessLevel",

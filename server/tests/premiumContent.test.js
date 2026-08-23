@@ -48,4 +48,25 @@ describe("Premium Article and Story API representation", () => {
     expect(result.body).toBe("");
     expect(result.premiumRequired).toBe(true);
   });
+
+  test("public listings omit Free bodies and internal ownership fields", () => {
+    const result = serializePublicContent({
+      ...freeArticle,
+      createdBy: "admin-id",
+      creatorWorkflowStatus: "approved",
+    }, { listing: true });
+    expect(result.body).toBeUndefined();
+    expect(result.createdBy).toBeUndefined();
+    expect(result.creatorWorkflowStatus).toBeUndefined();
+  });
+
+  test("public details sanitize legacy stored HTML before rendering", () => {
+    const result = serializePublicContent({
+      ...freeArticle,
+      body: '<p style="position:fixed">Safe</p><script>alert(1)</script>',
+      storySections: [{ body: '<iframe src="https://attacker.example"></iframe><strong>Chapter</strong>' }],
+    });
+    expect(result.body).toBe('<p>Safe</p>');
+    expect(result.storySections[0].body).toBe('<strong>Chapter</strong>');
+  });
 });

@@ -12,6 +12,7 @@ describe("Story image compatibility", () => {
       body: "<p>Legacy prose.</p>",
       coverImage: "/uploads/legacy.jpg",
       coverImageAlt: "Existing author-provided alt",
+      coverImageCaption: "A retained editorial caption",
       storySections: [],
     });
 
@@ -21,6 +22,7 @@ describe("Story image compatibility", () => {
       source: "cover",
       field: "coverImage",
       altMissing: false,
+      caption: "A retained editorial caption",
     });
   });
 

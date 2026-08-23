@@ -27,6 +27,7 @@ import { mediaApi, default as apiService } from "../../services/apiService";
 import { useCms } from "../../context/CmsContext";
 import { useBlocker } from "react-router";
 import CmsPanelResolver from "./panels/CmsPanelResolver";
+import { getImageUrl } from "../../utils/imageUrlHelper";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -102,6 +103,8 @@ const createArticleDraft = (categories = []) => ({
       title: "",
       description: "",
       keywords: [],
+      canonicalUrl: "",
+      openGraphImage: "",
       metaRobots: "index,follow",
     },
     mood: "",
@@ -585,7 +588,13 @@ const ArticleModule = () => {
                   });
                   if (res?.data?.content) {
                     const parsed = typeof res.data.content === 'string' ? JSON.parse(res.data.content) : res.data.content;
-                    alert(`📋 AI Article Readiness Audit Score: ${parsed.readinessScore}/100\nReadability: ${parsed.readabilityGrade || 'Good'}\nSEO Score: ${parsed.seoScore || 80}/100\n\nRecommendations:\n• ${parsed.recommendations?.join('\n• ') || 'Article is ready for publish!'}`);
+                    const readiness = Number.isFinite(parsed.readinessScore) ? `${parsed.readinessScore}/100` : 'Not reported';
+                    const seo = Number.isFinite(parsed.seoScore) ? `${parsed.seoScore}/100` : 'Not reported';
+                    const readability = parsed.readabilityGrade || 'Not reported';
+                    const recommendations = Array.isArray(parsed.recommendations) && parsed.recommendations.length
+                      ? parsed.recommendations.join('\n• ')
+                      : 'No recommendations returned.';
+                    alert(`📋 AI Article Readiness Audit Score: ${readiness}\nReadability: ${readability}\nSEO Score: ${seo}\n\nRecommendations:\n• ${recommendations}`);
                   }
                 } catch (err) {
                   alert('AI Audit failed: ' + err.message);
@@ -697,7 +706,7 @@ const ArticleModule = () => {
             {articleDraft.coverImage && (
               <div style={{ marginTop: "0.5rem" }}>
                 <img
-                  src={articleDraft.coverImage.startsWith("http") || articleDraft.coverImage.startsWith("data:") ? articleDraft.coverImage : `http://localhost:5000${articleDraft.coverImage.startsWith("/") ? "" : "/"}${articleDraft.coverImage}`}
+                  src={getImageUrl(articleDraft.coverImage, articleDraft.category)}
                   alt="Cover Preview"
                   style={{ maxHeight: "120px", borderRadius: "8px", border: "1px solid #ddd" }}
                 />
@@ -857,6 +866,24 @@ const ArticleModule = () => {
                 value={Array.isArray(articleDraft.seo?.keywords) ? articleDraft.seo.keywords.join(", ") : ""}
                 onChange={(e) => update({ seo: { ...(articleDraft.seo || {}), keywords: e.target.value.split(",").map(k => k.trim()).filter(Boolean) } })}
                 placeholder="seo, article, keyword"
+              />
+            </label>
+            <label>
+              Canonical URL
+              <input
+                type="url"
+                value={articleDraft.seo?.canonicalUrl || ""}
+                onChange={(e) => update({ seo: { ...(articleDraft.seo || {}), canonicalUrl: e.target.value } })}
+                placeholder="https://example.com/articles/article-slug"
+              />
+            </label>
+            <label>
+              Open Graph Image
+              <input
+                type="url"
+                value={articleDraft.seo?.openGraphImage || ""}
+                onChange={(e) => update({ seo: { ...(articleDraft.seo || {}), openGraphImage: e.target.value } })}
+                placeholder="https://example.com/social-card.jpg"
               />
             </label>
             <label>

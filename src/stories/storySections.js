@@ -51,7 +51,7 @@ export const createStorySection = (type = STORY_SECTION_TYPES.TEXT) => {
   const common = { id: makeStorySectionId(), type: normalizedType };
 
   if (normalizedType === STORY_SECTION_TYPES.QUOTE) {
-    return { ...common, quote: "", attribution: "" };
+    return { ...common, quote: "", attribution: "", quoteSource: "", quoteStyle: "classic" };
   }
   if (normalizedType === STORY_SECTION_TYPES.REFLECTION) {
     return { ...common, heading: "", body: "" };
@@ -90,7 +90,7 @@ export const stripStoryHtml = (value = "") =>
     .trim();
 
 export const getStorySectionText = (section = {}) =>
-  [section.heading, section.chapterTitle, section.body, section.quote, section.attribution]
+  [section.heading, section.chapterTitle, section.body, section.quote, section.attribution, section.quoteSource]
     .map(stripStoryHtml)
     .filter(Boolean)
     .join(" ");
@@ -128,6 +128,12 @@ const normalizeOneSection = (section, index) => {
   if (type === STORY_SECTION_TYPES.CHAPTER) {
     normalized.chapterTitle = section.chapterTitle || section.heading || section.title || "";
     normalized.imageSide = (section.imageSide || section.imagePosition) === "left" ? "left" : "right";
+  }
+  if (type === STORY_SECTION_TYPES.QUOTE) {
+    normalized.quoteSource = section.quoteSource || section.source || "";
+    normalized.quoteStyle = ["classic", "pull-quote", "aside"].includes(section.quoteStyle || section.stylePreset)
+      ? (section.quoteStyle || section.stylePreset)
+      : "classic";
   }
   return normalized;
 };
