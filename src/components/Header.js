@@ -37,7 +37,7 @@ const Header = () => {
   const accountDropdownRef = useRef(null);
   const mobileDrawerRef = useRef(null);
 
-  const isAdmin = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
+  const isAdmin = isAuthenticated && user?.role === "Admin";
 
   useDialogFocus({
     open: isMobileOpen,
