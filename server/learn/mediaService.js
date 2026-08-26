@@ -4,11 +4,13 @@ const LearningResource = require("../models/LearningResource");
 const PodcastEpisode = require("../models/PodcastEpisode");
 const PodcastSeries = require("../models/PodcastSeries");
 const ProtectedMediaAsset = require("../models/ProtectedMediaAsset");
+const Topic = require("../models/Topic");
+const mongoose = require("mongoose");
 const { resolveLearnAccess } = require("./accessPolicy");
 const MediaProvider = require("./mediaProviderService");
 const { serializePodcast, serializeResource, serializeVideo } = require("./serializers");
 const { MEDIA_LIMITS } = require("./constants");
-const { slugify } = require("../creators/utils");
+const { escapeRegex, slugify } = require("../creators/utils");
 
 const errorWith = (message, status, code) => Object.assign(new Error(message), { status, code });
 const creatorPopulate = "displayName slug headline profileImage";
@@ -38,8 +40,47 @@ const paginate = (query) => ({
 const listPublished = async (Model, query, serializer, extraFilter = {}) => {
   const { page, limit } = paginate(query);
   const filter = { publicationStatus: "published", ...extraFilter };
-  if (query.creator) filter.creatorId = query.creator;
-  if (query.topic) filter.topicIds = query.topic;
+  if (query.creator) {
+    const creatorRaw = String(query.creator).trim();
+    if (mongoose.isValidObjectId(creatorRaw)) {
+      filter.creatorId = creatorRaw;
+    } else {
+      const creatorDoc = await CreatorProfile.findOne({
+        slug: slugify(creatorRaw) || creatorRaw.toLowerCase(),
+        status: "active",
+      }).select("_id").lean();
+      if (creatorDoc) {
+        filter.creatorId = creatorDoc._id;
+      } else {
+        filter.creatorId = new mongoose.Types.ObjectId();
+      }
+    }
+  }
+  const topicParam = query.topic || query.topicIds || query.topicSlug || query.topicId;
+  if (topicParam) {
+    let topicDoc = null;
+    const topicRaw = String(Array.isArray(topicParam) ? topicParam[0] : topicParam).trim();
+    if (mongoose.isValidObjectId(topicRaw)) {
+      topicDoc = await Topic.findOne({ _id: topicRaw, status: "active" }).select("_id").lean();
+    }
+    if (!topicDoc) {
+      topicDoc = await Topic.findOne({
+        slug: slugify(topicRaw) || topicRaw.toLowerCase(),
+        status: "active",
+      }).select("_id").lean();
+    }
+    if (!topicDoc) {
+      topicDoc = await Topic.findOne({
+        name: new RegExp(`^${escapeRegex(topicRaw)}$`, "i"),
+        status: "active",
+      }).select("_id").lean();
+    }
+    if (topicDoc) {
+      filter.topicIds = topicDoc._id;
+    } else {
+      filter.topicIds = new mongoose.Types.ObjectId();
+    }
+  }
   if (query.language) filter.language = query.language;
   if (query.accessLevel) filter.accessLevel = query.accessLevel;
   if (query.search) filter.$text = { $search: String(query.search).slice(0, 100) };

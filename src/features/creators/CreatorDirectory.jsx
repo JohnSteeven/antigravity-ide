@@ -49,11 +49,18 @@ export default function CreatorDirectory() {
       </section>
 
       <section className="creator-filters" aria-label="Filter Creators">
-        <label><span>Search</span><input value={filters.search} onChange={update("search")} placeholder="Name, specialty, or topic" /></label>
-        <label><span>Expertise</span><select value={filters.specialty} onChange={update("specialty")}><option value="">All expertise</option>{(result.facets.specialties || []).map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label><span>Language</span><select value={filters.language} onChange={update("language")}><option value="">All languages</option>{(result.facets.languages || []).map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label><span>Format</span><select value={filters.format} onChange={update("format")}><option value="">All formats</option>{(result.facets.formats || []).map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label><span>Order</span><select value={filters.sort} onChange={update("sort")}><option value="featured">Featured</option><option value="new">New</option><option value="popular">Popular</option></select></label>
+        <div className="creator-filters__search">
+          <label>
+            <span>Search</span>
+            <input value={filters.search} onChange={update("search")} placeholder="Name, specialty, or topic" />
+          </label>
+        </div>
+        <div className="creator-filters__group">
+          <label><span>Expertise</span><select value={filters.specialty} onChange={update("specialty")}><option value="">All expertise</option>{(result.facets.specialties || []).map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label><span>Language</span><select value={filters.language} onChange={update("language")}><option value="">All languages</option>{(result.facets.languages || []).map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label><span>Format</span><select value={filters.format} onChange={update("format")}><option value="">All formats</option>{(result.facets.formats || []).map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label><span>Order</span><select value={filters.sort} onChange={update("sort")}><option value="featured">Featured</option><option value="new">New</option><option value="popular">Popular</option></select></label>
+        </div>
       </section>
 
       <section aria-labelledby="creator-results-heading">

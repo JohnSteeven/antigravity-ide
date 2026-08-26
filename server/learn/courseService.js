@@ -5,9 +5,10 @@ const CourseModule = require("../models/CourseModule");
 const CourseLesson = require("../models/CourseLesson");
 const CourseEnrollment = require("../models/CourseEnrollment");
 const LearningEvent = require("../models/LearningEvent");
+const Topic = require("../models/Topic");
 const { resolveLearnAccess } = require("./accessPolicy");
 const { serializeCourse, serializeLesson, serializeLessonMetadata } = require("./serializers");
-const { slugify, uniqueStrings } = require("../creators/utils");
+const { escapeRegex, slugify, uniqueStrings } = require("../creators/utils");
 
 const errorWith = (message, status, code) => Object.assign(new Error(message), { status, code });
 const userIdString = (value) => String(value?._id || value?.id || value || "");
@@ -56,11 +57,51 @@ const listCourses = async (query = {}) => {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1);
   const limit = Math.min(48, Math.max(1, Number.parseInt(query.limit, 10) || 18));
   const filter = { publicationStatus: "published", isDeleted: false };
-  if (query.topic) filter.topicIds = query.topic;
+  const topicParam = query.topic || query.topicIds || query.topicSlug || query.topicId;
+  if (topicParam) {
+    let topicDoc = null;
+    const topicRaw = String(Array.isArray(topicParam) ? topicParam[0] : topicParam).trim();
+    if (mongoose.isValidObjectId(topicRaw)) {
+      topicDoc = await Topic.findOne({ _id: topicRaw, status: "active" }).select("_id").lean();
+    }
+    if (!topicDoc) {
+      topicDoc = await Topic.findOne({
+        slug: slugify(topicRaw) || topicRaw.toLowerCase(),
+        status: "active",
+      }).select("_id").lean();
+    }
+    if (!topicDoc) {
+      topicDoc = await Topic.findOne({
+        name: new RegExp(`^${escapeRegex(topicRaw)}$`, "i"),
+        status: "active",
+      }).select("_id").lean();
+    }
+    if (topicDoc) {
+      filter.topicIds = topicDoc._id;
+    } else {
+      filter.topicIds = new mongoose.Types.ObjectId();
+    }
+  }
   if (query.level) filter.level = query.level;
   if (query.language) filter.language = query.language;
   if (query.accessLevel) filter.accessLevel = query.accessLevel;
-  if (query.creator) filter.creatorId = query.creator;
+  if (query.creator) {
+    const creatorRaw = String(query.creator).trim();
+    if (mongoose.isValidObjectId(creatorRaw)) {
+      filter.creatorId = creatorRaw;
+    } else {
+      const CreatorProfile = require("../models/CreatorProfile");
+      const creatorDoc = await CreatorProfile.findOne({
+        slug: slugify(creatorRaw) || creatorRaw.toLowerCase(),
+        status: "active",
+      }).select("_id").lean();
+      if (creatorDoc) {
+        filter.creatorId = creatorDoc._id;
+      } else {
+        filter.creatorId = new mongoose.Types.ObjectId();
+      }
+    }
+  }
   if (query.search) filter.$text = { $search: String(query.search).slice(0, 100) };
   const sort = query.sort === "new" ? { publishedAt: -1 } : { isFeatured: -1, publishedAt: -1 };
   const [items, total] = await Promise.all([

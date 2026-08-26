@@ -352,8 +352,15 @@ async function seedCreatorDemoFixtures() {
     const creatorUser = creatorUserMap.get(item.owner);
     if (!creator || !creatorUser) continue;
 
-    const topicIds = (item.topics || [])
-      .map((t) => topicMap.get(t.toLowerCase().replace(/[^a-z0-9]+/g, "-"))?._id)
+    const persona = DEVELOPMENT_FIXTURES.personas.find((p) => p.key === item.owner);
+    const rawTopicNames = [
+      ...(Array.isArray(item.topics) ? item.topics : []),
+      ...(item.category ? [item.category] : []),
+      ...(persona && Array.isArray(persona.topics) ? persona.topics : []),
+    ];
+    const uniqueTopicNames = [...new Set(rawTopicNames)];
+    const topicIds = uniqueTopicNames
+      .map((t) => topicMap.get(t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""))?._id)
       .filter(Boolean);
 
     // 4a. Course
