@@ -25,6 +25,7 @@
 [data-theme="dark"] .story-detail-route,
 body.dark-theme .stories-page,
 body.dark-theme .story-detail-route,
+body.theme-dark .stories-page,
 body.theme-dark .story-detail-route {
   --story-bg: #141211;
   --story-surface-warm: #1c1917;

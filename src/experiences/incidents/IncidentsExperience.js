@@ -109,7 +109,11 @@ const IncidentsExperience = (props) => {
   const categorySlug = String(article?.category || article?.categorySlug || "").toLowerCase().trim();
 
   return (
-    <main className="incidents-experience-page experience-page-container" data-experience="incidents" data-category={categorySlug || "incidents"}>
+    <main
+      className="incidents-experience-page experience-page-container article-detail-theme article-detail-theme--standard"
+      data-experience="incidents"
+      data-category={categorySlug || "incidents"}
+    >
       {/* 1. Full-Bleed 100% Width Hero Section */}
       <IncidentsHero
         article={article}

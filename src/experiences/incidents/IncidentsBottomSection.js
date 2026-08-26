@@ -219,7 +219,7 @@ const IncidentsBottomSection = ({
             </div>
             <button
               type="button"
-              className="share-story-btn"
+              className="share-story-btn detail-primary-action"
               onClick={() => setUserStoryModalOpen(true)}
             >
               Write Your Story <FiSend />
@@ -255,7 +255,7 @@ const IncidentsBottomSection = ({
                       >
                         Cancel
                       </button>
-                      <button type="submit" className="submit-story-btn">
+                      <button type="submit" className="submit-story-btn detail-primary-action">
                         Submit Story <FiSend />
                       </button>
                     </div>

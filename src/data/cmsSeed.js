@@ -16,10 +16,16 @@ export const cmsSeed = {
         "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=1800&q=80",
     },
     storyIntro: {
+      eyebrow: "Stories stay.\nJourneys shape us.",
+      title: "A space for stories that stay with us.",
+      accentWord: "stay",
       subtitle: "A place for stories",
       text:
         "This is my corner of the internet where I share life experiences, lessons, memorable incidents, and thoughts that shaped my journey.",
       cta: "Read My Story",
+      signature: "Experience. Reflect. Grow.",
+      image:
+        "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=90",
     },
     quote: {
       text:

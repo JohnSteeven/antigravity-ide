@@ -39,7 +39,11 @@ const SettingsTab = () => {
   useEffect(() => {
     document.body.classList.toggle("theme-dark", darkMode);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("myjourney-theme", darkMode ? "dark" : "light");
+      const mode = darkMode ? "dark" : "light";
+      window.localStorage.setItem("myjourney-theme", mode);
+      document.documentElement.dataset.theme = mode;
+      document.documentElement.style.colorScheme = mode;
+      window.dispatchEvent(new CustomEvent("myjourney-theme-change", { detail: { mode } }));
     }
   }, [darkMode]);
 

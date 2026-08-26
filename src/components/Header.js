@@ -18,6 +18,7 @@ import {
 import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
 import { categoryApi } from "../services/apiService";
+import useDialogFocus from "../hooks/useDialogFocus";
 
 const Header = () => {
   const { data } = useCms();
@@ -34,8 +35,15 @@ const Header = () => {
 
   const categoriesDropdownRef = useRef(null);
   const accountDropdownRef = useRef(null);
+  const mobileDrawerRef = useRef(null);
 
   const isAdmin = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
+
+  useDialogFocus({
+    open: isMobileOpen,
+    containerRef: mobileDrawerRef,
+    onClose: () => setIsMobileOpen(false),
+  });
 
   const avatarUrl = useMemo(() => {
     const raw =
@@ -183,18 +191,6 @@ const Header = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Lock body scroll when mobile drawer is open
-  useEffect(() => {
-    if (isMobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobileOpen]);
-
   const handleLogout = async () => {
     await logout();
     setIsAccountOpen(false);
@@ -207,10 +203,10 @@ const Header = () => {
   return (
     <>
       <header className="header main-public-header">
-        <div className="header-inner container">
+        <div className="header-inner">
           {/* Brand Logo */}
           <Link className="logo" to="/" onClick={() => setIsMobileOpen(false)}>
-            <h1>{data?.site?.brand || "MyJourney"}</h1>
+            <span className="header-logo-text">{data?.site?.brand || "MyJourney"}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -545,6 +541,8 @@ const Header = () => {
               type="button"
               onClick={() => setIsMobileOpen(true)}
               aria-label="Open mobile navigation drawer"
+              aria-expanded={isMobileOpen}
+              aria-controls="mobile-navigation-drawer"
             >
               <FiMenu />
             </button>
@@ -557,12 +555,16 @@ const Header = () => {
         <div
           className="mobile-drawer-backdrop"
           onClick={() => setIsMobileOpen(false)}
-          aria-hidden="true"
         >
           <aside
+            ref={mobileDrawerRef}
+            id="mobile-navigation-drawer"
             className="mobile-drawer"
             onClick={(e) => e.stopPropagation()}
             aria-label="Mobile navigation"
+            aria-modal="true"
+            role="dialog"
+            tabIndex="-1"
           >
             <div className="mobile-drawer-header">
               <Link
@@ -570,7 +572,7 @@ const Header = () => {
                 to="/"
                 onClick={() => setIsMobileOpen(false)}
               >
-                <h2>{data?.site?.brand || "MyJourney"}</h2>
+                <span className="header-logo-text">{data?.site?.brand || "MyJourney"}</span>
               </Link>
               <button
                 type="button"

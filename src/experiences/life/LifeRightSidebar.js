@@ -25,7 +25,7 @@ const LifeRightSidebar = ({
         {/* Author Card & Journey */}
         <AuthorCard article={article} />
 
-        <div className="life-author-journey-box">
+        <div className="life-author-journey-box detail-card detail-card--light">
           <FiAward className="journey-icon" />
           <span>Writing about mindful habits, personal growth, & intentional living since 2021.</span>
         </div>
@@ -65,7 +65,7 @@ const LifeRightSidebar = ({
 
         {/* Related Stories */}
         {relatedArticles.length > 0 && (
-          <div className="life-sidebar-panel">
+          <div className="life-sidebar-panel detail-card detail-card--light related-reflections-panel">
             <h3>Related Reflections</h3>
             <div className="related-stories-list">
               {relatedArticles.map((item) => (

@@ -8,6 +8,34 @@
 const Theme = require('../models/Theme');
 const ThemeService = require('../services/themeService');
 const AuditLogger = require('../audit/AuditLogger');
+const {
+  analyzeThemeAccessibility,
+  assertThemePayload,
+  safeStoredTokens,
+  sanitizeThemeTokens,
+} = require('../services/themeSafety');
+
+const sendThemeError = (res, err, fallback) => res.status(err.status || 500).json({
+  error: err.code || fallback,
+  message: err.message,
+  ...(err.details ? { details: err.details } : {}),
+});
+
+const serializePublicTheme = (theme) => {
+  if (!theme) return null;
+  const source = typeof theme.toObject === 'function' ? theme.toObject() : theme;
+  return {
+    _id: source._id,
+    key: source.key,
+    name: source.name,
+    slug: source.slug,
+    description: source.description,
+    mode: source.mode,
+    tokens: source.tokens,
+    version: source.version,
+    accessibility: analyzeThemeAccessibility(source),
+  };
+};
 
 exports.getThemes = async (req, res) => {
   try {
@@ -15,7 +43,7 @@ exports.getThemes = async (req, res) => {
     const themes = await Theme.find().sort({ isDefault: -1, isBuiltIn: -1, name: 1 }).lean();
     res.json({ success: true, data: themes });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch themes', message: err.message });
+    sendThemeError(res, err, 'Failed to fetch themes');
   }
 };
 
@@ -23,9 +51,9 @@ exports.getActiveTheme = async (req, res) => {
   try {
     const active = await ThemeService.getActiveTheme();
     const cssVariables = ThemeService.generateCSSVariables(active);
-    res.json({ success: true, data: active, cssVariables });
+    res.json({ success: true, data: serializePublicTheme(active), cssVariables });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch active theme', message: err.message });
+    sendThemeError(res, err, 'Failed to fetch active theme');
   }
 };
 
@@ -34,16 +62,20 @@ exports.getThemeById = async (req, res) => {
     const theme = await Theme.findById(req.params.id);
     if (!theme) return res.status(404).json({ error: 'Not Found', message: 'Theme not found' });
     const cssVariables = ThemeService.generateCSSVariables(theme);
-    res.json({ success: true, data: theme, cssVariables });
+    res.json({ success: true, data: theme, cssVariables, accessibility: analyzeThemeAccessibility(theme) });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch theme', message: err.message });
+    sendThemeError(res, err, 'Failed to fetch theme');
   }
 };
 
 exports.createTheme = async (req, res) => {
   try {
-    const { key, name, description, mode, tokens, customCSS } = req.body;
-    const cleanKey = key.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+    assertThemePayload(req.body);
+    const { key, name, description, mode, tokens } = req.body;
+    const cleanKey = String(key || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+    if (!cleanKey || !String(name || '').trim()) {
+      return res.status(400).json({ error: 'THEME_REQUIRED_FIELDS', message: 'Theme key and name are required.' });
+    }
 
     const existing = await Theme.findOne({ key: cleanKey });
     if (existing) {
@@ -52,19 +84,18 @@ exports.createTheme = async (req, res) => {
 
     const theme = new Theme({
       key: cleanKey,
-      name,
+      name: String(name).trim().slice(0, 120),
       slug: cleanKey,
       description: description || '',
       mode: mode || 'light',
-      tokens: tokens || {},
-      customCSS: customCSS || '',
+      tokens: tokens ? safeStoredTokens(sanitizeThemeTokens(tokens), mode || 'light') : safeStoredTokens({}, mode || 'light'),
       createdBy: req.user?.id,
     });
 
     await theme.save();
     res.status(201).json({ success: true, data: theme });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create theme', message: err.message });
+    sendThemeError(res, err, 'Failed to create theme');
   }
 };
 
@@ -74,13 +105,13 @@ exports.updateTheme = async (req, res) => {
     if (!theme) return res.status(404).json({ error: 'Not Found', message: 'Theme not found' });
 
     const oldDoc = theme.toObject();
-    const { name, description, mode, tokens, customCSS, status } = req.body;
+    assertThemePayload(req.body);
+    const { name, description, mode, tokens, status } = req.body;
 
     if (name !== undefined) theme.name = name;
     if (description !== undefined) theme.description = description;
     if (mode !== undefined) theme.mode = mode;
-    if (tokens !== undefined) theme.tokens = tokens;
-    if (customCSS !== undefined) theme.customCSS = customCSS;
+    if (tokens !== undefined) theme.tokens = safeStoredTokens(sanitizeThemeTokens(tokens), mode || theme.mode);
     if (status !== undefined) theme.status = status;
 
     theme.version = (theme.version || 1) + 1;
@@ -101,7 +132,7 @@ exports.updateTheme = async (req, res) => {
 
     res.json({ success: true, data: theme });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update theme', message: err.message });
+    sendThemeError(res, err, 'Failed to update theme');
   }
 };
 
@@ -110,9 +141,15 @@ exports.publishTheme = async (req, res) => {
     const theme = await ThemeService.setActiveTheme(req.params.id, req.user?.id);
     if (!theme) return res.status(404).json({ error: 'Not Found', message: 'Theme not found' });
     const cssVariables = ThemeService.generateCSSVariables(theme);
-    res.json({ success: true, data: theme, cssVariables, message: `Theme '${theme.name}' is now the default active theme.` });
+    res.json({
+      success: true,
+      data: theme,
+      cssVariables,
+      accessibility: analyzeThemeAccessibility(theme),
+      message: `Theme '${theme.name}' is now the default active theme.`,
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to activate theme', message: err.message });
+    sendThemeError(res, err, 'Failed to activate theme');
   }
 };
 
@@ -127,6 +164,6 @@ exports.deleteTheme = async (req, res) => {
     await Theme.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: `Theme '${theme.name}' deleted successfully.` });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete theme', message: err.message });
+    sendThemeError(res, err, 'Failed to delete theme');
   }
 };

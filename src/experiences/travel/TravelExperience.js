@@ -32,7 +32,10 @@ const TravelExperience = (props) => {
   } = props;
 
   return (
-    <main className="travel-experience-page" data-experience="travel">
+    <main
+      className="travel-experience-page article-detail-theme article-detail-theme--standard"
+      data-experience="travel"
+    >
       {/* Layer 1: Full-Bleed Destination Hero */}
       <TravelHero
         article={article}

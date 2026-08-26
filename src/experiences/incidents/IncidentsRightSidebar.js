@@ -74,7 +74,7 @@ const IncidentsRightSidebar = ({
 
   return (
     <aside className="incidents-right-sidebar experience-right-sidebar">
-      <div className="incidents-sticky-box">
+      <div className="incidents-sticky-box detail-dark-sidebar">
         {/* 1. Author Card (Dark Luxury Styling) */}
         <div className="sidebar-rhythm-wrapper dark-author-widget">
           <AuthorCard article={article} />

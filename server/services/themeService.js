@@ -6,6 +6,12 @@
  */
 
 const Theme = require('../models/Theme');
+const {
+  COLOR_DEFAULTS,
+  analyzeThemeAccessibility,
+  safeStoredTokens,
+  suggestedForeground,
+} = require('./themeSafety');
 
 const DEFAULT_9_THEMES = [
   {
@@ -38,7 +44,7 @@ const DEFAULT_9_THEMES = [
     mode: 'dark',
     isBuiltIn: true,
     tokens: {
-      colors: { primary: '#00d2ff', secondary: '#92fe9d', accent: '#00d2ff', gold: '#ffd166', background: '#0d1117', panel: '#161b22', text: '#f0f6fc', border: '#30363d' },
+      colors: { primary: '#00d2ff', secondary: '#92fe9d', accent: '#00d2ff', gold: '#ffd166', background: '#0d1117', surface: '#161b22', panel: '#161b22', text: '#f0f6fc', muted: '#8b949e', border: '#30363d' },
       typography: { headingFont: 'Outfit, sans-serif', bodyFont: 'Plus Jakarta Sans, sans-serif' },
     },
   },
@@ -139,8 +145,25 @@ class ThemeService {
    * Set a theme as the active default theme
    */
   static async setActiveTheme(themeId, userId = null) {
-    await Theme.updateMany({}, { $set: { isDefault: false } });
-    const theme = await Theme.findByIdAndUpdate(themeId, { $set: { isDefault: true, status: 'published', updatedBy: userId } }, { new: true });
+    const theme = await Theme.findById(themeId);
+    if (!theme) return null;
+    const accessibility = analyzeThemeAccessibility(theme);
+    if (!accessibility.pass) {
+      const error = new Error('Theme cannot be activated until critical text contrast issues are resolved.');
+      error.status = 422;
+      error.code = 'THEME_CONTRAST_UNSAFE';
+      error.details = accessibility;
+      throw error;
+    }
+
+    // Verify and validate the target before changing the current default. Set
+    // the target first so a later cleanup failure cannot leave the site with no
+    // active theme at all.
+    theme.isDefault = true;
+    theme.status = 'published';
+    theme.updatedBy = userId;
+    await theme.save();
+    await Theme.updateMany({ _id: { $ne: theme._id } }, { $set: { isDefault: false } });
     return theme;
   }
 
@@ -149,34 +172,70 @@ class ThemeService {
    */
   static generateCSSVariables(themeObj) {
     if (!themeObj || !themeObj.tokens) return '';
-    const c = themeObj.tokens.colors || {};
-    const t = themeObj.tokens.typography || {};
-    const r = themeObj.tokens.radii || {};
-    const s = themeObj.tokens.shadows || {};
     const isDark = themeObj.mode === 'dark';
+    const safe = safeStoredTokens(themeObj.tokens, isDark ? 'dark' : 'light');
+    const c = safe.colors;
+    const t = safe.typography;
+    const r = safe.radii;
+    const s = safe.shadows;
+    const fallback = isDark ? COLOR_DEFAULTS.dark : COLOR_DEFAULTS.light;
+    const accentContrast = suggestedForeground(c.primary || fallback.primary);
 
     // Map theme tokens → actual CSS variables used by index.css
     return `
-      :root {
+      ${isDark ? 'body.theme-dark' : ':root'} {
         /* ── Core palette (maps to index.css variables) ── */
-        --paper:   ${c.background || (isDark ? '#0d1117' : '#fbfaf7')} !important;
-        --surface: ${c.surface   || (isDark ? '#161b22' : '#ffffff')} !important;
-        --panel:   ${c.panel     || (isDark ? '#161b22' : '#ffffff')} !important;
-        --ink:     ${c.text      || (isDark ? '#f0f6fc' : '#2f3133')} !important;
-        --muted:   ${c.muted     || (isDark ? '#8b949e' : '#666d6d')} !important;
-        --line:    ${c.border    || (isDark ? '#30363d' : '#e4ded4')} !important;
-        --teal:    ${c.primary   || '#426c67'} !important;
-        --gold:    ${c.gold      || '#b58b5f'} !important;
-        --blue:    ${c.secondary || '#4d6478'} !important;
-        --soft:    ${c.background || (isDark ? '#161b22' : '#f1eee8')} !important;
+        --paper: ${c.background};
+        --surface: ${c.surface};
+        --panel: ${c.panel};
+        --ink: ${c.text};
+        --muted: ${c.muted};
+        --line: ${c.border};
+        --teal: ${c.primary};
+        --gold: ${c.gold};
+        --blue: ${c.secondary};
+        --soft: ${c.panel};
+
+        /* ── Semantic relationships ── */
+        --surface-page: ${c.background};
+        --surface-subtle: ${c.panel};
+        --surface-card: ${c.surface};
+        --surface-elevated: ${c.surface};
+        --surface-inverse: ${c.text};
+        --surface-light-fixed: #faf8f5;
+        --surface-dark-fixed: #131716;
+        --text-primary: ${c.text};
+        --text-secondary: ${c.muted};
+        --text-muted: ${c.muted};
+        --text-inverse: ${accentContrast};
+        --text-on-light: #2f3133;
+        --text-on-light-muted: #555956;
+        --text-on-dark: #f8f4ed;
+        --text-on-dark-muted: #c3ccc8;
+        --border-subtle: ${c.border};
+        --border-strong: ${c.muted};
+        --accent-primary: ${c.primary};
+        --accent-secondary: ${c.secondary};
+        --accent-contrast: ${accentContrast};
+        --link: ${c.primary};
+        --success: ${c.success};
+        --warning: ${c.warning};
+        --danger: ${c.danger};
+        --info: ${c.info};
 
         /* ── CMS accent tokens ── */
-        --cms-accent:       ${c.primary || '#426c67'} !important;
-        --cms-accent-hover: ${c.accent  || '#426c67'} !important;
-        --cms-bg:           ${c.background || (isDark ? '#0d1117' : '#f3f6f4')} !important;
-        --cms-sidebar:      ${isDark ? '#0d1117' : '#1e2523'} !important;
-        --control-bg:       ${c.surface || (isDark ? '#161b22' : '#ffffff')} !important;
-        --control-border:   ${c.border  || (isDark ? '#30363d' : '#d7cec3')} !important;
+        --cms-accent: ${c.primary};
+        --cms-accent-hover: ${c.accent};
+        --cms-bg: ${c.background};
+        --cms-sidebar: ${isDark ? '#0d1117' : '#1e2523'};
+        --control-bg: ${c.surface};
+        --control-border: ${c.border};
+        --article-card-surface: ${c.surface};
+        --article-card-text: ${c.text};
+        --article-card-secondary: ${c.muted};
+        --article-card-muted: ${c.muted};
+        --article-card-border: ${c.border};
+        --article-card-accent: ${c.gold};
 
         /* ── Typography ── */
         --font-heading: ${t.headingFont || 'Outfit, sans-serif'};
@@ -195,16 +254,14 @@ class ThemeService {
       }
 
       body {
-        background: var(--paper) !important;
-        color: var(--ink) !important;
-        font-family: var(--font-body) !important;
+        background: var(--surface-page);
+        color: var(--text-primary);
+        font-family: var(--font-body);
       }
 
       h1, h2, h3, h4, h5, h6 {
-        font-family: var(--font-heading) !important;
+        font-family: var(--font-heading);
       }
-
-      ${themeObj.customCSS || ''}
     `;
   }
 }

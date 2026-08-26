@@ -32,7 +32,11 @@ const CodingExperience = (props) => {
   } = props;
 
   return (
-    <main className="coding-experience-page" data-experience="coding" data-category="coding">
+    <main
+      className="coding-experience-page article-detail-theme article-detail-theme--coding"
+      data-experience="coding"
+      data-category="coding"
+    >
       {/* Layer 1: Developer Terminal Hero */}
       <CodingHero
         article={article}

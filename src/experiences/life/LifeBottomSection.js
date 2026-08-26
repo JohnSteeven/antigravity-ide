@@ -60,14 +60,14 @@ const LifeBottomSection = ({
 
       {/* Recommended Media Strip */}
       <div className="life-media-strip">
-        <div className="media-box">
+        <div className="media-box detail-card detail-card--light">
           <FiVideo className="media-icon" />
           <div>
             <strong>Watch: The Power of Tiny Habits</strong>
             <p>12-minute TED presentation on habit compounding.</p>
           </div>
         </div>
-        <div className="media-box">
+        <div className="media-box detail-card detail-card--light">
           <FiHeadphones className="media-icon" />
           <div>
             <strong>Audio: Mindful Morning Reflections</strong>

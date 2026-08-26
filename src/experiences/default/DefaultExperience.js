@@ -38,7 +38,10 @@ const DefaultExperience = ({
   newsletterMsg,
 }) => {
   return (
-    <main className="premium-article-page" data-experience="default">
+    <main
+      className="premium-article-page article-detail-theme article-detail-theme--standard"
+      data-experience="default"
+    >
       <header
         className="premium-article-hero"
         style={{ backgroundImage: `url("${getImageUrl(article.coverImage, article.category)}")` }}
@@ -102,8 +105,7 @@ const DefaultExperience = ({
                     <a
                       key={h.id}
                       href={`#${h.id}`}
-                      className={`toc-link ${activeHeading === h.id ? "active" : ""}`}
-                      style={h.level === 3 ? { paddingLeft: "35px", fontSize: "0.85rem", opacity: 0.8 } : undefined}
+                      className={`toc-link ${activeHeading === h.id ? "active" : ""} ${h.level === 3 ? "toc-link--nested" : ""}`}
                     >
                       {h.text}
                     </a>
@@ -180,7 +182,7 @@ const DefaultExperience = ({
             <ShareButtons article={article} handleCopyLink={handleCopyLink} />
 
             {relatedArticles.length > 0 && (
-              <div className="right-sidebar-panel">
+              <div className="right-sidebar-panel detail-card detail-card--dark">
                 <h3>Related Stories</h3>
                 <div className="related-stories-list">
                   {relatedArticles.map((item) => (

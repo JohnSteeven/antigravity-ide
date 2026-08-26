@@ -89,8 +89,7 @@ const LifeLeftSidebar = ({
                 <a
                   key={h.id}
                   href={`#${h.id}`}
-                  className={`life-toc-link ${activeHeading === h.id ? "active" : ""}`}
-                  style={h.level === 3 ? { paddingLeft: "20px", fontSize: "0.85rem", opacity: 0.8 } : undefined}
+                  className={`life-toc-link ${activeHeading === h.id ? "active" : ""} ${h.level === 3 ? "life-toc-link--nested" : ""}`}
                 >
                   <span className="bullet">✦</span> {h.text}
                 </a>
@@ -113,7 +112,7 @@ const LifeLeftSidebar = ({
 
         {/* Highlight Quote */}
         {favoriteQuote && (
-          <div className="life-sidebar-quote-panel">
+          <div className="life-sidebar-quote-panel detail-card detail-card--light">
             <h4><FiBookmark /> Reflection Note</h4>
             <p>"{favoriteQuote}"</p>
           </div>
@@ -174,7 +173,7 @@ const LifeLeftSidebar = ({
                   {statusMessage && <span className="notes-status-msg">{statusMessage}</span>}
                   <button
                     type="button"
-                    className="notes-save-btn"
+                    className="notes-save-btn detail-primary-action"
                     onClick={handleSaveNote}
                     disabled={!noteText.trim()}
                   >

@@ -14,7 +14,7 @@ const CommentsSection = ({
   if (isCoding) {
     return (
       <section
-        className="premium-comments-section coding-comments-section"
+        className="premium-comments-section coding-comments-section detail-comments"
         style={{ color: "#f8fafc", marginTop: "40px" }}
       >
         <div
@@ -110,19 +110,6 @@ const CommentsSection = ({
           <button
             className="coding-submit-btn"
             type="submit"
-            style={{
-              background: "linear-gradient(135deg, #0284c7 0%, #0d9488 100%)",
-              color: "#ffffff",
-              borderRadius: "12px",
-              padding: "12px 24px",
-              fontWeight: 600,
-              fontSize: "14px",
-              border: "none",
-              cursor: "pointer",
-              boxShadow: "0 4px 14px rgba(2, 132, 199, 0.35)",
-              transition: "all 0.2s ease",
-              alignSelf: "flex-start",
-            }}
           >
             Submit Comment
           </button>
@@ -137,7 +124,7 @@ const CommentsSection = ({
   }
 
   return (
-    <section className="premium-comments-section">
+    <section className="premium-comments-section detail-comments">
       <div className="section-heading-row">
         <h2>Comments ({approvedComments.length})</h2>
         <span>
@@ -171,7 +158,7 @@ const CommentsSection = ({
           placeholder="Write a thoughtful comment"
           required
         ></textarea>
-        <button className="primary-btn" type="submit">
+        <button className="primary-btn detail-primary-action" type="submit">
           Submit Comment
         </button>
         {commentMessage && <span className="form-note">{commentMessage}</span>}

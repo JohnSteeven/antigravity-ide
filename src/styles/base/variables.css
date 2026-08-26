@@ -4,9 +4,8 @@
  *  MyJourney CMS  |  Layer X: Design System
  * ─────────────────────────────────────────────────────────────────────────────
  *
- *  SINGLE SOURCE OF TRUTH for every visual value.
- *  The Theme Builder modifies only this file via CSS variable overrides.
- *  Never hardcode colors, radii, shadows, or transitions in components.
+ *  Canonical token catalog mirrored by the runtime aliases in index.css.
+ *  The Theme Builder emits validated runtime overrides for those aliases.
  *
  *  Token Naming Convention:
  *    --{category}-{variant}
@@ -53,6 +52,14 @@
   --color-panel-muted:   #f8faf8;
   --color-control-bg:    #ffffff;
   --color-control-border:#d7cec3;
+
+  /* Surface-authoritative foreground relationships. */
+  --surface-light-fixed: #faf8f5;
+  --surface-dark-fixed:  #131716;
+  --text-on-light:       #2f3133;
+  --text-on-light-muted: #555956;
+  --text-on-dark:        #f8f4ed;
+  --text-on-dark-muted:  #c3ccc8;
 
   /* ── CMS-Specific Tokens ─────────────────────────────────────────────────── */
   --cms-bg:              #f3f6f4;

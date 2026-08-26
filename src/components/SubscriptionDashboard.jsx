@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 import { membershipApi } from "../services/apiService";
+import useDialogFocus from "../hooks/useDialogFocus";
 
 const labelForDuration = (months) => ({ 1: "1 Month", 3: "3 Months", 6: "6 Months", 12: "1 Year" }[months] || "Not available");
 const formatDate = (value) => {
@@ -15,18 +16,17 @@ export default function SubscriptionDashboard() {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const confirmationRef = useRef(null);
   const premiumActive = accountAccess?.plan === "premium";
   const cancelPending = Boolean(accountAccess?.cancelAtPeriodEnd);
   const expired = accountAccess?.subscriptionStatus === "expired" || accountAccess?.accessReason === "period_expired";
 
-  useEffect(() => {
-    if (!confirming) return undefined;
-    const closeOnEscape = (event) => {
-      if (event.key === "Escape" && !busy) setConfirming(false);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [busy, confirming]);
+  useDialogFocus({
+    open: confirming,
+    containerRef: confirmationRef,
+    onClose: () => setConfirming(false),
+    escapeEnabled: !busy,
+  });
 
   const cancelRenewal = async () => {
     setBusy(true);
@@ -78,7 +78,7 @@ export default function SubscriptionDashboard() {
 
       {confirming && (
         <div className="premium-dialog-backdrop">
-          <section className="premium-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-premium-heading">
+          <section ref={confirmationRef} className="premium-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-premium-heading" tabIndex="-1">
             <h2 id="cancel-premium-heading">Cancel renewal?</h2>
             <p>Your MyJourney Premium access will continue until {formatDate(accountAccess.currentPeriodEnd)}. After that, Premium experiences will lock unless you renew.</p>
             <p>Your private MyJourney Life history will not be deleted.</p>

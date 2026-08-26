@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   /* ── Existing Tokens (unchanged) ── */
   --paper: #fbfaf7;
   --surface: #ffffff;
@@ -20,6 +21,39 @@
   --cms-bg: #f3f6f4;
   --cms-sidebar: #1e2523;
   --cms-sidebar-strong: #ffffff;
+
+  /* Semantic relationships used by theme-adaptive components. */
+  --surface-page: var(--paper);
+  --surface-subtle: var(--soft);
+  --surface-card: var(--surface);
+  --surface-elevated: var(--panel);
+  --surface-inverse: #131716;
+  --surface-light-fixed: #faf8f5;
+  --surface-dark-fixed: #131716;
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-muted: var(--muted);
+  --text-inverse: #fffdf9;
+  --text-on-light: #2f3133;
+  --text-on-light-muted: #555956;
+  --text-on-dark: #f8f4ed;
+  --text-on-dark-muted: #c3ccc8;
+  --border-subtle: var(--line);
+  --border-strong: #a8a29e;
+  --accent-primary: var(--teal);
+  --accent-secondary: var(--blue);
+  --accent-contrast: #fffdf9;
+  --link: var(--teal);
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+  --info: var(--color-info);
+  --article-card-surface: var(--surface-card);
+  --article-card-text: var(--text-primary);
+  --article-card-secondary: var(--text-secondary);
+  --article-card-muted: var(--text-muted);
+  --article-card-border: var(--border-subtle);
+  --article-card-accent: var(--gold-dark);
 
   /* ── Design System Additions (Layer X) ── */
   /* CMS accent — canonical token (previously hardcoded inline as #426c67) */
@@ -57,6 +91,7 @@
 
   /* Layout */
   --header-height: 74px;
+  --home-gutter: clamp(20px, 2.8vw, 44px);
 }
 
 * {
@@ -77,6 +112,7 @@ body {
 }
 
 body.theme-dark {
+  color-scheme: dark;
   --paper: #131716;
   --surface: #1d2422;
   --soft: #222a28;
@@ -91,6 +127,27 @@ body.theme-dark {
   --cms-bg: #111615;
   --cms-sidebar: #151b1a;
   --cms-sidebar-strong: #f8f4ed;
+  --surface-page: var(--paper);
+  --surface-subtle: var(--soft);
+  --surface-card: var(--surface);
+  --surface-elevated: var(--panel);
+  --surface-inverse: #f8f4ed;
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-muted: var(--muted);
+  --text-inverse: #131716;
+  --border-subtle: var(--line);
+  --border-strong: #77827e;
+  --accent-primary: #7bb8b2;
+  --accent-secondary: #9fb5c7;
+  --accent-contrast: #111827;
+  --link: #9bd0ca;
+  --article-card-surface: var(--surface-card);
+  --article-card-text: var(--text-primary);
+  --article-card-secondary: var(--text-secondary);
+  --article-card-muted: var(--text-muted);
+  --article-card-border: var(--border-subtle);
+  --article-card-accent: #d7ad7f;
 }
 
 button,
@@ -135,6 +192,23 @@ select:focus-visible,
   box-shadow: var(--focus-ring);
 }
 
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 12px;
+  z-index: 20000;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--surface-elevated, #ffffff);
+  color: var(--text-primary, #2f3133);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+  transform: translateY(-160%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -175,13 +249,14 @@ body.theme-dark .header {
   justify-content: space-between;
   height: 74px;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--home-gutter);
   box-sizing: border-box;
 }
 
-.logo h1 {
+.logo h1,
+.header-logo-text {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.6rem;
@@ -219,15 +294,15 @@ body.theme-dark .header {
 
 .hero {
   position: relative !important;
-  min-height: 460px !important;
-  /* Shrunk to occupy less vertical space */
+  min-height: auto !important;
   display: flex !important;
   align-items: center !important;
-  padding: 24px clamp(20px, 6vw, 90px) !important;
-  /* Reduced vertical padding */
+  justify-content: center !important;
+  padding: clamp(44px, 4.5vw, 68px) var(--home-gutter) !important;
   background: linear-gradient(135deg, #FAF8F5 0%, #FAF6F0 50%, #F5F1EB 100%) !important;
-  /* Beautiful warm luxury backdrop */
   overflow: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .hero-overlay {
@@ -264,32 +339,34 @@ body.theme-dark .header {
 
 .hero-container {
   width: 100% !important;
-  max-width: 1200px !important;
+  max-width: 1280px !important;
   margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: row !important;
+  display: grid !important;
+  grid-template-columns: minmax(400px, 1.15fr) minmax(360px, 0.85fr) !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 80px !important;
+  gap: clamp(36px, 4vw, 64px) !important;
   position: relative !important;
   z-index: 1 !important;
+  box-sizing: border-box !important;
 }
 
 .hero-content {
-  flex: 1.2 !important;
-  max-width: 650px !important;
+  width: 100% !important;
+  max-width: 660px !important;
   text-align: left !important;
   position: relative !important;
   z-index: 2 !important;
 }
 
 .hero-glass-column {
-  flex: 1 !important;
+  width: 100% !important;
   display: flex !important;
-  justify-content: center !important;
+  justify-content: flex-end !important;
   align-items: center !important;
   position: relative !important;
-  padding: 40px 0 !important;
+  padding: 24px 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* High-Visibility Distinct 3D Card Deck Stack */
@@ -301,7 +378,7 @@ body.theme-dark .header {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: 30px 0 !important;
+  margin: 0 0 0 auto !important;
 }
 
 .hero-glass-card {
@@ -336,7 +413,7 @@ body.theme-dark .header {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   border: 1.5px solid #a7f3d0 !important;
   box-shadow: 0 18px 45px rgba(16, 185, 129, 0.15) !important;
-  transform: rotate(7deg) translate(55px, -30px) scale(0.96) !important;
+  transform: rotate(7deg) translate(48px, -28px) scale(0.96) !important;
   opacity: 0.98 !important;
   animation: floatBackCard1 6s ease-in-out infinite 0.5s !important;
 }
@@ -362,7 +439,7 @@ body.theme-dark .header {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
   border: 1.5px solid #38bdf8 !important;
   box-shadow: 0 18px 45px rgba(56, 189, 248, 0.2) !important;
-  transform: rotate(-7deg) translate(-55px, -50px) scale(0.93) !important;
+  transform: rotate(-6deg) translate(-36px, -42px) scale(0.94) !important;
   opacity: 0.98 !important;
   animation: floatBackCard2 6s ease-in-out infinite 1s !important;
 }
@@ -534,12 +611,17 @@ body.theme-dark .header {
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
+  :root {
+    --home-gutter: clamp(20px, 3.5vw, 32px);
+  }
+
   .hero {
-    padding: 55px 24px 45px !important;
+    padding: clamp(36px, 5vw, 48px) var(--home-gutter) !important;
   }
 
   .hero-container {
+    display: flex !important;
     flex-direction: column !important;
     text-align: center !important;
     gap: 40px !important;
@@ -549,6 +631,7 @@ body.theme-dark .header {
     text-align: center !important;
     align-items: center !important;
     max-width: 100% !important;
+    margin: 0 auto !important;
   }
 
   .hero-buttons {
@@ -558,12 +641,14 @@ body.theme-dark .header {
 
   .hero-glass-column {
     width: 100% !important;
+    justify-content: center !important;
     padding: 20px 0 15px 0 !important;
   }
 
   .hero-card-stack {
     min-height: 330px !important;
     margin: 15px auto 20px !important;
+    max-width: 410px !important;
   }
 
   .hero-glass-card {
@@ -573,7 +658,6 @@ body.theme-dark .header {
   }
 
   @keyframes floatCardMobile {
-
     0%,
     100% {
       transform: translateY(0);
@@ -586,26 +670,147 @@ body.theme-dark .header {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --home-gutter: 16px;
+  }
+
   .hero {
-    padding: 48px 18px 40px !important;
+    padding: 32px var(--home-gutter) 28px !important;
   }
 
   .hero-container {
-    gap: 36px !important;
+    gap: 28px !important;
   }
 
   .hero-glass-column {
-    padding: 15px 0 10px 0 !important;
+    padding: 10px 0 5px 0 !important;
   }
 
   .hero-card-stack {
-    min-height: 310px !important;
-    margin: 10px auto 15px !important;
+    min-height: 238px !important;
+    margin: 2px auto 8px !important;
+    max-width: 300px !important;
+  }
+
+  .hero-title {
+    font-size: clamp(2.35rem, 11vw, 3rem) !important;
+    line-height: 1.02 !important;
+  }
+
+  .hero-description {
+    max-width: 34rem !important;
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+  }
+
+  .hero-glass-card.stack-card.back-card-1,
+  .hero-glass-card.stack-card.back-card-2,
+  .hero-floating-badge {
+    display: none !important;
+  }
+
+  .hero .hero-glass-card.stack-card.front-card {
+    max-width: 300px !important;
+    padding: 20px !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .hero .glass-card-title {
+    font-size: 1.25rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .hero .glass-card-excerpt {
+    margin-bottom: 10px !important;
   }
 
   .stories-section-premium,
   .categories-section {
-    padding-top: 48px !important;
+    padding-top: 40px !important;
+  }
+}
+
+/* Laptop Viewport Tier (1024px to 1439px) */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .header-inner {
+    max-width: 1260px !important;
+    padding: 0 clamp(20px, 2.5vw, 36px) !important;
+    margin: 0 auto !important;
+  }
+
+  .hero {
+    padding: clamp(40px, 4.5vw, 60px) clamp(20px, 2.5vw, 36px) !important;
+  }
+
+  .hero-container {
+    max-width: 1240px !important;
+    margin: 0 auto !important;
+    gap: clamp(32px, 3.5vw, 56px) !important;
+  }
+
+  .stories-container-premium {
+    max-width: 1240px !important;
+    margin: 0 auto !important;
+    gap: clamp(56px, 6.5vw, 96px) !important;
+  }
+}
+
+/* Large Monitors & Desktop Displays (>= 1440px) */
+@media (min-width: 1440px) {
+  .header-inner {
+    max-width: 1680px !important;
+    margin: 0 auto !important;
+    padding: 0 clamp(24px, 2.5vw, 44px) !important;
+  }
+
+  .hero {
+    padding: clamp(48px, 4.5vw, 72px) clamp(24px, 2.5vw, 44px) !important;
+  }
+
+  .hero-container {
+    max-width: 1640px !important;
+    margin: 0 auto !important;
+    gap: clamp(36px, 3.8vw, 68px) !important;
+  }
+
+  .stories-section-premium {
+    padding: clamp(48px, 4.5vw, 72px) clamp(24px, 2.5vw, 44px) !important;
+  }
+
+  .stories-container-premium {
+    max-width: 1240px !important;
+    margin: 0 auto !important;
+    gap: clamp(56px, 5vw, 84px) !important;
+  }
+}
+
+/* Extra Large & Ultra-wide Monitors (>= 1800px) */
+@media (min-width: 1800px) {
+  .header-inner {
+    max-width: 1840px !important;
+    margin: 0 auto !important;
+    padding: 0 clamp(32px, 2.2vw, 56px) !important;
+  }
+
+  .hero {
+    padding: 56px clamp(32px, 2.2vw, 56px) !important;
+  }
+
+  .hero-container {
+    max-width: 1800px !important;
+    margin: 0 auto !important;
+    gap: 56px !important;
+  }
+
+  .stories-section-premium {
+    padding: 56px clamp(32px, 2.2vw, 56px) !important;
+  }
+
+  .stories-container-premium {
+    max-width: 1240px !important;
+    margin: 0 auto !important;
+    gap: 84px !important;
   }
 }
 
@@ -844,10 +1049,10 @@ body.theme-dark .header {
 .featured,
 .articles-body {
   width: 100%;
-  max-width: 1840px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 40px clamp(20px, 4vw, 80px);
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 40px var(--home-gutter);
   box-sizing: border-box;
   height: auto !important;
   min-height: unset !important;
@@ -1027,6 +1232,9 @@ body.theme-dark .header {
   background-position: center !important;
   text-align: center !important;
   overflow: hidden !important;
+  padding: 40px var(--home-gutter) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .quote-overlay {
@@ -4656,17 +4864,19 @@ progress::-webkit-progress-value {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 24px 70px rgba(47, 49, 51, 0.2);
+  color: var(--ink, #2f3133);
 }
 
 .login-required-modal h2 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 2rem;
+  color: var(--ink, #2f3133);
 }
 
 .login-required-modal p {
   margin: 0;
-  color: var(--muted);
+  color: var(--muted, #666d6d);
   line-height: 1.7;
 }
 
@@ -5074,6 +5284,7 @@ body.theme-dark .header nav {
 }
 
 body.theme-dark .logo h1,
+body.theme-dark .header-logo-text,
 body.theme-dark .nav-links a,
 body.theme-dark .nav-links button,
 body.theme-dark .mobile-menu-btn {
@@ -5111,6 +5322,48 @@ body.theme-dark .subscribe-left p,
 body.theme-dark .footer-brand p,
 body.theme-dark .listing-hero p {
   color: var(--muted);
+}
+
+/* The home hero intentionally remains a warm Light surface in every mode.
+   Its local foreground contract must therefore follow the surface, not body. */
+body.theme-dark .hero {
+  --hero-surface-text: var(--text-on-light, #2f3133);
+  --hero-surface-muted: var(--text-on-light-muted, #555956);
+  --hero-surface-accent: #765636;
+  color: var(--hero-surface-text);
+}
+
+body.theme-dark .hero .hero-title {
+  color: var(--hero-surface-text) !important;
+}
+
+body.theme-dark .hero .hero-description {
+  color: var(--hero-surface-muted) !important;
+}
+
+body.theme-dark .hero .hero-subtitle {
+  color: var(--hero-surface-accent) !important;
+}
+
+body.theme-dark .hero .primary-btn {
+  background: var(--hero-surface-text) !important;
+  color: var(--text-on-dark, #f8f4ed) !important;
+}
+
+body.theme-dark .hero .secondary-btn {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: #b8aa9a !important;
+  color: var(--hero-surface-text) !important;
+}
+
+/* This section follows the active page surface, so its editorial headings
+   must use the corresponding semantic foregrounds in Dark Mode. */
+body.theme-dark .categories-section .categories-heading {
+  color: var(--text-on-dark, #f8f4ed) !important;
+}
+
+body.theme-dark .categories-section .categories-subheading {
+  color: var(--text-on-dark-muted, #c3ccc8) !important;
 }
 
 body.theme-dark .article-card,
@@ -7526,9 +7779,11 @@ code {
 
 /* â”€â”€ Home Page: Categories Section (Image 3 Design) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .categories-section {
-  padding: clamp(48px, 6vw, 84px) 24px;
+  padding: clamp(48px, 5vw, 72px) var(--home-gutter);
   text-align: center;
   background: var(--paper);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .categories-section .section-kicker {
@@ -7563,9 +7818,11 @@ code {
   align-items: center !important;
   justify-content: center !important;
   gap: 14px !important;
-  max-width: 1360px !important;
+  max-width: none !important;
+  width: 100% !important;
   margin: 30px auto 0 !important;
-  padding: 0 16px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* Side Navigation Arrows (beside categories) */
@@ -7630,7 +7887,7 @@ body.theme-dark .categories-carousel-nav:hover:not(:disabled) {
   padding: 8px 4px !important;
   margin: 0 !important;
   width: 100% !important;
-  max-width: 1240px !important;
+  max-width: none !important;
 }
 
 .categories-grid-premium::-webkit-scrollbar {
@@ -7863,142 +8120,355 @@ body.theme-dark .categories-carousel-nav:hover:not(:disabled) {
   transform: scale(1.05) !important;
 }
 
+/* Keep the homepage banner copy and story cards visually connected on desktop. */
+@media (min-width: 1200px) {
+  .hero-container {
+    max-width: 1200px !important;
+    grid-template-columns: minmax(520px, 1.08fr) minmax(440px, 0.92fr) !important;
+    justify-content: center !important;
+    gap: 40px !important;
+  }
+
+  .hero-glass-column {
+    justify-content: center !important;
+  }
+
+  .hero-card-stack {
+    max-width: 440px !important;
+    margin: 0 auto !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .hero-container {
+    max-width: 1100px !important;
+    grid-template-columns: minmax(430px, 1fr) minmax(400px, 1fr) !important;
+    justify-content: center !important;
+    gap: 32px !important;
+  }
+
+  .hero-glass-column {
+    justify-content: center !important;
+  }
+
+  .hero-card-stack {
+    max-width: 420px !important;
+    margin: 0 auto !important;
+  }
+}
+
 /* Premium Stories Section */
 .stories-section-premium {
-  padding: 36px clamp(20px, 6vw, 90px) !important;
-  background-color: #FAF7F2 !important;
-  /* Beautiful warm ivory paper background */
-  background-image: linear-gradient(90deg, rgba(250, 247, 242, 0.1) 0%, rgba(250, 247, 242, 0.95) 50%, #FAF7F2 100%),
-    url('https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=85') !important;
-  background-size: cover !important;
-  background-position: left center !important;
-  background-repeat: no-repeat !important;
+  position: relative !important;
+  isolation: isolate !important;
+  min-height: clamp(410px, 38vw, 470px) !important;
+  padding: 0 !important;
+  background: #a99f8f !important;
   scroll-margin-top: 90px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+body.theme-dark .stories-section-premium {
+  background: #756d62 !important;
+}
+
+.stories-background-img {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -3 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center 49% !important;
+  filter: saturate(0.72) sepia(0.08) contrast(0.98) brightness(0.96) !important;
+}
+
+.stories-background-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  background:
+    linear-gradient(90deg, rgba(27, 16, 7, 0.23) 0%, rgba(250, 247, 242, 0.06) 45%, rgba(250, 247, 242, 0.74) 62%, rgba(250, 247, 242, 0.9) 100%),
+    linear-gradient(180deg, rgba(16, 10, 5, 0.02) 58%, rgba(16, 10, 5, 0.1) 100%) !important;
+  pointer-events: none !important;
 }
 
 .stories-container-premium {
-  max-width: 1200px !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 40px !important;
-}
-
-.stories-spacer-col {
-  flex: 1.2 !important;
-}
-
-.stories-content-col {
-  flex: 1.5 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  text-align: left !important;
-}
-
-.stories-subtitle-premium {
-  font-family: 'Alex Brush', cursive !important;
-  font-size: 2.8rem !important;
-  /* Larger signature size */
-  color: #a85f49 !important;
-  /* Soft premium clay/brown color from screenshot */
-  font-weight: 400 !important;
-  margin: 0 0 10px 0 !important;
-  display: block !important;
   position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  max-width: 1440px !important;
+  min-height: inherit !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
 }
 
-.stories-subtitle-premium::after {
+.stories-handwritten-note {
+  position: absolute !important;
+  top: clamp(34px, 3.5vw, 44px) !important;
+  left: clamp(38px, 4.8vw, 66px) !important;
+  width: 190px !important;
+  margin: 0 !important;
+  color: rgba(250, 246, 239, 0.96) !important;
+  font-family: "Caveat", "Segoe Print", cursive !important;
+  font-size: clamp(1.18rem, 2vw, 1.45rem) !important;
+  line-height: 1.02 !important;
+  font-weight: 400 !important;
+  white-space: pre-line !important;
+  text-shadow: 0 1px 7px rgba(25, 13, 4, 0.52) !important;
+}
+
+.stories-handwritten-note::after {
   content: "" !important;
   position: absolute !important;
-  bottom: 0 !important;
-  left: 10px !important;
-  width: 80px !important;
-  height: 1px !important;
-  background-color: rgba(168, 95, 73, 0.4) !important;
+  left: 4px !important;
+  bottom: -18px !important;
+  width: 132px !important;
+  height: 13px !important;
+  border-top: 4px solid rgba(181, 139, 95, 0.94) !important;
+  border-radius: 50% !important;
+  transform: rotate(-4deg) !important;
+  filter: drop-shadow(38px 1px 0 rgba(228, 212, 194, 0.68)) !important;
 }
 
-.stories-text-premium {
-  font-family: Georgia, 'Playfair Display', serif !important;
-  font-size: clamp(1.6rem, 3.2vw, 2.3rem) !important;
-  /* Large, editorial typography */
-  line-height: 1.45 !important;
-  font-weight: 500 !important;
-  color: #2F3133 !important;
-  margin: 10px 0 20px 0 !important;
-  max-width: 650px !important;
-  text-align: left !important;
+.stories-paper-card {
+  position: absolute !important;
+  top: clamp(30px, 3vw, 38px) !important;
+  right: clamp(40px, 5.8vw, 84px) !important;
+  display: flex !important;
+  width: clamp(350px, 34vw, 454px) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  color: #2f3133 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+.stories-card-content {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+.stories-card-heading {
+  position: relative !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+}
+
+.stories-card-heading::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: -18px !important;
+  width: 1px !important;
+  background: rgba(143, 107, 72, 0.8) !important;
+}
+
+.stories-feather {
+  display: block !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin-bottom: 24px !important;
+  color: #8f6b48 !important;
+  transform: rotate(-7deg) !important;
+}
+
+.stories-card-title {
+  max-width: 390px !important;
+  margin: 0 !important;
+  color: #2f3133 !important;
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif !important;
+  font-size: clamp(2.05rem, 3.4vw, 2.35rem) !important;
+  line-height: 1.02 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.035em !important;
+  text-shadow: 0 1px 10px rgba(255, 252, 247, 0.48) !important;
+}
+
+.stories-title-accent {
+  color: #8f6b48 !important;
+}
+
+.stories-card-divider {
+  display: flex !important;
+  align-items: center !important;
+  gap: 22px !important;
+  height: 1px !important;
+  margin: 18px 0 !important;
+}
+
+.stories-card-divider span {
+  display: block !important;
+  width: 28px !important;
+  height: 1px !important;
+  background: rgba(143, 107, 72, 0.42) !important;
+}
+
+.stories-card-divider span:last-child {
+  width: 24px !important;
+  opacity: 0.28 !important;
+}
+
+.stories-card-description {
+  max-width: 310px !important;
+  margin: 0 0 22px !important;
+  color: #454746 !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: clamp(1rem, 1.55vw, 1.08rem) !important;
+  line-height: 1.34 !important;
+  font-weight: 400 !important;
+  text-shadow: 0 1px 8px rgba(255, 252, 247, 0.44) !important;
 }
 
 .stories-btn-premium {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 8px !important;
-  padding: 12px 28px !important;
-  background-color: #FAF6F0 !important;
-  /* Light beige */
-  border: 1px solid #b8aa9a !important;
-  /* Thin brown border */
-  border-radius: 6px !important;
-  color: #7A6652 !important;
-  /* Brown text color */
-  font-family: Inter, sans-serif !important;
-  font-size: 0.95rem !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  min-height: 31px !important;
+  padding: 8px 15px !important;
+  background: #8f6b48 !important;
+  border: 1px solid #8f6b48 !important;
+  border-radius: 4px !important;
+  color: #fffaf4 !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+  font-size: 0.72rem !important;
   font-weight: 600 !important;
+  line-height: 1 !important;
   text-decoration: none !important;
-  transition: all 0.3s ease !important;
+  box-shadow: 0 3px 8px rgba(65, 45, 28, 0.24) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease !important;
   cursor: pointer !important;
 }
 
 .stories-btn-premium:hover {
-  background-color: #F3ECE2 !important;
-  border-color: #9c8a77 !important;
-  color: #5c4c3b !important;
-  transform: translateY(-2px) !important;
+  background: #765538 !important;
+  border-color: #765538 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
 }
 
 .stories-btn-arrow {
-  font-size: 1.15rem !important;
-  transition: transform 0.3s ease !important;
+  width: 13px !important;
+  height: 13px !important;
+  transition: transform 0.2s ease !important;
 }
 
 .stories-btn-premium:hover .stories-btn-arrow {
-  transform: translateX(4px) !important;
+  transform: translateX(3px) !important;
+}
+
+.stories-card-signature {
+  margin: 28px 0 0 !important;
+  color: #8f6b48 !important;
+  font-family: "Caveat", "Segoe Print", cursive !important;
+  font-size: clamp(1.04rem, 1.8vw, 1.28rem) !important;
+  line-height: 1 !important;
+  font-weight: 400 !important;
+  transform: rotate(-1deg) !important;
+  text-shadow: 0 1px 8px rgba(255, 252, 247, 0.46) !important;
+}
+
+.stories-botanical {
+  display: none !important;
+}
+
+.stories-botanical path {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.5 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
 }
 
 @media (max-width: 900px) {
   .stories-section-premium {
-    background-image: linear-gradient(180deg, rgba(250, 247, 242, 0.85) 0%, #FAF7F2 100%),
-      url('https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=85') !important;
-    padding: 40px 20px !important;
+    min-height: 620px !important;
   }
 
   .stories-container-premium {
+    min-height: 620px !important;
+    display: flex !important;
     flex-direction: column !important;
-    text-align: center !important;
-    gap: 40px !important;
+    align-items: flex-start !important;
+    padding: 38px clamp(22px, 5vw, 44px) 34px !important;
   }
 
-  .stories-spacer-col {
-    display: none !important;
-    /* Hide spacer column on mobile */
+  .stories-background-img {
+    object-position: 42% center !important;
   }
 
-  .stories-content-col {
-    align-items: center !important;
-    text-align: center !important;
-    flex: 1 !important;
+  .stories-background-overlay {
+    background: linear-gradient(180deg, rgba(25, 14, 7, 0.2) 0%, rgba(250, 247, 242, 0.16) 30%, rgba(250, 247, 242, 0.82) 48%, rgba(250, 247, 242, 0.92) 100%) !important;
   }
 
-  .stories-text-premium {
-    text-align: center !important;
+  .stories-handwritten-note {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    flex: 0 0 auto !important;
   }
 
-  .stories-subtitle-premium::after {
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+  .stories-paper-card {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    align-self: flex-end !important;
+    width: min(100%, 454px) !important;
+    height: auto !important;
+    margin-top: 90px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .stories-section-premium,
+  .stories-container-premium {
+    min-height: 625px !important;
+  }
+
+  .stories-container-premium {
+    padding: 32px 16px 24px !important;
+  }
+
+  .stories-handwritten-note {
+    margin-left: 10px !important;
+    font-size: 1.2rem !important;
+  }
+
+  .stories-paper-card {
+    align-self: center !important;
+    width: 100% !important;
+    height: auto !important;
+    margin-top: 105px !important;
+    padding: 0 12px 0 30px !important;
+  }
+
+  .stories-card-title {
+    font-size: clamp(1.95rem, 9.2vw, 2.25rem) !important;
+  }
+
+  .stories-card-description {
+    max-width: 92% !important;
+    font-size: 1rem !important;
+  }
+
+  .stories-botanical {
+    width: 43% !important;
+    opacity: 0.14 !important;
   }
 }
 
@@ -10828,15 +11298,15 @@ body:has([data-experience="life"]) .life-hero,
 [data-experience="coding"] .coding-hero {
   background-color: #010409 !important;
   border-bottom: 1px solid var(--coding-border) !important;
-  padding: 60px 24px 60px 24px !important;
-  margin-top: 20px !important;
+  padding: clamp(16px, 2vw, 28px) 24px 60px !important;
+  margin-top: 0 !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
 
 [data-experience="coding"] .coding-hero-container {
   max-width: 1200px !important;
-  margin: 24px auto 0 auto !important;
+  margin: 0 auto !important;
   background: var(--coding-card-bg) !important;
   border: 1px solid var(--coding-border) !important;
   border-radius: 12px !important;
@@ -11542,6 +12012,87 @@ body:has([data-experience="life"]) .life-hero,
   color: var(--coding-green) !important;
   background: none !important;
   padding: 0 !important;
+}
+
+/* Coding comments: keep the form surface transparent and give its submit
+   action a complete, accessible interaction contract. */
+[data-experience="coding"] .coding-comments-section .comment-form {
+  width: 100% !important;
+  max-width: 820px !important;
+  margin-top: 24px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-experience="coding"] .coding-comments-section .coding-submit-btn {
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: flex-start !important;
+  min-width: 176px !important;
+  min-height: 46px !important;
+  padding: 0 22px !important;
+  border: 1px solid rgba(88, 166, 255, 0.55) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #0969da 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  font-family: var(--coding-font-sans) !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: 0 8px 22px rgba(9, 105, 218, 0.28) !important;
+  cursor: pointer !important;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease !important;
+}
+
+[data-experience="coding"] .coding-comments-section .coding-submit-btn:hover {
+  border-color: #79c0ff !important;
+  background: linear-gradient(135deg, #0550ae 0%, #1d4ed8 100%) !important;
+  box-shadow: 0 10px 26px rgba(9, 105, 218, 0.38) !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-experience="coding"] .coding-comments-section .coding-submit-btn:focus-visible {
+  outline: 3px solid rgba(121, 192, 255, 0.55) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 8px 22px rgba(9, 105, 218, 0.32) !important;
+}
+
+[data-experience="coding"] .coding-comments-section .coding-submit-btn:active {
+  box-shadow: 0 4px 12px rgba(9, 105, 218, 0.24) !important;
+  transform: translateY(0) !important;
+}
+
+[data-experience="coding"] .coding-comments-section .coding-submit-btn:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+@media (max-width: 480px) {
+  [data-experience="coding"] .coding-comments-section .coding-submit-btn {
+    align-self: stretch !important;
+    width: 100% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-experience="coding"] .coding-comments-section .coding-submit-btn {
+    transition: none !important;
+  }
+
+  [data-experience="coding"] .coding-comments-section .coding-submit-btn:hover {
+    transform: none !important;
+  }
 }
 
 /* Suggested Reads Cards */
@@ -15003,13 +15554,8 @@ body:has([data-experience="incidents"]) .incidents-hero,
    COMPREHENSIVE HIGH-CONTRAST DARK MODE STYLES
    ========================================================================== */
 
-body.theme-dark,
-.dark-mode,
-.category-detail-page.dark-mode,
-[data-theme="dark"] {
-  background-color: #0b0f19 !important;
-  color: #f8fafc !important;
-}
+/* Page mode is owned by body.theme-dark and semantic tokens near the top of
+   this stylesheet. Component-level .dark-mode classes stay locally scoped. */
 
 /* 1. Category Page & Editorial Quote Strip Dark Mode */
 .dark-mode .life-editorial-quote-strip,
@@ -15032,89 +15578,144 @@ body.theme-dark .life-editorial-quote-strip p,
   color: #f8fafc !important;
 }
 
-/* 2. Article Cards Dark Mode */
-.dark-mode .article-card,
+/* 2. Article cards use one Dark Mode surface contract. DefaultCard and the
+   specialized LifeCard share the same readable hierarchy; category identity
+   remains in badges, tags, and accents. */
+.category-detail-page.dark-mode .article-card {
+  --article-card-surface: #1d2422;
+  --article-card-text: #f8f4ed;
+  --article-card-secondary: #d6dedb;
+  --article-card-muted: #b8c2be;
+  --article-card-border: rgba(255, 255, 255, 0.18);
+  --article-card-accent: #d7ad7f;
+}
+
 body.theme-dark .article-card,
 .category-detail-page.dark-mode .article-card,
-.dark-mode .default-card,
-body.theme-dark .default-card {
-  background: #1e293b !important;
-  border: 1px solid #334155 !important;
+body.theme-dark .article-card.life-card,
+.category-detail-page.dark-mode .article-card.life-card {
+  background: var(--article-card-surface, #1d2422) !important;
+  border-color: var(--article-card-border, rgba(255, 255, 255, 0.18)) !important;
+  color: var(--article-card-text, #f8f4ed) !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
 }
 
-.dark-mode .article-card:hover,
 body.theme-dark .article-card:hover,
 .category-detail-page.dark-mode .article-card:hover {
-  border-color: #38bdf8 !important;
+  border-color: var(--article-card-accent, #d7ad7f) !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Article Card Title Dark Mode */
-.dark-mode .article-title,
-body.theme-dark .article-title,
-.category-detail-page.dark-mode .article-title,
-.dark-mode .article-title a,
-body.theme-dark .article-title a,
-.category-detail-page.dark-mode .article-title a {
-  color: #f8fafc !important;
+body.theme-dark .article-card :is(.article-title, .article-title a, .life-card-title, .life-card-title a, .life-author-meta .author-name),
+.category-detail-page.dark-mode .article-card :is(.article-title, .article-title a, .life-card-title, .life-card-title a, .life-author-meta .author-name) {
+  color: var(--article-card-text, #f8f4ed) !important;
 }
 
-.dark-mode .article-title a:hover,
-body.theme-dark .article-title a:hover,
-.category-detail-page.dark-mode .article-title a:hover {
-  color: #38bdf8 !important;
+body.theme-dark .article-card :is(.article-title a, .life-card-title a):hover,
+.category-detail-page.dark-mode .article-card :is(.article-title a, .life-card-title a):hover {
+  color: var(--article-card-accent, #d7ad7f) !important;
 }
 
-/* Article Description Text Dark Mode */
-.dark-mode .article-text,
-body.theme-dark .article-text,
-.category-detail-page.dark-mode .article-text {
-  color: #cbd5e1 !important;
+body.theme-dark .article-card :is(.article-text, .life-card-excerpt),
+.category-detail-page.dark-mode .article-card :is(.article-text, .life-card-excerpt) {
+  color: var(--article-card-secondary, #d6dedb) !important;
 }
 
-/* Article Tag Pills Dark Mode */
-.dark-mode .article-tags span,
-body.theme-dark .article-tags span,
-.category-detail-page.dark-mode .article-tags span {
-  background: #0f172a !important;
-  color: #38bdf8 !important;
-  border: 1px solid #334155 !important;
+body.theme-dark .article-card :is(.article-meta-row > span, .article-card-footer, .article-card-footer span, .life-reading-time, .life-card-footer, .life-card-stats span, .publish-date),
+.category-detail-page.dark-mode .article-card :is(.article-meta-row > span, .article-card-footer, .article-card-footer span, .life-reading-time, .life-card-footer, .life-card-stats span, .publish-date) {
+  color: var(--article-card-muted, #b8c2be) !important;
+  border-color: var(--article-card-border, rgba(255, 255, 255, 0.18)) !important;
 }
 
-/* Article Category Badge Dark Mode */
-.dark-mode .article-tag,
-body.theme-dark .article-tag,
-.category-detail-page.dark-mode .article-tag {
-  background: rgba(56, 189, 248, 0.15) !important;
-  color: #38bdf8 !important;
-  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+body.theme-dark .article-card :is(.article-tags span, .life-tag-pill, .article-tag),
+.category-detail-page.dark-mode .article-card :is(.article-tags span, .life-tag-pill, .article-tag) {
+  background: color-mix(in srgb, var(--article-card-accent, #d7ad7f) 14%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--article-card-accent, #d7ad7f) 34%, transparent) !important;
+  color: var(--article-card-accent, #d7ad7f) !important;
 }
 
-/* Article Card Footer Dark Mode */
-.dark-mode .article-card-footer,
-body.theme-dark .article-card-footer,
-.category-detail-page.dark-mode .article-card-footer,
-.dark-mode .article-card-footer span,
-body.theme-dark .article-card-footer span,
-.category-detail-page.dark-mode .article-card-footer span,
-.dark-mode .article-meta-row>span,
-body.theme-dark .article-meta-row>span {
-  color: #94a3b8 !important;
-  border-top-color: #334155 !important;
+body.theme-dark .article-card :is(.article-card-footer svg, .article-read-link, .life-category-kicker, .life-read-btn),
+.category-detail-page.dark-mode .article-card :is(.article-card-footer svg, .article-read-link, .life-category-kicker, .life-read-btn) {
+  color: var(--article-card-accent, #d7ad7f) !important;
 }
 
-.dark-mode .article-card-footer svg,
-body.theme-dark .article-card-footer svg,
-.category-detail-page.dark-mode .article-card-footer svg {
-  color: #38bdf8 !important;
+body.theme-dark .article-card .life-read-btn,
+.category-detail-page.dark-mode .article-card .life-read-btn {
+  background: color-mix(in srgb, var(--article-card-accent, #d7ad7f) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--article-card-accent, #d7ad7f) 38%, transparent) !important;
 }
 
-/* Article Read Link Button Dark Mode */
-.dark-mode .article-read-link,
-body.theme-dark .article-read-link,
-.category-detail-page.dark-mode .article-read-link {
-  color: #38bdf8 !important;
+body.theme-dark .article-card .life-read-btn:hover,
+.category-detail-page.dark-mode .article-card .life-read-btn:hover {
+  background: var(--article-card-accent, #d7ad7f) !important;
+  color: #17201e !important;
+}
+
+/* Coding keeps its approved blue Light card treatment. In Dark Mode the
+   common Article foundation remains authoritative and Coding changes accents
+   only, so legacy category styling cannot replace body foregrounds. */
+body:not(.theme-dark) .coding-landing-page:not(.dark-mode) .article-card {
+  --article-card-surface: #f7faff !important;
+  --article-card-text: #0f172a !important;
+  --article-card-secondary: #334155 !important;
+  --article-card-muted: #475569 !important;
+  --article-card-border: #bfdbfe !important;
+  --article-card-accent: #2563eb !important;
+  --coding-card-accent-hover: #1d4ed8 !important;
+  --coding-card-accent-soft: rgba(37, 99, 235, 0.1) !important;
+  background: var(--article-card-surface) !important;
+  border-color: var(--article-card-border) !important;
+  color: var(--article-card-text) !important;
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.1) !important;
+}
+
+.coding-landing-page.dark-mode .article-card,
+body.theme-dark .coding-landing-page .article-card {
+  --article-card-accent: #58a6ff !important;
+  --coding-card-accent-hover: #79c0ff !important;
+  --coding-card-accent-soft: rgba(88, 166, 255, 0.14) !important;
+}
+
+.coding-landing-page .article-card::before {
+  background: linear-gradient(90deg, var(--article-card-accent), var(--coding-card-accent-hover)) !important;
+}
+
+.coding-landing-page .article-card:hover {
+  border-color: var(--article-card-accent) !important;
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--article-card-accent) 22%, transparent) !important;
+}
+
+.coding-landing-page .article-card :is(.article-title, .article-title a) {
+  color: var(--article-card-text) !important;
+}
+
+.coding-landing-page .article-card .article-title a:hover {
+  color: var(--coding-card-accent-hover) !important;
+}
+
+.coding-landing-page .article-card .article-text {
+  color: var(--article-card-secondary) !important;
+}
+
+.coding-landing-page .article-card :is(.article-meta-row > span, .article-card-footer, .article-card-footer span) {
+  color: var(--article-card-muted) !important;
+  border-color: var(--article-card-border) !important;
+}
+
+.coding-landing-page .article-card :is(.article-tag, .article-tags span) {
+  background: var(--coding-card-accent-soft) !important;
+  border: 1px solid color-mix(in srgb, var(--article-card-accent) 38%, transparent) !important;
+  color: var(--article-card-accent) !important;
+}
+
+.coding-landing-page .article-card :is(.article-card-footer svg, .article-read-link) {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: var(--article-card-accent) !important;
+}
+
+.coding-landing-page .article-card .article-read-link:hover {
+  color: var(--coding-card-accent-hover) !important;
 }
 
 /* 3. Sidebar Widgets Dark Mode */
@@ -15204,12 +15805,16 @@ body.theme-dark .topic-pill:hover {
   box-shadow: 0 4px 14px rgba(56, 189, 248, 0.2) !important;
 }
 
-/* Coding Landing Hero Spacing (Clears Fixed Header Navbar) */
-.coding-landing-page,
-.coding-landing-hero,
-.category-detail-page.coding-landing-page {
-  padding-top: 50px !important;
+/* Coding landing: one compact gutter below the in-flow sticky header. The
+   page previously gave both the main and hero 50px, doubling the blank area. */
+.coding-landing-page {
+  padding-top: clamp(16px, 2vw, 28px) !important;
   margin-top: 0 !important;
+}
+
+.coding-landing-page .coding-landing-hero {
+  margin: 0 auto 30px !important;
+  padding-top: 0 !important;
 }
 
 /* Non-Coding Category Hero Spacing (Clears Navbar so Badges & Breadcrumbs are Fully Visible) */
@@ -17291,6 +17896,101 @@ body:has([data-experience="incidents"]),
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Experience-category article banners: preserve every metadata group while
+   reducing the cinematic vertical footprint. All Experience aliases resolve
+   through the Incidents experience and therefore share this contract. */
+[data-experience="incidents"] .incidents-hero.experience-hero {
+  min-height: 440px !important;
+  padding: clamp(28px, 3vw, 40px) 0 !important;
+}
+
+[data-experience="incidents"] .incidents-hero-body {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px) !important;
+  grid-template-areas:
+    "top-left author-card"
+    "title-left author-card"
+    "sub-left author-card"
+    "meta-left author-card"
+    "quote-left author-card"
+    "chips-left author-card"
+    "engage-bot engage-bot" !important;
+  gap: 8px clamp(24px, 3vw, 40px) !important;
+}
+
+[data-experience="incidents"] .experience-hero-meta-bar {
+  grid-area: meta-left !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+[data-experience="incidents"] .experience-hero-meta-bar > span {
+  padding: 5px 12px !important;
+}
+
+[data-experience="incidents"] .experience-snapshot-strip {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px 10px !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 10px 14px !important;
+}
+
+[data-experience="incidents"] .experience-snapshot-strip .highlight-chip {
+  display: flex !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  padding: 7px 10px !important;
+  border-radius: 10px !important;
+  font-size: 0.8rem !important;
+  line-height: 1.35 !important;
+}
+
+[data-experience="incidents"] .hero-author-card {
+  max-width: 320px !important;
+  padding: 18px 20px !important;
+  border-radius: 14px !important;
+}
+
+[data-experience="incidents"] .hero-bottom-bar {
+  margin-top: 4px !important;
+}
+
+[data-experience="incidents"] .hero-tag-pill {
+  padding: 4px 12px !important;
+}
+
+@media (max-width: 900px) {
+  [data-experience="incidents"] .incidents-hero.experience-hero {
+    min-height: 0 !important;
+    padding: 28px 0 32px !important;
+  }
+
+  [data-experience="incidents"] .incidents-hero-body {
+    gap: 10px !important;
+    padding: 0 20px !important;
+  }
+
+  [data-experience="incidents"] .experience-hero-meta-bar {
+    justify-content: center !important;
+  }
+
+  [data-experience="incidents"] .experience-snapshot-strip {
+    max-width: 720px !important;
+  }
+
+  [data-experience="incidents"] .hero-author-card {
+    max-width: 420px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  [data-experience="incidents"] .experience-snapshot-strip {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* 5. Center Editorial Prose — Seamless Warm Paper Background with Breathing Room */
@@ -20248,9 +20948,9 @@ body.theme-dark .header.main-public-header {
   justify-content: space-between !important;
   height: 74px !important;
   width: 100% !important;
-  max-width: 1200px !important;
+  max-width: 1680px !important;
   margin: 0 auto !important;
-  padding: 0 24px !important;
+  padding: 0 var(--home-gutter) !important;
   box-sizing: border-box !important;
 }
 
@@ -20260,9 +20960,11 @@ body.theme-dark .header.main-public-header {
   text-decoration: none !important;
   margin: 0 !important;
   padding: 0 !important;
+  flex-shrink: 0 !important;
 }
 
-.header-inner .logo h1 {
+.header-inner .logo h1,
+.header-inner .logo .header-logo-text {
   margin: 0 !important;
   font-family: Georgia, "Times New Roman", serif !important;
   font-size: 1.55rem !important;
@@ -20276,17 +20978,18 @@ body.theme-dark .header.main-public-header {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: center !important;
-  flex: 1 !important;
-  margin: 0 32px !important;
+  justify-content: flex-end !important;
+  flex: 0 1 auto !important;
+  margin-left: auto !important;
+  margin-right: 28px !important;
 }
 
 .desktop-nav .nav-links {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: center !important;
-  gap: 24px !important;
+  justify-content: flex-end !important;
+  gap: 20px !important;
   list-style: none !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -20301,7 +21004,7 @@ body.theme-dark .header.main-public-header {
   white-space: nowrap !important;
 }
 
-.desktop-nav .nav-links a,
+.desktop-nav .nav-links > li > a,
 .nav-dropdown-trigger {
   font-family: inherit !important;
   font-size: 0.85rem !important;
@@ -20322,14 +21025,14 @@ body.theme-dark .header.main-public-header {
   transition: color 0.18s ease, background-color 0.18s ease !important;
 }
 
-body.theme-dark .desktop-nav .nav-links a,
+body.theme-dark .desktop-nav .nav-links > li > a,
 body.theme-dark .nav-dropdown-trigger {
   color: var(--ink, #e7e5e4) !important;
 }
 
-.desktop-nav .nav-links a:hover,
+.desktop-nav .nav-links > li > a:hover,
 .nav-dropdown-trigger:hover,
-.desktop-nav .nav-links a.active,
+.desktop-nav .nav-links > li > a.active,
 .nav-dropdown-trigger.active {
   color: var(--gold-dark, #8f6b48) !important;
   background-color: rgba(143, 107, 72, 0.08) !important;
@@ -20535,6 +21238,15 @@ body.theme-dark .account-menu-header {
 /* Categories Mega Menu Dropdown */
 #categories-menu.categories-mega-menu,
 .categories-mega-menu {
+  --mega-menu-surface: rgba(255, 255, 255, 0.98);
+  --mega-menu-text: #1c1917;
+  --mega-menu-muted: #625b55;
+  --mega-menu-border: rgba(0, 0, 0, 0.09);
+  --mega-menu-rule: rgba(0, 0, 0, 0.08);
+  --mega-menu-hover: rgba(143, 107, 72, 0.08);
+  --mega-menu-accent: #765636;
+  --mega-menu-icon-surface: rgba(66, 108, 103, 0.1);
+  --mega-menu-icon-text: #315b56;
   position: absolute !important;
   top: calc(100% + 8px) !important;
   left: 0 !important;
@@ -20542,10 +21254,10 @@ body.theme-dark .account-menu-header {
   width: 660px !important;
   min-width: 620px !important;
   max-width: 92vw !important;
-  background: rgba(255, 255, 255, 0.98) !important;
+  background: var(--mega-menu-surface) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(0, 0, 0, 0.09) !important;
+  border: 1px solid var(--mega-menu-border) !important;
   border-radius: 18px !important;
   box-shadow: 0 24px 54px -8px rgba(0, 0, 0, 0.14), 0 6px 16px -2px rgba(0, 0, 0, 0.05) !important;
   padding: 18px !important;
@@ -20556,8 +21268,19 @@ body.theme-dark .account-menu-header {
 }
 
 body.theme-dark .categories-mega-menu {
-  background: rgba(26, 28, 30, 0.98) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  /* This popover intentionally remains a fixed-Light surface in both modes. */
+  --mega-menu-surface: var(--surface-light-fixed, #faf8f5);
+  --mega-menu-text: var(--text-on-light, #2f3133);
+  --mega-menu-muted: var(--text-on-light-muted, #555956);
+  --mega-menu-border: rgba(47, 49, 51, 0.18);
+  --mega-menu-rule: rgba(47, 49, 51, 0.12);
+  --mega-menu-hover: rgba(143, 107, 72, 0.1);
+  --mega-menu-accent: #765636;
+  --mega-menu-icon-surface: rgba(66, 108, 103, 0.12);
+  --mega-menu-icon-text: #315b56;
+  background: var(--mega-menu-surface) !important;
+  border-color: var(--mega-menu-border) !important;
+  color: var(--mega-menu-text) !important;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7) !important;
 }
 
@@ -20568,7 +21291,7 @@ body.theme-dark .categories-mega-menu {
 }
 
 body.theme-dark .mega-menu-header {
-  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  border-bottom-color: var(--mega-menu-rule) !important;
 }
 
 .mega-menu-title {
@@ -20580,7 +21303,7 @@ body.theme-dark .mega-menu-header {
 }
 
 body.theme-dark .mega-menu-title {
-  color: #f5f5f4 !important;
+  color: var(--mega-menu-text) !important;
 }
 
 .mega-menu-subtitle {
@@ -20630,8 +21353,8 @@ body.theme-dark .mega-menu-item:hover {
   height: 34px !important;
   min-width: 34px !important;
   border-radius: 10px !important;
-  background: rgba(66, 108, 103, 0.1) !important;
-  color: var(--cms-accent, #426c67) !important;
+  background: var(--mega-menu-icon-surface) !important;
+  color: var(--mega-menu-icon-text) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -20640,8 +21363,8 @@ body.theme-dark .mega-menu-item:hover {
 }
 
 body.theme-dark .mega-menu-item-icon {
-  background: rgba(94, 158, 151, 0.16) !important;
-  color: #88c7c0 !important;
+  background: var(--mega-menu-icon-surface) !important;
+  color: var(--mega-menu-icon-text) !important;
 }
 
 .mega-menu-item-content {
@@ -20664,7 +21387,7 @@ body.theme-dark .mega-menu-item-icon {
 }
 
 body.theme-dark .mega-menu-item-title {
-  color: #f5f5f4 !important;
+  color: var(--mega-menu-text) !important;
 }
 
 .mega-menu-item-desc {
@@ -20686,7 +21409,7 @@ body.theme-dark .mega-menu-item-title {
 }
 
 body.theme-dark .mega-menu-footer {
-  border-top-color: rgba(255, 255, 255, 0.08) !important;
+  border-top-color: var(--mega-menu-rule) !important;
 }
 
 .mega-menu-all-link {
@@ -20705,6 +21428,35 @@ body.theme-dark .mega-menu-footer {
 .mega-menu-all-link:hover {
   background: rgba(143, 107, 72, 0.1) !important;
   transform: translateX(2px) !important;
+}
+
+/* All menu content follows the menu's own surface contract. This prevents a
+   custom page theme from leaking incompatible text colors into the popover. */
+.categories-mega-menu .mega-menu-header {
+  border-bottom-color: var(--mega-menu-rule) !important;
+}
+
+.categories-mega-menu .mega-menu-title,
+.categories-mega-menu .mega-menu-item-title {
+  color: var(--mega-menu-text) !important;
+}
+
+.categories-mega-menu .mega-menu-subtitle,
+.categories-mega-menu .mega-menu-item-desc {
+  color: var(--mega-menu-muted) !important;
+}
+
+.categories-mega-menu .mega-menu-item:hover,
+.categories-mega-menu .mega-menu-all-link:hover {
+  background: var(--mega-menu-hover) !important;
+}
+
+.categories-mega-menu .mega-menu-footer {
+  border-top-color: var(--mega-menu-rule) !important;
+}
+
+.categories-mega-menu .mega-menu-all-link {
+  color: var(--mega-menu-accent) !important;
 }
 
 /* Mobile drawer more categories link */
@@ -21448,7 +22200,7 @@ body.theme-dark .account-profile-summary strong {
   margin-top: 0 !important;
 }
 
-.contact-page {
+.account-trigger-btn {
   padding-top: 28px !important;
   margin-top: 0 !important;
   gap: 8px !important;
@@ -22230,7 +22982,11 @@ body.theme-dark .public-search-item-title {
   font-size: 1.4rem !important;
   color: var(--ink, #1c1917) !important;
   cursor: pointer !important;
-  padding: 4px !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 body.theme-dark .mobile-menu-btn {
@@ -22291,6 +23047,11 @@ body.theme-dark .mobile-drawer-header {
   font-size: 1.3rem !important;
   color: var(--muted, #78716c) !important;
   cursor: pointer !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .mobile-drawer-body {
@@ -22466,14 +23227,15 @@ body.theme-dark .mobile-logout-btn {
 /* Responsive Media Queries */
 @media (min-width: 901px) and (max-width: 1120px) {
   .desktop-nav {
-    margin: 0 10px !important;
+    margin-left: auto !important;
+    margin-right: 10px !important;
   }
 
   .desktop-nav .nav-links {
     gap: 4px !important;
   }
 
-  .desktop-nav .nav-links a,
+  .desktop-nav .nav-links > li > a,
   .nav-dropdown-trigger {
     padding: 8px 7px !important;
     font-size: 0.76rem !important;
@@ -22485,6 +23247,10 @@ body.theme-dark .mobile-logout-btn {
 }
 
 @media (max-width: 900px) {
+  .header-inner {
+    padding: 0 clamp(16px, 3vw, 24px) !important;
+  }
+
   .desktop-nav {
     display: none !important;
   }
@@ -22494,7 +23260,16 @@ body.theme-dark .mobile-logout-btn {
   }
 
   .mobile-menu-btn {
-    display: block !important;
+    display: inline-flex !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glass-card,
+  .mobile-drawer,
+  .mobile-drawer-backdrop {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
@@ -23018,4 +23793,652 @@ body.theme-dark .articles-toolbar .toolbar-select option,
   .articles-toolbar .search-control {
     grid-column: span 1 !important;
   }
+}
+
+/* ===========================================================================
+   DARK MODE DETAIL SURFACE AUTHORITY
+   Reusable detail widgets bind foregrounds to their own surface. These late,
+   component-scoped rules supersede legacy category literals without changing
+   the approved Light Mode cascade.
+   ========================================================================== */
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark {
+  background: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark :is(h2, h3, h4, strong) {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark :is(.author-bio, .author-card-header span, p, .related-story-meta) {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark .share-grid-btn {
+  background: var(--surface-subtle) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark .share-grid-btn:hover {
+  background: var(--surface-elevated) !important;
+  border-color: var(--border-strong) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark .author-socials a {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark .author-socials a:is(:hover, :focus-visible) {
+  color: var(--link) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark input {
+  background: var(--surface-dark-fixed) !important;
+  border-color: var(--control-border) !important;
+  color: var(--text-on-dark) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--dark input::placeholder {
+  color: var(--text-on-dark-muted) !important;
+  opacity: 1 !important;
+}
+
+/* Related Reflections intentionally remains a fixed-Light card in Dark Mode. */
+body.theme-dark .article-detail-theme--standard .detail-card--light {
+  background: var(--surface-light-fixed) !important;
+  border-color: rgba(47, 49, 51, 0.16) !important;
+  color: var(--text-on-light) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--light :is(h2, h3, h4, strong, .related-story-row strong) {
+  color: var(--text-on-light) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--light :is(p, span, cite, .related-story-meta) {
+  color: var(--text-on-light-muted) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-card--light .related-story-row:is(:hover, :focus-visible) strong {
+  color: #765636 !important;
+}
+
+/* Incident/Experience story rails are adaptive Dark cards in Dark Mode. */
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .incidents-sidebar-panel {
+  background: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .incidents-sidebar-panel :is(
+  .sidebar-section-title,
+  .emotion-name,
+  .magazine-milestone-body h4,
+  .collection-name,
+  h3
+) {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .incidents-sidebar-panel :is(
+  .step-title,
+  .summary-bullets-list li,
+  .magazine-milestone-body p,
+  .collection-count,
+  .topic-tag-pill,
+  .incidents-toc-link,
+  .toc-text
+) {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .chapter-roman,
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .magazine-num {
+  color: var(--article-card-accent, #d7ad7f) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar :is(.bullet-dot, .toc-bullet, .soft-gradient-quote-widget h3 .icon) {
+  color: var(--article-card-accent, #d7ad7f) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar :is(.apple-line, .milestone-line) {
+  background: color-mix(in srgb, var(--article-card-accent, #d7ad7f) 35%, transparent) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar :is(.topic-tag-pill, .collection-item, .emotional-glass-node) {
+  background: var(--surface-dark-fixed) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .incidents-toc-link:is(:hover, :focus-visible, .active) {
+  color: var(--article-card-accent, #d7ad7f) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .apple-timeline-node:is(:hover, :focus-visible, .active) .step-title {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .soft-gradient-quote-widget {
+  background: var(--surface-card) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .soft-gradient-quote-widget h3 {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-dark-sidebar .soft-gradient-quote-widget :is(blockquote p, blockquote cite) {
+  color: var(--text-secondary) !important;
+}
+
+/* Comments stay on Dark surfaces; their primary submit action is fixed-Light. */
+body.theme-dark .article-detail-theme--standard .detail-comments {
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-comments :is(h2, .premium-comment-card strong) {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-comments .premium-comment-card {
+  background: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-comments .premium-comment-card :is(p, .comment-header span),
+body.theme-dark .article-detail-theme--standard .detail-comments .empty-state-comments {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-comments .comment-form textarea {
+  background: var(--surface-dark-fixed) !important;
+  border-color: var(--control-border) !important;
+  color: var(--text-on-dark) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-comments .comment-form textarea::placeholder {
+  color: var(--text-on-dark-muted) !important;
+  opacity: 1 !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-comments .comment-form .detail-primary-action {
+  background: var(--article-detail-action) !important;
+  border: 1px solid transparent !important;
+  color: var(--article-detail-action-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-comments .comment-form .detail-primary-action:hover {
+  background: var(--article-detail-action-hover) !important;
+  border-color: var(--border-strong) !important;
+}
+
+/* Category list sidebars are adaptive Dark cards, including Popular/Topics. */
+body.theme-dark .category-side-panel {
+  background: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .category-side-panel :is(h2, h3, .popular-list a span) {
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .category-side-panel :is(.popular-list a small, p) {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-dark .category-side-panel .topic-chip-grid button {
+  background: var(--surface-dark-fixed) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-on-dark) !important;
+}
+
+/* 7. One authoritative non-Coding Article/detail Dark contract. Coding carries
+   an explicit sibling marker and remains outside this standard surface system. */
+body.theme-dark:has(.article-detail-theme--standard) {
+  background: var(--surface-page) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard {
+  --article-detail-page: var(--surface-page);
+  --article-detail-card: var(--surface-card);
+  --article-detail-card-subtle: var(--surface-subtle);
+  --article-detail-text: var(--text-primary);
+  --article-detail-secondary: var(--text-secondary);
+  --article-detail-muted: var(--text-muted);
+  --article-detail-border: var(--border-subtle);
+  --article-detail-input: var(--surface-dark-fixed);
+  --article-detail-input-text: var(--text-on-dark);
+  --article-detail-placeholder: var(--text-on-dark-muted);
+  --article-detail-action: var(--accent-primary);
+  --article-detail-action-hover: color-mix(in srgb, var(--accent-primary) 84%, white);
+  --article-detail-action-text: var(--accent-contrast);
+  background: var(--article-detail-page) !important;
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark [data-experience="incidents"] {
+  --incidents-bg: var(--article-detail-page) !important;
+  --incidents-card-bg: var(--article-detail-card) !important;
+  --incidents-card-hover: var(--article-detail-card-subtle) !important;
+  --incidents-border: var(--article-detail-border) !important;
+  --incidents-text: var(--article-detail-text) !important;
+  --incidents-muted: var(--article-detail-secondary) !important;
+  background-color: var(--incidents-bg) !important;
+  color: var(--incidents-text) !important;
+}
+
+body.theme-dark [data-experience="life"] {
+  --life-bg: var(--article-detail-page) !important;
+  --life-card-bg: var(--article-detail-card) !important;
+  --life-text: var(--article-detail-text) !important;
+  --life-text-muted: var(--article-detail-secondary) !important;
+  --life-border: var(--article-detail-border) !important;
+  background-color: var(--life-bg) !important;
+  color: var(--life-text) !important;
+}
+
+body.theme-dark [data-experience="travel"] {
+  --travel-bg: var(--article-detail-page) !important;
+  --travel-card-bg: var(--article-detail-card) !important;
+  --travel-card-hover: var(--article-detail-card-subtle) !important;
+  --travel-border: var(--article-detail-border) !important;
+  --travel-text: var(--article-detail-text) !important;
+  --travel-muted: var(--article-detail-secondary) !important;
+  background-color: var(--travel-bg) !important;
+  color: var(--travel-text) !important;
+}
+
+/* The shared prose renderer has late fixed-Light typography rules. */
+body.theme-dark .article-detail-theme--standard .premium-article-prose {
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .premium-article-prose :is(h1, h2, h3, h4, strong) {
+  color: var(--article-detail-text) !important;
+  border-color: var(--article-detail-border) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .premium-article-prose :is(p, li) {
+  color: var(--article-detail-secondary) !important;
+}
+
+/* Incident memoir cards were reset to translucent white by the later
+   editorial enhancement layer. Keep the category accent, not its Light body. */
+body.theme-dark [data-experience="incidents"] :is(
+  .memoir-callout-card,
+  .experience-bottom-card,
+  .medium-magazine-card,
+  .glass-summary-widget,
+  .reflection-question-item
+) {
+  background: var(--incidents-card-bg) !important;
+  border-color: var(--incidents-border) !important;
+  color: var(--incidents-text) !important;
+}
+
+body.theme-dark [data-experience="incidents"] :is(
+  .share-text-box p,
+  .impact-progress-label .trait-name,
+  .question-text,
+  .magazine-card-body p,
+  .medium-editorial-quote p
+) {
+  color: var(--incidents-muted) !important;
+}
+
+body.theme-dark [data-experience="incidents"] :is(
+  .magazine-card-body h4,
+  .experience-story-card h4
+) {
+  color: var(--incidents-text) !important;
+}
+
+body.theme-dark [data-experience="incidents"] .medium-editorial-quote {
+  background: var(--incidents-card-hover) !important;
+  border-color: var(--incidents-accent) !important;
+}
+
+body.theme-dark [data-experience="incidents"] .impact-progress-label .trait-percent {
+  color: var(--article-card-accent, #d7ad7f) !important;
+}
+
+body.theme-dark [data-experience="incidents"] .impact-progress-track {
+  background: color-mix(in srgb, var(--text-primary) 14%, transparent) !important;
+}
+
+/* Life modules inherit their adaptive variables; only nested controls need a
+   stronger Dark surface. Related Reflections remains the fixed-Light exception. */
+body.theme-dark [data-experience="life"] :is(
+  .life-toc-panel,
+  .life-sidebar-panel:not(.detail-card--light),
+  .life-takeaways-card,
+  .life-reflection-card,
+  .life-read-card
+) {
+  background: var(--life-card-bg) !important;
+  border-color: var(--life-border) !important;
+  color: var(--life-text) !important;
+}
+
+body.theme-dark [data-experience="life"] :is(
+  .life-sidebar-panel:not(.detail-card--light),
+  .life-takeaways-card,
+  .life-reflection-card,
+  .life-read-card
+) :is(p, span) {
+  color: var(--life-text-muted) !important;
+}
+
+body.theme-dark [data-experience="life"] .life-collections-list .collection-tag {
+  background: var(--surface-dark-fixed) !important;
+  border: 1px solid var(--life-border) !important;
+  color: var(--text-on-dark) !important;
+}
+
+/* Travel cards, callouts, and nested summary rows all follow the Dark canvas. */
+body.theme-dark [data-experience="travel"] :is(
+  .travel-sidebar-panel,
+  .travel-summary-card,
+  .travel-read-card
+) {
+  background: var(--travel-card-bg) !important;
+  border-color: var(--travel-border) !important;
+  color: var(--travel-text) !important;
+}
+
+body.theme-dark [data-experience="travel"] :is(
+  .summary-item,
+  .tips-panel,
+  .travel-center-content .premium-article-prose blockquote
+) {
+  background: var(--travel-card-hover) !important;
+  border-color: var(--travel-border) !important;
+  color: var(--travel-text) !important;
+}
+
+body.theme-dark [data-experience="travel"] :is(
+  .tips-text,
+  .travel-center-content .premium-article-prose blockquote,
+  .travel-read-card p
+) {
+  color: var(--travel-muted) !important;
+}
+
+/* ===========================================================================
+   DARK MODE FINAL CONTENT-SURFACE PASS
+   Standard Article roots own one semantic hierarchy. Intentional fixed-Light
+   modules opt in with detail-card--light; Coding is explicitly excluded by its
+   article-detail-theme--coding root and keeps its blue component contracts.
+   ========================================================================== */
+
+/* Preserve the approved Light indentation while removing faded Dark content. */
+.toc-link--nested {
+  padding-left: 35px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+[data-experience="life"] .life-toc-link--nested {
+  padding-left: 20px !important;
+  font-size: 0.85rem !important;
+  opacity: 0.8;
+}
+
+body.theme-dark .article-detail-theme--standard :is(.toc-link--nested, .life-toc-link--nested) {
+  color: var(--article-detail-secondary) !important;
+  opacity: 1 !important;
+}
+
+/* Default/News and every fallback Article renderer use the same Dark canvas. */
+body.theme-dark .article-detail-theme--standard[data-experience="default"] :is(
+  .premium-article-layout,
+  .travel-details-section,
+  .meta-card,
+  .travel-tips-box,
+  .right-sidebar-panel
+) {
+  background: var(--article-detail-card) !important;
+  border-color: var(--article-detail-border) !important;
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="default"] .premium-article-layout {
+  background: var(--article-detail-page) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="default"] :is(
+  .sticky-sidebar-box h3,
+  .travel-details-section h3,
+  .meta-card strong,
+  .related-story-row strong
+) {
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="default"] :is(
+  .toc-link,
+  .meta-card span,
+  .travel-tips-box p,
+  .related-story-meta
+) {
+  color: var(--article-detail-secondary) !important;
+}
+
+/* Shared primary and secondary actions, inputs, and messages. */
+body.theme-dark .article-detail-theme--standard .detail-primary-action {
+  background: var(--article-detail-action) !important;
+  border-color: transparent !important;
+  color: var(--article-detail-action-text) !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--article-detail-action) 30%, transparent) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-primary-action:is(:hover, :focus-visible) {
+  background: var(--article-detail-action-hover) !important;
+  color: var(--article-detail-action-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .detail-primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+body.theme-dark .article-detail-theme--standard .view-more-btn {
+  background: var(--article-detail-card) !important;
+  border-color: var(--article-detail-border) !important;
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .view-more-btn:is(:hover, :focus-visible) {
+  background: var(--article-detail-action) !important;
+  border-color: transparent !important;
+  color: var(--article-detail-action-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard :is(.form-note, .newsletter-msg, .notes-status-msg) {
+  color: var(--link) !important;
+}
+
+/* Newsletter is an adaptive Dark card, including every control and state. */
+body.theme-dark .article-detail-theme--standard .newsletter-panel {
+  background: var(--article-detail-card) !important;
+  border-color: var(--article-detail-border) !important;
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .newsletter-panel h3 {
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .newsletter-panel p {
+  color: var(--article-detail-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .newsletter-panel input[type="email"] {
+  background: var(--article-detail-input) !important;
+  border-color: var(--control-border) !important;
+  color: var(--article-detail-input-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard .newsletter-panel input[type="email"]::placeholder {
+  color: var(--article-detail-placeholder) !important;
+  opacity: 1 !important;
+}
+
+/* Fixed-Light Life modules use fixed-Light foregrounds, never page text. */
+body.theme-dark .article-detail-theme--standard[data-experience="life"] :is(
+  .life-sidebar-quote-panel,
+  .life-author-journey-box,
+  .life-media-strip .media-box,
+  .related-reflections-panel
+).detail-card--light {
+  background: var(--surface-light-fixed) !important;
+  border-color: rgba(47, 49, 51, 0.16) !important;
+  color: var(--text-on-light) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="life"] :is(
+  .life-sidebar-quote-panel,
+  .life-author-journey-box,
+  .life-media-strip .media-box,
+  .related-reflections-panel
+).detail-card--light :is(h3, h4, strong, .related-story-row strong) {
+  color: var(--text-on-light) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="life"] :is(
+  .life-sidebar-quote-panel,
+  .life-author-journey-box,
+  .life-media-strip .media-box,
+  .related-reflections-panel
+).detail-card--light :is(p, span, cite, .related-story-meta) {
+  color: var(--text-on-light-muted) !important;
+}
+
+/* Life adaptive panels and the personal-note form remain fully Dark. */
+body.theme-dark .article-detail-theme--standard[data-experience="life"] :is(
+  .life-progress-panel,
+  .life-streak-panel,
+  .life-notes-panel.collapsed .notes-trigger-bar,
+  .life-notes-panel .notes-editor-box,
+  .life-notes-panel .saved-note-item
+) {
+  background: var(--article-detail-card) !important;
+  border-color: var(--article-detail-border) !important;
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="life"] :is(
+  .life-progress-panel,
+  .life-streak-panel,
+  .life-notes-panel
+) :is(h4, h5, strong, .notes-trigger-left) {
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="life"] :is(
+  .life-progress-panel,
+  .life-streak-panel,
+  .life-notes-panel
+) :is(p, .note-date, .note-item-text, .life-eta-indicator) {
+  color: var(--article-detail-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="life"] .notes-textarea {
+  background: var(--article-detail-input) !important;
+  border-color: var(--control-border) !important;
+  color: var(--article-detail-input-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="life"] .notes-textarea::placeholder {
+  color: var(--article-detail-placeholder) !important;
+  opacity: 1 !important;
+}
+
+/* Incident chapter/summary/milestone/navigation and content cards. */
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] .detail-dark-sidebar :is(
+  .quick-note-quote,
+  .skill-chip,
+  .mood-tag,
+  .emotional-flow-arrow
+) {
+  color: var(--article-detail-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] .detail-dark-sidebar :is(
+  .skill-chip,
+  .mood-tag
+) {
+  background: var(--article-detail-input) !important;
+  border-color: var(--article-detail-border) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] :is(
+  .experience-bottom-card,
+  .book-item-card,
+  .before-after-glass-grid .ba-glass-panel,
+  .what-changed-icon-card
+) {
+  background: var(--article-detail-card) !important;
+  border-color: var(--article-detail-border) !important;
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] :is(
+  .experience-bottom-card,
+  .book-item-card,
+  .memoir-callout-card
+) :is(h3, h4, strong, .ba-title, .changed-text) {
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] :is(
+  .experience-bottom-card,
+  .book-item-card,
+  .memoir-callout-card
+) :is(p, li, .book-author, .book-note, .card-sub-caption) {
+  color: var(--article-detail-secondary) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] .user-story-form-box {
+  background: var(--article-detail-card-subtle) !important;
+  border-color: var(--article-detail-border) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] .user-story-form-box textarea {
+  background: var(--article-detail-input) !important;
+  border-color: var(--control-border) !important;
+  color: var(--article-detail-input-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="incidents"] .user-story-form-box textarea::placeholder {
+  color: var(--article-detail-placeholder) !important;
+  opacity: 1 !important;
+}
+
+/* Travel labels and nested rows bind to their adaptive card foregrounds. */
+body.theme-dark .article-detail-theme--standard[data-experience="travel"] :is(
+  .travel-sidebar-panel,
+  .travel-summary-card,
+  .travel-read-card
+) :is(h3, h4, strong, .fact-val, .node-text, .weather-val) {
+  color: var(--article-detail-text) !important;
+}
+
+body.theme-dark .article-detail-theme--standard[data-experience="travel"] :is(
+  .travel-sidebar-panel,
+  .travel-summary-card,
+  .travel-read-card
+) :is(p, .fact-label, .toc-text, .gear-item span, .card-body p) {
+  color: var(--article-detail-secondary) !important;
+}
+
+/* Coding is a hard boundary: standard selectors may never target this root. */
+body.theme-dark .article-detail-theme--coding {
+  --article-detail-contract: coding-owned;
 }

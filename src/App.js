@@ -125,12 +125,19 @@ const AppShell = () => {
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("myjourney-theme");
     document.body.classList.toggle("theme-dark", savedTheme === "dark");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      document.documentElement.dataset.theme = savedTheme;
+      document.documentElement.style.colorScheme = savedTheme;
+    }
   }, []);
 
   return (
     <div className="app-container">
+      {!isAuthRoute && !isImmersive && <a className="skip-link" href="#main-content">Skip to main content</a>}
       {!isAuthRoute && !isImmersive && <Header />}
-      <Outlet />
+      <div id="main-content" tabIndex="-1">
+        <Outlet />
+      </div>
       {!isCms && !isAuthRoute && !isImmersive && !isLife && <Footer />}
       {!isCms && !isAuthRoute && !isImmersive && !isLife && <AskMyJourneyWidget />}
     </div>

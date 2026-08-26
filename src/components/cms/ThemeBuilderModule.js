@@ -5,11 +5,16 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiService from '../../services/apiService';
 import { useThemeContext } from '../../context/ThemeContext';
+import {
+  THEME_COLOR_DEFAULTS,
+  analyzeThemeAccessibility,
+} from '../../utils/themeSafety';
 import { registerRoute } from '../../core/registerRoute';
 import { registerSidebar } from '../../core/registerSidebar';
+import useDialogFocus from '../../hooks/useDialogFocus';
 import {
   FiDroplet,
   FiCheckCircle,
@@ -21,14 +26,24 @@ import {
   FiDownload,
   FiPlus,
   FiStar,
+  FiMoon,
+  FiSun,
+  FiRefreshCw,
 } from 'react-icons/fi';
 
 export default function ThemeBuilderModule() {
-  const { activeTheme, activateTheme, previewThemeTokens, refreshTheme } = useThemeContext();
+  const {
+    activeTheme,
+    activateTheme,
+    previewThemeTokens,
+    resetThemePreview,
+    refreshTheme,
+  } = useThemeContext();
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingTheme, setEditingTheme] = useState(null);
   const [notification, setNotification] = useState(null);
+  const editorRef = useRef(null);
 
   const fetchThemes = useCallback(async () => {
     try {
@@ -48,34 +63,7 @@ export default function ThemeBuilderModule() {
 
   const handleActivate = async (themeId) => {
     try {
-      const res = await activateTheme(themeId);
-
-      // Direct DOM injection as a guaranteed fallback — bypasses any React re-render delays
-      const css = res?.cssVariables;
-      if (css) {
-        let styleEl = document.getElementById('cms-active-theme');
-        if (styleEl) styleEl.remove();
-        styleEl = document.createElement('style');
-        styleEl.id = 'cms-active-theme';
-        styleEl.innerHTML = css;
-        document.head.appendChild(styleEl);
-        console.log('[ThemeBuilder] Applied theme CSS directly to DOM');
-      } else {
-        console.warn('[ThemeBuilder] activateTheme returned no cssVariables:', res);
-        // Fallback: fetch active theme and apply
-        const activeRes = await apiService.get('/api/themes/active');
-        const fallbackCss = activeRes?.cssVariables;
-        if (fallbackCss) {
-          let styleEl = document.getElementById('cms-active-theme');
-          if (styleEl) styleEl.remove();
-          styleEl = document.createElement('style');
-          styleEl.id = 'cms-active-theme';
-          styleEl.innerHTML = fallbackCss;
-          document.head.appendChild(styleEl);
-          console.log('[ThemeBuilder] Applied theme via fallback fetch');
-        }
-      }
-
+      await activateTheme(themeId);
       setNotification({ type: 'success', text: 'Theme set as default active theme.' });
       fetchThemes();
     } catch (err) {
@@ -87,15 +75,55 @@ export default function ThemeBuilderModule() {
   const handleSaveTheme = async () => {
     if (!editingTheme) return;
     try {
-      await apiService.patch(`/api/themes/${editingTheme._id}`, editingTheme);
+      await apiService.patch(`/api/themes/${editingTheme._id}`, {
+        name: editingTheme.name,
+        description: editingTheme.description,
+        mode: editingTheme.mode,
+        status: editingTheme.status,
+        tokens: editingTheme.tokens,
+      });
       setNotification({ type: 'success', text: `Saved theme '${editingTheme.name}'` });
-      refreshTheme();
-      fetchThemes();
+      await refreshTheme();
+      await fetchThemes();
       setEditingTheme(null);
     } catch (err) {
       setNotification({ type: 'error', text: err.message });
     }
   };
+
+  const closeEditor = () => {
+    resetThemePreview();
+    setEditingTheme(null);
+  };
+
+  useDialogFocus({
+    open: Boolean(editingTheme),
+    containerRef: editorRef,
+    onClose: closeEditor,
+  });
+
+  const resetColors = () => {
+    const mode = editingTheme?.mode === 'dark' ? 'dark' : 'light';
+    const updated = {
+      ...editingTheme,
+      tokens: {
+        ...editingTheme.tokens,
+        colors: { ...THEME_COLOR_DEFAULTS[mode] },
+      },
+    };
+    setEditingTheme(updated);
+    previewThemeTokens(updated, mode);
+  };
+
+  const applySuggestedForeground = (warning) => {
+    const key = warning.pair.split('/')[0];
+    if (!['text', 'muted', 'primary'].includes(key)) return;
+    handleColorChange(key, warning.suggestedForeground);
+  };
+
+  const accessibility = editingTheme
+    ? analyzeThemeAccessibility(editingTheme, editingTheme.mode === 'dark' ? 'dark' : 'light')
+    : null;
 
   const handleColorChange = (key, hex) => {
     if (!editingTheme) return;
@@ -136,41 +164,44 @@ export default function ThemeBuilderModule() {
 
       {/* Theme Presets Grid */}
       {loading ? (
-        <div style={{ padding: '60px', textAlign: 'center', color: '#888' }}>Loading design system themes...</div>
+        <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted, #666d6d)' }}>Loading design system themes...</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
           {themes.map((theme) => {
             const isCurrent = activeTheme?._id === theme._id || theme.isDefault;
             const colors = theme.tokens?.colors || {};
 
             return (
-              <div key={theme._id} style={{ background: '#fff', border: isCurrent ? '2px solid var(--cms-accent, #426c67)' : '1px solid #e4ded4', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div key={theme._id} style={{ background: 'var(--surface-card, #fff)', color: 'var(--text-primary, #2f3133)', border: isCurrent ? '2px solid var(--cms-accent, #426c67)' : '1px solid var(--border-subtle, #e4ded4)', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700' }}>{theme.name}</h3>
                       {isCurrent && (
-                        <span style={{ fontSize: '0.7rem', background: 'var(--cms-accent-light, #e8f0ef)', color: 'var(--cms-accent, #426c67)', padding: '2px 8px', borderRadius: '100px', fontWeight: '700' }}>
+                        <span style={{ fontSize: '0.7rem', background: 'var(--surface-subtle, #e8f0ef)', color: 'var(--text-primary, #2f3133)', padding: '2px 8px', borderRadius: '100px', fontWeight: '700' }}>
                           Active
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: '#888' }}>Mode: {theme.mode}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #666d6d)' }}>Mode: {theme.mode}</span>
                   </div>
                 </div>
 
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#666' }}>{theme.description || 'No description provided'}</p>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary, #666d6d)' }}>{theme.description || 'No description provided'}</p>
 
                 {/* Color Palette Preview Swatches */}
-                <div style={{ display: 'flex', gap: '6px', padding: '8px', background: '#fafafa', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', gap: '6px', padding: '8px', background: 'var(--surface-subtle, #fafafa)', borderRadius: '8px' }}>
                   {['primary', 'secondary', 'accent', 'gold', 'background', 'text'].map((cKey) => (
                     <div key={cKey} title={`${cKey}: ${colors[cKey] || '#000'}`} style={{ flex: 1, height: '24px', borderRadius: '4px', background: colors[cKey] || '#ccc', border: '1px solid rgba(0,0,0,0.1)' }} />
                   ))}
                 </div>
 
                 {/* Action Bar */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', paddingTop: '10px' }}>
-                  <button type="button" className="small-outline-btn" onClick={() => setEditingTheme(theme)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle, #eee)', paddingTop: '10px' }}>
+                  <button type="button" className="small-outline-btn" onClick={() => {
+                    setEditingTheme(theme);
+                    previewThemeTokens(theme);
+                  }}>
                     <FiSliders /> Edit Tokens
                   </button>
 
@@ -189,27 +220,48 @@ export default function ThemeBuilderModule() {
       {/* Theme Token Inspector Drawer */}
       {editingTheme && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ width: '440px', background: '#fff', height: '100%', padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', pb: '12px' }}>
-              <h3 style={{ margin: 0 }}>Design Tokens: {editingTheme.name}</h3>
-              <button type="button" onClick={() => setEditingTheme(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
+          <div ref={editorRef} role="dialog" aria-modal="true" aria-labelledby="theme-editor-title" tabIndex="-1" style={{ width: 'min(520px, 100%)', background: 'var(--surface-elevated, #fff)', color: 'var(--text-primary, #2f3133)', height: '100%', padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle, #eee)', paddingBottom: '12px' }}>
+              <h3 id="theme-editor-title" style={{ margin: 0 }}>Design Tokens: {editingTheme.name}</h3>
+              <button type="button" aria-label="Close theme editor" onClick={closeEditor} style={{ border: 'none', background: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.2rem' }}>
                 ✕
               </button>
+            </div>
+
+            <div>
+              <label htmlFor="theme-mode" style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 700 }}>Theme mode</label>
+              <select
+                id="theme-mode"
+                value={editingTheme.mode || 'light'}
+                onChange={(event) => {
+                  const updated = { ...editingTheme, mode: event.target.value };
+                  setEditingTheme(updated);
+                  previewThemeTokens(updated, event.target.value === 'dark' ? 'dark' : 'light');
+                }}
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="system">System</option>
+                <option value="high-contrast">High contrast</option>
+                <option value="sepia">Sepia</option>
+              </select>
             </div>
 
             {/* Colors Swatches Editor */}
             <div>
               <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Color Palette Tokens</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                {['primary', 'secondary', 'accent', 'gold', 'background', 'surface', 'panel', 'text'].map((cKey) => {
-                  const val = editingTheme.tokens?.colors?.[cKey] || '#000000';
+                {['primary', 'secondary', 'accent', 'gold', 'background', 'surface', 'panel', 'text', 'muted', 'border'].map((cKey) => {
+                  const editorMode = editingTheme.mode === 'dark' ? 'dark' : 'light';
+                  const val = editingTheme.tokens?.colors?.[cKey] || THEME_COLOR_DEFAULTS[editorMode][cKey] || '#000000';
+                  const colorInputValue = /^#[0-9a-f]{6}$/i.test(val) ? val : '#000000';
                   return (
                     <div key={cKey} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <label style={{ fontSize: '0.75rem', fontWeight: '600', textTransform: 'capitalize' }}>{cKey}:</label>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                         <input
                           type="color"
-                          value={val}
+                          value={colorInputValue}
                           onChange={(e) => handleColorChange(cKey, e.target.value)}
                           style={{ width: '36px', height: '36px', border: 'none', cursor: 'pointer', borderRadius: '4px', padding: 0 }}
                         />
@@ -226,24 +278,41 @@ export default function ThemeBuilderModule() {
               </div>
             </div>
 
-            {/* Custom CSS */}
-            <div>
-              <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Custom CSS Overrides</h4>
-              <textarea
-                value={editingTheme.customCSS || ''}
-                onChange={(e) => {
-                  const updated = { ...editingTheme, customCSS: e.target.value };
-                  setEditingTheme(updated);
-                  previewThemeTokens(updated);
-                }}
-                rows={5}
-                placeholder="/* Extra CSS overrides */"
-                style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
-              />
+            <div aria-live="polite" style={{ padding: '14px', border: `1px solid ${accessibility.pass ? 'var(--success, #2e7d5a)' : 'var(--warning, #8f6b48)'}`, borderRadius: '8px', background: 'var(--surface-subtle, #f8faf8)' }}>
+              <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Accessibility contrast</h4>
+              {accessibility.warnings.length === 0 ? (
+                <p style={{ margin: 0, color: 'var(--success, #2e7d5a)' }}>All representative foreground/background pairs pass.</p>
+              ) : accessibility.warnings.map((warning) => (
+                <div key={warning.pair} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginTop: '8px' }}>
+                  <span>{warning.pair}: {warning.ratio ?? 'unknown'}:1 (needs {warning.required}:1)</span>
+                  <button type="button" className="small-outline-btn" onClick={() => applySuggestedForeground(warning)}>
+                    Use {warning.suggestedForeground}
+                  </button>
+                </div>
+              ))}
             </div>
 
+            <div style={{ border: '1px solid var(--border-subtle, #e4ded4)', borderRadius: '10px', padding: '16px', background: 'var(--surface-card, #fff)' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Representative component preview</span>
+              <h4 style={{ margin: '8px 0', color: 'var(--text-primary)' }}>Readable heading and card</h4>
+              <p style={{ color: 'var(--text-secondary)' }}>Body, metadata, links, controls, and focus states use semantic foreground/background relationships.</p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button type="button" className="primary-btn">Primary action</button>
+                <button type="button" className="small-outline-btn">Secondary action</button>
+                <a href="#theme-preview" onClick={(event) => event.preventDefault()} style={{ color: 'var(--link)', textDecoration: 'underline' }}>Preview link</a>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button type="button" className="small-outline-btn" onClick={() => previewThemeTokens(editingTheme, 'light')}><FiSun /> Preview Light</button>
+              <button type="button" className="small-outline-btn" onClick={() => previewThemeTokens(editingTheme, 'dark')}><FiMoon /> Preview Dark</button>
+              <button type="button" className="small-outline-btn" onClick={resetColors}><FiRefreshCw /> Reset colors</button>
+            </div>
+
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.78rem' }}>Raw CSS and JavaScript are intentionally unavailable. Themes use versioned, validated design tokens.</p>
+
             <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="secondary-btn" onClick={() => setEditingTheme(null)}>
+              <button type="button" className="secondary-btn" onClick={closeEditor}>
                 Cancel
               </button>
               <button type="button" className="primary-btn" onClick={handleSaveTheme}>

@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { FiAlertTriangle } from "react-icons/fi";
 import "./ConfirmationModal.css";
+import useDialogFocus from "../../hooks/useDialogFocus";
 
 const ConfirmationModal = ({
   isOpen,
@@ -14,17 +15,13 @@ const ConfirmationModal = ({
   onConfirm,
   onClose,
 }) => {
-  // Prevent body scroll while modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+  const dialogRef = useRef(null);
+  useDialogFocus({
+    open: isOpen,
+    containerRef: dialogRef,
+    onClose,
+    escapeEnabled: !isSubmitting,
+  });
 
   if (!isOpen) return null;
 
@@ -33,12 +30,19 @@ const ConfirmationModal = ({
   return createPortal(
     <div
       className="sec-modal-backdrop"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="sec-modal-title"
+      onClick={() => {
+        if (!isSubmitting) onClose();
+      }}
     >
-      <div className="sec-modal-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={dialogRef}
+        className="sec-modal-card"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sec-modal-title"
+        tabIndex="-1"
+      >
         <div className="sec-modal-header">
           <div className="sec-modal-icon-badge">
             <FiAlertTriangle />

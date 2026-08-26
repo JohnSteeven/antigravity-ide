@@ -116,7 +116,7 @@ const IncidentsLeftSidebar = ({
 
   return (
     <aside className="incidents-left-sidebar experience-left-sidebar">
-      <div className="incidents-sticky-box">
+      <div className="incidents-sticky-box detail-dark-sidebar">
         {/* 1. Book Chapters & Apple Vertical Timeline */}
         {showTimeline && journeyTimeline && journeyTimeline.length > 0 && (
           <div className="incidents-sidebar-panel journey-timeline-panel magazine-chapters-panel">
@@ -124,11 +124,15 @@ const IncidentsLeftSidebar = ({
               <FiMap className="icon" /> Story Chapters
             </h3>
             <div className="apple-vertical-timeline">
-              {journeyTimeline.map((item, idx) => (
+              {journeyTimeline.map((item, idx) => {
+                const itemHash = item.hash || `#heading-${idx}`;
+                const isCurrent = Boolean(activeHeading && itemHash === `#${activeHeading}`);
+                return (
                 <a
                   key={idx}
-                  href={item.hash || `#heading-${idx}`}
-                  className="apple-timeline-node"
+                  href={itemHash}
+                  className={`apple-timeline-node ${isCurrent ? "active" : ""}`}
+                  aria-current={isCurrent ? "location" : undefined}
                 >
                   <div className="apple-node-indicator">
                     <span className="apple-dot">●</span>
@@ -139,7 +143,8 @@ const IncidentsLeftSidebar = ({
                     <span className="step-title">{item.title}</span>
                   </div>
                 </a>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

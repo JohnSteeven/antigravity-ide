@@ -1,9 +1,14 @@
+import { useRef } from "react";
 import { FiLogIn, FiX } from "react-icons/fi";
 import { useNavigate } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
+import useDialogFocus from "../hooks/useDialogFocus";
 
 const LoginRequiredModal = ({ open, onClose, returnTo }) => {
   const navigate = useNavigate();
+  const dialogRef = useRef(null);
+
+  useDialogFocus({ open, containerRef: dialogRef, onClose });
 
   const handleLogin = () => {
     onClose();
@@ -21,6 +26,7 @@ const LoginRequiredModal = ({ open, onClose, returnTo }) => {
           role="presentation"
         >
           <motion.div
+            ref={dialogRef}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             aria-labelledby="login-required-title"
             aria-modal="true"
@@ -28,6 +34,7 @@ const LoginRequiredModal = ({ open, onClose, returnTo }) => {
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             initial={{ opacity: 0, scale: 0.97, y: 12 }}
             role="dialog"
+            tabIndex="-1"
             transition={{ duration: 0.2 }}
           >
             <button

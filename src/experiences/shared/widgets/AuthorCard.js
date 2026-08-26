@@ -3,7 +3,7 @@ import { FiTwitter, FiLinkedin, FiFacebook } from "react-icons/fi";
 
 const AuthorCard = ({ article }) => {
   return (
-    <div className="author-card">
+    <div className="author-card detail-card detail-card--dark">
       <div className="author-card-header">
         <div className="avatar-letter">{article?.author ? article.author.charAt(0) : "A"}</div>
         <div>

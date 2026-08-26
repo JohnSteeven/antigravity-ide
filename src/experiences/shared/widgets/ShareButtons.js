@@ -5,7 +5,7 @@ const ShareButtons = ({ article, handleCopyLink }) => {
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
-    <div className="right-sidebar-panel">
+    <div className="right-sidebar-panel detail-card detail-card--dark share-story-panel">
       <h3>Share this Story</h3>
       <div className="share-buttons-grid">
         <a

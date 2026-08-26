@@ -102,10 +102,12 @@ const ThemeSchema = new mongoose.Schema(
     customCSS: {
       type: String,
       default: '',
+      select: false,
     },
     customJS: {
       type: String,
       default: '',
+      select: false,
     },
     version: {
       type: Number,

@@ -104,7 +104,7 @@ const NewsletterPanel = ({
   }
 
   return (
-    <div className="right-sidebar-panel newsletter-panel">
+    <div className="right-sidebar-panel newsletter-panel detail-card detail-card--dark">
       <h3>Newsletter</h3>
       <p>Get the latest stories, incident reports, and lessons in your inbox weekly.</p>
       <form onSubmit={handleNewsletterSubmit}>
@@ -115,7 +115,7 @@ const NewsletterPanel = ({
           placeholder="Enter your email"
           required
         />
-        <button type="submit" className="primary-btn newsletter-btn">
+        <button type="submit" className="primary-btn newsletter-btn detail-primary-action">
           Subscribe
         </button>
       </form>

@@ -4,12 +4,56 @@
   --creator-muted: #71675e;
   --creator-line: #ded6cc;
   --creator-paper: #fbf8f3;
+  --creator-paper-raised: #fffdf9;
+  --creator-control-bg: #fff;
+  --creator-control-border: var(--creator-line);
+  --creator-control-text: var(--creator-ink);
+  --creator-placeholder: var(--creator-muted);
+  --creator-chip-surface: #eee6dc;
+  --creator-avatar-surface: #e9dfd1;
   --creator-accent: #8d4d27;
+  --creator-action: var(--creator-ink);
+  --creator-action-hover: #3a342f;
+  --creator-action-text: #fff;
+  --creator-focus: #d49966;
+  --creator-lesson-line: #d1a377;
+  --creator-notice-bg: #fff4e8;
+  --creator-notice-border: #dfb98e;
+  --creator-notice-text: #663816;
   color: var(--creator-ink);
   margin: 0 auto;
   max-width: 1180px;
   min-height: 62vh;
   padding: clamp(3.5rem, 8vw, 7rem) clamp(1.25rem, 4vw, 3rem);
+}
+
+/* Creator owns a warm, neutral workspace contract. These aliases switch only
+   inside Dark Mode; their Light values above intentionally match the approved
+   Creator UI byte-for-byte. */
+body.theme-dark .creator-page,
+body.theme-dark .creator-studio {
+  --creator-ink: var(--text-primary);
+  --creator-muted: var(--text-secondary);
+  --creator-line: color-mix(in srgb, var(--text-primary) 20%, transparent);
+  --creator-paper: var(--surface-card);
+  --creator-paper-raised: var(--surface-elevated);
+  --creator-control-bg: var(--control-bg);
+  --creator-control-border: var(--border-strong);
+  --creator-control-text: var(--text-on-dark);
+  --creator-placeholder: var(--text-on-dark-muted);
+  --creator-chip-surface: var(--surface-subtle);
+  --creator-avatar-surface: var(--surface-subtle);
+  --creator-accent: #d7ad7f;
+  --creator-action: #d7ad7f;
+  --creator-action-hover: #e4c29b;
+  --creator-action-text: #17120e;
+  --creator-focus: #e4c29b;
+  --creator-lesson-line: #d7ad7f;
+  --creator-notice-bg: #34271d;
+  --creator-notice-border: #8e6848;
+  --creator-notice-text: #f3d6b8;
+  background: var(--surface-page);
+  color-scheme: dark;
 }
 
 .creator-page *,
@@ -26,6 +70,7 @@
 .creator-profile h1,
 .creator-studio h1,
 .creator-application-state h1 {
+  color: var(--creator-ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.5rem, 6vw, 5.4rem);
   font-weight: 500;
@@ -72,8 +117,9 @@
 }
 
 .creator-primary-action {
-  background: var(--creator-ink);
-  color: #fff;
+  background: var(--creator-action);
+  border-color: var(--creator-action);
+  color: var(--creator-action-text);
   margin-top: 1rem;
 }
 
@@ -146,6 +192,7 @@
 .creator-studio select:focus-visible,
 .creator-studio textarea:focus-visible {
   outline: 3px solid #d49966;
+  outline-color: var(--creator-focus);
   outline-offset: 3px;
 }
 
@@ -204,10 +251,10 @@
 .creator-form input,
 .creator-form select,
 .creator-form textarea {
-  background: #fff;
-  border: 1px solid var(--creator-line);
+  background: var(--creator-control-bg);
+  border: 1px solid var(--creator-control-border);
   border-radius: 8px;
-  color: var(--creator-ink);
+  color: var(--creator-control-text);
   font: inherit;
   min-height: 46px;
   padding: .72rem .8rem;
@@ -237,6 +284,7 @@
 .creator-create-choice h2,
 .creator-empty h2,
 .creator-studio__workspace > h2 {
+  color: var(--creator-ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(1.8rem, 3vw, 2.8rem);
   font-weight: 500;
@@ -269,7 +317,7 @@
 .creator-profile__portrait > span {
   align-items: center;
   aspect-ratio: 1;
-  background: #e9dfd1;
+  background: var(--creator-avatar-surface);
   border-radius: 50%;
   display: flex;
   flex: 0 0 64px;
@@ -300,7 +348,7 @@
 }
 
 .creator-chip-list li {
-  background: #eee6dc;
+  background: var(--creator-chip-surface);
   border-radius: 999px;
   font-size: .8rem;
   padding: .4rem .65rem;
@@ -408,7 +456,7 @@
   margin-top: 1.25rem;
 }
 .creator-application-state__actions .creator-primary-action { margin-top: 0; }
-.creator-notice { background: #fff4e8; border: 1px solid #dfb98e; border-radius: 10px; color: #663816; padding: .9rem 1rem; }
+.creator-notice { background: var(--creator-notice-bg); border: 1px solid var(--creator-notice-border); border-radius: 10px; color: var(--creator-notice-text); padding: .9rem 1rem; }
 
 .creator-profile__header {
   align-items: center;
@@ -459,7 +507,7 @@
 }
 
 .creator-application__workspace {
-  background: #fffdf9;
+  background: var(--creator-paper-raised);
   border: 1px solid var(--creator-line);
   border-radius: 16px;
   gap: 0;
@@ -506,7 +554,7 @@
   justify-content: center;
 }
 .creator-application__progress .is-current button { color: var(--creator-ink); }
-.creator-application__progress .is-current button > span { background: var(--creator-ink); border-color: var(--creator-ink); color: #fff; }
+.creator-application__progress .is-current button > span { background: var(--creator-action); border-color: var(--creator-action); color: var(--creator-action-text); }
 .creator-application__progress .is-complete button { color: var(--creator-accent); }
 .creator-application__progress button:disabled { cursor: default; opacity: .48; }
 
@@ -542,18 +590,18 @@
 .creator-choice-list,
 .creator-token-list { display: flex; flex-wrap: wrap; gap: .5rem; }
 .creator-choice-list button {
-  background: #fff;
+  background: var(--creator-control-bg);
   border-color: var(--creator-line);
-  color: var(--creator-ink);
+  color: var(--creator-control-text);
   font-size: .82rem;
   min-height: 44px;
   padding: .55rem .8rem;
 }
-.creator-choice-list button.is-selected { background: var(--creator-ink); border-color: var(--creator-ink); color: #fff; }
+.creator-choice-list button.is-selected { background: var(--creator-action); border-color: var(--creator-action); color: var(--creator-action-text); }
 .creator-token-list { list-style: none; margin: .75rem 0 0; padding: 0; }
 .creator-token-list li {
   align-items: center;
-  background: #eee6dc;
+  background: var(--creator-chip-surface);
   border-radius: 999px;
   display: inline-flex;
   font-size: .8rem;
@@ -614,7 +662,7 @@
 }
 .creator-form__navigation .creator-step-back { margin-right: auto; }
 .creator-form__navigation .creator-step-next,
-.creator-form__navigation .creator-submit-action { background: var(--creator-ink); border-color: var(--creator-ink); color: #fff; }
+.creator-form__navigation .creator-submit-action { background: var(--creator-action); border-color: var(--creator-action); color: var(--creator-action-text); }
 .creator-form__navigation .creator-submit-action { padding-inline: 1.35rem; }
 
 .creator-studio__header {
@@ -639,7 +687,7 @@
 .creator-studio__tabs button,
 .creator-content-toolbar button { border-color: transparent; flex: 0 0 auto; text-transform: capitalize; }
 .creator-studio__tabs button[aria-pressed="true"],
-.creator-content-toolbar button[aria-pressed="true"] { background: var(--creator-ink); color: #fff; }
+.creator-content-toolbar button[aria-pressed="true"] { background: var(--creator-action); border-color: var(--creator-action); color: var(--creator-action-text); }
 .creator-studio__workspace { padding: 2.5rem 0; }
 .creator-studio__status { display: grid; gap: 1px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .creator-studio__status div { background: var(--creator-paper); border: 1px solid var(--creator-line); padding: 1rem; }
@@ -648,10 +696,213 @@
 .creator-create-choice { margin: 0 auto; max-width: 760px; text-align: center; }
 .creator-create-choice > div { display: flex; flex-wrap: wrap; gap: .7rem; justify-content: center; margin: 1.5rem 0; }
 .creator-curriculum { display: grid; gap: 1rem; }
-.creator-lesson-draft { border-left: 3px solid #d1a377; display: grid; gap: .75rem; padding-left: 1rem; }
+.creator-lesson-draft { border-left: 3px solid var(--creator-lesson-line); display: grid; gap: .75rem; padding-left: 1rem; }
 .creator-content-list { display: grid; gap: .75rem; }
 .creator-content-list article { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }
 .creator-content-list__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+/* Creator Dark Mode is surface-owned. The rules below deliberately enumerate
+   real Creator roles instead of applying a wildcard foreground override. */
+body.theme-dark .creator-page :is(
+  .creator-section-heading h2,
+  .creator-card h2,
+  .creator-card h3,
+  .creator-shelf h3,
+  .creator-about h2,
+  .creator-empty h2,
+  .creator-application-state h1,
+  .creator-review-block h3,
+  .creator-verification-note strong
+),
+body.theme-dark .creator-studio :is(
+  .creator-section-heading h2,
+  .creator-studio__workspace > h2,
+  .creator-create-choice h2,
+  .creator-content-list h3,
+  .creator-analytics-list h3,
+  .creator-curriculum h3,
+  .creator-curriculum h4,
+  .creator-curriculum legend
+) {
+  color: var(--creator-ink);
+}
+
+body.theme-dark .creator-page :is(
+  .creator-card p,
+  .creator-card__meta,
+  .creator-shelf p,
+  .creator-profile__headline,
+  .creator-profile__header > div > p:not(.creator-kicker),
+  .creator-application-state > p,
+  .creator-empty > p,
+  .creator-form > small
+),
+body.theme-dark .creator-studio :is(
+  .creator-studio__header > div > p:not(.creator-kicker),
+  .creator-create-choice > p:not(.creator-notice),
+  .creator-content-list article > div > p:not(.creator-kicker),
+  .creator-analytics-list article p,
+  .creator-studio__workspace > p:not(.creator-kicker),
+  .creator-empty > p,
+  .creator-form > small
+) {
+  color: var(--creator-muted);
+  opacity: 1;
+}
+
+body.theme-dark .creator-page :is(
+  .creator-card,
+  .creator-shelf__rail article,
+  .creator-empty,
+  .creator-application-state,
+  .creator-form__section,
+  .creator-curriculum fieldset,
+  .creator-review-block
+),
+body.theme-dark .creator-studio :is(
+  .creator-studio__status div,
+  .creator-content-list article,
+  .creator-analytics-list article,
+  .creator-empty,
+  .creator-form__section,
+  .creator-curriculum fieldset
+) {
+  border-color: var(--creator-line);
+}
+
+body.theme-dark .creator-studio__status dt,
+body.theme-dark .creator-review-block dt {
+  color: var(--creator-muted);
+  opacity: 1;
+}
+
+body.theme-dark .creator-studio__status dd,
+body.theme-dark .creator-review-block dd {
+  color: var(--creator-ink);
+}
+
+body.theme-dark .creator-page :is(input, select, textarea),
+body.theme-dark .creator-studio :is(input, select, textarea) {
+  background: var(--creator-control-bg);
+  border-color: var(--creator-control-border);
+  color: var(--creator-control-text);
+  caret-color: var(--creator-control-text);
+}
+
+body.theme-dark .creator-page :is(input, textarea)::placeholder,
+body.theme-dark .creator-studio :is(input, textarea)::placeholder {
+  color: var(--creator-placeholder);
+  opacity: 1;
+}
+
+body.theme-dark .creator-page select option,
+body.theme-dark .creator-studio select option {
+  background: var(--creator-control-bg);
+  color: var(--creator-control-text);
+}
+
+body.theme-dark .creator-page input[type="checkbox"],
+body.theme-dark .creator-studio input[type="checkbox"] {
+  accent-color: var(--creator-action);
+}
+
+body.theme-dark .creator-page :is(
+  .creator-choice-list button:not(.is-selected),
+  .creator-token-entry__controls button,
+  .creator-link-remove,
+  .creator-add-link,
+  .creator-step-back
+),
+body.theme-dark .creator-studio :is(
+  .creator-create-choice button,
+  .creator-content-list button,
+  .creator-curriculum button
+):not(.creator-primary-action):not([aria-pressed="true"]) {
+  border-color: var(--creator-control-border);
+  color: var(--creator-ink);
+}
+
+body.theme-dark .creator-page input:-webkit-autofill,
+body.theme-dark .creator-studio input:-webkit-autofill {
+  -webkit-text-fill-color: var(--creator-control-text);
+  box-shadow: 0 0 0 1000px var(--creator-control-bg) inset;
+  caret-color: var(--creator-control-text);
+}
+
+body.theme-dark .creator-primary-action,
+body.theme-dark .creator-form__navigation :is(.creator-step-next, .creator-submit-action),
+body.theme-dark .creator-choice-list button.is-selected,
+body.theme-dark .creator-studio__tabs button[aria-pressed="true"],
+body.theme-dark .creator-content-toolbar button[aria-pressed="true"] {
+  background: var(--creator-action);
+  border-color: var(--creator-action);
+  color: var(--creator-action-text);
+}
+
+body.theme-dark .creator-primary-action:not(:disabled):hover,
+body.theme-dark .creator-form__navigation :is(.creator-step-next, .creator-submit-action):not(:disabled):hover,
+body.theme-dark .creator-choice-list button.is-selected:not(:disabled):hover,
+body.theme-dark .creator-studio__tabs button[aria-pressed="true"]:not(:disabled):hover,
+body.theme-dark .creator-content-toolbar button[aria-pressed="true"]:not(:disabled):hover {
+  background: var(--creator-action-hover);
+  border-color: var(--creator-action-hover);
+  color: var(--creator-action-text);
+}
+
+body.theme-dark .creator-page :is(
+  .creator-choice-list button:not(.is-selected),
+  .creator-token-entry__controls button,
+  .creator-link-remove,
+  .creator-add-link,
+  .creator-review-block header button,
+  .creator-step-back
+):not(:disabled):hover,
+body.theme-dark .creator-studio :is(
+  button:not(.creator-primary-action):not([aria-pressed="true"]),
+  .creator-text-action
+):not(:disabled):hover {
+  background: var(--creator-control-bg);
+  border-color: var(--creator-control-border);
+  color: var(--creator-ink);
+}
+
+body.theme-dark .creator-primary-action:disabled,
+body.theme-dark .creator-studio button:disabled,
+body.theme-dark .creator-form button:disabled {
+  color: var(--creator-action-text);
+}
+
+body.theme-dark .creator-application__progress button:disabled {
+  color: var(--creator-muted);
+}
+
+body.theme-dark .creator-notice[role="alert"] {
+  background: #381f1f;
+  border-color: #925b55;
+  color: #ffd4cc;
+}
+
+body.theme-dark .creator-notice[role="status"] {
+  background: #183027;
+  border-color: #4f826e;
+  color: #c9f1dd;
+}
+
+body.theme-dark .creator-directory .creator-card__meta {
+  color: var(--creator-muted);
+  opacity: 1;
+}
+
+body.theme-dark .creator-studio__tabs,
+body.theme-dark .creator-content-toolbar,
+body.theme-dark .creator-studio__header,
+body.theme-dark .creator-form__navigation,
+body.theme-dark .creator-form__stage > header,
+body.theme-dark .creator-about,
+body.theme-dark .creator-shelf,
+body.theme-dark .creator-profile__header {
+  border-color: var(--creator-line);
+}
 
 @media (max-width: 960px) {
   .creator-directory .creator-filters {
