@@ -27,7 +27,8 @@ describe("Life rendering, responsive, and accessibility contract", () => {
 
   test("the authenticated header compacts before its mobile switch", () => {
     const globalCss = read("index.css");
-    expect(globalCss).toContain("(min-width: 901px) and (max-width: 1120px)");
+    expect(globalCss).toContain("(min-width: 1024px) and (max-width: 1120px)");
+    expect(globalCss).toContain("@media (max-width: 1023px)");
     expect(globalCss).toContain(".header-user-name");
   });
 

@@ -32,9 +32,12 @@ const Header = () => {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobileCatExpanded, setIsMobileCatExpanded] = useState(false);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
 
   const categoriesDropdownRef = useRef(null);
+  const categoriesTriggerRef = useRef(null);
   const accountDropdownRef = useRef(null);
+  const accountTriggerRef = useRef(null);
   const mobileDrawerRef = useRef(null);
 
   const isAdmin = isAuthenticated && user?.role === "Admin";
@@ -42,7 +45,10 @@ const Header = () => {
   useDialogFocus({
     open: isMobileOpen,
     containerRef: mobileDrawerRef,
-    onClose: () => setIsMobileOpen(false),
+    onClose: () => {
+      setIsMobileOpen(false);
+      setIsMobileCatExpanded(false);
+    },
   });
 
   const avatarUrl = useMemo(() => {
@@ -67,6 +73,10 @@ const Header = () => {
     if (user.username && user.username.trim()) return user.username.trim();
     return "User";
   }, [user]);
+
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [avatarUrl]);
 
   const username = useMemo(() => {
     return user?.username ? user.username.replace(/^@/, "").trim() : "";
@@ -155,6 +165,7 @@ const Header = () => {
     setIsCategoriesOpen(false);
     setIsAccountOpen(false);
     setIsMobileOpen(false);
+    setIsMobileCatExpanded(false);
   }, [location.pathname]);
 
   // Global click-outside listener to close dropdowns
@@ -181,24 +192,58 @@ const Header = () => {
   // Global Escape key listener
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setIsCategoriesOpen(false);
-        setIsAccountOpen(false);
-        setIsMobileOpen(false);
-      }
+      if (e.key !== "Escape" || isMobileOpen) return;
+
+      const triggerToRestore = isAccountOpen
+        ? accountTriggerRef.current
+        : isCategoriesOpen
+          ? categoriesTriggerRef.current
+          : null;
+
+      if (!triggerToRestore) return;
+
+      setIsCategoriesOpen(false);
+      setIsAccountOpen(false);
+      window.requestAnimationFrame(() => triggerToRestore.focus());
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isAccountOpen, isCategoriesOpen, isMobileOpen]);
+
+  const toggleCategoriesMenu = () => {
+    setIsAccountOpen(false);
+    setIsCategoriesOpen((prev) => !prev);
+  };
+
+  const toggleAccountMenu = () => {
+    setIsCategoriesOpen(false);
+    setIsAccountOpen((prev) => !prev);
+  };
+
+  const closeMobileNavigation = () => {
+    setIsMobileOpen(false);
+    setIsMobileCatExpanded(false);
+  };
+
+  const openMobileNavigation = () => {
+    setIsCategoriesOpen(false);
+    setIsAccountOpen(false);
+    setIsMobileOpen(true);
+  };
 
   const handleLogout = async () => {
     await logout();
     setIsAccountOpen(false);
-    setIsMobileOpen(false);
+    closeMobileNavigation();
     navigate("/", { replace: true });
   };
 
-  const isCategoryActive = location.pathname.startsWith("/category");
+  const pathname = location.pathname;
+  const isCategoryActive = pathname === "/categories" || pathname.startsWith("/category/");
+  const isLifeActive = pathname === "/life" || pathname.startsWith("/life/");
+  const isAboutActive =
+    pathname === "/about" || pathname === "/read-my-story" || pathname === "/readmystory";
+  const shouldShowAvatar = Boolean(avatarUrl && !avatarLoadFailed);
 
   return (
     <>
@@ -253,7 +298,7 @@ const Header = () => {
                 <li>
                   <NavLink
                     to="/life/today"
-                    className={({ isActive }) => (isActive ? "active" : "")}
+                    className={isLifeActive ? "active" : ""}
                   >
                     Life
                   </NavLink>
@@ -263,12 +308,12 @@ const Header = () => {
               {/* Categories Dropdown */}
               <li className="nav-dropdown-wrapper" ref={categoriesDropdownRef}>
                 <button
+                  ref={categoriesTriggerRef}
                   type="button"
                   className={`nav-dropdown-trigger ${isCategoryActive || isCategoriesOpen ? "active" : ""
                     }`}
-                  onClick={() => setIsCategoriesOpen((prev) => !prev)}
+                  onClick={toggleCategoriesMenu}
                   aria-expanded={isCategoriesOpen}
-                  aria-haspopup="true"
                   aria-controls="categories-menu"
                 >
                   <span>Categories</span>
@@ -282,7 +327,8 @@ const Header = () => {
                   <div
                     className="nav-dropdown-menu categories-mega-menu"
                     id="categories-menu"
-                    role="menu"
+                    role="region"
+                    aria-label="Categories navigation"
                   >
                     <div className="mega-menu-header">
                       <span className="mega-menu-title">Explore MyJourney</span>
@@ -302,7 +348,6 @@ const Header = () => {
                               key={cat.id || cat._id || cat.slug}
                               to={`/category/${cat.slug}`}
                               className="mega-menu-item"
-                              role="menuitem"
                               onClick={() => setIsCategoriesOpen(false)}
                             >
                               <div className="mega-menu-item-icon">
@@ -316,7 +361,7 @@ const Header = () => {
                           );
                         })
                       ) : (
-                        <div className="dropdown-empty" role="none">
+                        <div className="dropdown-empty">
                           No categories available
                         </div>
                       )}
@@ -347,13 +392,7 @@ const Header = () => {
               <li>
                 <NavLink
                   to="/about"
-                  className={({ isActive }) =>
-                    isActive ||
-                      location.pathname === "/read-my-story" ||
-                      location.pathname === "/readmystory"
-                      ? "active"
-                      : ""
-                  }
+                  className={isAboutActive ? "active" : ""}
                 >
                   About
                 </NavLink>
@@ -376,24 +415,30 @@ const Header = () => {
             {isAuthenticated ? (
               <div className="nav-dropdown-wrapper" ref={accountDropdownRef}>
                 <button
+                  ref={accountTriggerRef}
                   type="button"
                   className={`header-action-btn account-trigger-btn ${
                     isAccountOpen ? "active" : ""
                   }`}
-                  onClick={() => setIsAccountOpen((prev) => !prev)}
+                  onClick={toggleAccountMenu}
                   aria-expanded={isAccountOpen}
-                  aria-haspopup="true"
                   aria-controls="account-menu"
+                  aria-label={`${isAccountOpen ? "Close" : "Open"} account menu for ${displayName}`}
                 >
                   <div className="header-avatar-circle">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt={displayName} className="header-avatar-img" />
+                    {shouldShowAvatar ? (
+                      <img
+                        src={avatarUrl}
+                        alt=""
+                        className="header-avatar-img"
+                        onError={() => setAvatarLoadFailed(true)}
+                      />
                     ) : (
                       <span className="header-avatar-initials">{initials}</span>
                     )}
                   </div>
 
-                  <span className="header-user-name">{displayName}</span>
+                  <span className="header-user-name" title={displayName}>{displayName}</span>
 
                   <FiChevronDown
                     className={`dropdown-chevron ${
@@ -403,12 +448,17 @@ const Header = () => {
                 </button>
 
                 {isAccountOpen && (
-                  <ul className="nav-dropdown-menu account-dropdown-menu" id="account-menu" role="menu">
-                    <li className="account-menu-header" role="none">
+                  <ul className="nav-dropdown-menu account-dropdown-menu" id="account-menu">
+                    <li className="account-menu-header">
                       <div className="account-profile-card">
                         <div className="dropdown-avatar-circle">
-                          {avatarUrl ? (
-                            <img src={avatarUrl} alt={displayName} className="dropdown-avatar-img" />
+                          {shouldShowAvatar ? (
+                            <img
+                              src={avatarUrl}
+                              alt=""
+                              className="dropdown-avatar-img"
+                              onError={() => setAvatarLoadFailed(true)}
+                            />
                           ) : (
                             <span className="dropdown-avatar-initials">{initials}</span>
                           )}
@@ -437,13 +487,12 @@ const Header = () => {
                       </div>
                     </li>
 
-                    <li className="dropdown-divider" role="none" />
+                    <li className="dropdown-divider" aria-hidden="true" />
 
-                    <li role="none">
+                    <li>
                       <Link
                         to="/profile/subscription"
                         className="dropdown-item"
-                        role="menuitem"
                         onClick={() => setIsAccountOpen(false)}
                       >
                         <FiShield className="dropdown-item-icon" />
@@ -451,11 +500,10 @@ const Header = () => {
                       </Link>
                     </li>
 
-                    <li role="none">
+                    <li>
                       <Link
                         to="/profile"
                         className="dropdown-item"
-                        role="menuitem"
                         onClick={() => setIsAccountOpen(false)}
                       >
                         <FiUser className="dropdown-item-icon" />
@@ -463,11 +511,10 @@ const Header = () => {
                       </Link>
                     </li>
 
-                    <li role="none">
+                    <li>
                       <Link
                         to="/profile/dashboard"
                         className="dropdown-item"
-                        role="menuitem"
                         onClick={() => setIsAccountOpen(false)}
                       >
                         <FiBookOpen className="dropdown-item-icon" />
@@ -475,11 +522,10 @@ const Header = () => {
                       </Link>
                     </li>
 
-                    <li role="none">
+                    <li>
                       <Link
                         to={creatorAccess?.studioAvailable ? "/creator-studio" : "/creators/apply"}
                         className="dropdown-item"
-                        role="menuitem"
                         onClick={() => setIsAccountOpen(false)}
                       >
                         <FiCompass className="dropdown-item-icon" />
@@ -488,11 +534,10 @@ const Header = () => {
                     </li>
 
                     {isAdmin && (
-                      <li role="none">
+                      <li>
                         <Link
                           to="/cms"
                           className="dropdown-item cms-link-item"
-                          role="menuitem"
                           onClick={() => setIsAccountOpen(false)}
                         >
                           <FiGrid className="dropdown-item-icon" />
@@ -501,11 +546,10 @@ const Header = () => {
                       </li>
                     )}
 
-                    <li role="none">
+                    <li>
                       <Link
                         to="/edit-profile"
                         className="dropdown-item"
-                        role="menuitem"
                         onClick={() => setIsAccountOpen(false)}
                       >
                         <FiSettings className="dropdown-item-icon" />
@@ -513,13 +557,12 @@ const Header = () => {
                       </Link>
                     </li>
 
-                    <li className="dropdown-divider" role="none" />
+                    <li className="dropdown-divider" aria-hidden="true" />
 
-                    <li role="none">
+                    <li>
                       <button
                         type="button"
                         className="dropdown-item logout-item"
-                        role="menuitem"
                         onClick={handleLogout}
                       >
                         <FiLogOut className="dropdown-item-icon" />
@@ -539,7 +582,7 @@ const Header = () => {
             <button
               className="mobile-menu-btn"
               type="button"
-              onClick={() => setIsMobileOpen(true)}
+              onClick={openMobileNavigation}
               aria-label="Open mobile navigation drawer"
               aria-expanded={isMobileOpen}
               aria-controls="mobile-navigation-drawer"
@@ -554,7 +597,7 @@ const Header = () => {
       {isMobileOpen && (
         <div
           className="mobile-drawer-backdrop"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={closeMobileNavigation}
         >
           <aside
             ref={mobileDrawerRef}
@@ -570,14 +613,14 @@ const Header = () => {
               <Link
                 className="logo"
                 to="/"
-                onClick={() => setIsMobileOpen(false)}
+                onClick={closeMobileNavigation}
               >
                 <span className="header-logo-text">{data?.site?.brand || "MyJourney"}</span>
               </Link>
               <button
                 type="button"
                 className="mobile-drawer-close"
-                onClick={() => setIsMobileOpen(false)}
+                onClick={closeMobileNavigation}
                 aria-label="Close mobile menu"
               >
                 <FiX />
@@ -628,6 +671,7 @@ const Header = () => {
                     <li>
                       <NavLink
                         to="/life/today"
+                        className={isLifeActive ? "active" : ""}
                         onClick={() => setIsMobileOpen(false)}
                       >
                         Life
@@ -639,9 +683,10 @@ const Header = () => {
                   <li className="mobile-cat-accordion">
                     <button
                       type="button"
-                      className="mobile-accordion-trigger"
+                      className={`mobile-accordion-trigger ${isCategoryActive ? "active" : ""}`}
                       onClick={() => setIsMobileCatExpanded((prev) => !prev)}
                       aria-expanded={isMobileCatExpanded}
+                      aria-controls="mobile-categories-list"
                     >
                       <span>Categories</span>
                       <FiChevronDown
@@ -651,7 +696,7 @@ const Header = () => {
                     </button>
 
                     {isMobileCatExpanded && (
-                      <ul className="mobile-sub-list">
+                      <ul className="mobile-sub-list" id="mobile-categories-list">
                         {featuredCategories.map((cat) => (
                           <li key={cat.id || cat._id || cat.slug}>
                             <Link
@@ -687,6 +732,7 @@ const Header = () => {
                   <li>
                     <NavLink
                       to="/about"
+                      className={isAboutActive ? "active" : ""}
                       onClick={() => setIsMobileOpen(false)}
                     >
                       About
@@ -711,8 +757,8 @@ const Header = () => {
                     <div className="mobile-user-card">
                       <FiUser />
                       <div>
-                        <div className="mobile-user-name">
-                          {user?.name || "Reader"}
+                        <div className="mobile-user-name" title={displayName}>
+                          {displayName}
                         </div>
                         <div className="mobile-user-email">{user?.email}</div>
                       </div>

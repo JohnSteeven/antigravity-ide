@@ -40,6 +40,119 @@ describe("responsive and accessibility contracts", () => {
     expect(header).not.toMatch(/<h[12]>\{data\?\.site\?\.brand/);
   });
 
+  test("the desktop Header keeps the approved public route destinations", () => {
+    const header = read("src", "components", "Header.js");
+    ["/", "/articles", "/stories", "/learn", "/life/today", "/about", "/contact"].forEach(
+      (route) => expect(header).toContain(`to="${route}"`)
+    );
+  });
+
+  test("the mobile drawer exposes the same core destinations and a guest Sign In", () => {
+    const header = read("src", "components", "Header.js");
+    const mobile = header.slice(header.indexOf("Mobile Drawer & Backdrop"));
+    ["/", "/articles", "/stories", "/learn", "/life/today", "/about", "/contact", "/login"].forEach(
+      (route) => expect(mobile).toContain(`to="${route}"`)
+    );
+    expect(mobile).toContain("Sign In to MyJourney");
+  });
+
+  test("authenticated navigation keeps Life private and account routes server-compatible", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toMatch(/\{isAuthenticated && \([\s\S]*?to="\/life\/today"/);
+    ["/profile/subscription", "/profile", "/profile/dashboard", "/edit-profile"].forEach(
+      (route) => expect(header).toContain(`to="${route}"`)
+    );
+  });
+
+  test("Creator navigation follows server-derived Studio availability", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toContain('creatorAccess?.studioAvailable ? "/creator-studio" : "/creators/apply"');
+    expect(header).toContain('creatorAccess?.studioAvailable ? "Creator Studio" : "Become a Creator"');
+  });
+
+  test("Admin navigation uses the exact server role and never treats Editor as Admin", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toContain('const isAdmin = isAuthenticated && user?.role === "Admin"');
+    expect(header).not.toContain('user?.role === "Editor"');
+    expect(header).toContain('to="/cms"');
+  });
+
+  test("nested Life, category, and About-alias routes keep their section active", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toContain('pathname === "/categories" || pathname.startsWith("/category/")');
+    expect(header).toContain('pathname === "/life" || pathname.startsWith("/life/")');
+    expect(header).toContain('pathname === "/about" || pathname === "/read-my-story" || pathname === "/readmystory"');
+    expect(header).toContain('className={isLifeActive ? "active" : ""}');
+    expect(header).toContain('className={isAboutActive ? "active" : ""}');
+  });
+
+  test("Categories is a keyboard-native disclosure with an associated region", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toContain('aria-expanded={isCategoriesOpen}');
+    expect(header).toContain('aria-controls="categories-menu"');
+    expect(header).toContain('role="region"');
+    expect(header).toContain('aria-label="Categories navigation"');
+    expect(header).not.toContain('role="menu"');
+    expect(header).not.toContain('role="menuitem"');
+  });
+
+  test("the account trigger exposes state, ownership, and an identity-aware label", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toContain('aria-expanded={isAccountOpen}');
+    expect(header).toContain('aria-controls="account-menu"');
+    expect(header).toContain('aria-label={`${isAccountOpen ? "Close" : "Open"} account menu for ${displayName}`}');
+  });
+
+  test("opening either desktop disclosure closes the other", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toMatch(/const toggleCategoriesMenu = \(\) => \{\s*setIsAccountOpen\(false\);\s*setIsCategoriesOpen/);
+    expect(header).toMatch(/const toggleAccountMenu = \(\) => \{\s*setIsCategoriesOpen\(false\);\s*setIsAccountOpen/);
+  });
+
+  test("desktop Escape returns focus and global listeners always clean up", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toContain('e.key !== "Escape" || isMobileOpen');
+    expect(header).toContain("window.requestAnimationFrame(() => triggerToRestore.focus())");
+    expect(header).toContain('document.removeEventListener("mousedown", handleClickOutside)');
+    expect(header).toContain('window.removeEventListener("keydown", handleKeyDown)');
+  });
+
+  test("avatar loading failures fall back to initials without changing the account label", () => {
+    const header = read("src", "components", "Header.js");
+    expect(header).toContain("avatarLoadFailed");
+    expect(header).toContain("const shouldShowAvatar = Boolean(avatarUrl && !avatarLoadFailed)");
+    expect(header).toContain("onError={() => setAvatarLoadFailed(true)}");
+    expect(header).toContain('className="header-avatar-initials"');
+  });
+
+  test("long desktop and mobile identities are intentionally truncated", () => {
+    const header = read("src", "components", "Header.js");
+    const css = read("index.css");
+    expect(header).toContain('className="header-user-name" title={displayName}');
+    expect(header).toContain('className="mobile-user-name" title={displayName}');
+    expect(css).toMatch(/\.header-user-name\s*\{[^}]*max-width:\s*130px !important;[^}]*text-overflow:\s*ellipsis !important/);
+    expect(css).toMatch(/\.mobile-user-name\s*\{[^}]*text-overflow:\s*ellipsis !important/);
+    expect(css).toMatch(/\.mobile-user-email\s*\{[^}]*text-overflow:\s*ellipsis !important/);
+  });
+
+  test("Header layers, focus, and tablet breakpoints are explicit and collision-safe", () => {
+    const css = read("index.css");
+    const agentCss = read("src", "features", "agent", "agent.css");
+    expect(css).toContain("@media (min-width: 1024px) and (max-width: 1120px)");
+    expect(css).toContain("@media (max-width: 1023px)");
+    expect(css).toMatch(/#categories-menu\.categories-mega-menu\s*\{[^}]*right:\s*0 !important/);
+    expect(css).toMatch(/\.header-action-btn\.account-trigger-btn:focus-visible\s*\{[^}]*box-shadow:\s*var\(--focus-ring\) !important/);
+    expect(css).toMatch(/\.mobile-drawer-backdrop\s*\{[^}]*z-index:\s*10001 !important/);
+    expect(agentCss).toMatch(/\.ask-myjourney-window\s*\{[^}]*z-index:\s*10000/);
+  });
+
+  test("the fixed-light Categories surface is isolated from Dark and Coding themes", () => {
+    const css = read("index.css");
+    expect(css).toMatch(/body\.theme-dark \.categories-mega-menu\s*\{[\s\S]*?--mega-menu-surface:\s*var\(--surface-light-fixed/);
+    expect(css).toMatch(/\.categories-mega-menu \.mega-menu-item-title\s*\{[\s\S]*?color:\s*var\(--mega-menu-text\) !important/);
+    expect(css).not.toMatch(/\[data-experience="coding"\][^{]*(?:\.main-public-header|\.desktop-nav|\.categories-mega-menu|\.account-dropdown-menu)/);
+  });
+
   test("the Home mobile composition keeps one representative card and removes decorative stack height", () => {
     const css = read("index.css");
     expect(css).toMatch(/@media \(max-width: 640px\)[\s\S]*?\.hero-glass-card\.stack-card\.back-card-1,[\s\S]*?display: none !important/);

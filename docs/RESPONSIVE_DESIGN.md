@@ -31,6 +31,8 @@ Experience-category article banners use a compact 440px desktop minimum with tig
 
 The Home mobile hero intentionally removes the two rear desktop cards and the floating badge at widths up to 640px. The front card remains as a representative visual, and its animation is disabled.
 
+The public Header uses its compact desktop navigation from 1024px through 1120px and switches to the modal navigation drawer at 1023px and below. Desktop Categories and account controls are mutually exclusive disclosure popovers: native Tab order reaches their links, Escape closes the open popover and returns focus to its trigger, and outside clicks dismiss it. The drawer owns focus containment and scroll locking through the shared dialog-focus hook.
+
 ## Accessibility interaction contract
 
 - Public routes expose a keyboard-visible “Skip to main content” link.
