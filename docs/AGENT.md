@@ -110,8 +110,10 @@ For actions requiring user confirmation (`CONFIRM_REQUIRED`), the Agent implemen
 ## Observability & Privacy Rules
 
 - **Telemetry Redaction**: All logs hash user identifiers (`hashIdentifier`) using a server salt (`AGENT_TELEMETRY_SALT`). Raw emails, tokens, and names are never logged.
+- **HTTP Correlation**: The global request context supplies `req.id`/`X-Request-Id`; HTTP completion/error logs contain route templates, status, latency, and a `REQUEST_LOG_SALT` user hash, never raw URLs, queries, bodies, cookies, or raw user IDs.
 - **Audit Redaction**: `AgentToolExecution.outputSummary` stores only minimal operational summaries (e.g. `"3 item(s) returned"`, `"habit completed"`). It **never** stores raw journal bodies, financial entries, health details, full RAG documents, or raw model prompts.
 - **Circuit Breaker**: `AgentProviderRegistry` tracks provider failures with a configurable threshold (`circuitFailureThreshold`) and recovery window (`circuitResetMs`).
+- **Scale Boundary**: Agent request rate/concurrency guards and metrics are process-local Maps. They are bounded and correct for one API process, but require distributed rate/concurrency leases and centralized metrics before horizontal scale.
 
 ---
 
@@ -121,6 +123,7 @@ For actions requiring user confirmation (`CONFIRM_REQUIRED`), the Agent implemen
 - **Browser Abstraction**: `BrowserSpeechToTextProvider` uses `window.webkitSpeechRecognition` / `window.SpeechRecognition`. `BrowserTextToSpeechProvider` uses `window.speechSynthesis`.
 - **Shared Pipeline**: Voice transcripts feed directly into `AgentContext.sendMessage({ source: "voice" })`. Assistant replies trigger text-to-speech automatically when voice replies are enabled.
 - **Safety**: No persistent listening, no background recording, no audio uploads to server.
+- **Verification Boundary**: Source contracts cover the press-to-talk state machine and shared Agent pipeline. Microphone permissions, recognition quality, voice availability, interruption behavior, and assistive-technology interaction still require real browser/device QA.
 
 ---
 

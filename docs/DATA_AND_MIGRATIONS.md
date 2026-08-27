@@ -4,6 +4,8 @@
 
 MyJourney uses MongoDB through Mongoose. Auth, CMS/content, Premium, Life, Creator, Learn, multiplayer persistence, notifications, and audit data all depend on the configured database. The HTTP server does not start when the initial Mongo connection fails.
 
+Multiplayer runtime persistence never falls back to in-memory state after a disconnect. In-memory room repositories are limited to isolated tests/load harnesses. This prevents ephemeral room creation and split-brain state when Mongo is unavailable.
+
 Never print or commit a full Mongo URI. Confirm the connected host and database name separately before destructive local operations.
 
 ## Migration mechanism
@@ -20,8 +22,12 @@ Current ordered migrations:
 6. `006-myjourney-premium-foundation`
 7. `007-creator-learn-foundation`
 8. `008-agent-foundation`
+9. `009-auth-session-expiry`
+10. `010-theme-safety-foundation`
 
 Server startup does not run these automatically.
+
+Launch, deployment, and test-execution collections are historical evidence stores. Read endpoints never seed them. New release records default to non-production, deployment environment/status must be supplied explicitly, and absent test coverage remains `null`; these safe defaults do not rewrite existing records and require no data migration.
 
 
 ## Commands
@@ -50,7 +56,7 @@ Rollback is supported by the runner, but should be used only with a reviewed rec
 npm run migrate -- down 1
 ```
 
-These commands connect through the normal database initializer, which also runs the idempotent CMS role/permission seeder.
+These commands connect without running application seeders. `status` and `validate` only inspect migration metadata/indexes; `up` and `down` mutate only through the explicitly selected migration operation.
 
 ## Environment separation
 
@@ -58,7 +64,9 @@ These commands connect through the normal database initializer, which also runs 
 - Staging: use an approved migration window, backup, status capture, application, validation, and smoke test.
 - Production: never migrate from an ad hoc developer session. Require explicit authorization, backup/restore readiness, review, observability, and rollback planning.
 
-The 2026-08-16 local audit found migrations 001–007 all pending in the `myjourney` database. They were not applied automatically. Runtime and tests passed, but the unique/query indexes and normalization encoded by those migrations remain a local launch prerequisite. Re-run status because this observation is environment-specific.
+The 2026-08-23 local audit found migrations 001–010 all pending in the `myjourney` database. They were not applied automatically. Runtime and tests passed, but the unique/query/TTL indexes and normalization encoded by those migrations remain a local launch prerequisite. Migration 009 backfills legacy Session expiry from its linked RefreshToken and fails orphaned sessions closed. Migration 010 corrects only the known light surface/panel/muted defaults on the built-in Dark Pro theme; custom themes are untouched. Re-run status because this observation is environment-specific.
+
+Migration index validation compares key order and security-relevant options (including unique, sparse, TTL, partial-filter, and collation settings); an index is not accepted merely because its name matches. Migration 008 uses a partial unique Agent-message idempotency index without the mutually exclusive `sparse` option.
 
 ## Creator/Learn demo seed
 

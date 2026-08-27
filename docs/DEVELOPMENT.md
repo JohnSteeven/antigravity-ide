@@ -10,17 +10,18 @@ npm ci
 
 Copy `.env.example` to `.env`. Use development-only values and keep `.env` untracked.
 
-The repository does not declare a Node `engines` range. The 2026-08-16 stabilization audit ran successfully with Node `22.16.0` and npm `10.5.2`.
+The repository declares Node `>=20` and npm `>=10`. The 2026-08-23 hardening audit ran with Node `22.16.0` and npm `10.5.2`; those exact versions are the verified baseline, while the declared ranges are the supported minimum contract.
 
 ## Database expectation
 
-MongoDB is mandatory for the API. Set `MONGO_URI` to the intended local/development database, or rely on the code's localhost development default when no variable is present. Do not copy connection credentials into documentation, logs, or commits.
+MongoDB is mandatory for the API. Set `MONGO_URI` to the intended local/development database, or rely on the code's localhost development default when no variable is present. `MONGODB_URI` is accepted as a lower-precedence alias. `MONGO_SERVER_SELECTION_TIMEOUT_MS` controls initial selection and defaults to 8000 ms. Do not copy connection credentials into documentation, logs, or commits.
 
 Do not replace configured databases with hard-coded localhost values. Before seeding or applying migrations, confirm both `NODE_ENV` and the actual connected host/database.
 
 ## Start
 
 ```bash
+npm run doctor
 npm start
 ```
 
@@ -35,11 +36,17 @@ Useful single-process commands:
 ```bash
 npm run server
 npm run client
+npm run start:ui
 ```
+
+`npm run doctor` checks the current Node declaration, standard ports, Mongo configuration/reachability, and required production variables without printing connection credentials or secret values.
+
+`npm run start:ui` is the supported frontend-only mode. It starts Parcel only. It does not start Express, connect MongoDB, apply migrations, seed data, or initialize schedulers/jobs. API-dependent screens therefore show their honest unavailable states.
 
 The expected healthy startup order is:
 
 ```text
+[preflight] Full-stack startup checks passed
 MongoDB connected
 CMS permissions/roles seeded
 multiplayer realtime started
@@ -55,6 +62,7 @@ If MongoDB cannot be selected within the startup timeout, the API exits. That is
 ### Core runtime and auth
 
 - `NODE_ENV`, `PORT`, `SERVER_PORT`, `CLIENT_URL`, `MONGO_URI`
+- `MONGODB_URI` (lower-precedence alias), `MONGO_SERVER_SELECTION_TIMEOUT_MS`, `PARCEL_PORT`
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `ACCESS_TOKEN_TTL`, `REFRESH_TOKEN_TTL_DAYS`
 - `COOKIE_SECURE`, `CSRF_ENABLED`
 - `PASSWORD_MIN_LENGTH`, `PASSWORD_HISTORY_LIMIT`
@@ -76,6 +84,7 @@ Development OTP responses include a dev code and can log provider-unavailable de
 ### Multiplayer and games
 
 - `MULTIPLAYER_ENABLED`, `MULTIPLAYER_GUEST_SECRET`, `MULTIPLAYER_ANALYTICS_SALT`
+- `REQUEST_LOG_SALT` (required in production; hashes request-log user identifiers)
 - `MULTIPLAYER_ANALYTICS_RETENTION_DAYS`, `MULTIPLAYER_ROOM_TTL_HOURS`, `MULTIPLAYER_HOST_GRACE_SECONDS`
 - `REDIS_URL`, `MULTIPLAYER_REQUIRE_REDIS`
 - `LIFE_AUCTION_ENABLED`, `LIFE_AUCTION_SEALED_ENABLED`, `LIFE_AUCTION_EVENTS_ENABLED`, `LIFE_AUCTION_GROUP_EVENTS_ENABLED`
@@ -102,6 +111,7 @@ Development OTP responses include a dev code and can log provider-unavailable de
 - `SECRET_VAULT_ENABLED`, `SECRET_VAULT_KEY`
 - `NEWS_PROVIDER`, `NEWS_API_KEY`, `GNEWS_API_KEY`, `GUARDIAN_API_KEY`, `MEDIASTACK_API_KEY`
 - `CACHE_DRIVER`, `STORAGE_DRIVER`
+- `QUEUE_DRIVER` (the repository currently implements only a single-process memory queue; other selections fail closed)
 - `WEBAUTHN_RP_ID`
 - `BOOTSTRAP_ADMIN_ENABLED`, `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`
 - `SEED_DEMO_DATA`
@@ -136,9 +146,33 @@ Current startup fails fast on the initial connection, which prevents downstream 
 
 Start with `/api/learn`. It queries Topic plus Creator/Learn content collections, so a shared Mongo failure can surface as a Learn page error. Then inspect individual `/api/learn/courses`, format endpoints, detail responses, entitlements, and fixture/migration state.
 
+### `MongooseServerSelectionError: Server selection timed out`
+
+This means the configured Mongo target was not selectable within the configured timeout; it does not prove a specific cause. Run `npm run doctor`, then verify the local Mongo service or remote DNS/network/allow-list/TLS configuration. Startup reports only the sanitized host/database target and never prints credentials. Do not apply migrations or replace persistence while connectivity is unresolved.
+
 ### Port already in use
 
-The standard ports are 5000 and 1234. Stop the existing project process or configure the API port; do not launch multiple `npm start` trees against the same ports.
+The standard ports are 5000 (API) and 1234 (Parcel). Startup preflight fails with a clear message when either listener is already present. Use `npm run doctor` to distinguish a port conflict from Mongo unavailability. Stop the existing project process or configure the intended port; do not launch multiple `npm start` trees against the same worktree.
+
+### Parcel ENOENT: no such file or directory, unlink (Windows)
+
+Symptom:
+
+```
+Error: ENOENT: no such file or directory, unlink
+  C:\...\AppData\Local\Temp\ide antigravity.abc123.css...
+```
+
+The error can be caused by overlapping Parcel processes or an external Windows temp-file race. First run `npm run doctor`; if port 1234 is occupied, stop that existing process. Normal startup never deletes temp files because deleting an active atomic-write file can create the same ENOENT race.
+
+If no Parcel listener remains and the error persists, the explicit recovery command is:
+
+```bash
+npm run clean:parcel-temp
+npm start
+```
+
+The cleanup command refuses to run while port 1234 is occupied and removes only regular project-prefixed temp files older than one hour. It does not touch source, `dist/`, or Parcel cache directories.
 
 ## Creator/Learn development fixtures
 
@@ -159,3 +193,5 @@ The second seed should report identical entity totals. Reset removes only recogn
 - Do not auto-apply migrations as a workaround for connectivity.
 - Use random, temporary, self-cleaning audit identities for local auth testing; never add shared universal passwords.
 - Keep provider boundaries explicit and unavailable when not configured.
+- `CACHE_DRIVER=redis`, non-memory `QUEUE_DRIVER`, and non-local `STORAGE_DRIVER` currently fail closed because distributed adapters are not implemented in this repository. Do not select them until the corresponding adapter and integration tests are added.
+- Do not use the retired `bootstrapAdmin`, `resetAdminPassword`, `verifyApis`, `verifyPhase4A`, or `verifyPhase4B` scripts. They exit without connecting or mutating data. Use the opt-in bootstrap seeder, tokenized password recovery, and Jest/API test suites documented above.

@@ -15,6 +15,7 @@ The repository is a single npm application: Parcel serves the React client and E
 | Creators | Implemented application/review workflow, public directory/profile, follow state, ownership, and Creator Studio. Earnings/payout operations are foundation only. |
 | Learn | Implemented Topics, Course catalog/detail, lesson previews and gates, enrollment/progress, Continue Learning, and Video/Podcast/Resource catalogs. Secure media delivery is not configured. Exams expose metadata only. |
 | CMS/Admin | Implemented under `/cms/*`, backed by server-side Admin authorization. |
+| Launch/SEO evidence | Admin launch audits fail closed and never seed sample results; SEO health is derived from published records and public metadata excludes drafts/private/deleted content. |
 | Games/multiplayer | Play Life and Play With Friends are implemented; local realtime can run without Redis, while scaled production requires Redis. |
 | MyJourney Agent | Implemented unified assistant platform (`/agent` and floating companion) with server-authoritative tool registry, voice press-to-talk, cryptographic single-use confirmation tokens, and deterministic zero-cost Mock provider. |
 
@@ -23,7 +24,7 @@ See [Features](docs/FEATURES.md) for the engineering status inventory and [Agent
 
 ## Technology stack
 
-- Frontend: React 19, React Router 6, Framer Motion, Socket.IO client, and plain CSS.
+- Frontend: React 19, React Router 7.18.2, Framer Motion, Socket.IO client, and plain CSS.
 - Backend: Node.js, Express 4, Socket.IO, Mongoose 8, and optional Redis adapters.
 - Database: MongoDB through Mongoose.
 - Authentication: bcrypt passwords; JWT access/refresh tokens in HttpOnly cookies; persistent refresh-token/session records; optional CSRF enforcement.
@@ -32,7 +33,7 @@ See [Features](docs/FEATURES.md) for the engineering status inventory and [Agent
 
 ## Prerequisites
 
-- Node.js and npm. The repository does not currently declare an `engines` support range. The 2026-08-16 stabilization audit used Node `22.16.0` and npm `10.5.2`.
+- Node.js `>=20` and npm `>=10`. The verified hardening baseline used Node `22.16.0` and npm `10.5.2`.
 - A reachable MongoDB database for local development.
 - A local `.env` created from `.env.example` and populated with development-only values.
 - Redis only when testing Redis-backed or horizontally scaled multiplayer behavior.
@@ -48,14 +49,18 @@ npm ci
 Copy `.env.example` to `.env`, set the development database and auth secrets, then start both services:
 
 ```bash
+npm run doctor
 npm start
 ```
 
 - Client: `http://localhost:1234`
 - API: `http://localhost:5000`
 - Health: `http://localhost:5000/api/health`
+- Readiness: `http://localhost:5000/api/readiness`
 
 MongoDB must be reachable before startup. The server deliberately aborts instead of serving database-backed routes while disconnected. See [Development](docs/DEVELOPMENT.md) for setup and troubleshooting.
+
+For frontend-only work, use `npm run start:ui`. It starts Parcel only and does not connect to MongoDB, run migrations, start the API, or initialize background jobs. API-backed pages report their normal unavailable states; this mode does not provide fake persistence.
 
 ## Environment configuration
 
@@ -66,7 +71,8 @@ Core variables:
 | `NODE_ENV` | Runtime environment; production enables stricter guards. |
 | `PORT` / `SERVER_PORT` | Express API port; defaults to 5000. |
 | `CLIENT_URL` | Allowed browser origin and email-link base. |
-| `MONGO_URI` | MongoDB connection string. |
+| `MONGO_URI` / `MONGODB_URI` | MongoDB connection string; `MONGO_URI` has precedence. |
+| `MONGO_SERVER_SELECTION_TIMEOUT_MS` | Initial MongoDB selection timeout; defaults to 8000 ms. |
 | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | JWT signing secrets. Required in production. |
 | `ACCESS_TOKEN_TTL` / `REFRESH_TOKEN_TTL_DAYS` | Session token lifetimes. |
 | `COOKIE_SECURE` | Enables Secure auth/CSRF cookies. |
@@ -141,5 +147,11 @@ The final command applies all pending migrations to the configured database. Nev
 - [Testing](docs/TESTING.md)
 - [Data and migrations](docs/DATA_AND_MIGRATIONS.md)
 - [Security engineering](docs/SECURITY.md)
+- [CMS/Admin](docs/CMS.md)
+- [Theming and dark mode](docs/THEMING.md)
+- [Responsive design](docs/RESPONSIVE_DESIGN.md)
+- [Production readiness](docs/PRODUCTION_READINESS.md)
 - [Play With Friends](docs/PLAY_WITH_FRIENDS.md)
 - [Life Auction](docs/LIFE_AUCTION.md)
+
+Every substantial feature or domain change must update the relevant documentation: README for product/setup, FEATURES for inventory, ARCHITECTURE for boundaries, SECURITY for assumptions, and feature-specific documents for implementation detail.

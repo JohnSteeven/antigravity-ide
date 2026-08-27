@@ -28,15 +28,29 @@ npm run test:multiplayer
 Focused auth/startup checks:
 
 ```bash
-npx jest --runInBand server/tests/authOtp.test.js server/tests/authClientContract.test.js server/tests/dbStartup.test.js server/tests/auditLogger.test.js
+npx jest --runInBand server/tests/authOtp.test.js server/tests/authClientContract.test.js server/tests/dbStartup.test.js server/tests/runtimeDiagnostics.test.js server/tests/schedulerLifecycle.test.js server/tests/auditLogger.test.js
 ```
+
+`runtimeDiagnostics.test.js` covers Mongo URI precedence/redaction, dual-stack port detection, UI-only no-Mongo preflight behavior, safe Parcel temp cleanup, and liveness/readiness state. `schedulerLifecycle.test.js` verifies that scheduler startup is idempotent and all timers can be closed.
 
 Story/content/security examples:
 
 ```bash
 npx jest --runInBand server/tests/storyContent.test.js server/tests/storyLayouts.test.js server/tests/storyMedia.test.js server/tests/storyRenderingContract.test.js
+npx jest --runInBand server/tests/articleAuthorityContract.test.js server/tests/premiumControllers.test.js server/tests/themeSafety.test.js server/tests/themeMigration.test.js server/tests/darkModeThemeContract.test.js
+npx jest --runInBand server/tests/responsiveAccessibilityContract.test.js
+npx jest --runInBand server/tests/launchHonesty.test.js server/tests/seoEvidence.test.js server/tests/routes.test.js
+npx jest --runInBand server/tests/observabilityPrivacy.test.js server/tests/multiplayer/mongoAuthority.test.js
 npx jest --runInBand server/tests/security.test.js server/tests/routes.test.js server/tests/premiumSecurity.test.js server/tests/creatorSecurity.test.js
 ```
+
+`launchHonesty.test.js` proves that missing critical evidence blocks readiness and that launch history endpoints contain no automatic sample creation or embedded Admin credentials. `seoEvidence.test.js` verifies database-derived metrics and the published/public/non-deleted boundary for public metadata.
+
+`observabilityPrivacy.test.js` verifies request correlation, template-only logs, hashed identifiers, generic internal errors, validation-value omission, and persistent audit redaction. `mongoAuthority.test.js` proves multiplayer fails closed rather than switching to ephemeral persistence.
+
+`docs/STORY_PRESET_VERIFICATION.md` records the structural matrix for all 30 Story presets over the six shared engines. A structural pass (`PASS-S`) proves renderer/data contracts; the Browser-QA marker remains open until the corresponding viewport/theme/media interaction is exercised in a real browser.
+
+`darkModeThemeContract.test.js` verifies surface-authoritative Home hero and Categories text, the fixed-Light Categories mega-menu, the common Article-card hierarchy across every category variant, Coding isolation, the standard Article-detail root and its 12 semantic roles, 18 requested content-surface areas, fixed-Light exceptions, shared forms/actions, chapter/summary/milestone/navigation/collection/insight foregrounds, Learn local Dark tokens, Story landing/reader selectors, representative contrast ratios, Light-Dark-Light scoping, and the absence of a global Dark text override. It is structural evidence, not a substitute for the manual viewport matrix.
 
 ## Full regression
 
