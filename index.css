@@ -23682,6 +23682,14 @@ body.theme-dark .articles-toolbar .search-control .search-icon,
   box-sizing: border-box !important;
 }
 
+/* The toolbar owns the visible focus ring; keep the nested search input flat. */
+.articles-toolbar .search-control .search-input:focus,
+.articles-toolbar .search-control .search-input:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .articles-toolbar .search-input::placeholder {
   color: #94a3b8 !important;
   opacity: 1 !important;

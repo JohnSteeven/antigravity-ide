@@ -153,6 +153,12 @@ describe("responsive and accessibility contracts", () => {
     expect(css).not.toMatch(/\[data-experience="coding"\][^{]*(?:\.main-public-header|\.desktop-nav|\.categories-mega-menu|\.account-dropdown-menu)/);
   });
 
+  test("the Articles search uses one wrapper-owned focus ring", () => {
+    const css = read("index.css");
+    expect(css).toMatch(/body\.theme-dark \.articles-toolbar \.toolbar-item:focus-within,[\s\S]*?box-shadow:\s*0 0 0 3px rgba\(56, 189, 248, 0\.2\) !important/);
+    expect(css).toMatch(/\.articles-toolbar \.search-control \.search-input:focus,[\s\S]*?\.articles-toolbar \.search-control \.search-input:focus-visible\s*\{[^}]*border:\s*none !important;[^}]*outline:\s*none !important;[^}]*box-shadow:\s*none !important/);
+  });
+
   test("the Home mobile composition keeps one representative card and removes decorative stack height", () => {
     const css = read("index.css");
     expect(css).toMatch(/@media \(max-width: 640px\)[\s\S]*?\.hero-glass-card\.stack-card\.back-card-1,[\s\S]*?display: none !important/);
