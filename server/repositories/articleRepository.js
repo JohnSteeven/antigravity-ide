@@ -38,6 +38,23 @@ class ArticleRepository {
     );
   }
 
+  async updateEngagementCounter(id, metric, delta) {
+    if (!new Set(["likes", "bookmarks", "saved"]).has(metric)) {
+      throw Object.assign(new Error("Invalid Article engagement metric."), { status: 422 });
+    }
+    return Article.findOneAndUpdate(
+      { _id: id, isDeleted: false },
+      [{
+        $set: {
+          [metric]: {
+            $max: [0, { $add: [{ $ifNull: [`$${metric}`, 0] }, delta] }],
+          },
+        },
+      }],
+      { new: true }
+    );
+  }
+
   async softDelete(id, userId) {
     return Article.findOneAndUpdate(
       { _id: id, isDeleted: false },

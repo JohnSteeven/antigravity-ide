@@ -9,12 +9,17 @@ const PersonalizationService = require('../services/personalizationService');
 const ReadingProgressService  = require('../services/readingProgressService');
 const ReaderProfileService    = require('../services/readerProfileService');
 
+const fail = (res, error, fallback) => {
+  const status = Number.isInteger(error?.status) ? error.status : 500;
+  return res.status(status).json({ error: status >= 500 ? fallback : error.message });
+};
+
 // ── Personalized Feed ─────────────────────────────────────────────────────────
 
 exports.getPersonalizedFeed = async (req, res) => {
   try {
     const userId = req.user?.id || null;
-    const feed = await PersonalizationService.getPersonalizedFeed(userId, null);
+    const feed = await PersonalizationService.getPersonalizedFeed(userId);
     res.json({ success: true, data: feed });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch personalized feed', message: err.message });
@@ -26,20 +31,21 @@ exports.getPersonalizedFeed = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const profile = await ReaderProfileService.getProfile(req.user.id);
+    const profile = await ReaderProfileService.getProfileContract(req.user);
     res.json({ success: true, data: profile });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch profile', message: err.message });
+    fail(res, err, 'Failed to fetch profile');
   }
 };
 
 exports.updateProfile = async (req, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const updated = await ReaderProfileService.updateProfile(req.user.id, req.body);
+    await ReaderProfileService.updateProfile(req.user.id, req.body);
+    const updated = await ReaderProfileService.getProfileContract(req.user);
     res.json({ success: true, data: updated });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update profile', message: err.message });
+    fail(res, err, 'Failed to update profile');
   }
 };
 
@@ -47,21 +53,42 @@ exports.updateProfile = async (req, res) => {
 
 exports.updateProgress = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id;
     const progress = await ReadingProgressService.updateProgress({ ...req.body, userId });
     res.json({ success: true, data: progress });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update progress', message: err.message });
+    fail(res, err, 'Failed to update progress');
+  }
+};
+
+exports.getProgress = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const progress = await ReadingProgressService.getProgress(userId, req.params.articleId);
+    if (!progress) return res.status(404).json({ error: 'Reading progress not found.' });
+    return res.json({ success: true, data: progress });
+  } catch (err) {
+    return fail(res, err, 'Failed to fetch reading progress');
   }
 };
 
 exports.getContinueReading = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const list = await ReadingProgressService.getContinueReading(userId, null);
+    const userId = req.user.id || req.user._id;
+    const list = await ReadingProgressService.getContinueReading(userId);
     res.json({ success: true, data: list });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch continue reading list', message: err.message });
+    fail(res, err, 'Failed to fetch continue reading list');
+  }
+};
+
+exports.getCompleted = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const list = await ReadingProgressService.getCompleted(userId);
+    res.json({ success: true, data: list });
+  } catch (err) {
+    fail(res, err, 'Failed to fetch completed reading list');
   }
 };
 

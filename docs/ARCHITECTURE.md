@@ -57,6 +57,18 @@ MongoDB/API responses are the runtime authority for persistent Article and taxon
 
 Admin writes remain on existing Article/CMS routes and require Admin middleware.
 
+## Reader profile and Article progress
+
+Reader data is split by authority: `User` owns account identity/basic profile and account notification delivery settings; `ReaderProfile` owns interests, goals, theme/language preference, Article library relations, streak aggregates, and issued achievements; `ReadingProgress` owns one authenticated user/Article progress row. The client consumes this through global `ReaderContext`, while `AuthContext` remains an authentication/account boundary.
+
+Authenticated Article Like, Bookmark, and Save requests flow through the existing Article routes/service into atomic ReaderProfile toggles. Their responses carry the authoritative active state, denormalized Article count, and allowlisted library card. `ContentCmsContext` applies the returned count and `ReaderContext` applies the returned library state, keeping detail/category controls and Profile lists synchronized without copying Reader data back into AuthContext. Share remains public and uses native browser sharing with a canonical copy-link fallback.
+
+`ReaderContext` is auth-readiness and identity aware. It clears exposed Reader data immediately when the account changes, versions profile fetches against intervening mutations, and refuses to apply a mutation result whose captured owner is no longer the active authenticated user. This prevents stale fetch overwrites and cross-account library flashes during logout/login transitions.
+
+Global contexts respect their authorization boundaries before loading protected data. `MediaCmsContext` restores/fetches Admin media only for an authenticated Admin and clears its cache on privilege loss. The Agent may load public capabilities anonymously, but private conversations are fetched only after an authenticated user exists.
+
+Progress persistence validates a published `contentType=article`, applies monotonic progress/position with `$max`, accumulates active seconds with `$inc`, and uses a compare-and-set completion transition. Continue Reading and Completed are server-filtered from real progress; Stories, saved/liked inference, estimated reading time, and sample activity are excluded. See `docs/READER_DATA.md` for the exact field matrix and API DTO.
+
 ## Story domain and renderers
 
 Stories use `contentType=story` in the Article domain. `storyController` normalizes `storyLayout` and `storySections`, calculates reading time, validates publishability, and preserves legacy body compatibility.

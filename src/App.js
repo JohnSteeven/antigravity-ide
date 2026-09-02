@@ -9,6 +9,7 @@ import {
 } from "react-router";
 import { CmsProvider } from "./context/CmsContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ReaderProvider } from "./context/ReaderContext";
 import { FeatureProvider } from "./context/FeatureContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Header from "./components/Header";
@@ -146,18 +147,20 @@ const AppShell = () => {
 
 const Root = () => (
   <AuthProvider>
-    <FeatureProvider>
-      <ThemeProvider>
-        <CmsProvider>
-          {/* AgentProvider must be inside AuthProvider to access the authenticated user.
-              It initialises lazily — it does not load conversations until the user is
-              authenticated and navigates to an Agent surface. */}
-          <AgentProvider>
-            <AppShell />
-          </AgentProvider>
-        </CmsProvider>
-      </ThemeProvider>
-    </FeatureProvider>
+    <ReaderProvider>
+      <FeatureProvider>
+        <ThemeProvider>
+          <CmsProvider>
+            {/* AgentProvider must be inside AuthProvider to access the authenticated user.
+                It initialises lazily — it does not load conversations until the user is
+                authenticated and navigates to an Agent surface. */}
+            <AgentProvider>
+              <AppShell />
+            </AgentProvider>
+          </CmsProvider>
+        </ThemeProvider>
+      </FeatureProvider>
+    </ReaderProvider>
   </AuthProvider>
 );
 

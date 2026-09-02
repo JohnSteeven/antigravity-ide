@@ -202,7 +202,7 @@ class ArticleService {
       throw new Error("User ID is required.");
     }
 
-    const userRepository = require("../repositories/userRepository");
+    const ReaderProfileService = require("./readerProfileService");
     const fieldMap = {
       likes: "likedArticles",
       bookmarks: "bookmarks",
@@ -210,15 +210,12 @@ class ArticleService {
     };
     const userField = fieldMap[metric];
 
-    const { isAdded } = await userRepository.toggleArticleReference(userId, userField, id);
+    const { isAdded, libraryItem } = await ReaderProfileService.toggleArticleReference(userId, userField, id);
     const incValue = isAdded ? 1 : -1;
-
-    const article = await articleRepository.findById(id);
+    const article = await articleRepository.updateEngagementCounter(id, metric, incValue);
     if (!article) return null;
-    let newValue = (article[metric] || 0) + incValue;
-    if (newValue < 0) newValue = 0;
 
-    return articleRepository.update(id, { [metric]: newValue });
+    return { article, isActive: isAdded, libraryItem };
   }
 }
 

@@ -149,12 +149,6 @@ export const AuthProvider = ({ children }) => {
       async updateProfile(updates) {
         const result = await authService.updateProfile(user.id, updates);
         if (result?.user) {
-          if (user && user.profile && user.profile.notifications && (!result.user.profile || !result.user.profile.notifications)) {
-            result.user.profile = {
-              ...(result.user.profile || {}),
-              notifications: user.profile.notifications,
-            };
-          }
           setUser(result.user);
         }
         return result;

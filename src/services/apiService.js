@@ -439,6 +439,16 @@ export const userApi = {
   markNotificationAsRead: (id) => patch(`/api/users/notifications/${id}`, {}),
 };
 
+// ─── Reader profile, library, and Article progress ─────────────────────────
+export const readerApi = {
+  profile: () => get("/api/reader/profile"),
+  updateProfile: (payload) => patch("/api/reader/profile", payload),
+  continueReading: () => get("/api/reader/continue-reading"),
+  completed: () => get("/api/reader/completed"),
+  progress: (articleId) => get(`/api/reader/progress/${articleId}`),
+  updateProgress: (payload) => post("/api/reader/progress", payload),
+};
+
 // ─── MyJourney Premium ──────────────────────────────────────────────────────
 export const membershipApi = {
   catalog: () => get("/api/membership/plans"),
@@ -570,6 +580,7 @@ const apiService = {
   comments: commentApi,
   settings: settingApi,
   users: userApi,
+  reader: readerApi,
   membership: membershipApi,
   creators: creatorApi,
   creatorStudio: creatorStudioApi,
@@ -585,6 +596,7 @@ const apiService = {
   commentApi,
   settingApi,
   userApi,
+  readerApi,
   membershipApi,
   creatorApi,
   creatorStudioApi,

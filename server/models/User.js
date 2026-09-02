@@ -5,18 +5,9 @@ const ProfileSchema = new mongoose.Schema(
     avatar: String,
     coverImage: String,
     bio: String,
+    location: String,
+    website: String,
     skills: [String],
-    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    likedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    savedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    comments: [
-      {
-        articleId: String,
-        articleTitle: String,
-        text: String,
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
   },
   { _id: false }
 );
@@ -77,11 +68,9 @@ const UserSchema = new mongoose.Schema(
       type: ProfileSchema,
       default: () => ({
         bio: "",
+        location: "",
+        website: "",
         skills: [],
-        bookmarks: [],
-        likedArticles: [],
-        savedArticles: [],
-        comments: [],
       }),
     },
     lastLoginAt: Date,

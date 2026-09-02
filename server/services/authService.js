@@ -91,14 +91,12 @@ class AuthService {
       status: "PENDING_VERIFICATION",
       newsletter: Boolean(newsletter),
       profile: {
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
-        coverImage: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&q=80",
-        bio: "Reader, builder, and collector of meaningful stories.",
-        skills: ["Reading", "Writing", "Reflection"],
-        bookmarks: [],
-        likedArticles: [],
-        savedArticles: [],
-        comments: [],
+        avatar: "",
+        coverImage: "",
+        bio: "",
+        location: "",
+        website: "",
+        skills: [],
       },
     });
 

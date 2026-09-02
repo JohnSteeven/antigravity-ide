@@ -19,7 +19,9 @@ import {
 } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
-import { getFullName, resolveImageUrl, copyToClipboard } from "../utils/helpers";
+import { useReader } from "../hooks/useReader";
+import { useArticleReadingProgress } from "../hooks/useArticleReadingProgress";
+import { getFullName, resolveImageUrl, shareArticle } from "../utils/helpers";
 import { getImageUrl } from "../utils/imageUrlHelper";
 import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
@@ -31,9 +33,11 @@ const ArticleDetail = () => {
   const { slug } = useParams();
   const location = useLocation();
   const { data, addComment, incrementArticle } = useCms();
-  const { isAuthenticated, loading: authLoading, updateProfile, user, refreshSession } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { library, applyAuthoritativeLibraryState } = useReader();
   const [comment, setComment] = useState({ text: "" });
   const [commentMessage, setCommentMessage] = useState("");
+  const [interactionFeedback, setInteractionFeedback] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeHeading, setActiveHeading] = useState("");
@@ -44,12 +48,19 @@ const ArticleDetail = () => {
   const [apiArticle, setApiArticle] = useState(null);
   const [apiLoading, setApiLoading] = useState(true);
 
+  useEffect(() => {
+    if (!interactionFeedback) return undefined;
+    const timer = window.setTimeout(() => setInteractionFeedback(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [interactionFeedback]);
+
   // Detail content always comes from the authoritative slug API. Shared CMS
   // context may contain Admin bodies and is never a public detail fallback.
   useEffect(() => {
     let cancelled = false;
     setApiArticle(null);
     setApiLoading(true);
+    setScrollProgress(0);
 
     const run = async () => {
       try {
@@ -67,6 +78,12 @@ const ArticleDetail = () => {
   }, [slug]);
 
   const article = apiArticle;
+
+  useArticleReadingProgress({
+    articleId: article?.id || article?._id,
+    enabled: Boolean(isAuthenticated && article && !article.premiumRequired),
+    progressPercent: scrollProgress,
+  });
 
   const relatedArticles = useMemo(() => {
     if (!article) return [];
@@ -196,61 +213,99 @@ const ArticleDetail = () => {
         String(item.articleId?._id || item.articleId?.id || item.articleId) === String(article.id || article._id)
     );
 
-  const requireLogin = () => {
-    if (authLoading) return false;   // session check still in-flight, don't show modal
+  const requireLogin = (action = "use this feature") => {
+    if (authLoading) {
+      setInteractionFeedback({ type: "status", message: "Checking your session…" });
+      return false;
+    }
     if (isAuthenticated) return true;
+    setInteractionFeedback({ type: "error", message: `Please sign in to ${action}.` });
     setShowLoginModal(true);
     return false;
   };
 
-  const isLiked = user?.profile?.likedArticles?.some(id => String(id) === String(article?.id || article?._id));
-  const isBookmarked = user?.profile?.bookmarks?.some(id => String(id) === String(article?.id || article?._id));
-  const isSaved = user?.profile?.savedArticles?.some(id => String(id) === String(article?.id || article?._id));
+  const currentArticleId = String(article?.id || article?._id);
+  const isLiked = library.liked.some((item) => String(item.id) === currentArticleId);
+  const isBookmarked = library.bookmarked.some((item) => String(item.id) === currentArticleId);
+  const isSaved = library.saved.some((item) => String(item.id) === currentArticleId);
 
-  const handleLikeToggle = async () => {
-    if (!requireLogin()) return;
+  const handleArticleInteraction = async ({
+    metric,
+    collection,
+    action,
+    activeMessage,
+    inactiveMessage,
+    failureMessage,
+  }) => {
+    if (!requireLogin(`${action} this article`)) return;
+    setInteractionFeedback(null);
     try {
       const articleId = article.id || article._id;
-      const response = await incrementArticle(articleId, "likes");
-      if (response?.likes !== undefined) {
-        setApiArticle((current) => current ? { ...current, likes: response.likes } : null);
+      const response = await incrementArticle(articleId, metric);
+      const count = Number(response?.count);
+      if (
+        response?.metric !== metric ||
+        String(response?.articleId) !== String(articleId) ||
+        typeof response?.isActive !== "boolean" ||
+        !Number.isFinite(count) ||
+        count < 0 ||
+        String(response?.libraryItem?.id) !== String(articleId)
+      ) {
+        throw new Error("The server returned an invalid Article interaction response.");
       }
-      await refreshSession();
-      setCommentMessage(isLiked ? "Article unliked." : "Article liked.");
+
+      setApiArticle((current) => current ? { ...current, [metric]: count } : null);
+      const applied = applyAuthoritativeLibraryState({
+        collection,
+        isActive: response.isActive,
+        article: response.libraryItem,
+        userId: user?.id,
+      });
+      if (!applied) {
+        throw Object.assign(new Error("The authenticated Reader changed before the response completed."), {
+          code: "READER_SESSION_CHANGED",
+        });
+      }
+      setInteractionFeedback({
+        type: "status",
+        message: response.isActive ? activeMessage : inactiveMessage,
+      });
     } catch (error) {
-      setCommentMessage(error.message || "Please try again.");
+      const message = error?.status === 401
+        ? `Please sign in to ${action} this article.`
+        : error?.status === 404
+          ? "This Article is no longer available."
+          : failureMessage;
+      setInteractionFeedback({ type: "error", message });
     }
   };
 
-  const handleBookmarkToggle = async () => {
-    if (!requireLogin()) return;
-    try {
-      const articleId = article.id || article._id;
-      const response = await incrementArticle(articleId, "bookmarks");
-      if (response?.bookmarks !== undefined) {
-        setApiArticle((current) => current ? { ...current, bookmarks: response.bookmarks } : null);
-      }
-      await refreshSession();
-      setCommentMessage(isBookmarked ? "Article removed from bookmarks." : "Article bookmarked.");
-    } catch (error) {
-      setCommentMessage(error.message || "Please try again.");
-    }
-  };
+  const handleLikeToggle = () => handleArticleInteraction({
+    metric: "likes",
+    collection: "liked",
+    action: "like",
+    activeMessage: "Article liked.",
+    inactiveMessage: "Article unliked.",
+    failureMessage: "Could not update your like. Try again.",
+  });
 
-  const handleSaveToggle = async () => {
-    if (!requireLogin()) return;
-    try {
-      const articleId = article.id || article._id;
-      const response = await incrementArticle(articleId, "saved");
-      if (response?.saved !== undefined) {
-        setApiArticle((current) => current ? { ...current, saved: response.saved } : null);
-      }
-      await refreshSession();
-      setCommentMessage(isSaved ? "Article removed from saved articles." : "Article saved to your profile.");
-    } catch (error) {
-      setCommentMessage(error.message || "Please try again.");
-    }
-  };
+  const handleBookmarkToggle = () => handleArticleInteraction({
+    metric: "bookmarks",
+    collection: "bookmarked",
+    action: "bookmark",
+    activeMessage: "Article bookmarked.",
+    inactiveMessage: "Article removed from bookmarks.",
+    failureMessage: "Could not update your bookmark. Try again.",
+  });
+
+  const handleSaveToggle = () => handleArticleInteraction({
+    metric: "saved",
+    collection: "saved",
+    action: "save",
+    activeMessage: "Article saved to your profile.",
+    inactiveMessage: "Article removed from saved articles.",
+    failureMessage: "Could not save this article. Try again.",
+  });
 
   const handleCommentSubmit = async (event) => {
     event.preventDefault();
@@ -265,21 +320,6 @@ const ArticleDetail = () => {
       };
       // AWAIT the addComment API call to catch and handle TimeoutErrors properly!
       await addComment(articleId, nextComment);
-      await updateProfile({
-        profile: {
-          ...(user?.profile || {}),
-          comments: [
-            {
-              id: `profile-comment-${articleId}-${Date.now()}`,
-              articleId: articleId,
-              articleTitle: article.title,
-              text: comment.text,
-              createdAt: new Date().toISOString().slice(0, 10),
-            },
-            ...((user?.profile?.comments || [])),
-          ],
-        },
-      });
       setComment({ text: "" });
       setCommentMessage("Comment submitted for moderation.");
     } catch (error) {
@@ -294,18 +334,51 @@ const ArticleDetail = () => {
     setNewsletterEmail("");
   };
 
-  const handleCopyLink = async () => {
-    const success = await copyToClipboard(window.location.href);
-    if (success) {
-      setCommentMessage("Article link copied to clipboard!");
+  const handleCopyLink = async ({ forceCopy = false } = {}) => {
+    const canonicalUrl = new URL(window.location.href);
+    canonicalUrl.search = "";
+    canonicalUrl.hash = "";
+    const result = await shareArticle({
+      title: article.title,
+      url: canonicalUrl.href,
+      preferNative: !forceCopy,
+    });
+    if (result.method === "native") {
+      setInteractionFeedback({ type: "status", message: "Article shared." });
+    } else if (result.method === "clipboard") {
+      setInteractionFeedback({ type: "status", message: "Link copied." });
+    } else if (result.method === "cancelled") {
+      setInteractionFeedback({ type: "status", message: "Sharing cancelled." });
     } else {
-      setCommentMessage("Failed to copy link.");
+      setInteractionFeedback({ type: "error", message: "Could not copy the link." });
     }
+    return result;
   };
 
   return (
     <>
       <DocumentMetadata content={article} kind="Article" />
+      {interactionFeedback?.message && (
+        <div
+          role={interactionFeedback.type === "error" ? "alert" : "status"}
+          aria-live={interactionFeedback.type === "error" ? "assertive" : "polite"}
+          aria-atomic="true"
+          style={{
+            position: "fixed",
+            top: "1rem",
+            right: "1rem",
+            zIndex: 1200,
+            maxWidth: "min(24rem, calc(100vw - 2rem))",
+            padding: "0.75rem 1rem",
+            borderRadius: "0.65rem",
+            background: interactionFeedback.type === "error" ? "#7f1d1d" : "#174f49",
+            color: "#ffffff",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.24)",
+          }}
+        >
+          {interactionFeedback.message}
+        </div>
+      )}
       <ExperienceResolver
         article={article}
         processedBody={processedBody}

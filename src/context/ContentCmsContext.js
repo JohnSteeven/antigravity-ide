@@ -6,6 +6,11 @@ import { useAuth } from "../hooks/useAuth";
 const ContentCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-content-data";
 const CACHE_VERSION = "v7"; // Structured Story fixtures and renderer contract
+const ARTICLE_INTERACTION_API = {
+  likes: articleApi.like,
+  bookmarks: articleApi.bookmark,
+  saved: articleApi.save,
+};
 
 const slugify = (value) =>
   String(value || "")
@@ -288,23 +293,11 @@ export const ContentCmsProvider = ({ children }) => {
         return response;
       }
 
-      if (metric === "likes") {
-        const response = await articleApi.like(id);
-        if (response?.likes !== undefined) applyUpdate(response.likes);
-        return response;
-      }
-
-      if (metric === "bookmarks") {
-        const response = await articleApi.bookmark(id);
-        if (response?.bookmarks !== undefined) applyUpdate(response.bookmarks);
-        return response;
-      }
-
-      if (metric === "saved") {
-        const response = await articleApi.save(id);
-        if (response?.saved !== undefined) applyUpdate(response.saved);
-        return response;
-      }
+      const requestInteraction = ARTICLE_INTERACTION_API[metric];
+      if (!requestInteraction) throw new Error("Unsupported Article interaction.");
+      const response = await requestInteraction(id);
+      if (response?.count !== undefined) applyUpdate(response.count);
+      return response;
     },
     async toggleArticleStatus(id) {
       const prevArticles = [...articles];

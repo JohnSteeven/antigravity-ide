@@ -1,15 +1,57 @@
 const { body } = require("express-validator");
+const { isDailyQuoteTimeSlot } = require("../config/notificationPreferences");
+
+const ACCOUNT_PROFILE_FIELDS = new Set([
+  "avatar",
+  "coverImage",
+  "bio",
+  "location",
+  "website",
+  "skills",
+]);
+
+const isHttpUrl = (value) => {
+  if (value === "") return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const isSafeProfileImage = (value) => {
+  if (value === "") return true;
+  if (isHttpUrl(value)) return true;
+  return /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value)
+    && value.length <= 2_000_000;
+};
 
 const updateProfileValidator = [
   body("firstName").optional().trim().notEmpty().withMessage("First name cannot be empty."),
   body("lastName").optional().trim().notEmpty().withMessage("Last name cannot be empty."),
   body("username").optional().trim().isLength({ min: 3 }).withMessage("Username must be at least 3 characters."),
   body("email").optional().trim().isEmail().normalizeEmail().withMessage("Must be a valid email address."),
+  body("countryCode").optional().trim().matches(/^\+\d{1,4}$/).withMessage("Must be a valid country code."),
   body("mobile").optional().trim().isLength({ min: 8, max: 18 }).withMessage("Must be a valid mobile number."),
+  body("newsletter").optional().isBoolean().withMessage("Newsletter preference must be a boolean."),
+  body("profile")
+    .optional()
+    .custom((value) => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error("profile must be an object.");
+      }
+      const unknown = Object.keys(value).find((key) => !ACCOUNT_PROFILE_FIELDS.has(key));
+      if (unknown) throw new Error(`Unknown profile field: ${unknown}`);
+      return true;
+    }),
   body("profile.bio").optional().trim().isLength({ max: 700 }).withMessage("Bio cannot exceed 700 characters."),
-  body("profile.skills").optional().isArray().withMessage("Skills must be an array of strings."),
-  body("profile.avatar").optional().trim().isURL().withMessage("Avatar must be a valid URL."),
-  body("profile.coverImage").optional().trim().isURL().withMessage("Cover image must be a valid URL."),
+  body("profile.location").optional().trim().isLength({ max: 120 }).withMessage("Location cannot exceed 120 characters."),
+  body("profile.website").optional().trim().custom(isHttpUrl).withMessage("Website must be an HTTP(S) URL."),
+  body("profile.skills").optional().isArray({ max: 30 }).withMessage("Skills must be an array of strings."),
+  body("profile.skills.*").optional().isString().trim().isLength({ min: 1, max: 60 }).withMessage("Each skill must be between 1 and 60 characters."),
+  body("profile.avatar").optional().custom(isSafeProfileImage).withMessage("Avatar must be an HTTP(S) URL or a supported image upload."),
+  body("profile.coverImage").optional().custom(isSafeProfileImage).withMessage("Cover image must be an HTTP(S) URL or a supported image upload."),
   body("notificationPreferences")
     .optional()
     .custom((value) => {
@@ -21,12 +63,7 @@ const updateProfileValidator = [
         "dailyQuote",
         "newArticles",
         "readingReminders",
-        "weeklySummary",
-        "sentQuotes",
-        "lastQuoteSentAt",
-        "lastActiveAt",
-        "lastReadingReminderSentAt",
-        "lastWeeklySummarySentAt"
+        "weeklySummary"
       ];
       const actualKeys = Object.keys(value);
       for (const k of actualKeys) {
@@ -60,8 +97,7 @@ const updateProfileValidator = [
           }
           const h = value.dailyQuote.time.hour;
           const m = value.dailyQuote.time.minute;
-          const isValidSlot = (h === 8 && m === 0) || (h === 9 && m === 0) || (h === 18 && m === 0) || (h === 21 && m === 0);
-          if (!isValidSlot) {
+          if (!isDailyQuoteTimeSlot(h, m)) {
             throw new Error("Time slot must be one of: 08:00 AM, 09:00 AM, 06:00 PM, or 09:00 PM.");
           }
         }

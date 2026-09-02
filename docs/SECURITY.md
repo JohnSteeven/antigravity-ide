@@ -23,6 +23,8 @@ The client does not create browser-only fallback users or sessions when the API/
 
 When `CSRF_ENABLED=true`, mutations require a CSRF token that matches the readable SameSite cookie. The client obtains it from `/api/auth/csrf-token` and sends `x-csrf-token`.
 
+Client auth cleanup expires only the HttpOnly access/refresh cookie names; it does not enumerate and delete the readable CSRF cookie. This keeps the cached header token and double-submit cookie aligned across anonymous `/me`/refresh failures and the next login or mutation.
+
 CORS allows the configured `CLIENT_URL` with credentials. Production should use explicit HTTPS origins, Secure cookies, and CSRF enforcement.
 
 ## Authorization and RBAC
@@ -33,7 +35,9 @@ CORS allows the configured `CLIENT_URL` with credentials. Production should use 
 - Creator Studio and CMS/Admin remain separate roles/surfaces.
 - Object ownership is resolved from authenticated server state; client owner flags are informational only.
 - Settings registries, content modeling, layouts, component manifests, workflow/version state, dashboards, operational tooling, and legacy CMS AI completions are Admin-only. Their public runtime contracts are separate and minimal (for example active theme, evaluated feature status, published page-by-slug, navigation tree, and generated design-token CSS).
-- Reader progress and continue-reading state require authentication; arbitrary client-supplied anonymous session IDs are not ownership credentials.
+- Reader profile, progress, Continue Reading, and Completed endpoints require authentication and scope every query to `req.user`; arbitrary client user/session IDs are not ownership credentials. The profile DTO allowlists basic account fields and does not expose email/mobile verification, authentication/security fields, notification history, or another user's private preferences/history. Progress/library writes verify `contentType=article`, so Stories cannot enter Article Reader history.
+- The Reader client binds response application to the current authenticated identity, clears library data on identity loss/change, and rejects late mutation results from a prior account. Reading-progress cleanup also rechecks current auth enablement before sending.
+- Global Admin media state is neither fetched nor restored for anonymous/Reader sessions and is cleared when Admin authority is lost. Anonymous Agent capability discovery does not fetch private conversation history.
 
 ## Premium enforcement
 

@@ -68,13 +68,32 @@ jest.mock('../controllers/aiController', () => new Proxy({}, {
 jest.mock('../controllers/readerController', () => ({
   getPersonalizedFeed: mockOk,
   updateProgress: mockOk,
+  getProgress: mockOk,
   getContinueReading: mockOk,
+  getCompleted: mockOk,
   getLearningPaths: mockOk,
   getProfile: mockOk,
   updateProfile: mockOk,
   getCollections: mockOk,
   createCollection: mockOk,
   addToCollection: mockOk,
+}));
+
+jest.mock('../controllers/articleController', () => ({
+  getArticles: mockOk,
+  getAdminArticles: mockOk,
+  getArticleBySlug: mockOk,
+  incrementViews: mockOk,
+  likeArticle: mockOk,
+  bookmarkArticle: mockOk,
+  saveArticle: mockOk,
+  getComments: mockOk,
+  addComment: mockOk,
+  createArticle: mockOk,
+  updateArticle: mockOk,
+  deleteArticle: mockOk,
+  restoreArticle: mockOk,
+  updateStatus: mockOk,
 }));
 
 const app = express();
@@ -85,6 +104,7 @@ app.use('/api/themes', require('../routes/themeRoutes'));
 app.use('/api/features', require('../routes/featureFlagRoutes'));
 app.use('/api/ai', require('../routes/aiRoutes'));
 app.use('/api/reader', require('../routes/readerRoutes'));
+app.use('/api/articles', require('../routes/articleRoutes'));
 
 const expectAdminBoundary = async (makeRequest) => {
   expect((await makeRequest()).status).toBe(401);
@@ -122,5 +142,14 @@ describe('server-authoritative authorization boundaries', () => {
     expect((await request(app).post('/api/reader/progress')).status).toBe(401);
     expect((await request(app).post('/api/reader/progress').set('x-test-role', 'Reader')).status).toBe(200);
     expect((await request(app).get('/api/reader/continue-reading')).status).toBe(401);
+    expect((await request(app).get('/api/reader/completed')).status).toBe(401);
+    expect((await request(app).get('/api/reader/progress/article-1')).status).toBe(401);
+  });
+
+  test('Article like, bookmark, and save reject anonymous callers', async () => {
+    for (const action of ['like', 'bookmark', 'save']) {
+      expect((await request(app).post(`/api/articles/article-1/${action}`)).status).toBe(401);
+      expect((await request(app).post(`/api/articles/article-1/${action}`).set('x-test-role', 'Reader')).status).toBe(200);
+    }
   });
 });

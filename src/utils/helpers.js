@@ -64,11 +64,12 @@ export const removeStorage = (key) => {
 
 export const clearAuthCookies = () => {
   if (typeof document === "undefined") return;
-  document.cookie.split(";").forEach((cookie) => {
-    const name = cookie.split("=")[0].trim();
-    if (name) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    }
+  // Access/refresh cookies are HttpOnly in the supported server flow, but
+  // remove legacy script-visible copies without deleting unrelated cookies.
+  // In particular, the CSRF cookie must remain paired with the token cached by
+  // the request clients after an anonymous session/refresh check returns 401.
+  ["accessToken", "refreshToken"].forEach((name) => {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
   });
 };
 
@@ -133,35 +134,11 @@ export const toCsv = (items) => {
 };
 
 import { getImageUrl } from "./imageUrlHelper";
+import articleSharing from "./articleSharing.cjs";
 
 export const resolveImageUrl = (url, category = "") => {
   return getImageUrl(url, category);
 };
 
-export const copyToClipboard = async (text) => {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (e) {
-      console.warn("navigator.clipboard failed, trying fallback", e);
-    }
-  }
-
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.left = "-999999px";
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-  try {
-    document.execCommand("copy");
-    textArea.remove();
-    return true;
-  } catch (err) {
-    console.error("Fallback copy failed", err);
-    textArea.remove();
-    return false;
-  }
-};
+export const copyToClipboard = articleSharing.copyToClipboard;
+export const shareArticle = articleSharing.shareArticle;

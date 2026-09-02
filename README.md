@@ -10,6 +10,7 @@ The repository is a single npm application: Parcel serves the React client and E
 | --- | --- |
 | Articles | Implemented public catalog/detail and CMS management, with Free/Premium body protection. |
 | Stories | Implemented on the Article domain with dedicated structured sections and approved render layouts. |
+| Reader profile | Server-authoritative interests/goals/library, atomic per-Article progress, real Continue/Completed/time/achievement states, and honest empty states. Migration 011 is required before rollout. |
 | MyJourney Life | Implemented private Premium workspace for today, habits, routines, tasks, goals, health, money, journal, insights, search, notifications, export, and deletion. Optional AI, push, and external integrations require providers. |
 | MyJourney Premium | Implemented global account-level entitlement model. Billing durations are billing choices, not separate feature tiers. Checkout/webhooks are unavailable until a billing provider is implemented. |
 | Creators | Implemented application/review workflow, public directory/profile, follow state, ownership, and Creator Studio. Earnings/payout operations are foundation only. |
@@ -29,7 +30,7 @@ See [Features](docs/FEATURES.md) for the engineering status inventory and [Agent
 - Database: MongoDB through Mongoose.
 - Authentication: bcrypt passwords; JWT access/refresh tokens in HttpOnly cookies; persistent refresh-token/session records; optional CSRF enforcement.
 - Build: Parcel 2 and `concurrently`.
-- Tests: Jest 29 and Supertest, with Socket.IO integration tests.
+- Tests: Jest 29, Supertest, Socket.IO integration tests, and Playwright Chromium smoke journeys.
 
 ## Prerequisites
 
@@ -100,6 +101,8 @@ Optional provider groups include SMTP, Twilio/SMS, VAPID web push, Redis/multipl
 
 Authentication routes include `/login`, `/register`, OTP verification, password reset, profile editing, and logout through the account UI.
 
+Authenticated Reader APIs live under `/api/reader`: the allowlisted profile contract, Reader preference updates, periodic Article progress updates, per-Article progress, Continue Reading, and Completed. See [Reader data foundation](docs/READER_DATA.md).
+
 ## Tests and build
 
 ```bash
@@ -108,13 +111,14 @@ npm run test:premium
 npm run test:creator
 npm run test:learn
 npm run test:multiplayer
+npm run test:e2e
 npm test -- --runInBand
 npm run check:server
 npm run build
 git diff --check
 ```
 
-See [Testing](docs/TESTING.md) for focused suites, integration expectations, and manual browser QA rules.
+See [Testing](docs/TESTING.md) for focused suites, isolated Playwright setup, integration expectations, and manual browser QA rules. The current cross-surface status is tracked in the [core interaction inventory](docs/CORE_INTERACTION_INVENTORY.md).
 
 ## Development Creator/Learn fixtures
 

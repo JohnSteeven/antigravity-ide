@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { mediaApi, galleryApi } from "../services/apiService";
+import { useAuth } from "../hooks/useAuth";
 
 const MediaCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-media-data";
@@ -10,11 +11,14 @@ const withClientId = (item) => {
 };
 
 export const MediaCmsProvider = ({ children }) => {
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === "Admin";
   const [syncStatus, setSyncStatus] = useState("loading");
   const [media, setMedia] = useState([]);
 
   // Load from local storage fallback
   useEffect(() => {
+    if (authLoading || !isAdmin) return;
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -24,20 +28,21 @@ export const MediaCmsProvider = ({ children }) => {
     } catch (err) {
       console.warn("Failed to load local media cache", err);
     }
-  }, []);
+  }, [authLoading, isAdmin]);
 
   // Debounced save
   useEffect(() => {
+    if (!isAdmin) return undefined;
     const timer = setTimeout(() => {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ media }));
     }, 1000);
     return () => clearTimeout(timer);
-  }, [media]);
+  }, [isAdmin, media]);
 
   const fetchMediaData = async () => {
     setSyncStatus("loading");
     try {
-      const mediaRes = await mediaApi.list({ includeDeleted: true }).catch(() => ({ files: [] }));
+      const mediaRes = await mediaApi.list({ includeDeleted: true });
       if (mediaRes && Array.isArray(mediaRes.files)) {
         setMedia(mediaRes.files.map(withClientId));
       }
@@ -49,8 +54,15 @@ export const MediaCmsProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAdmin) {
+      setMedia([]);
+      setSyncStatus("idle");
+      window.localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
     fetchMediaData();
-  }, []);
+  }, [authLoading, isAdmin]);
 
   const actions = useMemo(() => ({
     async refreshMedia() {

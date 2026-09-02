@@ -52,6 +52,18 @@ const calcReadingTime = (html = "") => {
   return { min: minutes, label: `${minutes} min read` };
 };
 
+const sendEngagementResponse = (res, result, metric) => {
+  const count = Number(result.article[metric] || 0);
+  return res.json({
+    articleId: String(result.article._id || result.article.id),
+    metric,
+    isActive: result.isActive,
+    count,
+    [metric]: count,
+    libraryItem: result.libraryItem,
+  });
+};
+
 class ArticleController {
   async getArticles(req, res, next) {
     try {
@@ -96,9 +108,9 @@ class ArticleController {
 
   async likeArticle(req, res, next) {
     try {
-      const article = await articleService.incrementMetric(req.params.id, "likes", req.user._id);
-      if (!article) return res.status(404).json({ message: "Article not found." });
-      res.json({ likes: article.likes });
+      const result = await articleService.incrementMetric(req.params.id, "likes", req.user._id);
+      if (!result) return res.status(404).json({ message: "Article not found." });
+      sendEngagementResponse(res, result, "likes");
     } catch (err) {
       next(err);
     }
@@ -106,9 +118,9 @@ class ArticleController {
 
   async bookmarkArticle(req, res, next) {
     try {
-      const article = await articleService.incrementMetric(req.params.id, "bookmarks", req.user._id);
-      if (!article) return res.status(404).json({ message: "Article not found." });
-      res.json({ bookmarks: article.bookmarks });
+      const result = await articleService.incrementMetric(req.params.id, "bookmarks", req.user._id);
+      if (!result) return res.status(404).json({ message: "Article not found." });
+      sendEngagementResponse(res, result, "bookmarks");
     } catch (err) {
       next(err);
     }
@@ -116,9 +128,9 @@ class ArticleController {
 
   async saveArticle(req, res, next) {
     try {
-      const article = await articleService.incrementMetric(req.params.id, "saved", req.user._id);
-      if (!article) return res.status(404).json({ message: "Article not found." });
-      res.json({ saved: article.saved });
+      const result = await articleService.incrementMetric(req.params.id, "saved", req.user._id);
+      if (!result) return res.status(404).json({ message: "Article not found." });
+      sendEngagementResponse(res, result, "saved");
     } catch (err) {
       next(err);
     }

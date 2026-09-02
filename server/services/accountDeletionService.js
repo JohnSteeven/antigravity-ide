@@ -5,6 +5,9 @@ const Session = require("../models/Session");
 const TrustedDevice = require("../models/TrustedDevice");
 const User = require("../models/User");
 const ReaderMembership = require("../models/ReaderMembership");
+const ReaderProfile = require("../models/ReaderProfile");
+const ReadingProgress = require("../models/ReadingProgress");
+const ReadingCollection = require("../models/ReadingCollection");
 const BillingEvent = require("../models/BillingEvent");
 const CreatorApplication = require("../models/CreatorApplication");
 const CreatorProfile = require("../models/CreatorProfile");
@@ -44,6 +47,9 @@ const permanentlyDeleteAccount = async (userId) => {
   const subscriptionCleanup = mongoose.isValidObjectId(userId)
     ? [ReaderMembership.deleteMany({ userId }), BillingEvent.deleteMany({ userId })]
     : [Promise.resolve({ deletedCount: 0 }), Promise.resolve({ deletedCount: 0 })];
+  const readerCleanup = mongoose.isValidObjectId(userId)
+    ? [ReaderProfile.deleteMany({ userId }), ReadingProgress.deleteMany({ userId }), ReadingCollection.deleteMany({ userId })]
+    : [Promise.resolve({ deletedCount: 0 }), Promise.resolve({ deletedCount: 0 }), Promise.resolve({ deletedCount: 0 })];
   const creatorLearnCleanup = mongoose.isValidObjectId(userId)
     ? [
       CreatorApplication.deleteMany({ userId }),
@@ -57,9 +63,10 @@ const permanentlyDeleteAccount = async (userId) => {
       Notification.deleteMany({ user: userId }),
     ]
     : Array.from({ length: 9 }, () => Promise.resolve({ deletedCount: 0, modifiedCount: 0 }));
-  const [sessions, refreshTokens, devices, memberships, billingEvents, creatorApplicationsDeleted, creatorReviewEvents, creatorProfiles, enrollments, learningEvents, engagementEvents, contentReports, follows, notifications] = await Promise.all([
+  const [sessions, refreshTokens, devices, memberships, billingEvents, readerProfiles, readingProgress, readingCollections, creatorApplicationsDeleted, creatorReviewEvents, creatorProfiles, enrollments, learningEvents, engagementEvents, contentReports, follows, notifications] = await Promise.all([
     Session.deleteMany({ user: userId }), RefreshToken.deleteMany({ user: userId }), TrustedDevice.deleteMany({ user: userId }),
     ...subscriptionCleanup,
+    ...readerCleanup,
     ...creatorLearnCleanup,
   ]);
   const user = await User.deleteOne({ _id: userId });
@@ -67,6 +74,7 @@ const permanentlyDeleteAccount = async (userId) => {
     userDeleted: user.deletedCount === 1,
     life: life.deleted,
     subscription: { memberships: memberships.deletedCount || 0, billingEvents: billingEvents.deletedCount || 0, externalProviderCancellationRequired: false },
+    reader: { profiles: readerProfiles.deletedCount || 0, progress: readingProgress.deletedCount || 0, collections: readingCollections.deletedCount || 0 },
     creator: { applications: creatorApplicationsDeleted.deletedCount || 0, reviewEvents: creatorReviewEvents.deletedCount || 0, profilesDeactivated: creatorProfiles.modifiedCount || 0, publishedContentPreserved: true },
     learn: { enrollments: enrollments.deletedCount || 0, learningEvents: learningEvents.deletedCount || 0, engagementEvents: engagementEvents.deletedCount || 0, reports: contentReports.deletedCount || 0, follows: follows.deletedCount || 0, notifications: notifications.deletedCount || 0 },
     authentication: { sessions: sessions.deletedCount || 0, refreshTokens: refreshTokens.deletedCount || 0, trustedDevices: devices.deletedCount || 0 },

@@ -11,18 +11,19 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
+import { useReader } from "../../hooks/useReader";
 import SecurityCenter from "../security/SecurityCenter";
 
 const SettingsTab = () => {
   const { user, updateProfile } = useAuth();
-  const profile = user?.profile || {};
+  const { reader, contracts, updateReaderProfile } = useReader();
 
   const [activeSection, setActiveSection] = useState("account");
 
   // Appearance state
   const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window === "undefined") return Boolean(profile.darkMode);
-    return window.localStorage.getItem("myjourney-theme") === "dark" || Boolean(profile.darkMode);
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("myjourney-theme") === "dark";
   });
 
   // Notifications state
@@ -47,16 +48,31 @@ const SettingsTab = () => {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    if (reader?.preferences?.theme === "dark") setDarkMode(true);
+    if (reader?.preferences?.theme === "light") setDarkMode(false);
+  }, [reader?.preferences?.theme]);
+
+  useEffect(() => {
+    setPrefDailyQuote(user?.notificationPreferences?.dailyQuote?.enabled ?? true);
+    setPrefDailyHour(user?.notificationPreferences?.dailyQuote?.time?.hour ?? 9);
+    setPrefNewArticles(user?.notificationPreferences?.newArticles?.enabled ?? false);
+    setPrefReadingReminders(user?.notificationPreferences?.readingReminders?.enabled ?? false);
+    setPrefWeeklySummary(user?.notificationPreferences?.weeklySummary?.enabled ?? false);
+  }, [user?.notificationPreferences]);
+
+  useEffect(() => {
+    const allowed = contracts.dailyQuoteTimeSlots.map((slot) => slot.hour);
+    if (allowed.length && !allowed.includes(prefDailyHour)) setPrefDailyHour(9);
+  }, [contracts.dailyQuoteTimeSlots, prefDailyHour]);
+
   const handleToggleDarkMode = async () => {
     const nextVal = !darkMode;
     setDarkMode(nextVal);
     try {
-      await updateProfile({
-        profile: {
-          darkMode: nextVal,
-        },
-      });
+      await updateReaderProfile({ themePreference: nextVal ? "dark" : "light" });
     } catch (e) {
+      setDarkMode(!nextVal);
       console.warn("Dark mode preference update failed:", e);
     }
   };
@@ -230,12 +246,9 @@ const SettingsTab = () => {
                     onChange={(e) => setPrefDailyHour(Number(e.target.value))}
                     style={{ maxWidth: 220 }}
                   >
-                    <option value={7}>7:00 AM</option>
-                    <option value={8}>8:00 AM</option>
-                    <option value={9}>9:00 AM (Default)</option>
-                    <option value={10}>10:00 AM</option>
-                    <option value={18}>6:00 PM</option>
-                    <option value={20}>8:00 PM</option>
+                    {contracts.dailyQuoteTimeSlots.map((slot) => (
+                      <option key={`${slot.hour}:${slot.minute}`} value={slot.hour}>{slot.label}</option>
+                    ))}
                   </select>
                 </div>
               )}

@@ -9,6 +9,7 @@ import {
   FiSettings,
 } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
+import { useReader } from "../../hooks/useReader";
 import { getFullName, getProfileCover, getProfilePhoto } from "../../utils/helpers";
 import UserAvatar from "../shared/UserAvatar";
 import OverviewTab from "./OverviewTab";
@@ -28,12 +29,17 @@ const TABS = [
 
 const ReaderPortal = () => {
   const { user } = useAuth();
+  const { refreshReader } = useReader();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const profile   = user?.profile || {};
   const fullName  = getFullName(user);
   const coverImage = getProfileCover(profile);
+
+  useEffect(() => {
+    refreshReader();
+  }, [refreshReader]);
 
   // Derive active tab from URL; default to "overview"
   const rawTab   = searchParams.get("tab") || "overview";

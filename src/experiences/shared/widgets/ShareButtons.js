@@ -1,8 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { FiTwitter, FiLinkedin, FiFacebook, FiLink } from "react-icons/fi";
 
 const ShareButtons = ({ article, handleCopyLink }) => {
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const [copying, setCopying] = useState(false);
+  const shareUrl = typeof window !== "undefined"
+    ? `${window.location.origin}${window.location.pathname}`
+    : "";
+  const copyLink = async () => {
+    if (copying) return;
+    setCopying(true);
+    try {
+      await handleCopyLink({ forceCopy: true });
+    } finally {
+      setCopying(false);
+    }
+  };
 
   return (
     <div className="right-sidebar-panel detail-card detail-card--dark share-story-panel">
@@ -32,8 +44,14 @@ const ShareButtons = ({ article, handleCopyLink }) => {
         >
           <FiFacebook /> Facebook
         </a>
-        <button type="button" onClick={handleCopyLink} className="share-grid-btn copylink">
-          <FiLink /> Copy Link
+        <button
+          type="button"
+          onClick={copyLink}
+          className="share-grid-btn copylink"
+          disabled={copying}
+          aria-busy={copying}
+        >
+          <FiLink /> {copying ? "Copying…" : "Copy Link"}
         </button>
       </div>
     </div>

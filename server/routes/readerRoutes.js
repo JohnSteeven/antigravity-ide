@@ -14,7 +14,9 @@ const apiRegistry = require('../core/apiRegistry');
 // ── Public / Anonymous Endpoints ──────────────────────────────────────────────
 router.get('/feed', optionalAuthenticate, readerController.getPersonalizedFeed);
 router.post('/progress', authenticate, readerController.updateProgress);
+router.get('/progress/:articleId', authenticate, readerController.getProgress);
 router.get('/continue-reading', authenticate, readerController.getContinueReading);
+router.get('/completed', authenticate, readerController.getCompleted);
 router.get('/learning-paths', readerController.getLearningPaths);
 
 // ── Authenticated Reader Endpoints ────────────────────────────────────────────

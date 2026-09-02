@@ -31,6 +31,35 @@ Focused auth/startup checks:
 npx jest --runInBand server/tests/authOtp.test.js server/tests/authClientContract.test.js server/tests/dbStartup.test.js server/tests/runtimeDiagnostics.test.js server/tests/schedulerLifecycle.test.js server/tests/auditLogger.test.js
 ```
 
+Focused Reader/Profile checks:
+
+```bash
+npx jest --runInBand server/tests/articleReaderInteractions.test.js server/tests/readerDataFoundation.test.js server/tests/readerDataMigration.test.js server/tests/authorizationBoundaries.test.js
+```
+
+These cover User/ReaderProfile ownership, DTO privacy, atomic Article library toggles/counters, authenticated Like/Bookmark/Save boundaries and response contracts, ReaderContext/Profile synchronization, native Share and clipboard failure paths, atomic monotonic progress, completion compare-and-set, Article-only enforcement, unique-index migration behavior, editable account fields, notification time-slot consistency, and source contracts excluding fabricated Profile data.
+
+Core reliability contract checks:
+
+```bash
+npx jest --runInBand server/tests/authClientContract.test.js server/tests/articleReaderInteractions.test.js server/tests/coreInteractionReliability.test.js server/tests/readerDataFoundation.test.js server/tests/readerDataMigration.test.js server/tests/authorizationBoundaries.test.js
+```
+
+## Browser smoke tests
+
+Playwright runs a deterministic Chromium journey with an isolated UI on port 1235, API on port 5001, and Mongo database whose name must end in `_e2e` or `_test`:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+npm run test:e2e:headed
+npm run test:e2e:report
+```
+
+The default database is `mongodb://127.0.0.1:27017/myjourney_e2e`. Override it only with `E2E_MONGO_URI` naming an unmistakable test database. Global setup upserts fixed Reader/Article fixtures and clears only their test-owned Reader/session state. It does not weaken production authentication, contact SMTP/SMS, use personal Admin records, or run migration 011.
+
+The initial journey covers cookie/CSRF login, desktop Categories navigation, published Article open, Like/Unlike visual and reload state, Bookmark and Save persistence/Profile synchronization, canonical Share fallback feedback, reading progress, Light/Dark active-state CSS, logout/login account isolation, and the mobile drawer. See `docs/CORE_INTERACTION_INVENTORY.md` for browser-pending surfaces.
+
 `runtimeDiagnostics.test.js` covers Mongo URI precedence/redaction, dual-stack port detection, UI-only no-Mongo preflight behavior, safe Parcel temp cleanup, and liveness/readiness state. `schedulerLifecycle.test.js` verifies that scheduler startup is idempotent and all timers can be closed.
 
 Story/content/security examples:

@@ -15,8 +15,9 @@ import {
 } from "react-icons/fi";
 import { getCategoryBlueprint } from "../../domain/knowledgeArchitecture";
 import { useAuth } from "../../hooks/useAuth";
+import { useReader } from "../../hooks/useReader";
 import { useCms } from "../../context/CmsContext";
-import { decodeHtmlEntities, resolveImageUrl, copyToClipboard } from "../../utils/helpers";
+import { decodeHtmlEntities, resolveImageUrl, shareArticle } from "../../utils/helpers";
 import { getImageUrl, handleImageError } from "../../utils/imageUrlHelper";
 import ArticlesCard from "../../components/ArticlesCard";
 import LoginRequiredModal from "../../components/LoginRequiredModal";
@@ -82,7 +83,8 @@ const CategoryLanding = ({
   incrementArticle,
 }) => {
   const location = useLocation();
-  const { isAuthenticated, loading: authLoading, updateProfile, user, refreshSession } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { library, applyAuthoritativeLibraryState } = useReader();
   const { data } = useCms();
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("all");
@@ -91,6 +93,8 @@ const CategoryLanding = ({
   const [visibleCount, setVisibleCount] = useState(6);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [message, setMessage] = useState("");
+  const [pendingAction, setPendingAction] = useState("");
+  const [engagementCounts, setEngagementCounts] = useState({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   const sentinelRef = useRef(null);
 
@@ -148,6 +152,10 @@ const CategoryLanding = ({
 
   const featuredArticle =
     categoryArticles.find((article) => article.featured) || categoryArticles[0];
+
+  useEffect(() => {
+    setEngagementCounts({});
+  }, [featuredArticle?.id, featuredArticle?._id]);
 
   const popularArticles = useMemo(
     () => sortArticles(categoryArticles, "popular").slice(0, 5),
@@ -224,58 +232,67 @@ const CategoryLanding = ({
     return false;
   };
 
-  const isLiked = user?.profile?.likedArticles?.some(id => String(id) === String(featuredArticle?.id || featuredArticle?._id));
-  const isBookmarked = user?.profile?.bookmarks?.some(id => String(id) === String(featuredArticle?.id || featuredArticle?._id));
+  const featuredArticleId = String(featuredArticle?.id || featuredArticle?._id);
+  const isLiked = library.liked.some((item) => String(item.id) === featuredArticleId);
+  const isBookmarked = library.bookmarked.some((item) => String(item.id) === featuredArticleId);
+
+  const applyInteractionResponse = (response, metric, collection) => {
+    if (
+      response?.metric !== metric ||
+      String(response?.articleId) !== featuredArticleId ||
+      typeof response?.isActive !== "boolean" ||
+      !Number.isFinite(Number(response?.count)) ||
+      String(response?.libraryItem?.id) !== featuredArticleId
+    ) throw new Error("Invalid Article interaction response.");
+    setEngagementCounts((current) => ({ ...current, [metric]: Number(response.count) }));
+    applyAuthoritativeLibraryState({ collection, isActive: response.isActive, article: response.libraryItem });
+    return response.isActive;
+  };
 
   const handleLikeToggle = async () => {
     if (!featuredArticle) return;
     if (!requireLogin()) return;
+    if (pendingAction) return;
+    setPendingAction("like");
     try {
       const articleId = featuredArticle.id || featuredArticle._id;
-      await incrementArticle(articleId, "likes");
-      await refreshSession();
-      setMessage(isLiked ? "Article unliked." : "Article liked.");
-    } catch (error) {
-      setMessage(error.message || "Please try again.");
+      const response = await incrementArticle(articleId, "likes");
+      const active = applyInteractionResponse(response, "likes", "liked");
+      setMessage(active ? "Article liked." : "Article unliked.");
+    } catch {
+      setMessage("Could not update your like. Try again.");
+    } finally {
+      setPendingAction("");
     }
   };
 
   const handleBookmarkToggle = async () => {
     if (!featuredArticle) return;
     if (!requireLogin()) return;
+    if (pendingAction) return;
+    setPendingAction("bookmark");
     try {
       const articleId = featuredArticle.id || featuredArticle._id;
-      await incrementArticle(articleId, "bookmarks");
-      await refreshSession();
-      setMessage(isBookmarked ? "Article removed from bookmarks." : "Article bookmarked.");
-    } catch (error) {
-      setMessage(error.message || "Please try again.");
+      const response = await incrementArticle(articleId, "bookmarks");
+      const active = applyInteractionResponse(response, "bookmarks", "bookmarked");
+      setMessage(active ? "Article bookmarked." : "Article removed from bookmarks.");
+    } catch {
+      setMessage("Could not update your bookmark. Try again.");
+    } finally {
+      setPendingAction("");
     }
   };
 
   const handleShare = async (article = featuredArticle) => {
     if (!article) return;
-
-    const shareData = {
-      title: article.title,
-      text: article.description,
-      url: getArticleUrl(article.slug),
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        const success = await copyToClipboard(shareData.url);
-        if (success) {
-          setMessage("Article link copied.");
-        } else {
-          setMessage("Failed to copy link.");
-        }
-      }
-    } catch {
-      setMessage("Sharing was cancelled.");
-    }
+    if (pendingAction) return;
+    setPendingAction("share");
+    const result = await shareArticle({ title: article.title, text: article.description, url: getArticleUrl(article.slug) });
+    if (result.method === "native") setMessage("Article shared.");
+    else if (result.method === "clipboard") setMessage("Link copied.");
+    else if (result.method === "cancelled") setMessage("Sharing cancelled.");
+    else setMessage("Could not copy the link.");
+    setPendingAction("");
   };
 
   const categorySlug = String(categoryModel.slug || categoryModel.name || "").toLowerCase().trim();
@@ -408,25 +425,33 @@ const CategoryLanding = ({
                 className={`small-outline-btn ${isLiked ? "active like-btn" : ""}`}
                 type="button"
                 onClick={handleLikeToggle}
+                disabled={Boolean(pendingAction)}
+                aria-pressed={isLiked}
+                aria-label={isLiked ? "Unlike featured article" : "Like featured article"}
               >
-                <FiHeart style={isLiked ? { fill: "#ff4d4f", stroke: "#ff4d4f" } : undefined} /> {formatNumber(featuredArticle.likes)}
+                <FiHeart style={isLiked ? { fill: "#ff4d4f", stroke: "#ff4d4f" } : undefined} /> {pendingAction === "like" ? "Updating…" : formatNumber(engagementCounts.likes ?? featuredArticle.likes)}
               </button>
               <button
                 className={`small-outline-btn ${isBookmarked ? "active bookmark-btn" : ""}`}
                 type="button"
                 onClick={handleBookmarkToggle}
+                disabled={Boolean(pendingAction)}
+                aria-pressed={isBookmarked}
+                aria-label={isBookmarked ? "Remove featured article bookmark" : "Bookmark featured article"}
               >
-                <FiBookmark style={isBookmarked ? { fill: "currentColor" } : undefined} /> {formatNumber(featuredArticle.bookmarks)}
+                <FiBookmark style={isBookmarked ? { fill: "currentColor" } : undefined} /> {pendingAction === "bookmark" ? "Updating…" : formatNumber(engagementCounts.bookmarks ?? featuredArticle.bookmarks)}
               </button>
               <button
                 className="small-outline-btn"
                 type="button"
                 onClick={() => handleShare(featuredArticle)}
+                disabled={Boolean(pendingAction)}
+                aria-label="Share featured article"
               >
-                <FiShare2 /> Share
+                <FiShare2 /> {pendingAction === "share" ? "Sharing…" : "Share"}
               </button>
             </div>
-            {message && <span className="form-note">{message}</span>}
+            {message && <span className="form-note" role="status" aria-live="polite">{message}</span>}
           </div>
         </section>
       )}

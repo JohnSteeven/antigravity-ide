@@ -102,13 +102,16 @@ export function AgentProvider({ children }) {
     resetForIdentity();
     let active = true;
 
-    Promise.allSettled([agentApi.capabilities(), agentApi.listConversations()]).then(
+    const requests = user
+      ? [agentApi.capabilities(), agentApi.listConversations()]
+      : [agentApi.capabilities()];
+    Promise.allSettled(requests).then(
       ([capabilityResult, conversationResult]) => {
         if (!active) return;
         if (capabilityResult.status === "fulfilled") {
           setCapabilities(capabilityResult.value);
         }
-        if (conversationResult.status === "fulfilled") {
+        if (conversationResult?.status === "fulfilled") {
           const result = conversationResult.value;
           setConversations(conversationsFrom(result));
           setConversationCursor(result?.nextCursor || null);
@@ -119,7 +122,7 @@ export function AgentProvider({ children }) {
     return () => {
       active = false;
     };
-  }, [authLoading, resetForIdentity, user?._id, user?.id]);
+  }, [authLoading, resetForIdentity, user, user?._id, user?.id]);
 
   useEffect(
     () => () => {

@@ -3,6 +3,7 @@ const Notification = require("../models/Notification");
 const Article = require("../models/Article");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
+const ReaderProfile = require("../models/ReaderProfile");
 
 const safeUser = (user) => {
   const nextUser = user.toSafeJSON ? user.toSafeJSON() : user;
@@ -25,30 +26,7 @@ class UserController {
         await req.user.save();
       }
 
-      const [notifications, comments] = await Promise.all([
-        Notification.find({ user: req.user._id })
-          .sort({ createdAt: -1 })
-          .limit(20),
-        Comment.find({ authorId: req.user._id, isDeleted: false })
-          .populate("articleId", "title slug")
-          .sort({ createdAt: -1 }),
-      ]);
-
       const user = safeUser(req.user);
-      const userComments = comments.map(c => ({
-        id: c._id.toString(),
-        _id: c._id.toString(),
-        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
-        articleTitle: c.articleId?.title || "Unknown Article",
-        text: c.body,
-        createdAt: c.createdAt,
-      }));
-
-      user.profile = {
-        ...(user.profile || {}),
-        notifications,
-        comments: userComments,
-      };
 
       res.json({ user });
     } catch (err) {
@@ -75,6 +53,7 @@ class UserController {
         "email",
         "countryCode",
         "mobile",
+        "newsletter",
       ];
 
       const updateData = {};
@@ -83,12 +62,17 @@ class UserController {
       });
 
       if (req.body.profile) {
+        const allowedProfile = ["avatar", "coverImage", "bio", "location", "website", "skills"];
         const currentProfile = req.user.profile
           ? (typeof req.user.profile.toObject === "function" ? req.user.profile.toObject() : req.user.profile)
           : {};
+        const incomingProfile = {};
+        allowedProfile.forEach((key) => {
+          if (req.body.profile[key] !== undefined) incomingProfile[key] = req.body.profile[key];
+        });
         updateData.profile = {
           ...currentProfile,
-          ...req.body.profile,
+          ...incomingProfile,
         };
       }
 
@@ -121,30 +105,7 @@ class UserController {
 
       const updated = await userService.updateUserProfile(req.user._id, updateData, req.user._id);
 
-      const [notifications, comments] = await Promise.all([
-        Notification.find({ user: req.user._id })
-          .sort({ createdAt: -1 })
-          .limit(20),
-        Comment.find({ authorId: req.user._id, isDeleted: false })
-          .populate("articleId", "title slug")
-          .sort({ createdAt: -1 }),
-      ]);
-
       const safe = safeUser(updated);
-      const userComments = comments.map(c => ({
-        id: c._id.toString(),
-        _id: c._id.toString(),
-        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
-        articleTitle: c.articleId?.title || "Unknown Article",
-        text: c.body,
-        createdAt: c.createdAt,
-      }));
-
-      safe.profile = {
-        ...(safe.profile || {}),
-        notifications,
-        comments: userComments,
-      };
 
       res.json({
         user: safe,
@@ -175,9 +136,10 @@ class UserController {
       }
 
       // Fetch user's article interactions
-      const [articles, comments] = await Promise.all([
+      const [articles, comments, readerProfile] = await Promise.all([
         Article.find({ authorId: user._id, isDeleted: false }).select("title slug status views likes bookmarks"),
         Comment.find({ authorId: user._id, isDeleted: false }).populate("articleId", "title slug"),
+        ReaderProfile.findOne({ userId: user._id }).select("bookmarks likedArticles savedArticles").lean(),
       ]);
 
       const safe = safeUser(user);
@@ -188,8 +150,9 @@ class UserController {
         interactions: {
           articles,
           comments,
-          bookmarks: user.profile?.bookmarks || [],
-          likedArticles: user.profile?.likedArticles || [],
+          bookmarks: readerProfile?.bookmarks || [],
+          likedArticles: readerProfile?.likedArticles || [],
+          savedArticles: readerProfile?.savedArticles || [],
         }
       });
     } catch (err) {

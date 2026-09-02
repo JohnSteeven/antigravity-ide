@@ -17665,6 +17665,38 @@ body:has([data-experience="reflections"]) .life-hero,
   border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
+/* Article action state contract. These selectors intentionally follow the
+   experience-specific !important defaults above so an active control remains
+   visibly active in every Article renderer and in both color modes. */
+.article-detail-theme .premium-stats-bar .stat-btn.active.like-btn {
+  background: rgba(255, 77, 79, 0.15) !important;
+  border-color: #ff4d4f !important;
+  color: #ff4d4f !important;
+}
+
+.article-detail-theme .premium-stats-bar .stat-btn.active.bookmark-btn {
+  background: rgba(181, 139, 95, 0.15) !important;
+  border-color: var(--gold, #b58b5f) !important;
+  color: var(--gold, #b58b5f) !important;
+}
+
+.article-detail-theme .premium-stats-bar .stat-btn.active.save-btn {
+  background: rgba(66, 108, 103, 0.18) !important;
+  border-color: var(--teal, #426c67) !important;
+  color: var(--teal, #426c67) !important;
+}
+
+.article-detail-theme .premium-stats-bar .stat-btn.active.like-btn svg,
+.article-detail-theme .premium-stats-bar .stat-btn.active.bookmark-btn svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.article-detail-theme .premium-stats-bar .stat-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
 .life-hero .premium-stats-bar .stat-span,
 .travel-hero .premium-stats-bar .stat-span,
 .incidents-hero .premium-stats-bar .stat-span,

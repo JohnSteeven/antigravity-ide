@@ -3,6 +3,7 @@ const path = require("path");
 
 describe("client authentication contract", () => {
   const clientAuth = fs.readFileSync(path.join(__dirname, "../../src/services/authService.js"), "utf8");
+  const clientHelpers = fs.readFileSync(path.join(__dirname, "../../src/utils/helpers.js"), "utf8");
   const tokenService = fs.readFileSync(path.join(__dirname, "../services/tokenService.js"), "utf8");
 
   test("does not manufacture browser-only users or authenticated sessions", () => {
@@ -26,5 +27,15 @@ describe("client authentication contract", () => {
 
   test("uses the registered server user id when requesting an OTP", () => {
     expect(clientAuth).toContain('JSON.stringify({ userId, channel, purpose: "register" })');
+  });
+
+  test("failed session cleanup preserves the CSRF double-submit cookie", () => {
+    const clearAuthCookies = clientHelpers.slice(
+      clientHelpers.indexOf("export const clearAuthCookies"),
+      clientHelpers.indexOf("export const formatCountdown")
+    );
+    expect(clearAuthCookies).toContain('["accessToken", "refreshToken"]');
+    expect(clearAuthCookies).not.toContain('document.cookie.split(";")');
+    expect(clearAuthCookies).not.toContain('"csrfToken"');
   });
 });

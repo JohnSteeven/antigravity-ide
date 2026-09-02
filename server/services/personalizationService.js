@@ -16,7 +16,7 @@ class PersonalizationService {
   /**
    * Generate personalized home feed sections tailored for the given user or session.
    */
-  static async getPersonalizedFeed(userId = null, sessionId = null) {
+  static async getPersonalizedFeed(userId = null) {
     let profile = null;
     let preferredCategories = [];
 
@@ -26,21 +26,24 @@ class PersonalizationService {
     }
 
     // 1. Continue Reading (uncompleted articles sorted by lastReadAt)
-    const filterProgress = userId ? { userId } : { sessionId };
     let continueReadingList = [];
 
-    if (userId || sessionId) {
-      const progressItems = await ReadingProgress.find({ ...filterProgress, isCompleted: false })
+    if (userId) {
+      const progressItems = await ReadingProgress.find({ userId, isCompleted: false })
         .sort({ lastReadAt: -1 })
         .limit(4)
-        .populate('articleId', 'title slug description excerpt coverImage category readingTime')
+        .populate({
+          path: 'articleId',
+          match: { contentType: 'article', status: 'published', isDeleted: false },
+          select: 'title slug description excerpt coverImage category readingTime contentType',
+        })
         .lean();
 
-      continueReadingList = progressItems.map((p) => ({
+      continueReadingList = progressItems.filter((p) => p.articleId).map((p) => ({
         ...p.articleId,
         progress: {
-          scrollPositionPx: p.scrollPositionPx,
-          completionPercent: p.completionPercent,
+          lastPosition: p.lastPosition || 0,
+          progressPercent: p.furthestProgressPercent ?? p.progressPercent ?? 0,
           lastReadAt: p.lastReadAt,
         },
       }));

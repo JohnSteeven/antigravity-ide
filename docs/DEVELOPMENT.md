@@ -39,6 +39,15 @@ npm run client
 npm run start:ui
 ```
 
+For the isolated core browser smoke, install Chromium once and run:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+Playwright owns ports 1235/5001 and defaults to the isolated `myjourney_e2e` Mongo database. `E2E_MONGO_URI` is accepted only when its database name ends in `_e2e` or `_test`. Do not point the smoke at development, staging, or production data. The setup creates deterministic Reader and published-Article fixtures, does not send OTP/email/SMS, and never applies migration 011.
+
 `npm run doctor` checks the current Node declaration, standard ports, Mongo configuration/reachability, and required production variables without printing connection credentials or secret values.
 
 `npm run start:ui` is the supported frontend-only mode. It starts Parcel only. It does not start Express, connect MongoDB, apply migrations, seed data, or initialize schedulers/jobs. API-dependent screens therefore show their honest unavailable states.

@@ -24,6 +24,7 @@ Current ordered migrations:
 8. `008-agent-foundation`
 9. `009-auth-session-expiry`
 10. `010-theme-safety-foundation`
+11. `011-reader-data-foundation`
 
 Server startup does not run these automatically.
 
@@ -66,6 +67,10 @@ These commands connect without running application seeders. `status` and `valida
 
 The 2026-08-23 local audit found migrations 001–010 all pending in the `myjourney` database. They were not applied automatically. Runtime and tests passed, but the unique/query/TTL indexes and normalization encoded by those migrations remain a local launch prerequisite. Migration 009 backfills legacy Session expiry from its linked RefreshToken and fails orphaned sessions closed. Migration 010 corrects only the known light surface/panel/muted defaults on the built-in Dark Pro theme; custom themes are untouched. Re-run status because this observation is environment-specific.
 
+Migration 011 moves saved/liked/bookmarked Article relations from `User.profile` to `ReaderProfile`, removes deprecated parallel Reader/activity fields, normalizes authenticated ReadingProgress records, merges competing `(userId, articleId)` rows without losing maximum progress or accumulated time, and creates the partial unique authority index. It preserves anonymous legacy rows but the authenticated Reader API does not use them. Legacy completion rows without a real `completedAt` are not assigned an inferred timestamp. This migration was created for reviewed application and is not applied by this change.
+
+Playwright browser smoke setup uses only a database whose name ends in `_e2e` or `_test` (default `myjourney_e2e`). It upserts deterministic test-owned users/content and resets only their Reader/session state. The smoke proves new ReaderProfile and ReadingProgress writes without depending on migration 011; it does not migrate legacy Reader data or apply any migration.
+
 Migration index validation compares key order and security-relevant options (including unique, sparse, TTL, partial-filter, and collation settings); an index is not accepted merely because its name matches. Migration 008 uses a partial unique Agent-message idempotency index without the mutually exclusive `sparse` option.
 
 ## Creator/Learn demo seed
@@ -100,7 +105,7 @@ Account deletion:
 4. can be canceled before the scheduled time;
 5. is purged by the scheduled account-deletion worker.
 
-Permanent deletion removes auth, subscription/billing, Life, Creator application/review, learner progress/events, follows, reports, and notifications. Owned Creator profiles are deactivated and detached; published Creator content is intentionally preserved.
+Permanent deletion removes auth, ReaderProfile/ReadingProgress/ReadingCollection, subscription/billing, Life, Creator application/review, learner progress/events, follows, reports, and notifications. Owned Creator profiles are deactivated and detached; published Creator content is intentionally preserved.
 
 ### Agent data lifecycle
 

@@ -1,6 +1,4 @@
 const authService = require("../services/authService");
-const Comment = require("../models/Comment");
-const Notification = require("../models/Notification");
 
 const safeUser = (user) => {
   const safe = user.toSafeJSON ? user.toSafeJSON() : user;
@@ -13,32 +11,7 @@ const safeUser = (user) => {
 class AuthController {
   async me(req, res, next) {
     try {
-      const [notifications, comments] = await Promise.all([
-        Notification.find({ user: req.user._id })
-          .sort({ createdAt: -1 })
-          .limit(20)
-          .catch(() => []),
-        Comment.find({ authorId: req.user._id, isDeleted: false })
-          .populate("articleId", "title slug")
-          .sort({ createdAt: -1 })
-          .catch(() => []),
-      ]);
-
       const safe = safeUser(req.user);
-      const userComments = comments.map(c => ({
-        id: c._id.toString(),
-        _id: c._id.toString(),
-        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
-        articleTitle: c.articleId?.title || "Unknown Article",
-        text: c.body,
-        createdAt: c.createdAt,
-      }));
-
-      safe.profile = {
-        ...(safe.profile || {}),
-        notifications,
-        comments: userComments,
-      };
 
       res.json({
         session: { authenticated: true },
@@ -97,32 +70,7 @@ class AuthController {
         });
       }
 
-      const [notifications, comments] = await Promise.all([
-        Notification.find({ user: result.user._id })
-          .sort({ createdAt: -1 })
-          .limit(20)
-          .catch(() => []),
-        Comment.find({ authorId: result.user._id, isDeleted: false })
-          .populate("articleId", "title slug")
-          .sort({ createdAt: -1 })
-          .catch(() => []),
-      ]);
-
       const safe = safeUser(result.user);
-      const userComments = comments.map(c => ({
-        id: c._id.toString(),
-        _id: c._id.toString(),
-        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
-        articleTitle: c.articleId?.title || "Unknown Article",
-        text: c.body,
-        createdAt: c.createdAt,
-      }));
-
-      safe.profile = {
-        ...(safe.profile || {}),
-        notifications,
-        comments: userComments,
-      };
 
       res.json({
         session: result.session,
@@ -142,32 +90,7 @@ class AuthController {
       const { identifier, password, remember } = req.body;
       const { session, user } = await authService.login(identifier, password, remember, req, res);
 
-      const [notifications, comments] = await Promise.all([
-        Notification.find({ user: user._id })
-          .sort({ createdAt: -1 })
-          .limit(20)
-          .catch(() => []),
-        Comment.find({ authorId: user._id, isDeleted: false })
-          .populate("articleId", "title slug")
-          .sort({ createdAt: -1 })
-          .catch(() => []),
-      ]);
-
       const safe = safeUser(user);
-      const userComments = comments.map(c => ({
-        id: c._id.toString(),
-        _id: c._id.toString(),
-        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
-        articleTitle: c.articleId?.title || "Unknown Article",
-        text: c.body,
-        createdAt: c.createdAt,
-      }));
-
-      safe.profile = {
-        ...(safe.profile || {}),
-        notifications,
-        comments: userComments,
-      };
 
       res.json({
         session,
@@ -230,30 +153,7 @@ class AuthController {
 
       const { session, user } = await authService.refreshToken(token, req, res);
 
-      const [notifications, comments] = await Promise.all([
-        Notification.find({ user: user._id })
-          .sort({ createdAt: -1 })
-          .limit(20),
-        Comment.find({ authorId: user._id, isDeleted: false })
-          .populate("articleId", "title slug")
-          .sort({ createdAt: -1 }),
-      ]);
-
       const safe = safeUser(user);
-      const userComments = comments.map(c => ({
-        id: c._id.toString(),
-        _id: c._id.toString(),
-        articleId: c.articleId?._id?.toString() || c.articleId?.toString() || "",
-        articleTitle: c.articleId?.title || "Unknown Article",
-        text: c.body,
-        createdAt: c.createdAt,
-      }));
-
-      safe.profile = {
-        ...(safe.profile || {}),
-        notifications,
-        comments: userComments,
-      };
 
       res.json({
         session,

@@ -30,7 +30,8 @@ describe("Article client authority and scalability contracts", () => {
     const detail = read("src", "components", "ArticleDetail.js");
     expect(detail).toContain("const article = apiArticle");
     expect(detail).toContain("response?.views !== undefined");
-    expect(detail).toContain("response?.likes !== undefined");
+    expect(detail).toContain("Number(response?.count)");
+    expect(detail).toContain('typeof response?.isActive !== "boolean"');
     expect(detail).toContain("getImageUrl(path)");
     expect(detail).not.toContain("contextArticle");
     expect(detail).not.toContain("http://localhost:5000");
