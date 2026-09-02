@@ -51,3 +51,6 @@ uploads/
 
 # IDE brain data
 brain/
+
+# Parcel production cache
+.parcel-cache-prod/
