@@ -2,16 +2,43 @@ const request = require('supertest');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+
+const controlledEnvironment = {
+  NODE_ENV: process.env.NODE_ENV,
+  CSRF_ENABLED: process.env.CSRF_ENABLED,
+  COOKIE_SECURE: process.env.COOKIE_SECURE,
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
+};
+
+process.env.NODE_ENV = 'test';
+process.env.CSRF_ENABLED = 'true';
+process.env.COOKIE_SECURE = 'false';
+process.env.JWT_ACCESS_SECRET = 'private-beta-test-access-secret';
+
 const app = require('../index');
 const env = require('../config/env');
 const User = require('../models/User');
 const GovernanceService = require('../services/governanceService');
+const AIProviderService = require('../services/aiProviderService');
 const { checkMagicBytes, sanitizeFilename } = require('../middleware/uploadValidation');
+
+const restoreEnvironmentValue = (key, value) => {
+  if (value === undefined) delete process.env[key];
+  else process.env[key] = value;
+};
+
+const restoreEnvironment = () => {
+  Object.entries(controlledEnvironment).forEach(([key, value]) => {
+    restoreEnvironmentValue(key, value);
+  });
+};
 
 jest.setTimeout(20000);
 
 describe('Private Beta Hardening & Security Suite', () => {
   let adminToken;
+  let api;
+  let csrfToken;
   let createdAdminId = null;
 
   beforeAll(async () => {
@@ -40,13 +67,25 @@ describe('Private Beta Hardening & Security Suite', () => {
       env.jwtAccessSecret,
       { expiresIn: '1h' }
     );
+
+    api = request.agent(app);
+    const csrfResponse = await api.get('/api/auth/csrf-token');
+    expect(csrfResponse.status).toBe(200);
+    csrfToken = csrfResponse.body.csrfToken;
   });
 
   afterAll(async () => {
-    const SecretVault = require('../models/SecretVault');
-    await SecretVault.deleteMany({ secretKey: { $in: ['KEY_ONE', 'KEY_TWO', 'TAMPER_KEY'] } });
-    if (createdAdminId) await User.deleteOne({ _id: createdAdminId });
-    await mongoose.disconnect();
+    try {
+      const SecretVault = require('../models/SecretVault');
+      await SecretVault.deleteMany({ secretKey: { $in: ['KEY_ONE', 'KEY_TWO', 'TAMPER_KEY'] } });
+      if (createdAdminId) await User.deleteOne({ _id: createdAdminId });
+    } finally {
+      try {
+        await mongoose.disconnect();
+      } finally {
+        restoreEnvironment();
+      }
+    }
   });
 
   describe('Secret Vault Security & Encryption Tests', () => {
@@ -54,8 +93,8 @@ describe('Private Beta Hardening & Security Suite', () => {
     const originalKey = process.env.SECRET_VAULT_KEY;
 
     afterEach(() => {
-      process.env.SECRET_VAULT_ENABLED = originalEnabled;
-      process.env.SECRET_VAULT_KEY = originalKey;
+      restoreEnvironmentValue('SECRET_VAULT_ENABLED', originalEnabled);
+      restoreEnvironmentValue('SECRET_VAULT_KEY', originalKey);
     });
 
     test('Secret Vault endpoints return 503 when SECRET_VAULT_ENABLED is false or missing', async () => {
@@ -64,7 +103,7 @@ describe('Private Beta Hardening & Security Suite', () => {
 
       expect(GovernanceService.isVaultEnabled()).toBe(false);
 
-      const res = await request(app)
+      const res = await api
         .get('/api/governance/secrets')
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -157,9 +196,10 @@ describe('Private Beta Hardening & Security Suite', () => {
 
   describe('Disabled Private Beta Features Tests (HTTP 503 Verification)', () => {
     test('Payment subscription request returns 503 Service Unavailable without mock URLs', async () => {
-      const res = await request(app)
+      const res = await api
         .post('/api/membership/subscribe')
         .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-csrf-token', csrfToken)
         .send({ planSlug: 'pro', provider: 'stripe' });
 
       expect(res.status).toBe(503);
@@ -169,9 +209,10 @@ describe('Private Beta Hardening & Security Suite', () => {
     });
 
     test('Outbound webhook creation returns 503 Service Unavailable', async () => {
-      const res = await request(app)
+      const res = await api
         .post('/api/developer/webhooks')
         .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-csrf-token', csrfToken)
         .send({ targetUrl: 'https://example.com/webhook', events: ['article.published'] });
 
       expect(res.status).toBe(503);
@@ -180,9 +221,10 @@ describe('Private Beta Hardening & Security Suite', () => {
     });
 
     test('GDPR user data export returns 503 Service Unavailable', async () => {
-      const res = await request(app)
+      const res = await api
         .post('/api/governance/compliance/export')
         .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-csrf-token', csrfToken)
         .send({});
 
       expect(res.status).toBe(503);
@@ -190,9 +232,10 @@ describe('Private Beta Hardening & Security Suite', () => {
     });
 
     test('Multi-tenancy tenant creation returns 503 Service Unavailable', async () => {
-      const res = await request(app)
+      const res = await api
         .post('/api/tenants')
         .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-csrf-token', csrfToken)
         .send({ name: 'Secondary Site', domain: 'secondary.com' });
 
       expect(res.status).toBe(503);
@@ -200,14 +243,22 @@ describe('Private Beta Hardening & Security Suite', () => {
     });
 
     test('AI chat returns 503 when no active AI provider is configured', async () => {
-      const res = await request(app)
-        .post('/api/ai/chat')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({ query: 'How do I learn React?' });
+      // This legacy endpoint resolves providers from MongoDB, independently of AGENT_PROVIDER.
+      const providerSpy = jest.spyOn(AIProviderService, 'getActiveConfig').mockResolvedValue(null);
 
-      expect(res.status).toBe(503);
-      expect(res.body.error).toBe('AI Completions Unavailable');
-      expect(JSON.stringify(res.body)).not.toContain('To learn **React**');
+      try {
+        const res = await api
+          .post('/api/ai/chat')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .set('x-csrf-token', csrfToken)
+          .send({ query: 'How do I learn React?' });
+
+        expect(res.status).toBe(503);
+        expect(res.body.error).toBe('AI Completions Unavailable');
+        expect(JSON.stringify(res.body)).not.toContain('To learn **React**');
+      } finally {
+        providerSpy.mockRestore();
+      }
     });
   });
 

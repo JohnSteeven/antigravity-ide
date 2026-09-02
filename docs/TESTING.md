@@ -89,7 +89,7 @@ npm test -- --runInBand
 
 In-band execution is preferred for stabilization and local database work because it avoids overlapping database-backed suites and makes failure ordering deterministic.
 
-GitHub Actions provisions a health-checked MongoDB 7 service and sets `MONGO_URI` to the isolated `mongodb://127.0.0.1:27017/myjourney_ci_test` database before running Jest. A Mongoose readiness probe fails the job before syntax validation or tests if that service is unavailable. The database-backed private-beta suite creates only its test Admin and SecretVault fixtures, removes those fixtures in `afterAll`, and disconnects Mongoose. CI does not use development or production databases, credentials, or customer data.
+GitHub Actions provisions a health-checked MongoDB 7 service and sets `MONGO_URI` to the isolated `mongodb://127.0.0.1:27017/myjourney_ci_test` database before running Jest. A Mongoose readiness probe fails the job before syntax validation or tests if that service is unavailable. The database-backed private-beta suite fixes its import-time test/auth/CSRF configuration, exercises protected POST routes with a real CSRF cookie/header pair, forces the legacy database-backed AI provider lookup to the unavailable state, restores its environment, removes only its test Admin and SecretVault fixtures in `afterAll`, and disconnects Mongoose. CI does not use development or production databases, credentials, or customer data.
 
 Do not encode a permanent expected test count in scripts or docs. Report the exact suite/test count from each audit run.
 
