@@ -20,9 +20,14 @@ import {
   FiSliders,
   FiChevronLeft,
   FiChevronRight,
-  FiCopy
+  FiCopy,
+  FiZap,
 } from "react-icons/fi";
-import { mediaApi } from "../../services/apiService";
+import { mediaApi, default as apiService } from "../../services/apiService";
+import { useCms } from "../../context/CmsContext";
+import { useBlocker } from "react-router";
+import CmsPanelResolver from "./panels/CmsPanelResolver";
+import { getImageUrl } from "../../utils/imageUrlHelper";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -48,25 +53,25 @@ const getWordCount = (html) => {
 // Markdown simple converter for pasting
 const convertMarkdownToHtml = (markdown) => {
   let html = markdown;
-  
+
   // Headers
   html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>");
   html = html.replace(/^## (.*$)/gim, "<h2>$1</h2>");
   html = html.replace(/^# (.*$)/gim, "<h1>$1</h1>");
-  
+
   // Bold & Italic
   html = html.replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>");
   html = html.replace(/\*(.*)\*/gim, "<em>$1</em>");
-  
+
   // Blockquotes
   html = html.replace(/^\> (.*$)/gim, "<blockquote>$1</blockquote>");
-  
+
   // Horizontal Rules
   html = html.replace(/^---$/gim, "<hr />");
-  
+
   // Links
   html = html.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2">$1</a>');
-  
+
   // Convert newlines to paragraphs
   html = html.split(/\n\n+/).map(p => {
     if (p.trim().startsWith("<h") || p.trim().startsWith("<bl") || p.trim().startsWith("<hr")) {
@@ -78,21 +83,117 @@ const convertMarkdownToHtml = (markdown) => {
   return html;
 };
 
-const ArticleModule = ({
-  articleDraft,
-  categories = [],
-  onChange,
-  onNew,
-  onSave,
-  onDelete,
-  onSelectArticle,
-  onToggleStatus,
-  articles = [],
-  onRestore
-}) => {
+const createArticleDraft = (categories = []) => ({
+  title: "",
+  slug: "",
+  description: "",
+  coverImage: "",
+  category: categories[0]?.name || "Uncategorized",
+  subcategory: "",
+  body: "<p>Write your story here...</p>",
+  status: "draft",
+  accessLevel: "free",
+  tags: [],
+  isFeatured: false,
+  isMustRead: false,
+  isTrending: false,
+  isPinned: false,
+  readingTimeMin: 1,
+    seo: {
+      title: "",
+      description: "",
+      keywords: [],
+      canonicalUrl: "",
+      openGraphImage: "",
+      metaRobots: "index,follow",
+    },
+    mood: "",
+    heroQuote: "",
+    favoriteQuote: "",
+    reflectionQuestions: [],
+    takeaways: [],
+  });
+
+const ArticleModule = () => {
+  const {
+    data,
+    saveArticle,
+    deleteArticle,
+    restoreArticle,
+    toggleArticleStatus,
+    uploadMedia
+  } = useCms();
+
+  const categories = data?.categories || [];
+  const articles = data?.articles || [];
+
+  // Sorted articles (latest first)
+  const sortedArticles = useMemo(
+    () =>
+      [...articles].sort(
+        (a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
+      ),
+    [articles]
+  );
+
+  const defaultDraft = useMemo(() => createArticleDraft(categories), [categories]);
+
+  const [articleDraft, setArticleDraft] = useState(defaultDraft);
+
+  // Editor save/sync states (declared before use in handlers)
+  const [saveStatus, setSaveStatus] = useState("Unsaved"); // "Unsaved" | "Saving..." | "Draft Saved" | "Published Successfully" | "Saved" | "Save Failed"
+  const [lastSavedTime, setLastSavedTime] = useState("");
+  const lastSavedDraftRef = useRef(JSON.stringify(defaultDraft));
+
+  const onChange = setArticleDraft;
+  const onNew = () => {
+    const fresh = createArticleDraft(categories);
+    setArticleDraft(fresh);
+    lastSavedDraftRef.current = JSON.stringify(fresh);
+    setSaveStatus("Unsaved");
+  };
+  const onSave = async (draft) => {
+    try {
+      const saved = await saveArticle(draft);
+      if (saved) {
+        const normalized = {
+          ...saved,
+          id: saved._id || saved.id,
+          featured: saved.featured !== undefined ? saved.featured : saved.isFeatured,
+          mustRead: saved.mustRead !== undefined ? saved.mustRead : saved.isMustRead,
+          trending: saved.trending !== undefined ? saved.trending : saved.isTrending,
+          pinned: saved.pinned !== undefined ? saved.pinned : saved.isPinned,
+        };
+        setArticleDraft(normalized);
+        lastSavedDraftRef.current = JSON.stringify(normalized);
+        return normalized;
+      }
+    } catch (err) {
+      console.error("Article save failed:", err);
+      throw err;
+    }
+  };
+  const onDelete = deleteArticle;
+  const onRestore = restoreArticle;
+  const onSelectArticle = (article) => {
+    const normalized = {
+      ...article,
+      id: article._id || article.id,
+      featured: article.featured !== undefined ? article.featured : article.isFeatured,
+      mustRead: article.mustRead !== undefined ? article.mustRead : article.isMustRead,
+      trending: article.trending !== undefined ? article.trending : article.isTrending,
+      pinned: article.pinned !== undefined ? article.pinned : article.isPinned,
+    };
+    setArticleDraft(normalized);
+    lastSavedDraftRef.current = JSON.stringify(normalized);
+    setSaveStatus("Saved");
+  };
+  const onToggleStatus = toggleArticleStatus;
+
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const coverImageInputRef = useRef(null);
 
   // Pagination, search, and filtering states
   const [query, setQuery] = useState("");
@@ -100,15 +201,59 @@ const ArticleModule = ({
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [editorMode, setEditorMode] = useState("edit"); // "edit" | "preview"
+  const [imageAlign, setImageAlign] = useState("center");
 
   // Undo/Redo stacks
-  const [history, setHistory] = useState([articleDraft.body || ""]);
+  const [history, setHistory] = useState([articleDraft?.body || ""]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const typingTimeoutRef = useRef(null);
+  const savedSelectionRangeRef = useRef(null);
 
-  // Auto save states
-  const [saveStatus, setSaveStatus] = useState("Saved"); // "Saved" | "Saving..." | "Save Failed"
-  const [lastSavedTime, setLastSavedTime] = useState("");
-  const lastSavedDraftRef = useRef(JSON.stringify(articleDraft));
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+        savedSelectionRangeRef.current = range.cloneRange();
+      }
+    }
+  };
+
+  const insertHtmlAtSavedCursor = (html) => {
+    let range = savedSelectionRangeRef.current;
+    const sel = window.getSelection();
+    if (range) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else if (sel.rangeCount > 0) {
+      range = sel.getRangeAt(0);
+    }
+
+    if (range) {
+      if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+        range.deleteContents();
+        const el = document.createElement("div");
+        el.innerHTML = html;
+        const frag = document.createDocumentFragment();
+        let node;
+        let lastNode;
+        while ((node = el.firstChild)) {
+          lastNode = frag.appendChild(node);
+        }
+        range.insertNode(frag);
+        if (lastNode) {
+          range = range.cloneRange();
+          range.setStartAfter(lastNode);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          savedSelectionRangeRef.current = range.cloneRange();
+        }
+        return true;
+      }
+    }
+    return false;
+  };
 
   // Word & Reading metrics
   const wordCount = useMemo(() => getWordCount(articleDraft.body), [articleDraft.body]);
@@ -159,6 +304,30 @@ const ArticleModule = ({
       e.preventDefault();
       handleRedo();
     }
+    // Space or Enter: push history immediately
+    if (e.key === " " || e.key === "Enter") {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      const html = editorRef.current?.innerHTML || "";
+      if (history[historyIndex] !== html) {
+        pushHistory(html);
+      }
+    }
+  };
+
+  const handleEditorInput = (e) => {
+    const html = e.target.innerHTML;
+    onChange({ ...articleDraft, body: html });
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = setTimeout(() => {
+      if (history[historyIndex] !== html) {
+        pushHistory(html);
+      }
+    }, 800);
   };
 
   // Drag & drop file uploads helper
@@ -173,19 +342,28 @@ const ArticleModule = ({
   const uploadAndInsertImage = async (file) => {
     try {
       setSaveStatus("Saving...");
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "Uploads");
-      
-      const res = await fetch("/api/media", {
-        method: "POST",
-        body: formData
-      });
-      const data = await res.json();
-      
-      if (data.media && data.media.url) {
-        const nextBody = `${editorRef.current.innerHTML}<p><img src="${data.media.url}" alt="${data.media.name}" /></p>`;
-        editorRef.current.innerHTML = nextBody;
+      const media = await uploadMedia(file, "articles");
+
+      if (media && media.url) {
+        const alignClass = imageAlign === "left" ? "article-image-left" : imageAlign === "right" ? "article-image-right" : "article-image-center";
+        
+        let styleStr = "";
+        if (imageAlign === "left") {
+          styleStr = "float: left; margin: 0.5rem 1.5rem 1.25rem 0; max-width: 45%; position: relative; text-align: center; display: inline-block;";
+        } else if (imageAlign === "right") {
+          styleStr = "float: right; margin: 0.5rem 0 1.25rem 1.5rem; max-width: 45%; position: relative; text-align: center; display: inline-block;";
+        } else {
+          styleStr = "display: block; margin: 1.5rem auto; text-align: center; max-width: 100%; position: relative;";
+        }
+
+        const figHtml = `<figure class="article-image-container ${alignClass}" contenteditable="false" style="${styleStr}"><img src="${media.url}" alt="${media.name}" style="${imageAlign === 'center' ? 'max-width: 100%; max-height: 500px; height: auto;' : 'width: 100%; height: auto;'} border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #eaeaea;" /><button class="remove-image-btn" onclick="const ws = this.closest('.rich-text-editor-workspace'); this.parentElement.remove(); if (ws) { ws.dispatchEvent(new Event('input', { bubbles: true })); }" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; line-height: 1; pointer-events: auto;">×</button></figure>`;
+
+        const inserted = insertHtmlAtSavedCursor(figHtml);
+        if (!inserted && editorRef.current) {
+          editorRef.current.innerHTML = `${editorRef.current.innerHTML}${figHtml}`;
+        }
+        
+        const nextBody = editorRef.current.innerHTML;
         const nextDraft = { ...articleDraft, body: nextBody };
         onChange(nextDraft);
         pushHistory(nextBody);
@@ -195,6 +373,23 @@ const ArticleModule = ({
       }
     } catch (err) {
       console.error("Image upload failed:", err);
+      setSaveStatus("Save Failed");
+    }
+  };
+
+  const handleCoverImageUpload = async (file) => {
+    try {
+      setSaveStatus("Saving...");
+      const media = await uploadMedia(file, "covers");
+
+      if (media && media.url) {
+        update({ coverImage: media.url });
+        setSaveStatus("Saved");
+      } else {
+        setSaveStatus("Save Failed");
+      }
+    } catch (err) {
+      console.error("Cover image upload failed:", err);
       setSaveStatus("Save Failed");
     }
   };
@@ -241,6 +436,10 @@ const ArticleModule = ({
   };
 
   const triggerManualSave = async () => {
+    if (!articleDraft.title || !articleDraft.title.trim()) {
+      alert("Please enter a title before saving the article.");
+      return;
+    }
     setSaveStatus("Saving...");
     try {
       // Auto-recalculate reading time
@@ -248,38 +447,58 @@ const ArticleModule = ({
         ...articleDraft,
         readingTime: calculateReadingTime(articleDraft.body)
       };
-      await onSave(finalDraft);
-      lastSavedDraftRef.current = JSON.stringify(finalDraft);
-      setSaveStatus("Saved");
+      
+      const savedObj = await onSave(finalDraft);
+      const nextStatus = finalDraft.status === "published" ? "Published Successfully" : "Draft Saved";
+      setSaveStatus(nextStatus);
       setLastSavedTime(new Date().toLocaleTimeString());
+      
+      setTimeout(() => {
+        setSaveStatus("Saved");
+      }, 3000);
     } catch (err) {
       setSaveStatus("Save Failed");
     }
   };
 
-  // Auto-Save Effect (trigger only when content differs and status is not Saving...)
+  const isModified = useMemo(() => {
+    if (!articleDraft) return false;
+    return JSON.stringify(articleDraft) !== lastSavedDraftRef.current;
+  }, [articleDraft]);
+
+  // Prompt before reloading or closing the tab
   useEffect(() => {
-    const serialized = JSON.stringify(articleDraft);
-    if (serialized === lastSavedDraftRef.current) return;
-
-    setSaveStatus("Saving...");
-    const delay = setTimeout(async () => {
-      try {
-        const finalDraft = {
-          ...articleDraft,
-          readingTime: calculateReadingTime(articleDraft.body)
-        };
-        await onSave(finalDraft);
-        lastSavedDraftRef.current = JSON.stringify(finalDraft);
-        setSaveStatus("Saved");
-        setLastSavedTime(new Date().toLocaleTimeString());
-      } catch (err) {
-        setSaveStatus("Save Failed");
+    const handleBeforeUnload = (e) => {
+      if (isModified) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Leave without saving?";
+        return e.returnValue;
       }
-    }, 4000); // 4 seconds debounce
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isModified]);
 
-    return () => clearTimeout(delay);
-  }, [articleDraft, onSave]);
+  // Prompt before navigating away via React Router
+  const blocker = useBlocker(
+    useCallback(
+      ({ nextLocation }) => {
+        return isModified;
+      },
+      [isModified]
+    )
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      const confirmLeave = window.confirm("You have unsaved changes. Leave without saving?");
+      if (confirmLeave) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
 
   // Sync editor innerHTML on draft switch
   useEffect(() => {
@@ -326,6 +545,25 @@ const ArticleModule = ({
     onSelectArticle(clone);
   };
 
+  const hasId = Boolean(articleDraft.id || articleDraft._id);
+  const isPublished = articleDraft.status === "published";
+  const isSaving = saveStatus === "Saving...";
+
+  let buttonText = "Save Draft";
+  if (isPublished) {
+    buttonText = hasId ? "Update Published" : "Publish";
+  } else {
+    buttonText = "Save Draft";
+  }
+
+  if (isSaving) {
+    buttonText = "Saving...";
+  } else if (saveStatus === "Draft Saved") {
+    buttonText = "✓ Draft Saved";
+  } else if (saveStatus === "Published Successfully") {
+    buttonText = "✓ Published Successfully";
+  }
+
   return (
     <div className="cms-grid-two article-editor-layout">
       {/* LEFT PANEL: Editor & Form */}
@@ -336,11 +574,53 @@ const ArticleModule = ({
             <h2>{articleDraft.id || articleDraft._id ? "Edit Article" : "Create Article"}</h2>
           </div>
           <div className="inline-actions">
+            <button
+              className="small-outline-btn"
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await apiService.post('/api/ai/article/audit', {
+                    title: articleDraft.title,
+                    body: articleDraft.body,
+                    description: articleDraft.description,
+                    tags: articleDraft.tags,
+                    coverImage: articleDraft.coverImage,
+                  });
+                  if (res?.data?.content) {
+                    const parsed = typeof res.data.content === 'string' ? JSON.parse(res.data.content) : res.data.content;
+                    const readiness = Number.isFinite(parsed.readinessScore) ? `${parsed.readinessScore}/100` : 'Not reported';
+                    const seo = Number.isFinite(parsed.seoScore) ? `${parsed.seoScore}/100` : 'Not reported';
+                    const readability = parsed.readabilityGrade || 'Not reported';
+                    const recommendations = Array.isArray(parsed.recommendations) && parsed.recommendations.length
+                      ? parsed.recommendations.join('\n• ')
+                      : 'No recommendations returned.';
+                    alert(`📋 AI Article Readiness Audit Score: ${readiness}\nReadability: ${readability}\nSEO Score: ${seo}\n\nRecommendations:\n• ${recommendations}`);
+                  }
+                } catch (err) {
+                  alert('AI Audit failed: ' + err.message);
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              <FiZap style={{ color: 'var(--cms-accent)' }} /> Audit Readiness
+            </button>
             <button className="small-outline-btn" type="button" onClick={onNew}>
               <FiPlus /> New
             </button>
-            <button className="small-solid-btn" type="button" onClick={triggerManualSave}>
-              <FiSave /> {saveStatus === "Saving..." ? "Saving..." : "Save"}
+            <button
+              className="small-solid-btn"
+              type="button"
+              onClick={triggerManualSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <FiRefreshCw className="spin-animation" style={{ marginRight: "0.25rem" }} />
+              ) : (saveStatus === "Draft Saved" || saveStatus === "Published Successfully") ? (
+                <span style={{ marginRight: "0.25rem" }}>✓</span>
+              ) : (
+                <FiSave style={{ marginRight: "0.25rem" }} />
+              )}
+              {buttonText}
             </button>
           </div>
         </div>
@@ -348,7 +628,27 @@ const ArticleModule = ({
         {/* Form Inputs */}
         <div className="form-grid">
           <label>
-            Title
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Title</span>
+              {articleDraft.title && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await apiService.post('/api/ai/write', { action: 'suggest_headings', title: articleDraft.title, content: articleDraft.body || '' });
+                      if (res?.data?.content) {
+                        alert(`✨ AI Suggested Title & Section Alternatives:\n\n${res.data.content}`);
+                      }
+                    } catch (e) {
+                      alert('AI generation failed');
+                    }
+                  }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--cms-accent)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 2 }}
+                >
+                  <FiZap /> AI Ideas
+                </button>
+              )}
+            </div>
             <input
               value={articleDraft.title || ""}
               onChange={(e) => update({ title: e.target.value })}
@@ -372,7 +672,48 @@ const ArticleModule = ({
               placeholder="Excerpt or summary..."
             ></textarea>
           </label>
-          
+
+          <label className="span-two">
+            Cover Image (Banner Image)
+            <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginTop: "0.25rem" }}>
+              <input
+                type="text"
+                value={articleDraft.coverImage || ""}
+                onChange={(e) => update({ coverImage: e.target.value })}
+                placeholder="https://images.unsplash.com/... or upload an image"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className="small-outline-btn"
+                onClick={() => coverImageInputRef.current?.click()}
+                style={{ height: "38px", whiteSpace: "nowrap" }}
+              >
+                Upload File
+              </button>
+              <input
+                ref={coverImageInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={async (e) => {
+                  if (e.target.files?.length) {
+                    await handleCoverImageUpload(e.target.files[0]);
+                  }
+                }}
+              />
+            </div>
+            {articleDraft.coverImage && (
+              <div style={{ marginTop: "0.5rem" }}>
+                <img
+                  src={getImageUrl(articleDraft.coverImage, articleDraft.category)}
+                  alt="Cover Preview"
+                  style={{ maxHeight: "120px", borderRadius: "8px", border: "1px solid #ddd" }}
+                />
+              </div>
+            )}
+          </label>
+
           <label>
             Category
             <select
@@ -381,6 +722,7 @@ const ArticleModule = ({
                 const cat = categories.find(c => c.name === e.target.value);
                 update({
                   category: e.target.value,
+                  categoryId: cat?.id || cat?._id || "",
                   subcategory: cat?.subcategories?.[0] || ""
                 });
               }}
@@ -410,6 +752,10 @@ const ArticleModule = ({
           </label>
         </div>
 
+        {/* Modular CMS Experience Panel Resolver */}
+        <CmsPanelResolver articleDraft={articleDraft} update={update} />
+
+
         {/* WYSIWYG Toolbar */}
         <div className="rich-editor-toolbar" style={{ marginTop: "1.5rem" }}>
           <button type="button" onClick={() => runCommand("bold")} title="Bold"><FiBold /></button>
@@ -417,9 +763,28 @@ const ArticleModule = ({
           <button type="button" onClick={() => runCommand("insertUnorderedList")} title="Bullet List"><FiList /></button>
           <button type="button" onClick={insertLink} title="Insert Link"><FiLink /></button>
           <button type="button" onClick={() => imageInputRef.current?.click()} title="Insert Image"><FiImage /></button>
+          <select
+            value={imageAlign}
+            onChange={(e) => setImageAlign(e.target.value)}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              fontSize: "0.85rem",
+              marginLeft: "0.25rem",
+              marginRight: "0.5rem",
+              cursor: "pointer",
+              verticalAlign: "middle"
+            }}
+            title="Image Layout Style"
+          >
+            <option value="center">Center</option>
+            <option value="left">Float Left</option>
+            <option value="right">Float Right</option>
+          </select>
           <button type="button" onClick={handleUndo} title="Undo">Undo</button>
           <button type="button" onClick={handleRedo} title="Redo">Redo</button>
-          
+
           <span style={{ marginLeft: "auto", fontSize: "0.8rem", color: "#666" }}>
             {saveStatus === "Saving..." && <span style={{ color: "orange" }}>Saving...</span>}
             {saveStatus === "Saved" && <span style={{ color: "green" }}>Saved {lastSavedTime && `at ${lastSavedTime}`}</span>}
@@ -445,12 +810,13 @@ const ArticleModule = ({
           className="rich-text-editor-workspace"
           contentEditable
           onKeyDown={handleKeyDown}
+          onKeyUp={saveSelection}
+          onMouseUp={saveSelection}
+          onBlur={saveSelection}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onPaste={handlePaste}
-          onInput={(e) => {
-            onChange({ ...articleDraft, body: e.target.innerHTML });
-          }}
+          onInput={handleEditorInput}
           style={{
             minHeight: "350px",
             border: "1px solid #ccc",
@@ -458,7 +824,8 @@ const ArticleModule = ({
             marginTop: "0.5rem",
             outline: "none",
             borderRadius: "4px",
-            backgroundColor: "#fff"
+            backgroundColor: "#fff",
+            display: "flow-root"
           }}
         ></div>
 
@@ -502,6 +869,24 @@ const ArticleModule = ({
               />
             </label>
             <label>
+              Canonical URL
+              <input
+                type="url"
+                value={articleDraft.seo?.canonicalUrl || ""}
+                onChange={(e) => update({ seo: { ...(articleDraft.seo || {}), canonicalUrl: e.target.value } })}
+                placeholder="https://example.com/articles/article-slug"
+              />
+            </label>
+            <label>
+              Open Graph Image
+              <input
+                type="url"
+                value={articleDraft.seo?.openGraphImage || ""}
+                onChange={(e) => update({ seo: { ...(articleDraft.seo || {}), openGraphImage: e.target.value } })}
+                placeholder="https://example.com/social-card.jpg"
+              />
+            </label>
+            <label>
               Meta Robots Directives
               <select
                 value={articleDraft.seo?.metaRobots || "index,follow"}
@@ -519,7 +904,7 @@ const ArticleModule = ({
 
       {/* RIGHT PANEL: Sidebar Settings & Articles Registry */}
       <div className="cms-sidebar-control" style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-        
+
         {/* Settings Panel */}
         <div className="cms-panel">
           <div className="cms-panel-heading">
@@ -557,6 +942,17 @@ const ArticleModule = ({
                 onChange={(e) => update({ pinned: e.target.checked })}
               />
               Pinned
+            </label>
+            <label>
+              Access
+              <select
+                value={articleDraft.accessLevel || "free"}
+                onChange={(e) => update({ accessLevel: e.target.value })}
+                aria-label="Article access"
+              >
+                <option value="free">Free</option>
+                <option value="premium">Premium</option>
+              </select>
             </label>
             <label>
               Publishing Status

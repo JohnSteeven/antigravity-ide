@@ -86,7 +86,7 @@ const AvatarUploader = ({ label, value, onChange, aspect = "avatar" }) => {
     <label className={`avatar-uploader ${aspect}`}>
       <span>{label}</span>
       <div className="avatar-preview">
-        {preview ? <img src={preview} alt="" /> : <FiImage />}
+        {preview?.trim() ? <img src={preview} alt="" /> : <FiImage />}
       </div>
       <input
         accept="image/*"

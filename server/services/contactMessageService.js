@@ -1,5 +1,9 @@
 const contactMessageRepository = require("../repositories/contactMessageRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
+const ContactMessage = require("../models/ContactMessage");
+
+const IDEMPOTENCY_WINDOW_MS =
+  (parseInt(process.env.CONTACT_IDEMPOTENCY_SECONDS, 10) || 60) * 1000;
 
 class ContactMessageService {
   async getMessages(query = {}) {
@@ -7,6 +11,14 @@ class ContactMessageService {
 
     if (query.status && query.status !== "all") {
       filter.status = query.status;
+    }
+
+    if (query.inquiryType && query.inquiryType !== "all") {
+      filter.inquiryType = query.inquiryType;
+    }
+
+    if (query.priority && query.priority !== "all") {
+      filter.priority = query.priority;
     }
 
     if (query.search) {
@@ -51,17 +63,58 @@ class ContactMessageService {
     };
   }
 
+  async getStats() {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [total, unread, resolved, pending, today] = await Promise.all([
+      ContactMessage.countDocuments({ isDeleted: false }),
+      ContactMessage.countDocuments({ isDeleted: false, status: "unread" }),
+      ContactMessage.countDocuments({ isDeleted: false, status: "resolved" }),
+      ContactMessage.countDocuments({ isDeleted: false, status: { $in: ["unread", "in_progress", "waiting"] } }),
+      ContactMessage.countDocuments({ isDeleted: false, createdAt: { $gte: startOfToday } }),
+    ]);
+
+    return { total, unread, resolved, pending, today };
+  }
+
   async getMessageById(id) {
     return contactMessageRepository.findById(id);
   }
 
-  async createMessage(data) {
-    const message = await contactMessageRepository.create(data);
+  async createMessage(data, userId = null) {
+    const normalizedEmail = String(data.email || "").toLowerCase().trim();
+    const normalizedMessage = String(data.message || "").trim();
 
-    // Activity log with null user (anonymous public action)
+    // Configurable Idempotency Check: Suppress duplicate submissions within window
+    const windowStart = new Date(Date.now() - IDEMPOTENCY_WINDOW_MS);
+    const recentDuplicate = await ContactMessage.findOne({
+      email: normalizedEmail,
+      message: normalizedMessage,
+      createdAt: { $gte: windowStart },
+      isDeleted: false,
+    });
+
+    if (recentDuplicate) {
+      const err = new Error("A duplicate message was recently received. Please wait a moment before sending again.");
+      err.status = 409;
+      err.code = "DUPLICATE_SUBMISSION";
+      throw err;
+    }
+
+    const payload = {
+      ...data,
+      email: normalizedEmail,
+      message: normalizedMessage,
+      createdBy: userId || data.createdBy || null,
+    };
+
+    const message = await contactMessageRepository.create(payload);
+
+    // Privacy-Safe Observability: Log metadata without sensitive message content
     await activityLogRepository.create({
       action: "contact_message_create",
-      description: `Public contact message received from "${message.name} <${message.email}>"`,
+      description: `Public contact message received from "${message.name}" (${message.inquiryType || "General Question"})`,
       module: "contact",
     });
 
@@ -70,12 +123,29 @@ class ContactMessageService {
 
   async updateMessage(id, data, userId) {
     data.updatedBy = userId;
+    const now = new Date();
+
+    // Centralized Audit Fields Management
+    if (data.status === "resolved") {
+      data.resolvedAt = now;
+      data.resolvedBy = userId;
+    } else if (data.status === "archived") {
+      data.archivedAt = now;
+      data.archivedBy = userId;
+    }
+
+    if (data.replied === true) {
+      data.repliedAt = now;
+      data.repliedBy = userId;
+    }
+
     const message = await contactMessageRepository.update(id, data);
     if (!message) throw new Error("Message not found.");
 
+    // Privacy-Safe Observability
     await activityLogRepository.create({
       action: "contact_message_update",
-      description: `Updated status or assigned status of message from "${message.name}"`,
+      description: `Updated status/priority of message ID "${id}" to status="${message.status}"`,
       userId,
       module: "contact",
     });
@@ -89,7 +159,7 @@ class ContactMessageService {
 
     await activityLogRepository.create({
       action: "contact_message_delete",
-      description: `Soft deleted message from "${message.name}"`,
+      description: `Soft deleted contact message ID "${id}"`,
       userId,
       module: "contact",
     });
@@ -103,7 +173,7 @@ class ContactMessageService {
 
     await activityLogRepository.create({
       action: "contact_message_restore",
-      description: `Restored message from "${message.name}"`,
+      description: `Restored contact message ID "${id}"`,
       userId,
       module: "contact",
     });

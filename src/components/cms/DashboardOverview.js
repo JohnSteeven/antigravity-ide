@@ -11,8 +11,10 @@ import {
   FiMessageCircle,
   FiTag,
   FiUsers,
+  FiZap,
 } from "react-icons/fi";
-import { logApi } from "../../services/apiService";
+import { logApi, default as apiService } from "../../services/apiService";
+import { useCms } from "../../context/CmsContext";
 
 const MetricCard = ({ icon, label, value }) => (
   <div className="metric-card">
@@ -22,9 +24,15 @@ const MetricCard = ({ icon, label, value }) => (
   </div>
 );
 
-const DashboardOverview = ({ analytics, articles = [] }) => {
+const DashboardOverview = ({ analytics: propAnalytics, articles: propArticles }) => {
+  const { analytics: ctxAnalytics, data } = useCms();
+  const analytics = propAnalytics || ctxAnalytics || {};
+  const articles = propArticles || data?.articles || [];
+
   const [logs, setLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   useEffect(() => {
     logApi
@@ -36,7 +44,28 @@ const DashboardOverview = ({ analytics, articles = [] }) => {
       })
       .catch((err) => console.warn("Failed to fetch activity logs:", err))
       .finally(() => setLoadingLogs(false));
-  }, []);
+
+    // Fetch AI Suggestions
+    setLoadingAi(true);
+    apiService
+      .post('/api/ai/dashboard', {
+        statsSummary: {
+          publishedArticles: analytics.publishedCount || articles.length,
+          draftCount: analytics.draftCount || 0,
+          totalViews: analytics.views || 0,
+        },
+      })
+      .then((res) => {
+        if (res?.data?.content) {
+          try {
+            const parsed = typeof res.data.content === 'string' ? JSON.parse(res.data.content) : res.data.content;
+            if (Array.isArray(parsed)) setAiSuggestions(parsed);
+          } catch (e) {}
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAi(false));
+  }, [analytics.publishedCount, analytics.draftCount, analytics.views, articles.length]);
 
   // Most Viewed
   const mostViewed = [...articles]
@@ -61,6 +90,32 @@ const DashboardOverview = ({ analytics, articles = [] }) => {
 
   return (
     <div className="dashboard-overview-layout">
+      {/* Today's Intelligent Suggestions Widget */}
+      {aiSuggestions.length > 0 && (
+        <div className="cms-panel wide" style={{ marginBottom: '1.5rem', background: 'var(--soft)', border: '1px solid var(--line)' }}>
+          <div className="cms-panel-heading" style={{ marginBottom: '0.75rem' }}>
+            <div>
+              <span className="section-kicker" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <FiZap style={{ color: 'var(--cms-accent)' }} /> AI Intelligence
+              </span>
+              <h2>Today's Publishing Suggestions</h2>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            {aiSuggestions.map((s, idx) => (
+              <div key={idx} style={{ background: 'var(--panel)', padding: 14, borderRadius: 10, border: '1px solid var(--line)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>{s.title}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.4, marginBottom: 8 }}>{s.description}</div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--cms-accent)', textTransform: 'uppercase' }}>
+                  {s.actionLabel || 'View Action'} →
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Metrics Row 1 */}
       <div className="cms-panel wide">
         <div className="cms-panel-heading">

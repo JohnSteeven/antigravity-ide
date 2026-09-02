@@ -8,11 +8,11 @@ const UserAvatar = ({ user, className = "", size = "large" }) => {
     .filter(Boolean)
     .join(" ");
 
-  if (photoUrl) {
+  if (photoUrl && photoUrl.trim()) {
     return (
       <img
         className={classes}
-        src={photoUrl}
+        src={photoUrl.trim()}
         alt={`${getFullName(user)} profile photo`}
       />
     );

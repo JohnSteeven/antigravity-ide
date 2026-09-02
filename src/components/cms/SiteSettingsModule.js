@@ -23,8 +23,8 @@ export default function SiteSettingsModule() {
     contactEmail: "hello@myjourney.com",
     supportEmail: "support@myjourney.com",
     socials: {
-      instagram: "https://instagram.com",
-      linkedin: "https://linkedin.com",
+      instagram: "https://www.instagram.com/j.steeven_?utm_source=qr&igsh=MWh6aHFyNmIxZTV6Mg%3D%3D",
+      linkedin: "https://www.linkedin.com/in/noblejohnsteeven/",
       twitter: "https://twitter.com",
       github: "https://github.com",
     },

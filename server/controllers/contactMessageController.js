@@ -1,6 +1,15 @@
 const contactMessageService = require("../services/contactMessageService");
 
 class ContactMessageController {
+  async getStats(req, res, next) {
+    try {
+      const stats = await contactMessageService.getStats();
+      res.json({ success: true, stats });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getMessages(req, res, next) {
     try {
       const result = await contactMessageService.getMessages(req.query);

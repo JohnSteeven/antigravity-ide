@@ -7,6 +7,13 @@ const Session = require("../models/Session");
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
+const durationToMs = (value, fallbackMs) => {
+  const match = String(value || "").trim().match(/^(\d+)\s*([smhd])$/i);
+  if (!match) return fallbackMs;
+  const multipliers = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
+  return Number(match[1]) * multipliers[match[2].toLowerCase()];
+};
+
 const signAccessToken = (user) =>
   jwt.sign(
     {
@@ -15,11 +22,12 @@ const signAccessToken = (user) =>
       tokenVersion: user.tokenVersion || 0,
     },
     env.jwtAccessSecret,
-    { expiresIn: env.accessTokenTtl }
+    { algorithm: "HS256", expiresIn: env.accessTokenTtl }
   );
 
 const signRefreshToken = (user, days = env.refreshTokenTtlDays) =>
-  jwt.sign({ sub: user._id.toString() }, env.jwtRefreshSecret, {
+  jwt.sign({ sub: user._id.toString(), jti: crypto.randomUUID() }, env.jwtRefreshSecret, {
+    algorithm: "HS256",
     expiresIn: `${days}d`,
   });
 
@@ -33,7 +41,7 @@ const cookieOptions = {
 const setAuthCookies = (res, { accessToken, refreshToken, refreshExpiresAt }) => {
   res.cookie("accessToken", accessToken, {
     ...cookieOptions,
-    maxAge: 1000 * 60 * 15,
+    maxAge: durationToMs(env.accessTokenTtl, 15 * 60 * 1000),
   });
   res.cookie("refreshToken", refreshToken, {
     ...cookieOptions,
@@ -61,19 +69,22 @@ const createAuthSession = async ({ user, req, res, remember = false }) => {
     expiresAt: refreshExpiresAt,
   });
 
+  const userAgent = typeof req.get === "function"
+    ? req.get("user-agent")
+    : (req.headers?.["user-agent"] || req.headers?.["User-Agent"] || "unknown");
+
   await Session.create({
     user: user._id,
     refreshToken: refreshRecord._id,
-    ip: req.ip,
-    userAgent: req.get("user-agent"),
+    ipAddress: req.ip || "unknown",
+    userAgent: String(userAgent || "unknown").slice(0, 512),
     expiresAt: refreshExpiresAt,
   });
 
   setAuthCookies(res, { accessToken, refreshToken, refreshExpiresAt });
 
   return {
-    accessToken,
-    refreshToken,
+    authenticated: true,
     remember,
     expiresAt: refreshExpiresAt,
   };
@@ -82,6 +93,7 @@ const createAuthSession = async ({ user, req, res, remember = false }) => {
 module.exports = {
   clearAuthCookies,
   createAuthSession,
+  durationToMs,
   hashToken,
   signAccessToken,
 };

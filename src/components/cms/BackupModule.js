@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { FiDatabase, FiPlus, FiDownload, FiRefreshCw, FiTrash2, FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
-import { useCms } from "../../context/CmsContext";
+import { useSiteCms } from "../../context/SiteCmsContext";
 import { backupApi } from "../../services/apiService";
 
 export default function BackupModule() {
-  const { fetchBackups, triggerBackup, restoreBackup, deleteBackup } = useCms();
+  const { backups, fetchBackups, triggerBackup, restoreBackup, deleteBackup } = useSiteCms();
 
-  const [backups, setBackups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,8 +15,7 @@ export default function BackupModule() {
     setLoading(true);
     setError("");
     try {
-      const list = await fetchBackups();
-      setBackups(list);
+      await fetchBackups();
     } catch (err) {
       setError(err.message || "Failed to load backups.");
     } finally {
@@ -36,7 +34,6 @@ export default function BackupModule() {
     try {
       const backup = await triggerBackup();
       setSuccess(`Backup "${backup.fileName}" created successfully.`);
-      loadBackups();
       setTimeout(() => setSuccess(""), 4000);
     } catch (err) {
       setError(err.message || "Failed to trigger backup.");
@@ -55,7 +52,7 @@ export default function BackupModule() {
     try {
       await restoreBackup(id);
       setSuccess("Database successfully restored to the chosen backup snapshot.");
-      loadBackups();
+      await fetchBackups();
       setTimeout(() => setSuccess(""), 4000);
     } catch (err) {
       setError(err.message || "Database restore failed.");
@@ -74,7 +71,6 @@ export default function BackupModule() {
     try {
       await deleteBackup(id);
       setSuccess("Backup record deleted.");
-      loadBackups();
       setTimeout(() => setSuccess(""), 4000);
     } catch (err) {
       setError(err.message || "Failed to delete backup.");

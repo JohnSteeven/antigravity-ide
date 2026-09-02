@@ -1,56 +1,76 @@
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const mediaController = require("../controllers/mediaController");
-const { authenticate } = require("../middleware/auth");
-const { requireAdmin } = require("../middleware/admin");
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  mediaRoutes.js  —  Digital Asset Management (DAM) API Routes
+ *  MyJourney CMS  |  Phase 2: Media Library 2.0
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const mediaController = require('../controllers/mediaController');
+const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
+const apiRegistry = require('../core/apiRegistry');
 
 const router = express.Router();
+router.use(authenticate, requireAdmin);
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const folder = req.body.folder || req.query.folder || "misc";
-    const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "misc"];
-    const targetFolder = allowedFolders.includes(folder) ? folder : "misc";
-    const dest = path.resolve(__dirname, "../../uploads", targetFolder);
-    cb(null, dest);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const cleanName = path.basename(file.originalname, ext).toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    cb(null, `${cleanName}-${uniqueSuffix}${ext}`);
-  }
-});
-
-// File Type Filter Validation
-const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
-  if (allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
-    cb(null, true);
-  } else {
-    cb(new Error("Invalid file type. Only JPG, JPEG, PNG, WEBP, and GIF are allowed."), false);
-  }
-};
+const { multerFileFilter, validateFileBuffer } = require('../middleware/uploadValidation');
 
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max
+  fileFilter: multerFileFilter,
 });
 
-// Routes
-router.get("/", authenticate, requireAdmin, mediaController.getMediaFiles);
-router.get("/folders", authenticate, requireAdmin, mediaController.getFolders);
+// Middleware helper to catch Multer file filter errors and return 400/415
+const handleUpload = (singleField) => (req, res, next) => {
+  upload.single(singleField)(req, res, (err) => {
+    if (err) {
+      const statusCode = err.statusCode || 400;
+      return res.status(statusCode).json({
+        error: statusCode === 415 ? 'Unsupported Media Type' : 'Bad Request',
+        message: err.message,
+      });
+    }
+    next();
+  });
+};
 
-// File Upload - Using Multer single file upload with field name "file"
-router.post("/", authenticate, requireAdmin, upload.single("file"), mediaController.uploadFile);
+// Folders CRUD
+router.get('/folders', mediaController.getFolders);
+router.post('/folders', mediaController.createFolder);
+router.patch('/folders/:id', mediaController.updateFolder);
+router.delete('/folders/:id', mediaController.deleteFolder);
 
-router.put("/:id/rename", authenticate, requireAdmin, mediaController.renameMedia);
-router.put("/:id/move", authenticate, requireAdmin, mediaController.moveMedia);
-router.post("/:id/restore", authenticate, requireAdmin, mediaController.restoreFile);
-router.delete("/:id", authenticate, requireAdmin, mediaController.deleteFile);
+// Asset Operations & Queries
+router.get('/', mediaController.getMedia);
+router.get('/usage/:id', mediaController.getAssetUsage);
+router.get('/:id', mediaController.getMediaById);
+
+router.post('/', handleUpload('file'), validateFileBuffer, mediaController.uploadMedia);
+router.post('/upload', handleUpload('file'), validateFileBuffer, mediaController.uploadMedia);
+router.post('/replace/:id', handleUpload('file'), validateFileBuffer, mediaController.replaceMedia);
+
+router.patch('/:id', mediaController.updateMedia);
+router.delete('/:id', mediaController.deleteMedia);
+
+// Bulk Operations
+router.post('/bulk', mediaController.bulkAction);
+router.post('/move', (req, res, next) => { req.body.action = 'move'; next(); }, mediaController.bulkAction);
+router.post('/archive', (req, res, next) => { req.body.action = 'archive'; next(); }, mediaController.bulkAction);
+
+// Legacy route aliases
+router.put('/:id/rename', mediaController.updateMedia);
+router.delete('/:id/file', mediaController.deleteMedia);
+
+apiRegistry.register({
+  name: 'MediaLibrary',
+  prefix: '/api/media',
+  router,
+  public: false,
+});
 
 module.exports = router;

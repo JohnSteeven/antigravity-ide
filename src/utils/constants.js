@@ -36,24 +36,10 @@ export const AUTH_PROVIDERS = {
 };
 
 export const DEFAULT_PROFILE = {
-  bio: "Reader, builder, and collector of meaningful stories.",
+  avatar: "",
+  coverImage: "",
+  bio: "",
   location: "",
   website: "",
-  skills: ["Reading", "Writing", "Reflection"],
-  bookmarks: [],
-  likedArticles: [],
-  savedArticles: [],
-  comments: [],
-  darkMode: false,
-  notificationsEnabled: true,
-  privateProfile: false,
-  notifications: [
-    {
-      id: "welcome-note",
-      title: "Welcome to MyJourney",
-      message: "Your profile is ready. Save articles and keep your journey here.",
-      read: false,
-      createdAt: "2026-06-28",
-    },
-  ],
+  skills: [],
 };

@@ -18,6 +18,8 @@ dist-backup*/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+playwright-report/
+test-results/
 
 # OS files
 .DS_Store
@@ -35,3 +37,20 @@ prisma/migrations/
 
 # Antigravity IDE agent data
 .agents/
+
+# Backups
+server/backups/
+
+# Scratch / temporary files (root-level dev artifacts)
+scratch_*.css
+scratch_*.js
+reset_admin.js
+
+# User uploads — never commit real upload content
+uploads/
+
+# IDE brain data
+brain/
+
+# Parcel production cache
+.parcel-cache-prod/

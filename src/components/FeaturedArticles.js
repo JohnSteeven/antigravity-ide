@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import { articleApi } from "../services/apiService";
@@ -7,13 +7,15 @@ import ArticlesCard from "./ArticlesCard";
 
 const getVisibleCount = () => {
   if (typeof window === "undefined") {
-    return 4;
+    return 5;
   }
-
-  if (window.innerWidth < 640) return 1;
-  if (window.innerWidth < 900) return 2;
-  if (window.innerWidth < 1200) return 3;
-  return 4;
+  const w = window.innerWidth;
+  if (w <= 480) return 1;
+  if (w <= 768) return 2;
+  if (w <= 1100) return 3;
+  if (w <= 1440) return 4;
+  if (w <= 1920) return 5;
+  return 6;
 };
 
 const FeaturedArticles = () => {
@@ -27,7 +29,7 @@ const FeaturedArticles = () => {
     let cancelled = false;
 
     articleApi
-      .list({ status: "published", featured: "true", limit: 20 })
+      .list({ status: "published", isFeatured: "true", limit: 25 })
       .then((res) => {
         if (!cancelled && Array.isArray(res.articles)) {
           setApiArticles(res.articles);
@@ -42,15 +44,22 @@ const FeaturedArticles = () => {
 
   // Prefer API articles; fall back to CmsContext
   const featuredArticles = useMemo(() => {
-    if (apiArticles) {
-      return apiArticles.filter((a) => (a.rating || 0) >= 3.5);
+    let list = (apiArticles && Array.isArray(apiArticles) && apiArticles.length > 0)
+      ? apiArticles
+      : (data.articles || []);
+
+    const filtered = list.filter((article) => {
+      const isPub = String(article.status || "published").toLowerCase() === "published";
+      const isFeat = article.isFeatured || article.featured;
+      return isPub && isFeat;
+    });
+
+    // If no specific articles are flagged as featured yet, fall back to top published articles
+    if (!filtered.length) {
+      return list.filter((article) => String(article.status || "published").toLowerCase() === "published");
     }
-    return data.articles.filter(
-      (article) =>
-        article.status === "published" &&
-        (article.isFeatured || article.featured) &&
-        article.rating >= 3.5
-    );
+
+    return filtered;
   }, [apiArticles, data.articles]);
 
   useEffect(() => {
@@ -66,10 +75,13 @@ const FeaturedArticles = () => {
     );
   };
 
-  const visibleArticles = Array.from(
-    { length: Math.min(visibleCount, featuredArticles.length) },
-    (_, offset) => featuredArticles[(currentIndex + offset) % featuredArticles.length]
-  );
+  const count = Math.min(visibleCount, featuredArticles.length);
+  const visibleArticles = featuredArticles.length > 0
+    ? Array.from(
+        { length: count },
+        (_, offset) => featuredArticles[(currentIndex + offset) % featuredArticles.length]
+      )
+    : [];
 
   return (
     <section className="featured" id="featured">

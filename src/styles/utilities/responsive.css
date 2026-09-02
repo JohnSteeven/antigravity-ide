@@ -1,0 +1,125 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  responsive.css  —  Centralized Responsive Utilities
+ *  MyJourney CMS  |  Layer X: Design System
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ *  Breakpoint tokens (for reference):
+ *    --bp-mobile:  480px
+ *    --bp-tablet:  768px
+ *    --bp-laptop:  1024px
+ *    --bp-desktop: 1280px
+ *    --bp-wide:    1440px
+ *
+ *  Mobile-first approach: base styles apply to mobile.
+ *  Media queries expand for larger screens.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ── Show / Hide by Breakpoint ───────────────────────────────────────────── */
+
+/* Hide on mobile, show on tablet+ */
+.hide-mobile   { display: none; }
+.show-mobile   { display: initial; }
+
+@media (min-width: 768px) {
+  .hide-mobile  { display: initial; }
+  .show-mobile  { display: none; }
+  .hide-tablet  { display: none; }
+}
+
+@media (min-width: 1024px) {
+  .hide-tablet  { display: initial; }
+  .hide-laptop  { display: none; }
+}
+
+@media (min-width: 1280px) {
+  .hide-laptop  { display: initial; }
+}
+
+/* ── Responsive Text Sizes ────────────────────────────────────────────────── */
+
+.text-responsive-sm {
+  font-size: clamp(var(--font-size-sm), 2vw, var(--font-size-base));
+}
+
+.text-responsive-md {
+  font-size: clamp(var(--font-size-base), 2.5vw, var(--font-size-lg));
+}
+
+.text-responsive-lg {
+  font-size: clamp(var(--font-size-lg), 3vw, var(--font-size-2xl));
+}
+
+.text-responsive-xl {
+  font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-3xl));
+}
+
+.text-responsive-hero {
+  font-size: clamp(3rem, 8vw, 5.8rem);
+}
+
+/* ── Responsive Padding ───────────────────────────────────────────────────── */
+
+.px-responsive {
+  padding-inline: clamp(var(--space-5), 5vw, var(--space-10));
+}
+
+.px-responsive-sm {
+  padding-inline: clamp(var(--space-4), 3vw, var(--space-7));
+}
+
+/* ── CMS Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .cms-layout {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Stack two-column grids */
+  .cms-grid-two {
+    grid-template-columns: 1fr;
+  }
+
+  /* Reduce CMS content padding */
+  .cms-content {
+    padding: var(--space-5);
+  }
+
+  /* Stack form grids */
+  .form-grid.two,
+  .form-grid.three {
+    grid-template-columns: 1fr;
+  }
+
+  /* Mobile metric grid — two columns */
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Single column metric grid on very small screens */
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Print ────────────────────────────────────────────────────────────────── */
+
+@media print {
+  .cms-sidebar,
+  .header,
+  .cms-header,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+}

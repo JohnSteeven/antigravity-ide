@@ -1,6 +1,7 @@
 const newsletterCampaignRepository = require("../repositories/newsletterCampaignRepository");
 const Subscriber = require("../models/Subscriber");
 const activityLogRepository = require("../repositories/activityLogRepository");
+const emailService = require("./emailService");
 
 class NewsletterCampaignService {
   async getCampaigns(query = {}) {
@@ -81,31 +82,75 @@ class NewsletterCampaignService {
     return campaign;
   }
 
+  /**
+   * Transactional Resumable Campaign Dispatcher
+   * Only target verified active subscribers who haven't unsubscribed.
+   * Tracks per-recipient delivery progress so interrupted campaigns can resume cleanly.
+   */
   async sendCampaign(id, userId) {
     const campaign = await newsletterCampaignRepository.findById(id);
     if (!campaign) throw new Error("Campaign not found.");
-    if (campaign.status === "sent") throw new Error("Campaign already sent.");
 
-    // Retrieve active subscribers
-    const subscribers = await Subscriber.find({ active: true, isDeleted: false }).lean();
-    
-    const deliveryHistory = subscribers.map((sub) => ({
-      email: sub.email,
-      sentAt: new Date(),
-      status: "success",
-    }));
+    // Retrieve active verified subscribers
+    const subscribers = await Subscriber.find({
+      status: "verified",
+      active: true,
+      isDeleted: false,
+    }).lean();
+
+    if (subscribers.length === 0) {
+      throw new Error("No verified active subscribers found to send this campaign.");
+    }
+
+    const existingHistory = campaign.deliveryHistory || [];
+    const historyMap = new Map(existingHistory.map((item) => [item.email, item]));
+
+    // Filter subscribers needing delivery
+    const pendingSubscribers = subscribers.filter(
+      (sub) => !historyMap.has(sub.email) || historyMap.get(sub.email).status === "failed"
+    );
+
+    let sentCount = existingHistory.filter((item) => item.status === "success").length;
+    let failedCount = existingHistory.filter((item) => item.status === "failed").length;
+
+    for (const sub of pendingSubscribers) {
+      // 1. Transactional record: mark started/pending
+      const entry = {
+        email: sub.email,
+        sentAt: new Date(),
+        status: "processing",
+      };
+      historyMap.set(sub.email, entry);
+      campaign.deliveryHistory = Array.from(historyMap.values());
+      await campaign.save();
+
+      // 2. Attempt delivery
+      try {
+        await emailService.sendCampaignEmail({ to: sub.email, campaign, token: sub.preferenceTokenHash });
+        entry.status = "success";
+        sentCount++;
+      } catch (err) {
+        console.warn('[newsletter] Campaign delivery failed.', { errorType: err?.name || 'Error' });
+        entry.status = "failed";
+        failedCount++;
+      }
+
+      // 3. Update final status for this recipient
+      historyMap.set(sub.email, entry);
+      campaign.deliveryHistory = Array.from(historyMap.values());
+      campaign.subscriberCount = sentCount;
+      await campaign.save();
+    }
 
     campaign.status = "sent";
     campaign.sentAt = new Date();
-    campaign.subscriberCount = subscribers.length;
-    campaign.deliveryHistory = deliveryHistory;
+    campaign.subscriberCount = sentCount;
     campaign.updatedBy = userId;
-
     await campaign.save();
 
     await activityLogRepository.create({
       action: "newsletter_send",
-      description: `Sent newsletter campaign "${campaign.title}" to ${subscribers.length} subscribers`,
+      description: `Sent newsletter campaign "${campaign.title}" to ${sentCount} subscribers (${failedCount} failed)`,
       userId,
       module: "newsletter",
     });

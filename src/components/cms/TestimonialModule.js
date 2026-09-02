@@ -367,9 +367,9 @@ export default function TestimonialModule() {
                 <tr key={item._id || item.id} style={{ opacity: item.isDeleted ? 0.6 : 1 }}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      {item.avatar && (
+                      {item.avatar?.trim() ? (
                         <img src={item.avatar} alt={item.name} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} />
-                      )}
+                      ) : null}
                       <strong>{item.name}</strong>
                     </div>
                   </td>

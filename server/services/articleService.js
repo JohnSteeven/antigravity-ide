@@ -1,10 +1,15 @@
+const mongoose = require("mongoose");
 const articleRepository = require("../repositories/articleRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
+const Category = require("../models/Category");
+const Article = require("../models/Article");
 
 class ArticleService {
   async getArticles(query = {}) {
     const filter = {};
-    if (query.status) filter.status = query.status;
+    if (query.contentType) filter.contentType = query.contentType;
+    if (query.status) filter.status = String(query.status).toLowerCase();
+    if (query.accessLevel) filter.accessLevel = query.accessLevel;
     if (query.category) filter.category = query.category;
     if (query.subcategory) filter.subcategory = query.subcategory;
     if (query.isFeatured) filter.isFeatured = query.isFeatured === "true";
@@ -16,13 +21,26 @@ class ArticleService {
       filter.tags = { $in: Array.isArray(query.tags) ? query.tags : [query.tags] };
     }
 
+    if (query.ids) {
+      const idList = (Array.isArray(query.ids) ? query.ids : String(query.ids).split(","))
+        .filter(Boolean)
+        .filter(id => mongoose.Types.ObjectId.isValid(id));
+      if (idList.length > 0) {
+        filter._id = { $in: idList };
+      } else {
+        filter._id = { $in: [] };
+      }
+    }
+
     if (query.search) {
-      filter.$text = { $search: query.search };
+      filter.$text = { $search: String(query.search).slice(0, 100) };
     }
 
     const sort = {};
     if (query.sort === "popular") {
       sort.views = -1;
+    } else if (query.sort === "rated") {
+      sort.rating = -1;
     } else if (query.sort === "oldest") {
       sort.publishedAt = 1;
     } else {
@@ -30,16 +48,20 @@ class ArticleService {
     }
 
     const page = Math.max(1, parseInt(query.page) || 1);
-    const limit = Math.min(100, parseInt(query.limit) || 20);
+    const limit = Math.min(1000, Math.max(1, parseInt(query.limit) || 1000));
     const skip = (page - 1) * limit;
+
+    const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
 
     const [articles, total] = await Promise.all([
       articleRepository.find(filter, sort, limit, skip),
       articleRepository.count(filter),
     ]);
 
+    const formattedArticles = articles.map(formatArticleImageUrls);
+
     return {
-      articles,
+      articles: formattedArticles,
       pagination: {
         page,
         limit,
@@ -50,19 +72,37 @@ class ArticleService {
   }
 
   async getArticleBySlug(slug) {
-    return articleRepository.findBySlug(slug);
+    const article = await articleRepository.findBySlug(slug);
+    const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
+    return article ? formatArticleImageUrls(article) : null;
   }
 
   async getArticleById(id) {
-    return articleRepository.findById(id);
+    const article = await articleRepository.findById(id);
+    const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
+    return article ? formatArticleImageUrls(article) : null;
   }
 
   async createArticle(data, userId) {
+    if (!data.categoryId && data.category) {
+      const categoryDoc = await Category.findOne({ name: data.category });
+      if (categoryDoc) {
+        data.categoryId = categoryDoc._id;
+        data.categorySlug = categoryDoc.slug;
+      }
+    } else if (data.categoryId) {
+      const categoryDoc = await Category.findById(data.categoryId);
+      if (categoryDoc) {
+        data.category = categoryDoc.name;
+        data.categorySlug = categoryDoc.slug;
+      }
+    }
+
     // Generate unique slug
     let baseSlug = data.slug || data.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     let slug = baseSlug;
     let counter = 1;
-    while (await articleRepository.findBySlug(slug)) {
+    while (await Article.findOne({ slug })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -76,10 +116,35 @@ class ArticleService {
       description: `Created article "${article.title}"`,
       userId,
     });
+
+    if (article.status === "published") {
+      const notificationSchedulerService = require("./notificationSchedulerService");
+      notificationSchedulerService.handleNewArticle(article).catch((err) => {
+        console.error('[articles] Notification trigger failed.', { errorType: err?.name || 'Error' });
+      });
+    }
+
     return article;
   }
 
   async updateArticle(id, data, userId) {
+    if (!data.categoryId && data.category) {
+      const categoryDoc = await Category.findOne({ name: data.category });
+      if (categoryDoc) {
+        data.categoryId = categoryDoc._id;
+        data.categorySlug = categoryDoc.slug;
+      }
+    } else if (data.categoryId) {
+      const categoryDoc = await Category.findById(data.categoryId);
+      if (categoryDoc) {
+        data.category = categoryDoc.name;
+        data.categorySlug = categoryDoc.slug;
+      }
+    }
+
+    const previousArticle = await articleRepository.findById(id);
+    const wasPublished = previousArticle?.status === "published";
+
     data.updatedBy = userId;
     const article = await articleRepository.update(id, data);
     if (!article) throw new Error("Article not found.");
@@ -89,6 +154,14 @@ class ArticleService {
       description: `Updated article "${article.title}"`,
       userId,
     });
+
+    if (article.status === "published" && !wasPublished) {
+      const notificationSchedulerService = require("./notificationSchedulerService");
+      notificationSchedulerService.handleNewArticle(article).catch((err) => {
+        console.error('[articles] Notification trigger failed.', { errorType: err?.name || 'Error' });
+      });
+    }
+
     return article;
   }
 
@@ -116,11 +189,33 @@ class ArticleService {
     return article;
   }
 
-  async incrementMetric(id, metric) {
-    if (!["views", "likes", "bookmarks"].includes(metric)) {
+  async incrementMetric(id, metric, userId) {
+    if (!["views", "likes", "bookmarks", "saved"].includes(metric)) {
       throw new Error("Invalid metric type.");
     }
-    return articleRepository.update(id, { $inc: { [metric]: 1 } });
+
+    if (metric === "views") {
+      return articleRepository.update(id, { $inc: { views: 1 } });
+    }
+
+    if (!userId) {
+      throw new Error("User ID is required.");
+    }
+
+    const ReaderProfileService = require("./readerProfileService");
+    const fieldMap = {
+      likes: "likedArticles",
+      bookmarks: "bookmarks",
+      saved: "savedArticles",
+    };
+    const userField = fieldMap[metric];
+
+    const { isAdded, libraryItem } = await ReaderProfileService.toggleArticleReference(userId, userField, id);
+    const incValue = isAdded ? 1 : -1;
+    const article = await articleRepository.updateEngagementCounter(id, metric, incValue);
+    if (!article) return null;
+
+    return { article, isActive: isAdded, libraryItem };
   }
 }
 

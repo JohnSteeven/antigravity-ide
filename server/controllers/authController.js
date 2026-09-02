@@ -11,9 +11,11 @@ const safeUser = (user) => {
 class AuthController {
   async me(req, res, next) {
     try {
+      const safe = safeUser(req.user);
+
       res.json({
         session: { authenticated: true },
-        user: safeUser(req.user),
+        user: safe,
       });
     } catch (err) {
       next(err);
@@ -47,7 +49,7 @@ class AuthController {
 
   async resendOtp(req, res, next) {
     try {
-      const challenge = await authService.sendOtp(req.body);
+      const challenge = await authService.resendOtp(req.body.challengeId);
       res.json({
         ...challenge,
         message: `A fresh OTP was sent to ${challenge.maskedIdentifier}.`,
@@ -68,9 +70,11 @@ class AuthController {
         });
       }
 
+      const safe = safeUser(result.user);
+
       res.json({
         session: result.session,
-        user: safeUser(result.user),
+        user: safe,
         message:
           req.body.purpose === "login-otp"
             ? "Logged in successfully."
@@ -85,9 +89,12 @@ class AuthController {
     try {
       const { identifier, password, remember } = req.body;
       const { session, user } = await authService.login(identifier, password, remember, req, res);
+
+      const safe = safeUser(user);
+
       res.json({
         session,
-        user: safeUser(user),
+        user: safe,
         message: "Welcome back.",
       });
     } catch (err) {
@@ -110,12 +117,19 @@ class AuthController {
 
   async forgotPassword(req, res, next) {
     try {
-      const challenge = await authService.sendOtp({
-        identifier: req.body.identifier,
-        channel: req.body.channel,
-        purpose: "password-reset",
-      });
-      res.json(challenge);
+      const emailOrIdentifier = req.body.email || req.body.identifier;
+      const result = await authService.requestPasswordReset(emailOrIdentifier, req);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async validateResetToken(req, res, next) {
+    try {
+      const token = req.params.token;
+      const result = await authService.validateResetToken(token);
+      res.json(result);
     } catch (err) {
       next(err);
     }
@@ -123,9 +137,10 @@ class AuthController {
 
   async resetPassword(req, res, next) {
     try {
-      const { resetToken, password } = req.body;
-      await authService.resetPassword(resetToken, password, res);
-      res.json({ message: "Password updated successfully. Please login again." });
+      const token = req.params.token || req.body.token || req.body.resetToken;
+      const { password, confirmPassword } = req.body;
+      const result = await authService.resetPasswordWithToken(token, password, confirmPassword, req, res);
+      res.json(result);
     } catch (err) {
       next(err);
     }
@@ -133,13 +148,16 @@ class AuthController {
 
   async refreshToken(req, res, next) {
     try {
-      const token = req.cookies.refreshToken || req.body.refreshToken;
+      const token = req.cookies.refreshToken;
       if (!token) return res.status(401).json({ message: "Refresh token required." });
-      
+
       const { session, user } = await authService.refreshToken(token, req, res);
+
+      const safe = safeUser(user);
+
       res.json({
         session,
-        user: safeUser(user),
+        user: safe,
         message: "Session refreshed.",
       });
     } catch (err) {
@@ -149,7 +167,7 @@ class AuthController {
 
   async logout(req, res, next) {
     try {
-      const token = req.cookies.refreshToken || req.body.refreshToken;
+      const token = req.cookies.refreshToken;
       await authService.logout(token, res);
       res.json({ message: "Logged out." });
     } catch (err) {
@@ -160,11 +178,8 @@ class AuthController {
   async changePassword(req, res, next) {
     try {
       const { currentPassword, newPassword } = req.body;
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: "Current and new passwords are required." });
-      }
-      await authService.changePassword(req.user._id, currentPassword, newPassword);
-      res.json({ success: true, message: "Password updated successfully." });
+      const result = await authService.changePassword(req.user._id, currentPassword, newPassword, req, res);
+      res.json(result);
     } catch (err) {
       next(err);
     }

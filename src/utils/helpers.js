@@ -64,11 +64,12 @@ export const removeStorage = (key) => {
 
 export const clearAuthCookies = () => {
   if (typeof document === "undefined") return;
-  document.cookie.split(";").forEach((cookie) => {
-    const name = cookie.split("=")[0].trim();
-    if (name) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    }
+  // Access/refresh cookies are HttpOnly in the supported server flow, but
+  // remove legacy script-visible copies without deleting unrelated cookies.
+  // In particular, the CSRF cookie must remain paired with the token cached by
+  // the request clients after an anonymous session/refresh check returns 401.
+  ["accessToken", "refreshToken"].forEach((name) => {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
   });
 };
 
@@ -110,6 +111,17 @@ export const getProfileCover = (profile = {}) => {
   return coverImage && !isLegacyPlaceholderImage(coverImage) ? coverImage : "";
 };
 
+export const decodeHtmlEntities = (str) => {
+  if (!str || typeof str !== "string") return str;
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#x27;/g, "'");
+};
+
 export const toCsv = (items) => {
   if (!items.length) return "";
   const keys = Object.keys(items[0]);
@@ -120,3 +132,13 @@ export const toCsv = (items) => {
   );
   return [keys.join(","), ...rows].join("\n");
 };
+
+import { getImageUrl } from "./imageUrlHelper";
+import articleSharing from "./articleSharing.cjs";
+
+export const resolveImageUrl = (url, category = "") => {
+  return getImageUrl(url, category);
+};
+
+export const copyToClipboard = articleSharing.copyToClipboard;
+export const shareArticle = articleSharing.shareArticle;

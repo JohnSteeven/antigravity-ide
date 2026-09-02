@@ -1,0 +1,102 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  Skeleton.css  —  Loading Skeleton Shimmer
+ *  MyJourney CMS  |  Layer X: Design System
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ── Base Skeleton ───────────────────────────────────────────────────────── */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-soft) 25%,
+    var(--color-line) 50%,
+    var(--color-soft) 75%
+  );
+  background-size: 400px 100%;
+  animation: cms-skeleton 1.4s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Skeleton Shapes ─────────────────────────────────────────────────────── */
+
+.skeleton-text {
+  height: 14px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text.short  { width: 60%; }
+.skeleton-text.medium { width: 80%; }
+.skeleton-text.long   { width: 100%; }
+
+.skeleton-title {
+  height: 22px;
+  width: 75%;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.skeleton-avatar.lg {
+  width: 64px;
+  height: 64px;
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-card {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeleton-button {
+  height: 36px;
+  width: 100px;
+  border-radius: var(--radius-md);
+}
+
+/* ── Skeleton List ───────────────────────────────────────────────────────── */
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeleton-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+/* ── Dark Mode Skeletons ──────────────────────────────────────────────────── */
+
+body.theme-dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    #222a28 25%,
+    #2a3330 50%,
+    #222a28 75%
+  );
+  background-size: 400px 100%;
+  animation: cms-skeleton 1.4s ease-in-out infinite;
+}

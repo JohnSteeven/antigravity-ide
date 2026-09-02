@@ -1,3 +1,5 @@
+import React from "react";
+
 const EmptyState = ({ title, message }) => (
   <div className="empty-state-block">
     <strong>{title}</strong>

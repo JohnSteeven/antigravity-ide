@@ -5,18 +5,9 @@ const ProfileSchema = new mongoose.Schema(
     avatar: String,
     coverImage: String,
     bio: String,
+    location: String,
+    website: String,
     skills: [String],
-    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    likedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    savedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
-    comments: [
-      {
-        articleId: String,
-        articleTitle: String,
-        text: String,
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
   },
   { _id: false }
 );
@@ -41,8 +32,30 @@ const UserSchema = new mongoose.Schema(
     tokenVersion: { type: Number, default: 0 },
     isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
+    // ── Two-Factor Authentication ─────────────────────────────────────────────
+    twoFactor: {
+      enabled: { type: Boolean, default: false },
+      secret: { type: String, default: null, select: false },
+      verifiedAt: { type: Date, default: null },
+      backupCodes: {
+        type: [{
+          codeHash: { type: String },
+          usedAt: { type: Date, default: null },
+        }],
+        default: [],
+        select: false,
+      },
+    },
+    // ── Pending Account Deletion (7-day recovery window) ──────────────────────
+    pendingDeletion: { type: Boolean, default: false, index: true },
+    pendingDeletionAt: { type: Date, default: null },
+    scheduledDeletionAt: { type: Date, default: null },
+    deletedBy: { type: String, default: null }, // 'self' | 'admin' | 'system'
     lastLogin: { type: Date },
     lastPasswordChange: { type: Date },
+    passwordResetToken: { type: String, default: null, select: false },
+    passwordResetExpires: { type: Date, default: null },
+    passwordHistory: [{ type: String, select: false }],
     verified: {
       email: { type: Boolean, default: false },
       mobile: { type: Boolean, default: false },
@@ -55,14 +68,29 @@ const UserSchema = new mongoose.Schema(
       type: ProfileSchema,
       default: () => ({
         bio: "",
+        location: "",
+        website: "",
         skills: [],
-        bookmarks: [],
-        likedArticles: [],
-        savedArticles: [],
-        comments: [],
       }),
     },
     lastLoginAt: Date,
+    notificationPreferences: {
+      dailyQuote: {
+        enabled: { type: Boolean, default: true },
+        time: {
+          hour: { type: Number, default: 9, min: 0, max: 23 },
+          minute: { type: Number, default: 0 }
+        }
+      },
+      newArticles: { enabled: { type: Boolean, default: false } },
+      readingReminders: { enabled: { type: Boolean, default: false } },
+      weeklySummary: { enabled: { type: Boolean, default: false } },
+      sentQuotes: { type: [String], default: [] },
+      lastQuoteSentAt: { type: Date, default: null },
+      lastActiveAt: { type: Date, default: null },
+      lastReadingReminderSentAt: { type: Date, default: null },
+      lastWeeklySummarySentAt: { type: Date, default: null }
+    }
   },
   { timestamps: true }
 );

@@ -1,0 +1,243 @@
+.sec-health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.sec-health-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink, #1e293b);
+  margin: 0 0 2px;
+}
+
+.sec-score-pill {
+  padding: 6px 14px;
+  border-radius: 8px;
+  text-align: right;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  flex-shrink: 0;
+}
+
+.sec-score-value {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #10b981;
+}
+
+.sec-score-rating {
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+/* Score progress bar */
+.sec-score-bar-wrap {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.sec-score-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sec-health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sec-health-metric-box {
+  padding: 12px 14px;
+  background: rgba(248, 250, 252, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 6px;
+}
+
+.sec-health-metric-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.sec-health-metric-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink, #1e293b);
+}
+
+/* Score breakdown table */
+.sec-score-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: rgba(248, 250, 252, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  border-radius: 6px;
+}
+
+.sec-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.sec-breakdown-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sec-breakdown-icon {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.sec-breakdown-icon.pass { color: #10b981; }
+.sec-breakdown-icon.fail { color: #cbd5e1; }
+
+.sec-breakdown-label {
+  color: #475569;
+  font-weight: 500;
+}
+
+.sec-breakdown-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.sec-breakdown-pts {
+  font-weight: 700;
+}
+
+.sec-breakdown-max {
+  color: #94a3b8;
+}
+
+/* Recommendations */
+.sec-recs-box {
+  padding: 12px 14px;
+  background: #fffbebf5;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+}
+.sec-recs-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #b45309;
+  margin: 0 0 4px;
+}
+.sec-recs-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.8rem;
+  color: #92400e;
+  line-height: 1.7;
+}
+
+
+.sec-score-pill {
+  padding: 6px 14px;
+  border-radius: 8px;
+  text-align: right;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.sec-score-value {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #10b981;
+}
+
+.sec-score-rating {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #047857;
+}
+
+.sec-health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sec-health-metric-box {
+  padding: 12px 14px;
+  background: rgba(248, 250, 252, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 6px;
+}
+
+.sec-health-metric-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.sec-health-metric-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink, #1e293b);
+}
+
+.sec-check-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+.sec-check-item {
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sec-check-item.pass {
+  color: #059669;
+}
+.sec-check-item.warn {
+  color: #d97706;
+}
+
+.sec-recs-box {
+  padding: 12px 14px;
+  background: #fffbebf5;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+}
+.sec-recs-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #b45309;
+  margin: 0 0 4px;
+}
+.sec-recs-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.8rem;
+  color: #92400e;
+}

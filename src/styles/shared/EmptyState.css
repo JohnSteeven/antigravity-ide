@@ -1,0 +1,59 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  EmptyState.css  —  Empty State Display
+ *  MyJourney CMS  |  Layer X: Design System
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-9) var(--space-6);
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.empty-state__icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-line);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state__title {
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.empty-state__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  max-width: 300px;
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.empty-state__action {
+  margin-top: var(--space-4);
+}
+
+/* Compact variant (inline in lists) */
+.empty-state.compact {
+  padding: var(--space-6) var(--space-4);
+  flex-direction: row;
+  gap: var(--space-3);
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.empty-state.compact .empty-state__icon {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 0;
+}

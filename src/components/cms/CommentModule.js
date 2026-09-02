@@ -13,7 +13,7 @@ import {
 import { useCms } from "../../context/CmsContext";
 
 export default function CommentModule() {
-  const { data, moderateComment, deleteComment, restoreComment, actions } = useCms();
+  const { data, moderateComment, deleteComment, restoreComment, refreshComments } = useCms();
   const { comments = [] } = data;
 
   // UI state
@@ -34,8 +34,8 @@ export default function CommentModule() {
 
   // Re-fetch comments on mount
   useEffect(() => {
-    if (actions && typeof actions.refreshData === "function") {
-      actions.refreshData();
+    if (typeof refreshComments === "function") {
+      refreshComments();
     }
   }, []);
 

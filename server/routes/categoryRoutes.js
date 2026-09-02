@@ -22,6 +22,7 @@ router.post(
 );
 
 router.put("/:id", authenticate, requireAdmin, categoryController.updateCategory);
+router.patch("/:id", authenticate, requireAdmin, categoryController.updateCategory);
 router.post("/:id/restore", authenticate, requireAdmin, categoryController.restoreCategory);
 router.delete("/:id", authenticate, requireAdmin, categoryController.deleteCategory);
 

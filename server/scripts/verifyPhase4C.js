@@ -126,7 +126,7 @@ async function runTests() {
   // Inline Edit
   console.log("Testing inline edit...");
   updatedComment = await commentService.updateComment(comment._id, { body: "This is an edited comment body text." }, null);
-  console.log("✓ Comment body updated to:", updatedComment.body);
+  console.log("✓ Comment body update verified.");
   if (updatedComment.body !== "This is an edited comment body text.") {
     throw new Error("Inline edit failed");
   }

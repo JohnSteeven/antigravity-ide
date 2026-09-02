@@ -25,8 +25,23 @@ import {
   FiStar,
   FiTag,
   FiUsers,
+  FiGlobe,
+  FiGitBranch,
+  FiCpu,
+  FiFileText,
+  FiPackage,
+  FiSliders,
+  FiLayout,
+  FiZap,
+  FiCreditCard,
+  FiCode,
+  FiAward,
 } from "react-icons/fi";
 import { cmsNavigation } from "../../domain/knowledgeArchitecture";
+import { useCms } from "../../context/CmsContext";
+import { NavLink } from "react-router";
+import AICommandPalette from "../cms/panels/AICommandPalette";
+import AICopilotPanel from "../cms/panels/AICopilotPanel";
 
 const iconMap = {
   activity: <FiActivity />,
@@ -55,6 +70,18 @@ const iconMap = {
   star: <FiStar />,
   tag: <FiTag />,
   users: <FiUsers />,
+  globe: <FiGlobe />,
+  "git-branch": <FiGitBranch />,
+  cpu: <FiCpu />,
+  "file-text": <FiFileText />,
+  package: <FiPackage />,
+  sliders: <FiSliders />,
+  layout: <FiLayout />,
+  'edit-3': <FiEdit3 />,
+  'bar-chart-2': <FiBarChart2 />,
+  'credit-card': <FiCreditCard />,
+  code: <FiCode />,
+  award: <FiAward />,
 };
 
 const CmsLayout = ({
@@ -67,6 +94,8 @@ const CmsLayout = ({
   children,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const { syncStatus } = useCms();
 
   return (
     <main className={`cms-page ${isCollapsed ? "sidebar-collapsed" : ""}`}>
@@ -93,16 +122,16 @@ const CmsLayout = ({
           <div className="cms-nav-group" key={group.group}>
             <span>{group.group}</span>
             {group.items.map((item) => (
-              <button
-                className={activeTab === item.id ? "active" : ""}
-                type="button"
+              <NavLink
+                to={item.path || (item.id === "overview" ? "/cms" : `/cms/${item.id}`)}
+                className={({ isActive }) => isActive ? "active" : ""}
                 key={item.id}
-                onClick={() => onTabChange(item.id)}
                 title={item.label}
+                end={item.id === "overview"}
               >
                 {iconMap[item.icon] || <FiGrid />}
                 <span>{item.label}</span>
-              </button>
+              </NavLink>
             ))}
           </div>
         ))}
@@ -110,16 +139,48 @@ const CmsLayout = ({
     </aside>
 
     <section className="cms-workspace">
+      {syncStatus === "stale-fallback" && (
+        <div style={{
+          background: "#fff3cd",
+          color: "#856404",
+          border: "1px solid #ffeeba",
+          padding: "0.75rem 1.25rem",
+          margin: "1rem 1.5rem 0 1.5rem",
+          borderRadius: "0.25rem",
+          fontSize: "0.9rem",
+          fontWeight: "500",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem"
+        }}>
+          ⚠️ Offline Fallback: Server sync failed. Displaying cached data.
+        </div>
+      )}
+
       <header className="cms-header">
         <div>
           <span className="section-kicker">{headerKicker}</span>
           <h1>{title}</h1>
         </div>
-        {actions && <div className="cms-header-actions">{actions}</div>}
+        <div className="cms-header-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {actions}
+          <button
+            type="button"
+            className="small-outline-btn"
+            onClick={() => setIsCopilotOpen((prev) => !prev)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', padding: '6px 12px', background: 'var(--soft)' }}
+          >
+            <FiZap style={{ color: 'var(--cms-accent, #426c67)' }} /> AI Copilot
+          </button>
+        </div>
       </header>
 
       {children}
     </section>
+
+    {/* Phase 20C Global AI Tools */}
+    <AICommandPalette />
+    <AICopilotPanel isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
     </main>
   );
 };

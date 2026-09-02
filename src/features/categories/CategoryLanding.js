@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import {
   FiBookmark,
   FiCalendar,
@@ -15,6 +15,10 @@ import {
 } from "react-icons/fi";
 import { getCategoryBlueprint } from "../../domain/knowledgeArchitecture";
 import { useAuth } from "../../hooks/useAuth";
+import { useReader } from "../../hooks/useReader";
+import { useCms } from "../../context/CmsContext";
+import { decodeHtmlEntities, resolveImageUrl, shareArticle } from "../../utils/helpers";
+import { getImageUrl, handleImageError } from "../../utils/imageUrlHelper";
 import ArticlesCard from "../../components/ArticlesCard";
 import LoginRequiredModal from "../../components/LoginRequiredModal";
 import Breadcrumbs from "../../components/shared/Breadcrumbs";
@@ -56,6 +60,22 @@ const articleMatchesSubcategory = (article, subcategory) => {
 
 const getArticleUrl = (slug) => `${window.location.origin}/articles/${slug}`;
 
+const CATEGORY_QUOTES = {
+  life: "In the middle of difficulty lies opportunity. Ordinary moments held with care become extraordinary memories.",
+  reflections: "We do not learn from experience... we learn from reflecting on experience.",
+  experiences: "Failure is simply the opportunity to begin again, this time more intelligently.",
+  incidents: "Failure is simply the opportunity to begin again, this time more intelligently.",
+  postmortems: "Failure is simply the opportunity to begin again, this time more intelligently.",
+  lessons: "Wisdom is not a product of schooling but of the lifelong attempt to acquire it.",
+  growth: "Wisdom is not a product of schooling but of the lifelong attempt to acquire it.",
+  coding: "First, solve the problem. Then, write the code. Simplicity is prerequisite for reliability.",
+  development: "First, solve the problem. Then, write the code. Simplicity is prerequisite for reliability.",
+  technology: "First, solve the problem. Then, write the code. Simplicity is prerequisite for reliability.",
+  travel: "The journey of a thousand miles begins with a single step. Travel leaves you speechless, then turns you into a storyteller.",
+  adventures: "The journey of a thousand miles begins with a single step. Travel leaves you speechless, then turns you into a storyteller.",
+  news: "Journalism is the first rough draft of history. Stay informed, stay curious.",
+};
+
 const CategoryLanding = ({
   category,
   allCategories,
@@ -63,7 +83,9 @@ const CategoryLanding = ({
   incrementArticle,
 }) => {
   const location = useLocation();
-  const { isAuthenticated, updateProfile, user } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { library, applyAuthoritativeLibraryState } = useReader();
+  const { data } = useCms();
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("all");
   const [activeSubcategory, setActiveSubcategory] = useState("all");
@@ -71,18 +93,21 @@ const CategoryLanding = ({
   const [visibleCount, setVisibleCount] = useState(6);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [message, setMessage] = useState("");
+  const [pendingAction, setPendingAction] = useState("");
+  const [engagementCounts, setEngagementCounts] = useState({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   const sentinelRef = useRef(null);
 
-  const blueprint = getCategoryBlueprint(category.slug) || {};
+  const blueprint = getCategoryBlueprint(category?.slug) || {};
   const categoryModel = {
-    ...blueprint,
-    ...category,
-    subcategories: category.subcategories?.length
+    name: category?.name || blueprint.name || "Category",
+    description: category?.description || blueprint.description || "",
+    longDescription: category?.longDescription || blueprint.longDescription || category?.description || blueprint.description || "",
+    heroImage: category?.heroImage || blueprint.heroImage || "",
+    subcategories: (Array.isArray(category?.subcategories) && category.subcategories.length > 0)
       ? category.subcategories
-      : blueprint.subcategories || [],
-    heroImage: category.heroImage || blueprint.heroImage,
-    longDescription: category.longDescription || blueprint.longDescription,
+      : (blueprint.subcategories || []),
+    ...category,
   };
 
   const categoryArticles = useMemo(
@@ -128,6 +153,10 @@ const CategoryLanding = ({
   const featuredArticle =
     categoryArticles.find((article) => article.featured) || categoryArticles[0];
 
+  useEffect(() => {
+    setEngagementCounts({});
+  }, [featuredArticle?.id, featuredArticle?._id]);
+
   const popularArticles = useMemo(
     () => sortArticles(categoryArticles, "popular").slice(0, 5),
     [categoryArticles]
@@ -145,21 +174,35 @@ const CategoryLanding = ({
       .slice(0, 3);
   }, [allArticles, categoryModel.name, tags]);
 
-  const recentComments = useMemo(
-    () =>
-      categoryArticles
-        .flatMap((article) =>
-          (article.comments || [])
-            .filter((comment) => comment.status === "approved")
-            .map((comment) => ({
-              ...comment,
-              articleSlug: article.slug,
-              articleTitle: article.title,
-            }))
-        )
-        .slice(0, 4),
-    [categoryArticles]
-  );
+  const recentComments = useMemo(() => {
+    const categoryArticleIds = new Set(
+      categoryArticles.map((a) => a.id || (a._id && a._id.toString()))
+    );
+    return (data.comments || [])
+      .filter(
+        (c) =>
+          !c.isDeleted &&
+          c.status === "approved" &&
+          categoryArticleIds.has(
+            c.articleId?._id?.toString() ||
+            c.articleId?.id ||
+            (typeof c.articleId === "string" ? c.articleId : null)
+          )
+      )
+      .map((c) => {
+        const matchArticle = categoryArticles.find(
+          (a) =>
+            (a.id || (a._id && a._id.toString())) ===
+            (c.articleId?._id?.toString() || c.articleId?.id || c.articleId)
+        );
+        return {
+          ...c,
+          articleSlug: matchArticle?.slug || "",
+          articleTitle: matchArticle?.title || c.articleId?.title || "Unknown",
+        };
+      })
+      .slice(0, 4);
+  }, [categoryArticles, data.comments]);
 
   useEffect(() => {
     setVisibleCount(6);
@@ -183,71 +226,89 @@ const CategoryLanding = ({
   }, [filteredArticles.length, visibleCount]);
 
   const requireLogin = () => {
+    if (authLoading) return false;   // session check still in-flight, don't show modal
     if (isAuthenticated) return true;
     setShowLoginModal(true);
     return false;
   };
 
-  const handleProfileAction = async ({ article, metric, profileField, success }) => {
+  const featuredArticleId = String(featuredArticle?.id || featuredArticle?._id);
+  const isLiked = library.liked.some((item) => String(item.id) === featuredArticleId);
+  const isBookmarked = library.bookmarked.some((item) => String(item.id) === featuredArticleId);
+
+  const applyInteractionResponse = (response, metric, collection) => {
+    if (
+      response?.metric !== metric ||
+      String(response?.articleId) !== featuredArticleId ||
+      typeof response?.isActive !== "boolean" ||
+      !Number.isFinite(Number(response?.count)) ||
+      String(response?.libraryItem?.id) !== featuredArticleId
+    ) throw new Error("Invalid Article interaction response.");
+    setEngagementCounts((current) => ({ ...current, [metric]: Number(response.count) }));
+    applyAuthoritativeLibraryState({ collection, isActive: response.isActive, article: response.libraryItem });
+    return response.isActive;
+  };
+
+  const handleLikeToggle = async () => {
+    if (!featuredArticle) return;
     if (!requireLogin()) return;
-
-    const profile = user?.profile || {};
-    const currentItems = Array.isArray(profile[profileField])
-      ? profile[profileField]
-      : [];
-
-    if (currentItems.includes(article.id)) {
-      setMessage("This article is already saved in your profile.");
-      return;
-    }
-
+    if (pendingAction) return;
+    setPendingAction("like");
     try {
-      await updateProfile({
-        profile: {
-          ...profile,
-          [profileField]: [article.id, ...currentItems],
-        },
-      });
-      if (metric) incrementArticle(article.id, metric);
-      setMessage(success);
-    } catch (error) {
-      setMessage(error.message || "Please try again.");
+      const articleId = featuredArticle.id || featuredArticle._id;
+      const response = await incrementArticle(articleId, "likes");
+      const active = applyInteractionResponse(response, "likes", "liked");
+      setMessage(active ? "Article liked." : "Article unliked.");
+    } catch {
+      setMessage("Could not update your like. Try again.");
+    } finally {
+      setPendingAction("");
+    }
+  };
+
+  const handleBookmarkToggle = async () => {
+    if (!featuredArticle) return;
+    if (!requireLogin()) return;
+    if (pendingAction) return;
+    setPendingAction("bookmark");
+    try {
+      const articleId = featuredArticle.id || featuredArticle._id;
+      const response = await incrementArticle(articleId, "bookmarks");
+      const active = applyInteractionResponse(response, "bookmarks", "bookmarked");
+      setMessage(active ? "Article bookmarked." : "Article removed from bookmarks.");
+    } catch {
+      setMessage("Could not update your bookmark. Try again.");
+    } finally {
+      setPendingAction("");
     }
   };
 
   const handleShare = async (article = featuredArticle) => {
     if (!article) return;
-
-    const shareData = {
-      title: article.title,
-      text: article.description,
-      url: getArticleUrl(article.slug),
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareData.url);
-        setMessage("Article link copied.");
-      }
-    } catch {
-      setMessage("Sharing was cancelled.");
-    }
+    if (pendingAction) return;
+    setPendingAction("share");
+    const result = await shareArticle({ title: article.title, text: article.description, url: getArticleUrl(article.slug) });
+    if (result.method === "native") setMessage("Article shared.");
+    else if (result.method === "clipboard") setMessage("Link copied.");
+    else if (result.method === "cancelled") setMessage("Sharing cancelled.");
+    else setMessage("Could not copy the link.");
+    setPendingAction("");
   };
 
+  const categorySlug = String(categoryModel.slug || categoryModel.name || "").toLowerCase().trim();
+
   return (
-    <main className={`category-detail-page ${isDarkMode ? "dark-mode" : ""}`}>
+    <main className={`category-detail-page ${isDarkMode ? "dark-mode" : ""}`} data-category={categorySlug} data-experience={categorySlug}>
       <section
         className="category-detail-hero"
-        style={{ backgroundImage: `url("${categoryModel.heroImage}")` }}
+        style={{ backgroundImage: `url("${getImageUrl(categoryModel.heroImage, categoryModel.name)}")` }}
       >
         <div className="category-detail-overlay"></div>
         <div className="category-detail-hero-content">
-          <Breadcrumbs items={[{ label: "Categories", to: "/#categories" }, { label: categoryModel.name }]} />
+          <Breadcrumbs items={[{ label: "Categories", to: "/#categories" }, { label: decodeHtmlEntities(categoryModel.name) }]} />
           <span className="section-kicker">Category</span>
-          <h1>{categoryModel.name}</h1>
-          <p>{categoryModel.longDescription || categoryModel.description}</p>
+          <h1>{decodeHtmlEntities(categoryModel.name)}</h1>
+          <p>{decodeHtmlEntities(categoryModel.longDescription || categoryModel.description)}</p>
           <div className="category-hero-meta">
             <span>
               <FiTag /> {categoryModel.subcategories.length} topics
@@ -262,9 +323,18 @@ const CategoryLanding = ({
         </div>
       </section>
 
+      {/* Editorial Category Quote Strip */}
+      <div className="life-editorial-quote-strip">
+        <span className="quote-icon">“</span>
+        <p>
+          {categoryModel.quote ||
+            CATEGORY_QUOTES[String(categoryModel.name).toLowerCase()] ||
+            "Every story brings a fresh perspective. Explore curated insights and thoughtful reflections."}
+        </p>
+      </div>
+
       <section className="category-toolbar" aria-label={`${categoryModel.name} filters`}>
         <label className="search-control">
-          <FiSearch />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -328,7 +398,12 @@ const CategoryLanding = ({
 
       {featuredArticle && (
         <section className="featured-category-article">
-          <img src={featuredArticle.coverImage} alt={featuredArticle.title} />
+          <img
+            src={getImageUrl(featuredArticle.coverImage, categoryModel.name)}
+            alt={featuredArticle.title}
+            loading="lazy"
+            onError={(e) => handleImageError(e, categoryModel.name)}
+          />
           <div>
             <span className="section-kicker">Featured article</span>
             <h2>{featuredArticle.title}</h2>
@@ -347,42 +422,36 @@ const CategoryLanding = ({
                 Read Article
               </Link>
               <button
-                className="small-outline-btn"
+                className={`small-outline-btn ${isLiked ? "active like-btn" : ""}`}
                 type="button"
-                onClick={() =>
-                  handleProfileAction({
-                    article: featuredArticle,
-                    metric: "likes",
-                    profileField: "likedArticles",
-                    success: "Article liked.",
-                  })
-                }
+                onClick={handleLikeToggle}
+                disabled={Boolean(pendingAction)}
+                aria-pressed={isLiked}
+                aria-label={isLiked ? "Unlike featured article" : "Like featured article"}
               >
-                <FiHeart /> {formatNumber(featuredArticle.likes)}
+                <FiHeart style={isLiked ? { fill: "#ff4d4f", stroke: "#ff4d4f" } : undefined} /> {pendingAction === "like" ? "Updating…" : formatNumber(engagementCounts.likes ?? featuredArticle.likes)}
               </button>
               <button
-                className="small-outline-btn"
+                className={`small-outline-btn ${isBookmarked ? "active bookmark-btn" : ""}`}
                 type="button"
-                onClick={() =>
-                  handleProfileAction({
-                    article: featuredArticle,
-                    metric: "bookmarks",
-                    profileField: "bookmarks",
-                    success: "Article bookmarked.",
-                  })
-                }
+                onClick={handleBookmarkToggle}
+                disabled={Boolean(pendingAction)}
+                aria-pressed={isBookmarked}
+                aria-label={isBookmarked ? "Remove featured article bookmark" : "Bookmark featured article"}
               >
-                <FiBookmark /> {formatNumber(featuredArticle.bookmarks)}
+                <FiBookmark style={isBookmarked ? { fill: "currentColor" } : undefined} /> {pendingAction === "bookmark" ? "Updating…" : formatNumber(engagementCounts.bookmarks ?? featuredArticle.bookmarks)}
               </button>
               <button
                 className="small-outline-btn"
                 type="button"
                 onClick={() => handleShare(featuredArticle)}
+                disabled={Boolean(pendingAction)}
+                aria-label="Share featured article"
               >
-                <FiShare2 /> Share
+                <FiShare2 /> {pendingAction === "share" ? "Sharing…" : "Share"}
               </button>
             </div>
-            {message && <span className="form-note">{message}</span>}
+            {message && <span className="form-note" role="status" aria-live="polite">{message}</span>}
           </div>
         </section>
       )}
@@ -397,7 +466,7 @@ const CategoryLanding = ({
             <>
               <div className="article-grid">
                 {filteredArticles.slice(0, visibleCount).map((article) => (
-                  <ArticlesCard articleData={article} key={article.id} />
+                  <ArticlesCard articleData={article} key={article.id || article._id} />
                 ))}
               </div>
               <div className="infinite-sentinel" ref={sentinelRef}>
@@ -419,7 +488,7 @@ const CategoryLanding = ({
             <span className="section-kicker">Most popular</span>
             <div className="popular-list">
               {popularArticles.map((article, index) => (
-                <Link to={`/articles/${article.slug}`} key={article.id}>
+                <Link to={`/articles/${article.slug}`} key={article.id || article._id || `popular-${index}`}>
                   <strong>{String(index + 1).padStart(2, "0")}</strong>
                   <span>{article.title}</span>
                   <small>
@@ -449,8 +518,8 @@ const CategoryLanding = ({
           <div className="category-side-panel">
             <span className="section-kicker">Comments</span>
             <div className="category-comment-list">
-              {recentComments.map((comment) => (
-                <Link to={`/articles/${comment.articleSlug}`} key={comment.id}>
+              {recentComments.map((comment, index) => (
+                <Link to={`/articles/${comment.articleSlug}`} key={comment.id || comment._id || `comment-${index}`}>
                   <strong>{comment.name}</strong>
                   <p>{comment.text}</p>
                   <span>{comment.articleTitle}</span>
@@ -469,13 +538,13 @@ const CategoryLanding = ({
         <h2>Keep Exploring</h2>
         <div className="related-link-list">
           {(relatedArticles.length ? relatedArticles : allCategories.slice(0, 3)).map(
-            (item) =>
+            (item, index) =>
               item.slug && item.title ? (
-                <Link to={`/articles/${item.slug}`} key={item.id}>
+                <Link to={`/articles/${item.slug}`} key={item.id || item._id || item.slug || index}>
                   {item.title}
                 </Link>
               ) : (
-                <Link to={`/category/${item.slug}`} key={item.id}>
+                <Link to={`/category/${item.slug}`} key={item.id || item._id || item.slug || index}>
                   {item.name}
                 </Link>
               )

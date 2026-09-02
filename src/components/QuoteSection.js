@@ -7,7 +7,7 @@ const QuoteSection = () => {
   return (
     <section
       className="quote-section"
-      style={{ backgroundImage: `url("${quote.image}")` }}
+      style={quote?.image?.trim() ? { backgroundImage: `url("${quote.image}")` } : undefined}
     >
       <div className="quote-overlay"></div>
 

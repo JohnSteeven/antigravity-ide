@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 import LoadingScreen from "./LoadingScreen";
 
@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  if (requireAdmin && user?.role !== "admin") {
+  if (requireAdmin && user?.role !== "Admin") {
     // Authenticated but not admin — redirect to homepage
     return <Navigate to="/" replace />;
   }

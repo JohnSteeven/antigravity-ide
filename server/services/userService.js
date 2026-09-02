@@ -1,6 +1,8 @@
 const userRepository = require("../repositories/userRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
 const bcrypt = require("bcrypt");
+const RefreshToken = require("../models/RefreshToken");
+const Session = require("../models/Session");
 
 class UserService {
   async getUsers(query = {}) {
@@ -92,6 +94,8 @@ class UserService {
     // Force logout on suspension
     if (newStatus === "SUSPENDED") {
       user.tokenVersion = (user.tokenVersion || 0) + 1;
+      await RefreshToken.updateMany({ user: user._id }, { revokedAt: new Date() });
+      await Session.updateMany({ user: user._id }, { isActive: false });
     }
     await user.save();
 
@@ -145,6 +149,8 @@ class UserService {
     if (!user) throw new Error("User not found.");
 
     user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await RefreshToken.updateMany({ user: user._id }, { revokedAt: new Date() });
+    await Session.updateMany({ user: user._id }, { isActive: false });
     await user.save();
 
     await activityLogRepository.create({
@@ -166,6 +172,8 @@ class UserService {
     user.passwordHash = await bcrypt.hash(newPassword, salt);
     user.tokenVersion = (user.tokenVersion || 0) + 1; // force logout other devices
     user.lastPasswordChange = new Date();
+    await RefreshToken.updateMany({ user: user._id }, { revokedAt: new Date() });
+    await Session.updateMany({ user: user._id }, { isActive: false });
     await user.save();
 
     await activityLogRepository.create({

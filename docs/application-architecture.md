@@ -20,8 +20,6 @@ src/
   hooks/               Reusable React hooks
   services/            Auth, OTP, and user services
   utils/               Generic helpers and validators
-prisma/
-  schema.prisma        Normalized PostgreSQL data model
 docs/
   application-architecture.md
 ```
@@ -94,12 +92,21 @@ Registered for the next phases:
 
 ## Database Design
 
-The Prisma schema in `prisma/schema.prisma` is normalized for PostgreSQL and includes:
+The application uses MongoDB as its database, with schemas defined in `server/models/` using Mongoose:
 
-- Users, roles, permissions, and role assignments.
-- Articles, categories, subcategories, tags, article tags, media, article media, and versions.
-- Comments, likes, bookmarks, and article views.
-- Settings, navigation, pages, SEO, audit logs, and notifications.
+- **User**: Manages system users, authentication hashes, and roles. Tracks article references like liked articles and bookmarks.
+- **Article**: Stores title, body, status, category (referencing Category), views, likes, and bookmarked counts. Configured with a text search index on title, description, body, and tags.
+- **Category**: Stores category metadata, description, icon, and active status.
+- **SubCategory**: Manages sub-taxonomies linked to parent categories.
+- **Tag**: Metadata tags for categorization.
+- **Media**: Stores files uploaded through the Media API with folder, URL, and mime-type.
+- **Comment**: Tracks article comments and their moderation status (approved, pending, spam).
+- **Role**: Manages system roles.
+- **Permission**: Defines specific modules and keys for access control.
+- **Setting**: Key-value pairs for global configurations.
+- **Backup**: Archive files generated from system backups.
+- **NewsletterCampaign**: Newsletter campaign metadata and template details.
+- **ContactMessage**: Stores contact submissions.
 
 ## Next.js Migration Target
 

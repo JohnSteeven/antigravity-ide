@@ -11,6 +11,23 @@ const API_BASE =
     ? process.env.PARCEL_API_URL
     : "";
 
+const REQUEST_TIMEOUT_MS = 8000;
+
+const fetchWithTimeout = async (url, options = {}) => {
+  if (typeof AbortController === "undefined") {
+    return fetch(url, options);
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...options, signal: options.signal || controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 // ─── CSRF ─────────────────────────────────────────────────────────────────────
 
 let _csrfToken = "";
@@ -34,11 +51,16 @@ const getCsrf = async () => {
   if (cookie) { _csrfToken = decodeURIComponent(cookie); return _csrfToken; }
   if (_csrfToken) return _csrfToken;
   if (!_csrfRequest) {
-    _csrfRequest = fetch(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" })
+    _csrfRequest = fetchWithTimeout(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" })
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         _csrfToken = d.csrfToken || readCookie("csrfToken") || "";
         return _csrfToken;
+      })
+      .catch((err) => {
+        // Suppress AbortError (timeout) — callers fall back to empty token
+        if (err && err.name === "AbortError") return "";
+        throw err;
       })
       .finally(() => { _csrfRequest = null; });
   }
@@ -47,10 +69,32 @@ const getCsrf = async () => {
 
 // ─── Core fetch ───────────────────────────────────────────────────────────────
 
+const sanitizeError = (error, status) => {
+  if (status === 401) {
+    return "Your session has expired or is invalid. Please log in again.";
+  }
+  if (status === 403) {
+    return error.message || "You do not have permission to perform this action.";
+  }
+  if (status === 404) {
+    return "The requested resource could not be found.";
+  }
+  if (status === 429) {
+    return "Too many requests. Please try again later.";
+  }
+  if (status >= 500) {
+    return "Our servers are experiencing issues. Please try again later.";
+  }
+  if (error.name === "TimeoutError" || error.isTimeout) {
+    return "The request timed out. Please check your connection and try again.";
+  }
+  return error.message || "An unexpected error occurred. Please try again.";
+};
+
 const request = async (path, options = {}) => {
   const method = String(options.method || "GET").toUpperCase();
   const headers = { ...(options.headers || {}) };
-  
+
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = headers["Content-Type"] || "application/json";
   }
@@ -61,12 +105,38 @@ const request = async (path, options = {}) => {
   }
 
   const url = `${API_BASE}${path}`;
-  const response = await fetch(url, { credentials: "include", ...options, headers });
+  let response;
+  try {
+    response = await fetchWithTimeout(url, { credentials: "include", ...options, headers });
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      const timeout = new Error("The request timed out. Please check your connection and try again.");
+      timeout.isTimeout = true;
+      timeout.name = "TimeoutError";
+      timeout.status = 408;
+      throw timeout;
+    }
+    const netErr = new Error("Unable to connect to the server. Please check your internet connection.");
+    netErr.status = 0;
+    throw netErr;
+  }
+
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const err = new Error(data.message || "API request failed.");
-    err.status = response.status;
+    const rawMsg = data.error?.message || data.message || "API request failed.";
+    const status = response.status;
+    const friendlyMsg = sanitizeError(new Error(rawMsg), status);
+    const err = new Error(friendlyMsg);
+    err.status = status;
+    err.code = data.error?.code || data.code;
+    err.requiredEntitlement = data.requiredEntitlement;
+    err.retryable = Boolean(data.error?.retryable);
+    err.details = data.error?.details;
+    // Attach raw data payload so callers can read redirect, article, etc.
+    err.data = data;
+    err.redirect = data.redirect;
+    err.article = data.article;
     throw err;
   }
 
@@ -77,6 +147,7 @@ const get = (path) => request(path);
 const post = (path, body) => request(path, { method: "POST", body: JSON.stringify(body) });
 const postFormData = (path, formData) => request(path, { method: "POST", body: formData });
 const put = (path, body) => request(path, { method: "PUT", body: JSON.stringify(body) });
+const patch = (path, body) => request(path, { method: "PATCH", body: JSON.stringify(body) });
 const del = (path) => request(path, { method: "DELETE" });
 
 // ─── Articles ─────────────────────────────────────────────────────────────────
@@ -125,15 +196,38 @@ export const articleApi = {
   /** Bookmark */
   bookmark: (id) => post(`/api/articles/${id}/bookmark`, {}),
 
+  /** Save */
+  save: (id) => post(`/api/articles/${id}/save`, {}),
+
   /** Get comments for an article */
   getComments: (id) => get(`/api/articles/${id}/comments`),
 
   /** Submit a comment */
   addComment: (id, body) => post(`/api/articles/${id}/comments`, { body }),
+};
 
-  /** Moderate a comment (admin) */
-  moderateComment: (articleId, commentId, status) =>
-    put(`/api/articles/${articleId}/comments/${commentId}`, { status }),
+// ─── Stories ──────────────────────────────────────────────────────────────────
+
+export const storyApi = {
+  /** Fetch published stories — enforced contentType=story on backend */
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/stories${qs ? `?${qs}` : ""}`);
+  },
+
+  /** Get a single story by slug */
+  getBySlug: (slug) => get(`/api/stories/${slug}`),
+
+  /** Create a structured Story (admin) */
+  create: (payload) => post("/api/stories", { ...payload, contentType: "story" }),
+
+  /** Update a structured or legacy Story (admin) */
+  update: (id, payload) => put(`/api/stories/${id}`, { ...payload, contentType: "story" }),
+
+  /** Change Story publishing state (admin) */
+  setStatus: (id, status) => put(`/api/stories/${id}/status`, { status }),
 };
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -207,7 +301,13 @@ export const statsApi = {
 // ─── Subscribers ──────────────────────────────────────────────────────────────
 
 export const subscriberApi = {
-  subscribe: (email) => post("/api/subscribers", { email }),
+  subscribe: (email, source = "website_footer") => post("/api/subscribers/subscribe", { email, source }),
+  verify: (token) => get(`/api/subscribers/verify/${token}`),
+  getPreferences: (token) => get(`/api/subscribers/preferences/${token}`),
+  updatePreferences: (token, preferences) => post(`/api/subscribers/preferences/${token}`, { preferences }),
+  unsubscribeByToken: (token, reason = "") => post(`/api/subscribers/unsubscribe/${token}`, { reason }),
+  getStats: () => get("/api/subscribers/stats"),
+  resendVerification: (id) => post(`/api/subscribers/${id}/resend-verification`, {}),
   list: (params = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
@@ -236,6 +336,7 @@ export const subCategoryApi = {
 export const settingApi = {
   get: (key) => get(`/api/settings/${key}`),
   update: (key, value) => put(`/api/settings/${key}`, { value }),
+  testSmtp: (testEmail) => post("/api/settings/test-smtp", { testEmail }),
 };
 
 // ─── Backups ──────────────────────────────────────────────────────────────────
@@ -299,6 +400,7 @@ export const contactMessageApi = {
     ).toString();
     return get(`/api/contact-messages${qs ? `?${qs}` : ""}`);
   },
+  getStats: () => get("/api/contact-messages/stats"),
   create: (payload) => post("/api/contact-messages", payload),
   update: (id, payload) => put(`/api/contact-messages/${id}`, payload),
   delete: (id) => del(`/api/contact-messages/${id}`),
@@ -334,6 +436,98 @@ export const userApi = {
   resetPassword: (id, password) => post(`/api/users/${id}/reset-password`, { password }),
   getMe: () => get("/api/users/me"),
   updateProfile: (payload) => put("/api/users/me", payload),
+  markNotificationAsRead: (id) => patch(`/api/users/notifications/${id}`, {}),
+};
+
+// ─── Reader profile, library, and Article progress ─────────────────────────
+export const readerApi = {
+  profile: () => get("/api/reader/profile"),
+  updateProfile: (payload) => patch("/api/reader/profile", payload),
+  continueReading: () => get("/api/reader/continue-reading"),
+  completed: () => get("/api/reader/completed"),
+  progress: (articleId) => get(`/api/reader/progress/${articleId}`),
+  updateProgress: (payload) => post("/api/reader/progress", payload),
+};
+
+// ─── MyJourney Premium ──────────────────────────────────────────────────────
+export const membershipApi = {
+  catalog: () => get("/api/membership/plans"),
+  me: () => get("/api/membership/me/entitlements"),
+  selectDuration: (billingPeriodMonths) => post("/api/membership/subscribe", { billingPeriodMonths }),
+  cancelRenewal: () => post("/api/membership/cancel", {}),
+};
+
+// ─── MyJourney Creators ─────────────────────────────────────────────────────
+const queryString = (params = {}) => {
+  const value = new URLSearchParams(Object.entries(params).filter(([, item]) => item !== undefined && item !== "")).toString();
+  return value ? `?${value}` : "";
+};
+
+export const creatorApi = {
+  capability: () => get("/api/creators/capability"),
+  list: (params = {}) => get(`/api/creators${queryString(params)}`),
+  get: (slug) => get(`/api/creators/${slug}`),
+  apply: (payload) => post("/api/creators/applications", payload),
+  myApplication: () => get("/api/creators/applications/me"),
+  updateApplication: (payload) => patch("/api/creators/applications/me", payload),
+  follow: (slug) => post(`/api/creators/${slug}/follow`, {}),
+  unfollow: (slug) => del(`/api/creators/${slug}/follow`),
+  adminApplications: (params = {}) => get(`/api/creators/admin/applications${queryString(params)}`),
+  adminApplication: (id) => get(`/api/creators/admin/applications/${id}`),
+  reviewApplication: (id, payload) => patch(`/api/creators/admin/applications/${id}/status`, payload),
+  adminContent: (params = {}) => get(`/api/creators/admin/content${queryString(params)}`),
+  reviewContent: (contentType, contentId, payload) => patch(`/api/creators/admin/content/${contentType}/${contentId}/status`, payload),
+};
+
+export const creatorStudioApi = {
+  overview: () => get("/api/creator-studio/overview"),
+  analytics: (params = {}) => get(`/api/creator-studio/analytics${queryString(params)}`),
+  earnings: () => get("/api/creator-studio/earnings"),
+  updateProfile: (payload) => patch("/api/creator-studio/profile", payload),
+  updateFeatured: (items) => put("/api/creator-studio/profile/featured", { items }),
+  content: (params = {}) => get(`/api/creator-studio/content${queryString(params)}`),
+  preview: (contentType, contentId) => get(`/api/creator-studio/content/${contentType}/${contentId}/preview`),
+  submit: (contentType, contentId) => post(`/api/creator-studio/content/${contentType}/${contentId}/submit`, {}),
+  createArticle: (payload) => post("/api/creator-studio/articles", payload),
+  updateArticle: (id, payload) => patch(`/api/creator-studio/articles/${id}`, payload),
+  createStory: (payload) => post("/api/creator-studio/stories", payload),
+  updateStory: (id, payload) => patch(`/api/creator-studio/stories/${id}`, payload),
+  createCourse: (payload) => post("/api/creator-studio/courses", payload),
+  updateCourse: (id, payload) => patch(`/api/creator-studio/courses/${id}`, payload),
+  saveCurriculum: (id, payload) => put(`/api/creator-studio/courses/${id}/curriculum`, payload),
+  submitCourse: (id) => post(`/api/creator-studio/courses/${id}/submit`, {}),
+  registerAsset: (payload) => post("/api/creator-studio/media/assets", payload),
+  createVideo: (payload) => post("/api/creator-studio/videos", payload),
+  createPodcastSeries: (payload) => post("/api/creator-studio/podcast-series", payload),
+  createPodcastEpisode: (payload) => post("/api/creator-studio/podcast-episodes", payload),
+  createResource: (payload) => post("/api/creator-studio/resources", payload),
+};
+
+export const learnApi = {
+  home: () => get("/api/learn"),
+  topics: () => get("/api/learn/topics"),
+  adminTopics: () => get("/api/learn/topics/admin"),
+  search: (q) => get(`/api/learn/search?q=${encodeURIComponent(q)}`),
+  createTopic: (payload) => post("/api/learn/topics", payload),
+  updateTopic: (id, payload) => patch(`/api/learn/topics/${id}`, payload),
+  courses: (params = {}) => get(`/api/learn/courses${queryString(params)}`),
+  course: (slug) => get(`/api/learn/courses/${slug}`),
+  lesson: (slug, lessonId) => get(`/api/learn/courses/${slug}/lessons/${lessonId}`),
+  enroll: (courseId) => post(`/api/learn/courses/${courseId}/enroll`, {}),
+  progress: (courseId, payload) => patch(`/api/learn/courses/${courseId}/progress`, payload),
+  continueLearning: () => get("/api/learn/continue"),
+  videos: (params = {}) => get(`/api/learn/videos${queryString(params)}`),
+  video: (slug) => get(`/api/learn/videos/${slug}`),
+  podcasts: (params = {}) => get(`/api/learn/podcasts${queryString(params)}`),
+  podcast: (slug) => get(`/api/learn/podcasts/${slug}`),
+  resources: (params = {}) => get(`/api/learn/resources${queryString(params)}`),
+  resource: (slug) => get(`/api/learn/resources/${slug}`),
+  exams: (params = {}) => get(`/api/learn/exams${queryString(params)}`),
+  mediaAccess: (assetId, purpose = "playback") => get(`/api/learn/media/${assetId}/access?purpose=${encodeURIComponent(purpose)}`),
+  engagement: (payload) => post("/api/learn/engagement", payload),
+  report: (payload) => post("/api/learn/reports", payload),
+  adminReports: (params = {}) => get(`/api/learn/reports/admin${queryString(params)}`),
+  reviewReport: (id, payload) => patch(`/api/learn/reports/admin/${id}`, payload),
 };
 
 // ─── Roles ───────────────────────────────────────────────────────────────────
@@ -355,4 +549,63 @@ export const permissionApi = {
   list: () => get("/api/permissions"),
   update: (roleId, permissions) => put(`/api/permissions/${roleId}`, { permissions }),
 };
+
+// ─── News & Analytics ────────────────────────────────────────────────────────
+export const newsApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+    ).toString();
+    return get(`/api/news${qs ? `?${qs}` : ""}`);
+  },
+  trackClick: (payload) => post("/api/news/analytics/click", payload),
+  trackImpression: (payload) => post("/api/news/analytics/impression", payload),
+  getStats: () => get("/api/news/analytics/stats"),
+};
+
+const apiService = {
+  request,
+  get,
+  post,
+  postFormData,
+  put,
+  patch,
+  delete: del,
+  del,
+  articles: articleApi,
+  stories: storyApi,
+  categories: categoryApi,
+  tags: tagApi,
+  media: mediaApi,
+  comments: commentApi,
+  settings: settingApi,
+  users: userApi,
+  reader: readerApi,
+  membership: membershipApi,
+  creators: creatorApi,
+  creatorStudio: creatorStudioApi,
+  learn: learnApi,
+  roles: roleApi,
+  permissions: permissionApi,
+  news: newsApi,
+  articleApi,
+  storyApi,
+  categoryApi,
+  tagApi,
+  mediaApi,
+  commentApi,
+  settingApi,
+  userApi,
+  readerApi,
+  membershipApi,
+  creatorApi,
+  creatorStudioApi,
+  learnApi,
+  roleApi,
+  permissionApi,
+  newsApi,
+};
+
+export default apiService;
+
 

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import { FiRefreshCw, FiShield } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
-import { otpService } from "../services/otpService";
+import { getPersistedServerChallenge } from "../services/authService";
 import { OTP_RESEND_MS, VERIFICATION_PURPOSES } from "../utils/constants";
 import { formatCountdown } from "../utils/helpers";
 import OTPInput from "./OTPInput";
@@ -13,7 +13,7 @@ const VerifyOTP = () => {
   const location = useLocation();
   const { resendOtp, verifyOtp } = useAuth();
   const [challenge, setChallenge] = useState(
-    location.state?.challenge || otpService.getCurrentChallenge()
+    location.state?.challenge || getPersistedServerChallenge()
   );
   const purpose = location.state?.purpose || challenge?.purpose || VERIFICATION_PURPOSES.register;
   const [otp, setOtp] = useState("");

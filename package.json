@@ -3,11 +3,40 @@
   "version": "1.0.0",
   "description": "article",
   "scripts": {
-    "start": "parcel index.html",
+    "prestart": "node server/scripts/startupPreflight.js full",
+    "predev": "node server/scripts/startupPreflight.js full",
+    "prestart:ui": "node server/scripts/startupPreflight.js ui",
+    "start": "concurrently -k -n \"server,client\" -c \"blue,magenta\" \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
+    "dev": "concurrently -k -n \"server,client\" -c \"blue,magenta\" \"node server/index.js\" \"parcel index.html --port 1234 --no-cache\"",
+    "start:ui": "parcel index.html --port 1234 --no-cache",
+    "client": "parcel index.html --port 1234 --no-cache",
+    "doctor": "node server/scripts/doctor.js",
+    "clean:parcel-temp": "node server/scripts/clearParcelTemp.js",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
-    "build": "parcel build index.html",
-    "test": "jest"
+    "build": "parcel build index.html --no-cache",
+    "seed:articles": "node server/scripts/seedArticles.js",
+    "seed:creator-demo": "node server/scripts/seedCreatorDemo.js",
+    "seed:creator-demo:reset": "node server/scripts/seedCreatorDemo.js --reset",
+    "check:server": "node -e \"const fs=require('fs'),path=require('path'),cp=require('child_process');function walk(d){fs.readdirSync(d).forEach(f=>{const p=path.join(d,f);if(fs.statSync(p).isDirectory())walk(p);else if(p.endsWith('.js'))cp.execSync('node --check \\\"'+p+'\\\"');});}walk('server');console.log('Server JS syntax check passed.');\"",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:multiplayer": "jest server/tests/multiplayer --runInBand",
+    "test:multiplayer:load": "node server/scripts/multiplayerLoad.js",
+    "test:life-auction:load": "node server/scripts/lifeAuctionLoad.js",
+    "test:life": "jest --runInBand --testPathPattern=server/tests/life",
+    "test:premium": "jest --runInBand --testPathPattern=server/tests/premium",
+    "test:creator": "jest --runInBand --testPathPattern=server/tests/creator",
+    "test:learn": "jest --runInBand --testPathPattern=server/tests/learn",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:life:load": "node server/scripts/lifeOsLoad.js",
+    "fixture:life": "node server/scripts/generateLifeFixtures.js",
+    "migrate": "node server/scripts/runMigrations.js",
+    "migrate:validate": "node server/scripts/runMigrations.js validate",
+    "preview:qa": "node server/scripts/serveQaBuild.js",
+    "test:multiplayer:preview": "node server/scripts/multiplayerPreviewSmoke.js"
   },
   "repository": {
     "type": "git",
@@ -20,13 +49,39 @@
   ],
   "author": "NOBLE JOHN STEEVEN",
   "license": "ISC",
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  },
   "bugs": {
     "url": "https://github.com/JohnSteeven/STEEVENWRITES/issues"
   },
   "homepage": "https://github.com/JohnSteeven/STEEVENWRITES#readme",
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/server/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "server/config/seeder.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 90,
+        "lines": 90
+      }
+    }
+  },
   "devDependencies": {
+    "@parcel/packager-raw-url": "^2.16.4",
+    "@parcel/transformer-webmanifest": "^2.16.4",
+    "@playwright/test": "^1.62.1",
+    "concurrently": "^10.0.4",
     "http-proxy-middleware": "^4.2.0",
-    "parcel": "^2.16.4"
+    "jest": "^29.7.0",
+    "parcel": "^2.16.4",
+    "supertest": "^7.2.2"
   },
   "browserslist": [
     "last 1 Chrome version",
@@ -35,6 +90,8 @@
     "last 1 Edge version"
   ],
   "dependencies": {
+    "@simplewebauthn/server": "^13.3.2",
+    "@socket.io/redis-adapter": "^8.3.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -48,11 +105,18 @@
     "mongoose": "^8.9.5",
     "multer": "^2.2.0",
     "nodemailer": "^9.0.1",
+    "qrcode": "^1.5.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-icons": "^5.6.0",
-    "react-router-dom": "^6.30.1",
+    "react-router": "7.18.2",
+    "redis": "^5.12.1",
     "sanitize-html": "^2.14.0",
-    "twilio": "^5.4.0"
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "speakeasy": "^2.0.0",
+    "twilio": "^5.4.0",
+    "web-push": "^3.6.7",
+    "zod": "^4.4.3"
   }
 }

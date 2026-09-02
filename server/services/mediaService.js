@@ -1,171 +1,295 @@
-const fs = require("fs");
-const path = require("path");
-const mediaRepository = require("../repositories/mediaRepository");
-const activityLogRepository = require("../repositories/activityLogRepository");
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  mediaService.js  —  Digital Asset Management (DAM) Service Layer
+ *  MyJourney CMS  |  Phase 2: Media Library 2.0
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 
-class LocalStorageProvider {
-  async upload(file, folder) {
-    const uploadDir = path.join(__dirname, "../../uploads", folder || "");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+const crypto = require('crypto');
+const Media = require('../models/Media');
+const MediaFolder = require('../models/MediaFolder');
+const StorageFactory = require('../storage/StorageFactory');
+const Article = require('../models/Article');
+const Category = require('../models/Category');
 
-    const uniqueName = `${Date.now()}-${file.name || "file"}`;
-    const filePath = path.join(uploadDir, uniqueName);
-    
-    if (file.mv) {
-      await file.mv(filePath);
-    } else if (file.data) {
-      fs.writeFileSync(filePath, file.data);
-    }
-
-    const url = `/uploads/${folder ? folder + "/" : ""}${uniqueName}`;
-    return {
-      fileName: uniqueName,
-      originalName: file.name,
-      url,
-      mimeType: file.mimetype || "image/jpeg",
-      sizeBytes: file.size || 0,
-      size: `${((file.size || 0) / 1024).toFixed(2)} KB`,
-    };
-  }
-
-  async delete(fileName, folder) {
-    const filePath = path.join(__dirname, "../../uploads", folder || "", fileName);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  }
-}
+const DEFAULT_FOLDERS = [
+  { name: 'Images', color: '#426c67', icon: 'Image' },
+  { name: 'Videos', color: '#4d6478', icon: 'Video' },
+  { name: 'Documents', color: '#a85f49', icon: 'FileText' },
+  { name: 'Audio', color: '#b58b5f', icon: 'Music' },
+  { name: 'Icons', color: '#2e7d5a', icon: 'Smile' },
+  { name: 'Logos', color: '#666d6d', icon: 'Box' },
+  { name: 'Hero Images', color: '#426c67', icon: 'Star' },
+  { name: 'Gallery', color: '#4d6478', icon: 'Grid' },
+  { name: 'Articles', color: '#a85f49', icon: 'Edit' },
+  { name: 'Avatars', color: '#2e7d5a', icon: 'User' },
+  { name: 'Downloads', color: '#b58b5f', icon: 'Download' },
+  { name: 'Archived', color: '#999999', icon: 'Archive' },
+];
 
 class MediaService {
-  constructor() {
-    this.provider = new LocalStorageProvider();
+  /**
+   * Seed default system folders if empty
+   */
+  static async seedDefaultFolders(userId = null) {
+    try {
+      const count = await MediaFolder.countDocuments({ parentFolder: null });
+      if (count === 0) {
+        console.info('[MediaService] Seeding default media folders...');
+        const folderDocs = DEFAULT_FOLDERS.map((f) => ({
+          name: f.name,
+          slug: f.name.toLowerCase().replace(/\s+/g, '-'),
+          parentFolder: null,
+          path: `/${f.name.toLowerCase().replace(/\s+/g, '-')}/`,
+          color: f.color,
+          icon: f.icon,
+          createdBy: userId,
+        }));
+        await MediaFolder.insertMany(folderDocs);
+        console.info(`[MediaService] Seeded ${folderDocs.length} media folders.`);
+      }
+    } catch (err) {
+      console.error('[MediaService] Folder seed error:', err.message);
+    }
   }
 
-  async getMediaFiles(query = {}) {
-    const filter = {};
-    if (query.type && query.type !== "all") filter.type = query.type;
-    if (query.folder && query.folder !== "all") filter.folder = query.folder;
-    const includeDeleted = query.includeDeleted === "true";
+  /**
+   * Calculate SHA256 checksum from Buffer
+   */
+  static computeChecksum(buffer) {
+    if (!Buffer.isBuffer(buffer)) return null;
+    return crypto.createHash('sha256').update(buffer).digest('hex');
+  }
 
-    const page = Math.max(1, parseInt(query.page) || 1);
-    const limit = Math.min(100, parseInt(query.limit) || 20);
+  /**
+   * Check if a file already exists by checksum
+   */
+  static async findDuplicate(checksum) {
+    if (!checksum) return null;
+    return await Media.findOne({ checksum, isDeleted: false });
+  }
+
+  /**
+   * Query media with smart collections & filters
+   */
+  static async queryMedia({ folderId, collection, type, search, page = 1, limit = 24 }) {
+    const query = { isDeleted: false };
+
+    // 1. Folder filter
+    if (folderId) {
+      query.folder = folderId;
+    }
+
+    // 2. Type filter
+    if (type && type !== 'all') {
+      query.type = type;
+    }
+
+    // 3. Smart Collections
+    if (collection) {
+      switch (collection) {
+        case 'favorites':
+          query.isFavorite = true;
+          break;
+        case 'recently_uploaded':
+          // Handled by sort order
+          break;
+        case 'unused':
+          query.usageCount = 0;
+          break;
+        case 'most_used':
+          query.usageCount = { $gt: 0 };
+          break;
+        case 'large':
+          query.sizeBytes = { $gt: 5 * 1024 * 1024 }; // > 5MB
+          break;
+        case 'duplicates':
+          query.isDuplicate = true;
+          break;
+        case 'archived':
+          query.status = 'archived';
+          break;
+        default:
+          break;
+      }
+    }
+
+    // 4. Text Search
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      query.$or = [
+        { name: regex },
+        { fileName: regex },
+        { originalName: regex },
+        { altText: regex },
+        { caption: regex },
+        { tags: regex },
+      ];
+    }
+
+    const sort = collection === 'most_used' ? { usageCount: -1 } : { createdAt: -1 };
     const skip = (page - 1) * limit;
 
-    const [files, total] = await Promise.all([
-      mediaRepository.find(filter, { createdAt: -1 }, limit, skip, includeDeleted),
-      mediaRepository.count(filter, includeDeleted),
+    const [items, total] = await Promise.all([
+      Media.find(query).sort(sort).skip(skip).limit(limit).lean(),
+      Media.countDocuments(query),
     ]);
 
     return {
-      files,
+      items,
       pagination: {
-        page,
-        limit,
+        page: Number(page),
+        limit: Number(limit),
         total,
         pages: Math.ceil(total / limit),
       },
     };
   }
 
-  async uploadFile(file, folder, userId) {
-    let uploadedData;
-    if (file.url) {
-      uploadedData = file;
-    } else if (file.filename) {
-      // Multer file object
-      const url = `/uploads/${folder ? folder + "/" : ""}${file.filename}`;
-      uploadedData = {
-        fileName: file.filename,
-        originalName: file.originalname,
-        url,
-        mimeType: file.mimetype,
-        sizeBytes: file.size,
-        size: `${(file.size / 1024).toFixed(2)} KB`,
-        type: file.mimetype.split("/")[0] || "image",
-      };
-    } else {
-      uploadedData = await this.provider.upload(file, folder);
-    }
+  /**
+   * Scan usage references across database to prevent deleting used assets
+   */
+  static async checkAssetUsage(mediaId) {
+    const media = await Media.findById(mediaId);
+    if (!media) return { usageCount: 0, usedBy: [] };
 
-    const media = await mediaRepository.create({
-      ...uploadedData,
-      name: file.originalname || file.name || uploadedData.name || "Untitled",
-      folder: folder || "Uploads",
+    const usedBy = [];
+
+    // Scan Articles using this image URL or mediaId
+    const articles = await Article.find({
+      $or: [{ featuredImage: media.url }, { content: new RegExp(media.url, 'i') }],
+      isDeleted: false,
+    }).select('title _id').lean();
+
+    articles.forEach((a) => {
+      usedBy.push({ entityType: 'article', entityId: a._id, title: a.title, field: 'featuredImage' });
+    });
+
+    // Scan Categories using this image
+    const categories = await Category.find({ image: media.url, isDeleted: false }).select('name _id').lean();
+    categories.forEach((c) => {
+      usedBy.push({ entityType: 'category', entityId: c._id, title: c.name, field: 'image' });
+    });
+
+    // Update media document usage count
+    media.usageCount = usedBy.length;
+    media.usedBy = usedBy;
+    media.lastUsed = usedBy.length > 0 ? new Date() : media.lastUsed;
+    await media.save();
+
+    return {
+      usageCount: usedBy.length,
+      usedBy,
+    };
+  }
+
+  /**
+   * Process and save uploaded file using StorageFactory adapter
+   */
+  static async uploadFile({ file, filename, mimetype, folderId, userId }) {
+    const checksum = MediaService.computeChecksum(file);
+    const existingDuplicate = await MediaService.findDuplicate(checksum);
+
+    const storage = StorageFactory.create();
+    const folderDoc = folderId ? await MediaFolder.findById(folderId) : null;
+
+    const uploaded = await storage.upload(file, {
+      filename,
+      mimetype,
+      folder: folderDoc ? folderDoc.slug : 'uploads',
+    });
+
+    // Determine high-level asset type
+    let assetType = 'image';
+    if (mimetype.startsWith('video/')) assetType = 'video';
+    else if (mimetype.startsWith('audio/')) assetType = 'audio';
+    else if (mimetype.includes('pdf')) assetType = 'pdf';
+    else if (mimetype.includes('document') || mimetype.includes('word')) assetType = 'document';
+
+    const ext = filename.split('.').pop() || '';
+
+    const media = new Media({
+      name: filename,
+      fileName: uploaded.filename || filename,
+      originalName: filename,
+      displayName: filename,
+      slug: filename.toLowerCase().replace(/[^a-z0-9.]+/g, '-'),
+      mimeType: mimetype,
+      type: assetType,
+      extension: ext.toLowerCase(),
+      url: uploaded.url,
+      provider: process.env.STORAGE_DRIVER || 'local',
+      folder: folderId || null,
+      folderPath: folderDoc ? folderDoc.path : '/',
+      sizeBytes: uploaded.size || 0,
+      size: `${(uploaded.size / (1024 * 1024)).toFixed(2)} MB`,
+      checksum,
+      isDuplicate: !!existingDuplicate,
+      duplicateOf: existingDuplicate ? existingDuplicate._id : null,
       uploadedById: userId,
+      createdBy: userId,
     });
 
-    await activityLogRepository.create({
-      action: "media_upload",
-      description: `Uploaded media file "${media.name}"`,
-      userId,
-    });
-
-    return media;
+    await media.save();
+    return { media, isDuplicate: !!existingDuplicate, duplicate: existingDuplicate };
   }
 
-  async renameMedia(id, newName, userId) {
-    const media = await mediaRepository.findById(id);
-    if (!media) throw new Error("Media asset not found.");
-    media.name = newName;
+  /**
+   * Replace file with version tracking
+   */
+  static async replaceFile(mediaId, { file, filename, mimetype, userId }) {
+    const media = await Media.findById(mediaId);
+    if (!media) throw new Error('Asset not found.');
+
+    // Save previous version snapshot
+    const currentVersion = (media.versions?.length || 0) + 1;
+    media.versions.push({
+      version: currentVersion,
+      key: media.fileName,
+      url: media.url,
+      sizeBytes: media.sizeBytes,
+      createdAt: new Date(),
+    });
+
+    const storage = StorageFactory.create();
+    const uploaded = await storage.upload(file, { filename, mimetype });
+
+    media.url = uploaded.url;
+    media.fileName = uploaded.filename;
+    media.originalName = filename;
+    media.mimeType = mimetype;
+    media.sizeBytes = uploaded.size;
+    media.checksum = MediaService.computeChecksum(file);
     media.updatedBy = userId;
+
     await media.save();
     return media;
   }
 
-  async moveMedia(id, newFolder, userId) {
-    const media = await mediaRepository.findById(id);
-    if (!media) throw new Error("Media asset not found.");
-    const allowedFolders = ["articles", "covers", "gallery", "profile", "newsletters", "logos", "misc"];
-    if (!allowedFolders.includes(newFolder)) {
-      throw new Error("Invalid target folder.");
+  /**
+   * Bulk operations (move, copy, archive, tag, delete)
+   */
+  static async bulkAction({ action, ids = [], payload = {} }) {
+    switch (action) {
+      case 'move':
+        await Media.updateMany({ _id: { $in: ids } }, { $set: { folder: payload.targetFolderId || null } });
+        break;
+      case 'archive':
+        await Media.updateMany({ _id: { $in: ids } }, { $set: { status: 'archived', isArchived: true } });
+        break;
+      case 'tag':
+        if (payload.tags) {
+          await Media.updateMany({ _id: { $in: ids } }, { $addToSet: { tags: { $each: payload.tags } } });
+        }
+        break;
+      case 'delete':
+        await Media.updateMany({ _id: { $in: ids } }, { $set: { isDeleted: true, deletedAt: new Date() } });
+        break;
+      default:
+        throw new Error(`Unsupported bulk action '${action}'`);
     }
-    
-    // Move on disk if file exists
-    const oldPath = path.join(__dirname, "../../uploads", media.folder, media.fileName);
-    const newPath = path.join(__dirname, "../../uploads", newFolder, media.fileName);
-    if (fs.existsSync(oldPath)) {
-      fs.renameSync(oldPath, newPath);
-    }
-    
-    media.folder = newFolder;
-    media.url = `/uploads/${newFolder}/${media.fileName}`;
-    media.updatedBy = userId;
-    await media.save();
-    return media;
-  }
-
-  async deleteFile(id, userId) {
-    const media = await mediaRepository.findById(id);
-    if (!media) throw new Error("Media asset not found.");
-
-    const updated = await mediaRepository.softDelete(id, userId);
-    
-    await activityLogRepository.create({
-      action: "media_delete",
-      description: `Soft deleted media asset "${media.name}"`,
-      userId,
-    });
-
-    return updated;
-  }
-
-  async restoreFile(id, userId) {
-    const media = await mediaRepository.restore(id, userId);
-    if (!media) throw new Error("Media asset not found.");
-
-    await activityLogRepository.create({
-      action: "media_restore",
-      description: `Restored media asset "${media.name}"`,
-      userId,
-    });
-    return media;
-  }
-
-  async getFolders() {
-    return mediaRepository.distinctFolders();
+    return { count: ids.length, action };
   }
 }
 
-module.exports = new MediaService();
+module.exports = MediaService;

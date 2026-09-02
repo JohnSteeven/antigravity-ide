@@ -29,9 +29,28 @@ class ArticleRepository {
   }
 
   async update(id, updateData) {
+    const isOperator = Object.keys(updateData).some((key) => key.startsWith("$"));
+    const updateObj = isOperator ? updateData : { $set: updateData };
     return Article.findOneAndUpdate(
       { _id: id, isDeleted: false },
-      { $set: updateData },
+      updateObj,
+      { new: true }
+    );
+  }
+
+  async updateEngagementCounter(id, metric, delta) {
+    if (!new Set(["likes", "bookmarks", "saved"]).has(metric)) {
+      throw Object.assign(new Error("Invalid Article engagement metric."), { status: 422 });
+    }
+    return Article.findOneAndUpdate(
+      { _id: id, isDeleted: false },
+      [{
+        $set: {
+          [metric]: {
+            $max: [0, { $add: [{ $ifNull: [`$${metric}`, 0] }, delta] }],
+          },
+        },
+      }],
       { new: true }
     );
   }

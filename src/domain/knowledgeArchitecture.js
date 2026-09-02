@@ -7,6 +7,7 @@ export const categoryBlueprints = [
     longDescription:
       "Daily journals, growth notes, goals, habits, health, relationships, productivity, faith, and memories gathered into one calm personal archive.",
     icon: "heart",
+    sortOrder: 1,
     heroImage:
       "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -22,6 +23,26 @@ export const categoryBlueprints = [
     ],
   },
   {
+    id: "cat-reflections",
+    name: "Reflections",
+    slug: "reflections",
+    description: "Slower essays about meaning, change, and self-awareness.",
+    longDescription:
+      "Thoughts, meditations, Bible reflections, life reflections, career reflections, and daily reflection entries for deeper review.",
+    icon: "feather",
+    sortOrder: 2,
+    heroImage:
+      "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=85",
+    subcategories: [
+      "Thoughts",
+      "Meditations",
+      "Bible Reflections",
+      "Life Reflections",
+      "Career Reflections",
+      "Daily Reflection",
+    ],
+  },
+  {
     id: "cat-incidents",
     name: "Incidents",
     slug: "incidents",
@@ -29,6 +50,7 @@ export const categoryBlueprints = [
     longDescription:
       "Real life events, work experiences, failures, success stories, office incidents, funny moments, and learning experiences preserved with context.",
     icon: "book",
+    sortOrder: 3,
     heroImage:
       "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -42,25 +64,6 @@ export const categoryBlueprints = [
     ],
   },
   {
-    id: "cat-reflections",
-    name: "Reflections",
-    slug: "reflections",
-    description: "Slower essays about meaning, change, and self-awareness.",
-    longDescription:
-      "Thoughts, meditations, Bible reflections, life reflections, career reflections, and daily reflection entries for deeper review.",
-    icon: "feather",
-    heroImage:
-      "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=85",
-    subcategories: [
-      "Thoughts",
-      "Meditations",
-      "Bible Reflections",
-      "Life Reflections",
-      "Career Reflections",
-      "Daily Reflection",
-    ],
-  },
-  {
     id: "cat-lessons",
     name: "Lessons",
     slug: "lessons",
@@ -68,6 +71,7 @@ export const categoryBlueprints = [
     longDescription:
       "Life lessons, books, leadership, business, technology, spiritual lessons, and career advice shaped into reusable knowledge.",
     icon: "award",
+    sortOrder: 4,
     heroImage:
       "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -88,6 +92,7 @@ export const categoryBlueprints = [
     longDescription:
       "Countries, cities, trips, travel guides, budgets, food, hotels, and photography notes from journeys worth remembering.",
     icon: "send",
+    sortOrder: 5,
     heroImage:
       "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -102,6 +107,25 @@ export const categoryBlueprints = [
     ],
   },
   {
+    id: "cat-news",
+    name: "News",
+    slug: "news",
+    description: "Live world news and global updates.",
+    longDescription:
+      "Real-time updates and breaking news coverage from reputable international sources covering world events, culture, science, and technology.",
+    icon: "globe",
+    sortOrder: 6,
+    heroImage:
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1800&q=85",
+    subcategories: [
+      "World News",
+      "Technology",
+      "Science",
+      "Business",
+      "Culture",
+    ],
+  },
+  {
     id: "cat-coding",
     name: "Coding",
     slug: "coding",
@@ -109,6 +133,7 @@ export const categoryBlueprints = [
     longDescription:
       "JavaScript, TypeScript, React, NextJS, NodeJS, Java, Python, SAP, SQL, system design, interview questions, DevOps, cloud, AI, coding tips, and projects.",
     icon: "code",
+    sortOrder: 7,
     heroImage:
       "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1800&q=85",
     subcategories: [
@@ -202,10 +227,12 @@ export const articleCapabilityGroups = [
 
 export const cmsNavigation = [
   {
-    group: "Publishing",
+    group: "Stage 1: Publishing",
     items: [
       { id: "overview", label: "Dashboard", icon: "dashboard" },
       { id: "articles", label: "Articles", icon: "edit" },
+      { id: "stories", label: "Stories", icon: "book" },
+      { id: "creators", label: "Creator Review", icon: "award" },
       { id: "categories", label: "Categories", icon: "folder" },
       { id: "subcategories", label: "Sub Categories", icon: "layers" },
       { id: "tags", label: "Tags", icon: "tag" },
@@ -214,7 +241,7 @@ export const cmsNavigation = [
     ],
   },
   {
-    group: "Access",
+    group: "Stage 1: Access Control",
     items: [
       { id: "users", label: "Users", icon: "users" },
       { id: "roles", label: "Roles", icon: "shield" },
@@ -222,11 +249,12 @@ export const cmsNavigation = [
     ],
   },
   {
-    group: "Experience",
+    group: "Stage 1: Site Experience",
     items: [
       { id: "analytics", label: "Analytics", icon: "analytics" },
       { id: "seo", label: "SEO", icon: "search" },
       { id: "settings", label: "Settings", icon: "settings" },
+      { id: "news-settings", label: "News Settings", icon: "globe" },
       { id: "navigation", label: "Navigation Menu", icon: "navigation" },
       { id: "footer", label: "Footer", icon: "footer" },
       { id: "hero", label: "Homepage", icon: "home" },
@@ -238,13 +266,70 @@ export const cmsNavigation = [
     ],
   },
   {
-    group: "Operations",
+    group: "Stage 2: Post-Launch Engines",
     items: [
-      { id: "newsletters", label: "Newsletters", icon: "send" },
-      { id: "contact", label: "Contact Messages", icon: "mail" },
-      { id: "backups", label: "Backups", icon: "archive" },
-      { id: "logs", label: "Logs", icon: "activity" },
-      { id: "profile", label: "Profile", icon: "profile" },
+      { id: "workflow", label: "Editorial Workflow", icon: "git-branch" },
+      { id: "version-control", label: "Version Control", icon: "clock" },
+      { id: "automation", label: "Automation Scheduler", icon: "cpu" },
+      { id: "forms", label: "Form Builder & Leads", icon: "file-text" },
+      { id: "plugins", label: "Plugin Platform", icon: "package" },
+      { id: "localization", label: "Localization & i18n", icon: "globe" },
+    ],
+  },
+  {
+    group: "Stage 2: Design Systems",
+    items: [
+      { id: "website-builder", label: "Website Builder", icon: "layout" },
+      { id: "theme-builder", label: "Theme Builder", icon: "sliders" },
+      { id: "design-tokens", label: "Design Tokens", icon: "layers" },
+      { id: "components", label: "Component Library", icon: "grid" },
+      { id: "settings-registry", label: "Settings Registry", icon: "settings" },
+    ],
+  },
+  {
+    group: 'Stage 1: Operations',
+    items: [
+      { id: 'newsletters', label: 'Newsletters', icon: 'send' },
+      { id: 'contact', label: 'Contact Messages', icon: 'mail' },
+      { id: 'backups', label: 'Backups', icon: 'archive' },
+      { id: 'logs', label: 'Logs', icon: 'activity' },
+      { id: 'profile', label: 'Profile', icon: 'profile' },
+    ],
+  },
+  {
+    group: 'Stage 3: AI Intelligence',
+    items: [
+      { id: 'ai-providers',       label: 'AI Provider Manager',     icon: 'cpu' },
+      { id: 'ai-writer',          label: 'AI Writing Assistant',    icon: 'edit-3' },
+      { id: 'ai-assistant',       label: 'AI Knowledge Assistant',  icon: 'message' },
+      { id: 'ai-seo',             label: 'Smart SEO Assistant',     icon: 'search' },
+      { id: 'ai-recommendations', label: 'Recommendation Engine',   icon: 'layers' },
+      { id: 'ai-prompts',         label: 'Prompt Manager',          icon: 'file-text' },
+      { id: 'ai-analytics',       label: 'AI Analytics',            icon: 'bar-chart-2' },
+    ],
+  },
+  {
+    group: 'Stage 4: Reader Platform',
+    items: [
+      { id: 'membership',   label: 'Membership & Monetization', icon: 'credit-card' },
+      { id: 'community',    label: 'Community & Moderation',     icon: 'users' },
+      { id: 'distribution', label: 'Distribution & Marketing',   icon: 'send' },
+    ],
+  },
+  {
+    group: 'Stage 5: Search & Knowledge',
+    items: [
+      { id: 'search',     label: 'Universal Search & Graph', icon: 'search' },
+      { id: 'developers', label: 'Developer Portal',         icon: 'code' },
+      { id: 'tenants',    label: 'Multi-Site & White-Label', icon: 'globe' },
+    ],
+  },
+  {
+    group: 'Stage 6: Enterprise Security',
+    items: [
+      { id: 'governance',     label: 'Governance & Security',    icon: 'shield' },
+      { id: 'infrastructure', label: 'Cloud & Observability',    icon: 'cpu' },
+      { id: 'launch',         label: 'Production Launch Console', icon: 'award' },
     ],
   },
 ];

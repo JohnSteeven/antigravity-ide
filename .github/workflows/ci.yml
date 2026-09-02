@@ -1,0 +1,57 @@
+name: MyJourney Continuous Integration
+
+on:
+  push:
+    branches: [ main, release/v1.0, stabilization/batch-1 ]
+  pull_request:
+    branches: [ main, release/v1.0 ]
+
+jobs:
+  validate-and-test:
+    name: Syntax Validation, Unit Tests & Production Build
+    runs-on: ubuntu-latest
+
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/myjourney_ci_test
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify isolated MongoDB test database
+        run: >-
+          node -e "const mongoose = require('mongoose');
+          mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 10000 })
+          .then(() => mongoose.disconnect())
+          .catch((error) => { console.error(error.message); process.exit(1); });"
+
+      - name: Verify Node.js syntax across all server files
+        run: |
+          find server -name "*.js" -exec node --check {} +
+          echo "All server JavaScript files passed syntax check."
+
+      - name: Run Jest test suite
+        run: npm test -- --no-coverage
+
+      - name: Execute Parcel production build
+        run: npm run build
