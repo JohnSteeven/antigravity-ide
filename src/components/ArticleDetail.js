@@ -21,7 +21,7 @@ import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
 import { useReader } from "../hooks/useReader";
 import { useArticleReadingProgress } from "../hooks/useArticleReadingProgress";
-import { getFullName, resolveImageUrl, shareArticle } from "../utils/helpers";
+import { resolveImageUrl, shareArticle } from "../utils/helpers";
 import { getImageUrl } from "../utils/imageUrlHelper";
 import LoginRequiredModal from "./LoginRequiredModal";
 import LoadingScreen from "./LoadingScreen";
@@ -32,11 +32,15 @@ import DocumentMetadata from "./shared/DocumentMetadata";
 const ArticleDetail = () => {
   const { slug } = useParams();
   const location = useLocation();
-  const { data, addComment, incrementArticle } = useCms();
+  const { data, incrementArticle } = useCms();
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const { library, applyAuthoritativeLibraryState } = useReader();
   const [comment, setComment] = useState({ text: "" });
   const [commentMessage, setCommentMessage] = useState("");
+  const [commentSubmissionStatus, setCommentSubmissionStatus] = useState("idle");
+  const [commentsStatus, setCommentsStatus] = useState("loading");
+  const [commentsError, setCommentsError] = useState("");
+  const [publicComments, setPublicComments] = useState([]);
   const [interactionFeedback, setInteractionFeedback] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -78,6 +82,34 @@ const ArticleDetail = () => {
   }, [slug]);
 
   const article = apiArticle;
+
+  useEffect(() => {
+    const articleId = article?.id || article?._id;
+    if (!articleId) return undefined;
+    let cancelled = false;
+    setComment({ text: "" });
+    setCommentMessage("");
+    setCommentSubmissionStatus("idle");
+    setPublicComments([]);
+    setCommentsError("");
+    setCommentsStatus("loading");
+
+    import("../services/apiService")
+      .then(({ articleApi }) => articleApi.getComments(articleId))
+      .then((response) => {
+        if (cancelled) return;
+        setPublicComments(Array.isArray(response?.comments) ? response.comments : []);
+        setCommentsStatus("ready");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPublicComments([]);
+        setCommentsError("Comments could not be loaded. Please try again later.");
+        setCommentsStatus("error");
+      });
+
+    return () => { cancelled = true; };
+  }, [article?.id, article?._id]);
 
   useArticleReadingProgress({
     articleId: article?.id || article?._id,
@@ -198,20 +230,13 @@ const ArticleDetail = () => {
     );
   }
 
-  const approvedComments = (data.comments || [])
-    .map((c) => ({
-      ...c,
-      id: c._id || c.id,
-      name: c.authorName || c.name || "Reader",
-      text: c.body || c.text || "",
+  const approvedComments = publicComments
+    .map((c, index) => ({
+      id: `${c.createdAt || "comment"}-${index}`,
+      name: c.author?.displayName || c.author?.username || "Reader",
+      text: c.body || "",
       createdAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "Just now",
-    }))
-    .filter(
-      (item) =>
-        !item.isDeleted &&
-        item.status === "approved" &&
-        String(item.articleId?._id || item.articleId?.id || item.articleId) === String(article.id || article._id)
-    );
+    }));
 
   const requireLogin = (action = "use this feature") => {
     if (authLoading) {
@@ -310,19 +335,37 @@ const ArticleDetail = () => {
   const handleCommentSubmit = async (event) => {
     event.preventDefault();
     if (!requireLogin()) return;
+    if (commentSubmissionStatus === "submitting") return;
+
+    const body = comment.text.trim();
+    if (body.length < 3 || body.length > 1000) {
+      setCommentSubmissionStatus("error");
+      setCommentMessage("Comments must be between 3 and 1000 characters.");
+      return;
+    }
 
     const articleId = article.id || article._id;
 
     try {
-      const nextComment = {
-        name: getFullName(user),
-        text: comment.text,
-      };
-      // AWAIT the addComment API call to catch and handle TimeoutErrors properly!
-      await addComment(articleId, nextComment);
+      setCommentSubmissionStatus("submitting");
+      setCommentMessage("Submitting your comment…");
+      const { articleApi } = await import("../services/apiService");
+      const response = await articleApi.addComment(articleId, body);
+      if (response?.status !== "pending") {
+        throw new Error("The server returned an invalid comment response.");
+      }
       setComment({ text: "" });
-      setCommentMessage("Comment submitted for moderation.");
+      setCommentSubmissionStatus("pending-approval");
+      setCommentMessage("Comment submitted successfully and is pending approval.");
+
+      const refreshed = await articleApi.getComments(articleId).catch(() => null);
+      if (Array.isArray(refreshed?.comments)) {
+        setPublicComments(refreshed.comments);
+        setCommentsError("");
+        setCommentsStatus("ready");
+      }
     } catch (error) {
+      setCommentSubmissionStatus("error");
       setCommentMessage(error.message || "Please try again.");
     }
   };
@@ -386,7 +429,13 @@ const ArticleDetail = () => {
         activeHeading={activeHeading}
         scrollProgress={scrollProgress}
         approvedComments={approvedComments}
-        comment={comment}
+        comment={{
+          ...comment,
+          listStatus: commentsStatus,
+          listMessage: commentsError,
+          submissionStatus: commentSubmissionStatus,
+          isSubmitting: commentSubmissionStatus === "submitting",
+        }}
         setComment={setComment}
         handleCommentSubmit={handleCommentSubmit}
         commentMessage={commentMessage}

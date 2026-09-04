@@ -284,10 +284,24 @@ body.life-dialog-open { overflow: hidden; }
 .life-mobile-bar > div:last-child { display: flex; align-items: center; gap: 2px; }
 .life-mobile-bar button, .life-mobile-bar a { display: grid; place-items: center; width: 40px; height: 40px; color: var(--life-ink); background: transparent; border: 0; }
 
-.life-offline-banner { position: sticky; top: 72px; z-index: 19; display: flex; justify-content: center; padding: 8px 18px; color: #704e1c; background: #fff6df; border-bottom: 1px solid #ecd9ad; font-size: .75rem; font-weight: 700; }
+.life-offline-banner { position: sticky; top: 72px; z-index: 19; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 18px; color: #704e1c; background: #fff6df; border-bottom: 1px solid #ecd9ad; font-size: .75rem; font-weight: 700; }
 .life-offline-banner.is-online { color: var(--life-accent-dark); background: #eaf4ee; border-color: #d2e7db; }
 .life-offline-banner span { display: flex; align-items: center; gap: 8px; }
 .life-offline-banner .is-spinning { animation: life-spin .8s linear infinite; }
+.life-offline-review { display: grid; gap: 18px; }
+.life-offline-review > p { margin: 0; color: var(--life-muted); line-height: 1.6; }
+.life-offline-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.life-offline-list > li { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--life-line); border-radius: 14px; background: var(--life-soft, #eaf2ed); }
+.life-offline-list > li > div:first-child { display: grid; gap: 4px; }
+.life-offline-list span, .life-offline-list small { overflow-wrap: anywhere; color: var(--life-muted); }
+.life-offline-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.life-offline-actions button { min-height: 44px; }
+.life-offline-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding-top: 12px; border-top: 1px solid var(--life-line); }
+.life-offline-details div { min-width: 0; }
+.life-offline-details dt { color: var(--life-muted); font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+.life-offline-details dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+.life-offline-clear-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px; border: 1px solid #d8aaa5; border-radius: 12px; background: #fff4f2; }
+.life-offline-clear-confirm p { flex: 1 1 220px; margin: 0; color: #7b2820; font-weight: 700; }
 
 .life-capture { display: grid; gap: 18px; }
 .life-capture > p { margin-bottom: 0; }
@@ -444,6 +458,12 @@ body.life-dialog-open { overflow: hidden; }
   .life-privacy-card > div:last-child { flex-wrap: wrap; }
   .life-option-grid { grid-template-columns: repeat(2, 1fr); }
   .life-onboarding-brand { display: none; }
+}
+
+@media (max-width: 520px) {
+  .life-offline-banner { align-items: stretch; flex-direction: column; gap: 6px; }
+  .life-offline-banner .life-link-button { align-self: flex-start; }
+  .life-offline-details { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {

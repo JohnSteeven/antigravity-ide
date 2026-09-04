@@ -24,6 +24,11 @@ class ArticleRepository {
       .populate("authorId", "firstName lastName username email");
   }
 
+  async findDeletedById(id) {
+    return Article.findOne({ _id: id, isDeleted: true })
+      .populate("authorId", "firstName lastName username email");
+  }
+
   async create(data) {
     return Article.create(data);
   }
@@ -43,7 +48,7 @@ class ArticleRepository {
       throw Object.assign(new Error("Invalid Article engagement metric."), { status: 422 });
     }
     return Article.findOneAndUpdate(
-      { _id: id, isDeleted: false },
+      { _id: id, contentType: "article", status: "published", isDeleted: false },
       [{
         $set: {
           [metric]: {
@@ -51,6 +56,14 @@ class ArticleRepository {
           },
         },
       }],
+      { new: true }
+    );
+  }
+
+  async incrementPublishedArticleView(id) {
+    return Article.findOneAndUpdate(
+      { _id: id, contentType: "article", status: "published", isDeleted: false },
+      { $inc: { views: 1 } },
       { new: true }
     );
   }

@@ -1,9 +1,19 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import { articleApi, commentApi, testimonialApi, newsletterCampaignApi, contactMessageApi, subscriberApi } from "../services/apiService";
 import { useAuth } from "../hooks/useAuth";
 
 const EngagementCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-engagement-data";
+
+const runForActiveAdmin = async (activeAdminRef, operation) => {
+  const ownerId = activeAdminRef.current;
+  if (!ownerId) throw Object.assign(new Error("Administrator access is no longer active."), { code: "CMS_ADMIN_CONTEXT_REQUIRED" });
+  const result = await operation();
+  if (activeAdminRef.current !== ownerId) {
+    throw Object.assign(new Error("This administrator response is no longer current."), { code: "CMS_STALE_ADMIN_RESPONSE" });
+  }
+  return result;
+};
 
 const withClientId = (item) => {
   if (!item || typeof item !== "object") return item;
@@ -11,42 +21,35 @@ const withClientId = (item) => {
 };
 
 export const EngagementCmsProvider = ({ children }) => {
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === "Admin";
+  const activeAdminId = isAdmin ? String(user?.id || user?._id || "") : "";
+  const activeAdminRef = useRef(activeAdminId);
+  activeAdminRef.current = activeAdminId;
+  const requestVersionRef = useRef(0);
   const [syncStatus, setSyncStatus] = useState("loading");
   const [comments, setComments] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
+  const [dataOwnerId, setDataOwnerId] = useState("");
 
-  // Load fallback from localStorage
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.comments) setComments(parsed.comments);
-        if (parsed.testimonials) setTestimonials(parsed.testimonials);
-        if (parsed.subscribers) setSubscribers(parsed.subscribers);
-      }
-    } catch (err) {
-      console.warn("Failed to load local engagement cache", err);
-    }
+    window.localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  // Debounced save
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ comments, testimonials, subscribers }));
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [comments, testimonials, subscribers]);
-
   const fetchEngagementData = async () => {
+    const ownerId = activeAdminRef.current;
+    if (!ownerId) return;
+    const requestVersion = ++requestVersionRef.current;
     setSyncStatus("loading");
     try {
       const [commentsRes, testimonialsRes, subscribersRes] = await Promise.all([
-        commentApi.list({ includeDeleted: true }).catch(() => ({ comments: [] })),
-        testimonialApi.list().catch(() => ({ testimonials: [] })),
-        subscriberApi.list().catch(() => ({ subscribers: [] })),
+        commentApi.list({ includeDeleted: true }),
+        testimonialApi.list(),
+        subscriberApi.list(),
       ]);
+
+      if (requestVersion !== requestVersionRef.current || activeAdminRef.current !== ownerId) return;
 
       if (commentsRes && Array.isArray(commentsRes.comments)) {
         setComments(commentsRes.comments.map(withClientId));
@@ -57,21 +60,31 @@ export const EngagementCmsProvider = ({ children }) => {
       if (subscribersRes && Array.isArray(subscribersRes.subscribers)) {
         setSubscribers(subscribersRes.subscribers.map(withClientId));
       }
+      setDataOwnerId(ownerId);
       setSyncStatus("live");
     } catch (err) {
-      console.warn("Failed to fetch live engagement, using stale fallback", err);
-      setSyncStatus("stale-fallback");
+      if (requestVersion !== requestVersionRef.current || activeAdminRef.current !== ownerId) return;
+      setComments([]);
+      setTestimonials([]);
+      setSubscribers([]);
+      setDataOwnerId("");
+      setSyncStatus("unavailable");
     }
   };
 
-  const { isAuthenticated, user } = useAuth();
-  const isAdminOrEditor = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
-
   useEffect(() => {
-    if (isAdminOrEditor) {
-      fetchEngagementData();
+    requestVersionRef.current += 1;
+    setComments([]);
+    setTestimonials([]);
+    setSubscribers([]);
+    setDataOwnerId("");
+    window.localStorage.removeItem(STORAGE_KEY);
+    if (authLoading || !activeAdminId) {
+      setSyncStatus("idle");
+      return;
     }
-  }, [isAdminOrEditor]);
+    fetchEngagementData();
+  }, [authLoading, activeAdminId]);
 
   const actions = useMemo(() => ({
     async refreshComments() {
@@ -79,25 +92,25 @@ export const EngagementCmsProvider = ({ children }) => {
     },
     async addComment(articleId, comment) {
       const data = await articleApi.addComment(articleId, comment.text || comment.body || "");
-      await fetchEngagementData();
-      return data.comment;
+      if (activeAdminRef.current) await fetchEngagementData();
+      return data;
     },
     async updateCommentStatus(articleId, commentId, status) {
-      await commentApi.moderate(commentId, status);
+      await runForActiveAdmin(activeAdminRef, () => commentApi.moderate(commentId, status));
       setComments((prev) => prev.map((c) => (c.id === commentId || c._id === commentId) ? { ...c, status } : c));
     },
     async moderateComment(commentId, status, updates = {}) {
-      const res = await commentApi.moderate(commentId, status, updates);
+      const res = await runForActiveAdmin(activeAdminRef, () => commentApi.moderate(commentId, status, updates));
       const normalized = withClientId(res.comment);
       setComments((prev) => prev.map((c) => (c.id === commentId || c._id === commentId) ? normalized : c));
       return res.comment;
     },
     async deleteComment(commentId) {
-      await commentApi.delete(commentId);
+      await runForActiveAdmin(activeAdminRef, () => commentApi.delete(commentId));
       setComments((prev) => prev.filter((c) => c.id !== commentId && c._id !== commentId));
     },
     async restoreComment(commentId) {
-      const res = await commentApi.restore(commentId);
+      const res = await runForActiveAdmin(activeAdminRef, () => commentApi.restore(commentId));
       const normalized = withClientId(res.comment);
       setComments((prev) => [normalized, ...prev.filter((c) => c.id !== commentId && c._id !== commentId)]);
       return res.comment;
@@ -106,9 +119,9 @@ export const EngagementCmsProvider = ({ children }) => {
       const isEdit = !!(testimonial.id || testimonial._id);
       let res;
       if (isEdit) {
-        res = await testimonialApi.update(testimonial.id || testimonial._id, testimonial);
+        res = await runForActiveAdmin(activeAdminRef, () => testimonialApi.update(testimonial.id || testimonial._id, testimonial));
       } else {
-        res = await testimonialApi.create(testimonial);
+        res = await runForActiveAdmin(activeAdminRef, () => testimonialApi.create(testimonial));
       }
       const normalized = withClientId(res.testimonial);
       setTestimonials((prev) => {
@@ -118,83 +131,80 @@ export const EngagementCmsProvider = ({ children }) => {
       return normalized;
     },
     async deleteTestimonial(id) {
-      await testimonialApi.delete(id);
+      await runForActiveAdmin(activeAdminRef, () => testimonialApi.delete(id));
       setTestimonials((prev) => prev.filter((t) => t.id !== id && t._id !== id));
     },
     async restoreTestimonial(id) {
-      const res = await testimonialApi.restore(id);
+      const res = await runForActiveAdmin(activeAdminRef, () => testimonialApi.restore(id));
       const normalized = withClientId(res.testimonial);
       setTestimonials((prev) => [normalized, ...prev.filter((t) => t.id !== id && t._id !== id)]);
       return res.testimonial;
     },
     async fetchTestimonials(params = {}) {
-      return testimonialApi.list(params);
+      return runForActiveAdmin(activeAdminRef, () => testimonialApi.list(params));
     },
     async addSubscriber(email) {
       const normalized = email.trim().toLowerCase();
       if (!normalized) return;
       try {
-        const res = await subscriberApi.subscribe(normalized);
-        const sub = withClientId(res.subscriber);
-        setSubscribers((prev) => {
-          if (prev.some((s) => s.email.toLowerCase() === normalized)) return prev;
-          return [...prev, sub];
-        });
+        return await subscriberApi.subscribe(normalized);
       } catch (err) {
-        console.error("Failed to add subscriber", err);
+        throw err;
       }
     },
     async deleteSubscriber(id) {
-      await subscriberApi.delete(id);
+      await runForActiveAdmin(activeAdminRef, () => subscriberApi.delete(id));
       setSubscribers((prev) => prev.filter((s) => s.id !== id && s._id !== id));
     },
     async fetchCampaigns(params = {}) {
-      return newsletterCampaignApi.list(params);
+      return runForActiveAdmin(activeAdminRef, () => newsletterCampaignApi.list(params));
     },
     async saveCampaign(campaign) {
       const isEdit = !!(campaign.id || campaign._id);
       let res;
       if (isEdit) {
-        res = await newsletterCampaignApi.update(campaign.id || campaign._id, campaign);
+        res = await runForActiveAdmin(activeAdminRef, () => newsletterCampaignApi.update(campaign.id || campaign._id, campaign));
       } else {
-        res = await newsletterCampaignApi.create(campaign);
+        res = await runForActiveAdmin(activeAdminRef, () => newsletterCampaignApi.create(campaign));
       }
       return res.campaign;
     },
     async sendCampaign(id) {
-      const res = await newsletterCampaignApi.send(id);
+      const res = await runForActiveAdmin(activeAdminRef, () => newsletterCampaignApi.send(id));
       return res.campaign;
     },
     async deleteCampaign(id) {
-      await newsletterCampaignApi.delete(id);
+      await runForActiveAdmin(activeAdminRef, () => newsletterCampaignApi.delete(id));
     },
     async restoreCampaign(id) {
-      const res = await newsletterCampaignApi.restore(id);
+      const res = await runForActiveAdmin(activeAdminRef, () => newsletterCampaignApi.restore(id));
       return res.campaign;
     },
     async fetchContactMessages(params = {}) {
-      return contactMessageApi.list(params);
+      return runForActiveAdmin(activeAdminRef, () => contactMessageApi.list(params));
     },
     async updateContactMessage(id, updates) {
-      const res = await contactMessageApi.update(id, updates);
+      const res = await runForActiveAdmin(activeAdminRef, () => contactMessageApi.update(id, updates));
       return res.message;
     },
     async deleteContactMessage(id) {
-      await contactMessageApi.delete(id);
+      await runForActiveAdmin(activeAdminRef, () => contactMessageApi.delete(id));
     },
     async restoreContactMessage(id) {
-      const res = await contactMessageApi.restore(id);
+      const res = await runForActiveAdmin(activeAdminRef, () => contactMessageApi.restore(id));
       return res.message;
     }
-  }), [comments, testimonials, subscribers]);
+  }), [activeAdminId]);
+
+  const ownsProtectedState = Boolean(activeAdminId && dataOwnerId === activeAdminId);
 
   const value = useMemo(() => ({
-    comments,
-    testimonials,
-    subscribers,
+    comments: ownsProtectedState ? comments : [],
+    testimonials: ownsProtectedState ? testimonials : [],
+    subscribers: ownsProtectedState ? subscribers : [],
     syncStatus,
     ...actions
-  }), [comments, testimonials, subscribers, syncStatus, actions]);
+  }), [comments, testimonials, subscribers, ownsProtectedState, syncStatus, actions]);
 
   return <EngagementCmsContext.Provider value={value}>{children}</EngagementCmsContext.Provider>;
 };

@@ -1,46 +1,49 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import { settingApi, backupApi, activityLogApi } from "../services/apiService";
 import { useAuth } from "../hooks/useAuth";
 
 const SiteCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-site-data";
 
+const runForActiveAdmin = async (activeAdminRef, operation) => {
+  const ownerId = activeAdminRef.current;
+  if (!ownerId) throw Object.assign(new Error("Administrator access is no longer active."), { code: "CMS_ADMIN_CONTEXT_REQUIRED" });
+  const result = await operation();
+  if (activeAdminRef.current !== ownerId) {
+    throw Object.assign(new Error("This administrator response is no longer current."), { code: "CMS_STALE_ADMIN_RESPONSE" });
+  }
+  return result;
+};
+
 export const SiteCmsProvider = ({ children }) => {
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === "Admin";
+  const activeAdminId = isAdmin ? String(user?.id || user?._id || "") : "";
+  const activeAdminRef = useRef(activeAdminId);
+  activeAdminRef.current = activeAdminId;
+  const requestVersionRef = useRef(0);
   const [syncStatus, setSyncStatus] = useState("loading");
   const [settings, setSettings] = useState({});
   const [backups, setBackups] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [dataOwnerId, setDataOwnerId] = useState("");
 
-  // Load from local storage fallback
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.settings) setSettings(parsed.settings);
-        if (parsed.backups) setBackups(parsed.backups);
-        if (parsed.logs) setLogs(parsed.logs);
-      }
-    } catch (err) {
-      console.warn("Failed to load local site cache", err);
-    }
+    window.localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  // Debounced save
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, backups, logs }));
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [settings, backups, logs]);
-
   const fetchSiteData = async () => {
+    const ownerId = activeAdminRef.current;
+    if (!ownerId) return;
+    const requestVersion = ++requestVersionRef.current;
     setSyncStatus("loading");
     try {
       const [backupsList, logsRes] = await Promise.all([
-        backupApi.list().catch(() => ({ backups: [] })),
-        activityLogApi.list({}).catch(() => ({ logs: [] })),
+        backupApi.list(),
+        activityLogApi.list({}),
       ]);
+
+      if (requestVersion !== requestVersionRef.current || activeAdminRef.current !== ownerId) return;
 
       if (backupsList && Array.isArray(backupsList.backups)) {
         setBackups(backupsList.backups.map((b) => ({ ...b, id: b._id || b.id })));
@@ -48,21 +51,31 @@ export const SiteCmsProvider = ({ children }) => {
       if (logsRes && Array.isArray(logsRes.logs)) {
         setLogs(logsRes.logs.map((l) => ({ ...l, id: l._id || l.id })));
       }
+      setDataOwnerId(ownerId);
       setSyncStatus("live");
     } catch (err) {
-      console.warn("Failed to fetch live site data, using stale fallback", err);
-      setSyncStatus("stale-fallback");
+      if (requestVersion !== requestVersionRef.current || activeAdminRef.current !== ownerId) return;
+      setSettings({});
+      setBackups([]);
+      setLogs([]);
+      setDataOwnerId("");
+      setSyncStatus("unavailable");
     }
   };
 
-  const { isAuthenticated, user } = useAuth();
-  const isAdminOrEditor = isAuthenticated && (user?.role === "Admin" || user?.role === "Editor");
-
   useEffect(() => {
-    if (isAdminOrEditor) {
-      fetchSiteData();
+    requestVersionRef.current += 1;
+    setSettings({});
+    setBackups([]);
+    setLogs([]);
+    setDataOwnerId("");
+    window.localStorage.removeItem(STORAGE_KEY);
+    if (authLoading || !activeAdminId) {
+      setSyncStatus("idle");
+      return;
     }
-  }, [isAdminOrEditor]);
+    fetchSiteData();
+  }, [authLoading, activeAdminId]);
 
   const actions = useMemo(() => ({
     async refreshSite() {
@@ -70,7 +83,7 @@ export const SiteCmsProvider = ({ children }) => {
     },
     async getSetting(key) {
       try {
-        const res = await settingApi.get(key);
+        const res = await runForActiveAdmin(activeAdminRef, () => settingApi.get(key));
         setSettings((prev) => ({ ...prev, [key]: res.value }));
         return res.value;
       } catch (err) {
@@ -79,44 +92,46 @@ export const SiteCmsProvider = ({ children }) => {
       }
     },
     async updateSetting(key, value) {
-      const res = await settingApi.update(key, value);
+      const res = await runForActiveAdmin(activeAdminRef, () => settingApi.update(key, value));
       setSettings((prev) => ({ ...prev, [key]: value }));
       return res.setting;
     },
     async fetchLogs(params = {}) {
-      const res = await activityLogApi.list(params);
+      const res = await runForActiveAdmin(activeAdminRef, () => activityLogApi.list(params));
       const mappedLogs = (res.logs || []).map((l) => ({ ...l, id: l._id || l.id }));
       setLogs(mappedLogs);
       return res;
     },
     async fetchBackups() {
-      const res = await backupApi.list();
+      const res = await runForActiveAdmin(activeAdminRef, () => backupApi.list());
       const mappedBackups = (res.backups || []).map((b) => ({ ...b, id: b._id || b.id }));
       setBackups(mappedBackups);
       return mappedBackups;
     },
     async triggerBackup() {
-      const res = await backupApi.create();
+      const res = await runForActiveAdmin(activeAdminRef, () => backupApi.create());
       const newBackup = { ...res.backup, id: res.backup._id || res.backup.id };
       setBackups((prev) => [newBackup, ...prev]);
       return newBackup;
     },
     async restoreBackup(id) {
-      await backupApi.restore(id);
+      await runForActiveAdmin(activeAdminRef, () => backupApi.restore(id));
     },
     async deleteBackup(id) {
-      await backupApi.delete(id);
+      await runForActiveAdmin(activeAdminRef, () => backupApi.delete(id));
       setBackups((prev) => prev.filter((b) => b.id !== id && b._id !== id));
     }
-  }), []);
+  }), [activeAdminId]);
+
+  const ownsProtectedState = Boolean(activeAdminId && dataOwnerId === activeAdminId);
 
   const value = useMemo(() => ({
-    settings,
-    backups,
-    logs,
+    settings: ownsProtectedState ? settings : {},
+    backups: ownsProtectedState ? backups : [],
+    logs: ownsProtectedState ? logs : [],
     syncStatus,
     ...actions
-  }), [settings, backups, logs, syncStatus, actions]);
+  }), [settings, backups, logs, ownsProtectedState, syncStatus, actions]);
 
   return <SiteCmsContext.Provider value={value}>{children}</SiteCmsContext.Provider>;
 };

@@ -31,6 +31,10 @@ const TYPE_ALIASES = Object.freeze({
 });
 
 const cleanString = (value) => (value === undefined || value === null ? "" : String(value));
+const isStoryRecord = (value) => Boolean(value) && (
+  value.contentType === "story"
+  || (!value.contentType && String(value.category || "").trim().toLowerCase() === "stories")
+);
 
 const stripHtml = (value = "") => cleanString(value)
   .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -166,5 +170,6 @@ module.exports = {
   normalizeStorySections,
   getStoryWordCount,
   calculateStoryReadingTime,
+  isStoryRecord,
   validateStorySections,
 };

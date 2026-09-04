@@ -8,15 +8,14 @@ class CommentRepository {
     }
     return Comment.find(query)
       .sort(sort)
-      .populate("authorId", "firstName lastName username email")
       .populate("articleId", "title slug")
       .lean();
   }
 
   async findById(id) {
     return Comment.findOne({ _id: id })
-      .populate("authorId", "firstName lastName username email")
-      .populate("articleId", "title slug");
+      .populate("articleId", "title slug")
+      .lean();
   }
 
   async create(data) {
@@ -27,15 +26,16 @@ class CommentRepository {
     return Comment.findOneAndUpdate(
       { _id: id, isDeleted: false },
       { $set: updateData },
-      { new: true }
-    );
+      { new: true, runValidators: true }
+    ).populate("articleId", "title slug")
+      .lean();
   }
 
   async softDelete(id, userId) {
     return Comment.findOneAndUpdate(
       { _id: id, isDeleted: false },
       { $set: { isDeleted: true, deletedAt: new Date(), updatedBy: userId } },
-      { new: true }
+      { new: true, runValidators: true }
     );
   }
 
@@ -43,7 +43,7 @@ class CommentRepository {
     return Comment.findOneAndUpdate(
       { _id: id, isDeleted: true },
       { $set: { isDeleted: false, deletedAt: null, updatedBy: userId } },
-      { new: true }
+      { new: true, runValidators: true }
     );
   }
 }

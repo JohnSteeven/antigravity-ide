@@ -25,6 +25,14 @@ npm run test:learn
 npm run test:multiplayer
 ```
 
+Focused Life offline privacy checks:
+
+```bash
+npx jest --runInBand --runTestsByPath server/tests/lifeOfflinePrivacy.test.js server/tests/lifeAdvancedClientContract.test.js server/tests/lifeRenderingContract.test.js
+```
+
+These cover queue allowlists and payload minimization; legacy, unowned, expired, corrupt, cross-account, duplicate, conflict, and authentication-failure handling; preservation of `false`, `0`, empty arrays, and partial supported inputs; immediate pre-send owner validation; logout/session/account/role/Life-deletion purge wiring; inspection/retry/discard/clear controls; online-only sensitive Life mutations; PWA capability truthfulness; and malicious notification destinations. They are structural/VM evidence and do not replace real-browser IndexedDB, service-worker, multi-tab, or notification testing.
+
 Focused auth/startup checks:
 
 ```bash
@@ -36,6 +44,14 @@ Focused Reader/Profile checks:
 ```bash
 npx jest --runInBand server/tests/articleReaderInteractions.test.js server/tests/readerDataFoundation.test.js server/tests/readerDataMigration.test.js server/tests/authorizationBoundaries.test.js
 ```
+
+Focused public-comment privacy and CMS browser-storage checks:
+
+```bash
+npx jest --runInBand server/tests/commentPrivacyAndCmsStorage.test.js server/tests/articleReaderInteractions.test.js server/tests/authClientContract.test.js server/tests/coreInteractionReliability.test.js server/tests/authorizationBoundaries.test.js
+```
+
+These verify the anonymous approved-comment boundary, minimal public-author serialization, pending-only submission response, strict Admin moderation inputs, Mongoose update validation, memory-only protected CMS collections, identity-gated cleanup, logout/expiry invalidation, and the reader-facing comment lifecycle contract.
 
 These cover User/ReaderProfile ownership, DTO privacy, atomic Article library toggles/counters, authenticated Like/Bookmark/Save boundaries and response contracts, ReaderContext/Profile synchronization, native Share and clipboard failure paths, atomic monotonic progress, completion compare-and-set, Article-only enforcement, unique-index migration behavior, editable account fields, notification time-slot consistency, and source contracts excluding fabricated Profile data.
 
@@ -52,13 +68,14 @@ Playwright runs a deterministic Chromium journey with an isolated UI on port 123
 ```bash
 npx playwright install chromium
 npm run test:e2e
+npx playwright test article-actions.spec.js
 npm run test:e2e:headed
 npm run test:e2e:report
 ```
 
 The default database is `mongodb://127.0.0.1:27017/myjourney_e2e`. Override it only with `E2E_MONGO_URI` naming an unmistakable test database. Global setup upserts fixed Reader/Article fixtures and clears only their test-owned Reader/session state. It does not weaken production authentication, contact SMTP/SMS, use personal Admin records, or run migration 011.
 
-The initial journey covers cookie/CSRF login, desktop Categories navigation, published Article open, Like/Unlike visual and reload state, Bookmark and Save persistence/Profile synchronization, canonical Share fallback feedback, reading progress, Light/Dark active-state CSS, logout/login account isolation, and the mobile drawer. See `docs/CORE_INTERACTION_INVENTORY.md` for browser-pending surfaces.
+The focused `article-actions.spec.js` smoke verifies that Article listings exclude Story records and that authenticated Like, Bookmark, and Save actions persist after reload, then returns the shared fixture to baseline. The wider initial journey covers cookie/CSRF login, desktop Categories navigation, published Article open, Like/Unlike visual and reload state, Bookmark and Save persistence/Profile synchronization, canonical Share fallback feedback, reading progress, Light/Dark active-state CSS, and logout/login account isolation. Anonymous mobile drawer/category behavior runs as a separate fresh-browser-context case so logout navigation cannot race the drawer. In network-restricted test environments, the journey stubs only non-local media; localhost UI/API/MongoDB requests remain real. See `docs/CORE_INTERACTION_INVENTORY.md` for browser-pending surfaces.
 
 `runtimeDiagnostics.test.js` covers Mongo URI precedence/redaction, dual-stack port detection, UI-only no-Mongo preflight behavior, safe Parcel temp cleanup, and liveness/readiness state. `schedulerLifecycle.test.js` verifies that scheduler startup is idempotent and all timers can be closed.
 

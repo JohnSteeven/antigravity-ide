@@ -1,18 +1,18 @@
 # Feature status
 
-Statuses describe the code in this repository, not a launch or security certification.
+Statuses describe the code in this repository, not a launch or security certification. The canonical production tracker is `docs/MYJOURNEY_PRODUCTION_MASTER_PLAN.md`; the older roadmap is retained as historical evidence only.
 
 | Area | Status | Engineering truth |
 | --- | --- | --- |
 | Public home/navigation/footer | Implemented | React shell, CMS-backed contexts, navigation, and public landing sections exist. |
-| Articles | Implemented | Public/CMS flows, bounded server pagination/filter/search/sort, categories, tags, comments, API-authoritative bodies/metrics, Free/Premium serialization, SEO/social metadata, and explicit unavailable/retry states exist. |
+| Articles | Implemented | Public/CMS flows, bounded server pagination/filter/search/sort, categories, tags, comments, API-authoritative bodies/metrics, Free/Premium serialization, SEO/social metadata, and explicit unavailable/retry states exist. Article list/detail routes force the Article discriminator so Story records cannot expose unsupported Article-only Like/Bookmark/Save controls. |
 | Stories | Implemented | Structured sections, validation, reading time, dedicated routes, 30 stable presets over six shared engines, CMS/public preview reuse, structured quote/media metadata, SEO, and legacy compatibility exist. Structural preset verification is documented; browser visual QA is tracked separately. |
 | Reader profile and Article progress | Implemented / migration required | Authenticated profile DTO, Reader-owned Like/Bookmark/Save interactions with response-driven Profile synchronization, atomic per-user/per-Article progress, real Continue/Completed/time/achievement states, public native/copy-link sharing, and Story exclusion exist. Migration 011 must be reviewed/applied per environment before rollout. |
 | Core browser reliability smoke | Implemented foundation | Isolated Playwright/Chromium fixtures exercise login, Header, Article Like/Unlike/Bookmark/Save/Share/progress, Profile synchronization, Light/Dark state, account isolation, logout, and mobile drawer. The wider browser inventory remains open; Story Save is known non-persistent. |
 | Authentication | Implemented | Registration, hashed single-use OTP, throttling/lockouts, enumeration-resistant recovery, cookie sessions, atomic refresh rotation/replay rejection, password reset/change, logout, and protected routes exist. SMTP/SMS delivery depends on configuration. |
 | MyJourney Premium entitlement | Implemented | One account-level Premium plan grants the entitlement catalog for 1/3/6/12-month billing durations. |
 | Premium checkout/billing sync | Deferred | Provider adapter reports checkout, portal, webhooks, cancellation sync, and price mapping unavailable. |
-| MyJourney Life | Implemented | Private Premium APIs/UI cover Today, habits, routines, tasks, goals, health, money, journal, insights, search, reports, notifications, export, and deletion. |
+| MyJourney Life | Implemented / privacy browser QA required | Private Premium APIs/UI cover Today, habits, routines, tasks, goals, health, money, journal, insights, search, reports, notifications, export, and deletion. Offline schema v2 queues only minimal task creation and non-sensitive habit/task/goal-action events for the current owner for at most 24 hours; sensitive Life changes require a connection. |
 | Life web push | Implemented / requires external configuration | Requires valid VAPID credentials. |
 | Life AI review | Implemented / requires external configuration | Requires `LIFE_AI_ENABLED=true` and an enabled AI provider; deterministic reports remain available. |
 | Calendar/health-device integrations | Foundation only | Capability registries exist; no real adapter is connected by default. |

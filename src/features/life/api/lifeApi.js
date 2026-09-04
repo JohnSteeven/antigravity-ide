@@ -7,7 +7,7 @@ const query = (params = {}) => {
 };
 const get = (path, params) => apiRequest(`/api/life${path}${query(params)}`);
 const send = (path, method, body) => apiRequest(`/api/life${path}`, { method, body: body === undefined ? undefined : JSON.stringify(body) });
-const queuedSend = (path, method, body, type) => queueOrSend({ path: `/api/life${path}`, method, body, type });
+const queuedSend = (path, method, body, operationType) => queueOrSend({ path: `/api/life${path}`, method, body, operationType });
 
 export const lifeApi = {
   profile: () => get("/profile"),
@@ -24,11 +24,13 @@ export const lifeApi = {
   createHabit: (body) => send("/habits", "POST", body),
   updateHabit: (id, body) => send(`/habits/${id}`, "PATCH", body),
   setHabitStatus: (id, status) => send(`/habits/${id}/status`, "PATCH", { status }),
-  logEvent: (itemType, id, body) => queuedSend(`/events/${itemType}/${id}`, "POST", body, "event"),
+  logEvent: (itemType, id, body) => ["habit", "task", "goal_action"].includes(itemType)
+    ? queuedSend(`/events/${itemType}/${id}`, "POST", body, "event.log")
+    : send(`/events/${itemType}/${id}`, "POST", body),
   history: (params) => get("/history", params),
 
   tasks: (params) => get("/tasks", params),
-  createTask: (body) => queuedSend("/tasks", "POST", body, "task"),
+  createTask: (body) => queuedSend("/tasks", "POST", body, "task.create"),
   updateTask: (id, body) => send(`/tasks/${id}`, "PATCH", body),
   routines: (params) => get("/routines", params),
   createRoutine: (body) => send("/routines", "POST", body),
@@ -44,19 +46,19 @@ export const lifeApi = {
 
   health: (params) => get("/health", params),
   healthSummary: (params) => get("/health/summary", params),
-  createHealth: (body) => queuedSend("/health", "POST", body, "health"),
+  createHealth: (body) => send("/health", "POST", body),
   deleteHealth: (id) => send(`/health/${id}`, "DELETE"),
 
   moneyEntries: (params) => get("/money/entries", params),
   moneySummary: (params) => get("/money/summary", params),
-  createMoneyEntry: (body) => queuedSend("/money/entries", "POST", body, "finance"),
+  createMoneyEntry: (body) => send("/money/entries", "POST", body),
   deleteMoneyEntry: (id) => send(`/money/entries/${id}`, "DELETE"),
   moneyPlans: (params) => get("/money/plans", params),
   createMoneyPlan: (body) => send("/money/plans", "POST", body),
   updateMoneyPlan: (id, body) => send(`/money/plans/${id}`, "PATCH", body),
 
   journal: (params) => get("/journal", params),
-  createJournal: (body) => queuedSend("/journal", "POST", body, "journal"),
+  createJournal: (body) => send("/journal", "POST", body),
   deleteJournal: (id) => send(`/journal/${id}`, "DELETE"),
   insights: (params) => get("/insights", params),
   dismissInsight: (id) => send(`/insights/${id}/dismiss`, "PATCH", {}),

@@ -5,6 +5,7 @@ const {
   normalizeStoryLayout,
   normalizeStorySections,
   calculateStoryReadingTime,
+  isStoryRecord,
   validateStorySections,
 } = require("../utils/storyContent");
 const entitlementService = require("../services/entitlementService");
@@ -96,7 +97,7 @@ class StoryController {
       if (!article || article.status !== "published") {
         return res.status(404).json({ message: "Story not found." });
       }
-      if (article.contentType && article.contentType !== "story") {
+      if (!isStoryRecord(article)) {
         return res.status(400).json({ redirect: true, slug: article.slug, message: "Content is an article" });
       }
       const resolution = req.user
@@ -132,7 +133,7 @@ class StoryController {
     try {
       const existingDoc = await Article.findOne({ _id: req.params.id, isDeleted: false }).lean();
       if (!existingDoc) return res.status(404).json({ message: "Story not found." });
-      if (existingDoc.contentType && existingDoc.contentType !== "story") {
+      if (!isStoryRecord(existingDoc)) {
         return res.status(400).json({ message: "This record is an Article, not a Story." });
       }
 
@@ -156,7 +157,7 @@ class StoryController {
         return res.status(422).json({ message: "Invalid Story status." });
       }
       const existingDoc = await Article.findOne({ _id: req.params.id, isDeleted: false }).lean();
-      if (!existingDoc || (existingDoc.contentType && existingDoc.contentType !== "story")) {
+      if (!isStoryRecord(existingDoc)) {
         return res.status(404).json({ message: "Story not found." });
       }
       const updateData = prepareStory({ status }, existingDoc);

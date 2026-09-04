@@ -1,6 +1,14 @@
 const commentRepository = require("../repositories/commentRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
 
+const STATUS_TRANSITIONS = Object.freeze({
+  pending: new Set(["pending", "approved", "rejected", "spam", "hidden"]),
+  approved: new Set(["approved", "rejected", "spam", "hidden"]),
+  rejected: new Set(["rejected", "pending", "approved", "spam"]),
+  spam: new Set(["spam", "pending", "rejected"]),
+  hidden: new Set(["hidden", "pending", "approved", "rejected", "spam"]),
+});
+
 class CommentService {
   async getComments(filter = {}, includeDeleted = false) {
     return commentRepository.find(filter, { createdAt: -1 }, includeDeleted);
@@ -18,6 +26,17 @@ class CommentService {
   }
 
   async updateComment(id, data, userId) {
+    const current = await commentRepository.findById(id);
+    if (!current || current.isDeleted) {
+      const error = new Error("Comment not found.");
+      error.status = 404;
+      throw error;
+    }
+    if (data.status !== undefined && !STATUS_TRANSITIONS[current.status]?.has(data.status)) {
+      const error = new Error("Invalid comment status transition.");
+      error.status = 422;
+      throw error;
+    }
     data.updatedBy = userId;
     const comment = await commentRepository.update(id, data);
     if (!comment) throw new Error("Comment not found.");
@@ -56,3 +75,4 @@ class CommentService {
 }
 
 module.exports = new CommentService();
+module.exports.STATUS_TRANSITIONS = STATUS_TRANSITIONS;

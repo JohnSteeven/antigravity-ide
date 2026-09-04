@@ -45,6 +45,17 @@ test.describe("core authenticated Article journey", () => {
       }
     });
 
+    // Keep the application journey deterministic when the test runner has no
+    // public network access; external media is outside this interaction smoke.
+    await page.route("**/*", async (route) => {
+      const url = new URL(route.request().url());
+      if (url.hostname === "127.0.0.1" || url.hostname === "localhost") {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({ status: 204, body: "" });
+    });
+
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
       Object.defineProperty(navigator, "clipboard", {
@@ -144,7 +155,17 @@ test.describe("core authenticated Article journey", () => {
     await expect(page.getByRole("tabpanel")).toContainText("No likes yet");
 
     await openFixtureArticle(page);
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.evaluate(() => {
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+    await expect.poll(() => page.evaluate(() => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      return totalHeight > 0 ? window.scrollY / totalHeight : 0;
+    })).toBeGreaterThan(0.9);
+    await page.evaluate(() => new Promise((resolve) => {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+    }));
     const [progressResponse] = await Promise.all([
       page.waitForResponse((candidate) => (
         candidate.url().endsWith("/api/reader/progress") && candidate.request().method() === "POST"
@@ -192,19 +213,15 @@ test.describe("core authenticated Article journey", () => {
     await expect(page.getByRole("button", { name: "Save article" })).toHaveAttribute("aria-pressed", "false");
 
     await page.getByRole("button", { name: /Open account menu/ }).click();
-    await page.getByRole("button", { name: "Sign Out" }).click();
+    const [secondaryLogoutResponse] = await Promise.all([
+      page.waitForResponse((candidate) => (
+        candidate.url().endsWith("/api/auth/logout") && candidate.request().method() === "POST"
+      )),
+      page.getByRole("button", { name: "Sign Out" }).click(),
+    ]);
+    expect(secondaryLogoutResponse.status()).toBe(200);
+    await expect(page).toHaveURL("http://127.0.0.1:1235/");
     await expect(page.getByRole("link", { name: /Sign In/i })).toBeVisible();
-
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.getByRole("button", { name: "Open mobile navigation drawer" }).click();
-    const mobileDrawer = page.getByRole("dialog", { name: "Mobile navigation" });
-    await expect(mobileDrawer).toBeVisible();
-    const mobileCategories = mobileDrawer.getByRole("button", { name: "Categories", exact: true });
-    await expect(mobileCategories).toBeVisible();
-    await mobileCategories.click();
-    await expect(mobileCategories).toHaveAttribute("aria-expanded", "true");
-    await page.getByRole("button", { name: "Close mobile menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Mobile navigation" })).toHaveCount(0);
 
     expect(pageErrors).toEqual([]);
     const unexpectedFailures = failedResponses.filter((entry) => !(
@@ -218,5 +235,19 @@ test.describe("core authenticated Article journey", () => {
       unexpectedConsoleErrors: [],
       unexpectedFailures: [],
     });
+  });
+
+  test("anonymous mobile navigation exposes and closes its category accordion", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: /Sign In/i })).toBeVisible();
+    await page.getByRole("button", { name: "Open mobile navigation drawer" }).click();
+    const mobileDrawer = page.getByRole("dialog", { name: "Mobile navigation" });
+    await expect(mobileDrawer).toBeVisible();
+    const mobileCategories = mobileDrawer.getByRole("button", { name: "Categories", exact: true });
+    await mobileCategories.click();
+    await expect(mobileCategories).toHaveAttribute("aria-expanded", "true");
+    await page.getByRole("button", { name: "Close mobile menu" }).click();
+    await expect(mobileDrawer).toHaveCount(0);
   });
 });

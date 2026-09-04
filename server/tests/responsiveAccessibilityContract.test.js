@@ -184,7 +184,7 @@ describe("responsive and accessibility contracts", () => {
   test("the Coding comment submit action owns scoped interaction and mobile states", () => {
     const comments = read("src", "experiences", "shared", "widgets", "CommentsSection.js");
     const css = read("index.css");
-    expect(comments).toMatch(/className="coding-submit-btn"\s+type="submit"\s*>/);
+    expect(comments).toMatch(/className="coding-submit-btn"\s+type="submit"\s+disabled=\{comment\.isSubmitting\}\s*>/);
     expect(css).toMatch(/\[data-experience="coding"\] \.coding-comments-section \.comment-form\s*\{[^}]*background:\s*transparent !important/);
     expect(css).toContain('[data-experience="coding"] .coding-comments-section .coding-submit-btn:hover');
     expect(css).toContain('[data-experience="coding"] .coding-comments-section .coding-submit-btn:focus-visible');

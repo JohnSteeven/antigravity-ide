@@ -1,4 +1,5 @@
 const commentService = require("../services/commentService");
+const { serializeAdminComment } = require("../serializers/commentSerializer");
 
 class CommentController {
   async getComments(req, res, next) {
@@ -12,7 +13,7 @@ class CommentController {
       }
       const includeDeleted = req.query.includeDeleted === "true";
       const comments = await commentService.getComments(filter, includeDeleted);
-      res.json({ success: true, comments });
+      res.json({ success: true, comments: comments.map(serializeAdminComment) });
     } catch (err) {
       next(err);
     }
@@ -28,7 +29,7 @@ class CommentController {
       if (isPinned !== undefined) updateData.isPinned = isPinned;
 
       const comment = await commentService.updateComment(id, updateData, req.user?._id);
-      res.json({ success: true, comment, message: "Comment updated successfully." });
+      res.json({ success: true, comment: serializeAdminComment(comment), message: "Comment updated successfully." });
     } catch (err) {
       next(err);
     }
@@ -48,7 +49,7 @@ class CommentController {
     try {
       const { id } = req.params;
       const comment = await commentService.restoreComment(id, req.user?._id);
-      res.json({ success: true, comment, message: "Comment restored successfully." });
+      res.json({ success: true, comment: serializeAdminComment(comment), message: "Comment restored successfully." });
     } catch (err) {
       next(err);
     }

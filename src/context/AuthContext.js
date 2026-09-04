@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { authService } from "../services/authService";
 import { creatorApi, membershipApi } from "../services/apiService";
+import { purgePrivateBrowserData } from "../utils/privateBrowserData";
 
 const FREE_ACCESS = Object.freeze({
   plan: "free",
@@ -15,6 +16,7 @@ const NO_CREATOR_ACCESS = Object.freeze({ studioAvailable: false, creatorStatus:
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const accountBoundaryRef = useRef("");
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,7 @@ export const AuthProvider = ({ children }) => {
       setSession(null);
       setAccountAccess(FREE_ACCESS);
       setCreatorAccess(NO_CREATOR_ACCESS);
+      await purgePrivateBrowserData("session_expired");
       return { user: null, session: null };
     } finally {
       setLoading(false);
@@ -85,8 +88,36 @@ export const AuthProvider = ({ children }) => {
     refreshSession();
   }, [refreshSession]);
 
+  useEffect(() => {
+    const nextBoundary = user ? `${user.id || user._id}:${user.role || ""}:${user.status || ""}` : "";
+    if (accountBoundaryRef.current && nextBoundary && accountBoundaryRef.current !== nextBoundary) {
+      purgePrivateBrowserData("account_or_role_change").catch(() => {});
+    }
+    accountBoundaryRef.current = nextBoundary;
+  }, [user]);
+
+  useEffect(() => {
+    const clearInvalidSession = () => {
+      purgePrivateBrowserData("session_invalidated").catch(() => {});
+      setUser(null);
+      setSession(null);
+      setAccountAccess(FREE_ACCESS);
+      setAccessError("");
+      setCreatorAccess(NO_CREATOR_ACCESS);
+    };
+    window.addEventListener("myjourney:auth-invalidated", clearInvalidSession);
+    return () => window.removeEventListener("myjourney:auth-invalidated", clearInvalidSession);
+  }, []);
+
   const applyAuthResult = useCallback(async (result) => {
-    if (result?.user) setUser(result.user);
+    if (result?.user) {
+      setUser(null);
+      setSession(null);
+      setAccountAccess(FREE_ACCESS);
+      setCreatorAccess(NO_CREATOR_ACCESS);
+      await purgePrivateBrowserData("account_change");
+      setUser(result.user);
+    }
     if (result?.session) setSession(result.session);
     await Promise.all([refreshEntitlements(result?.user || null), refreshCreatorAccess(result?.user || null)]);
     return result;
@@ -161,6 +192,7 @@ export const AuthProvider = ({ children }) => {
         setAccountAccess(FREE_ACCESS);
         setAccessError("");
         setCreatorAccess(NO_CREATOR_ACCESS);
+        await purgePrivateBrowserData("logout");
         return result;
       },
 

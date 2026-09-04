@@ -67,6 +67,10 @@ Premium is resolved server-side from ReaderMembership and access dates/status. D
 - Creator access does not grant Life access or visibility.
 - Life export/deletion operates only on the requesting user's Life-owned models.
 - Losing Premium access does not erase Life data.
+- The Life IndexedDB queue is schema-versioned, owner-bound, and limited to a 24-hour retention window. It accepts only minimal task creation and non-sensitive habit/task/goal-action event payloads; health, medication, routine, journal, money, notes, arbitrary URLs, headers, and credentials are rejected.
+- Replay discards legacy/unowned, wrong-owner, expired, corrupt, unsupported, and duplicate records, and rechecks the current owner immediately before the request. Logout, invalid sessions, account/role changes, and Life deletion initiate private browser-data removal.
+- IndexedDB is plaintext browser-profile storage, not encrypted custody. Deletion can be blocked by another open tab, so server ownership and the replay owner check remain mandatory defenses. The review UI exposes safe summaries and retry/discard/clear controls only to the active owner.
+- The Life service worker caches only shell scripts/styles/fonts plus the Life navigation fallback. It does not intercept `/api`, image, or non-Life navigation responses. Notification clicks accept exact same-origin Life destinations and otherwise fall back to `/life/today`.
 
 ## Protected media and resources
 
@@ -105,6 +109,10 @@ Legacy credential-bearing Admin bootstrap, password-reset, and phase/API verifie
 Public SEO JSON-LD and sitemap reads query only published, non-deleted Articles and published public Pages. Unsupported JSON-LD entity types are rejected, and non-qualifying or missing records return 404 instead of an empty or manufactured schema document.
 
 Production-readiness audits are Admin-only, read-only, and fail closed. They report configured evidence without exposing secret values and do not claim that an external provider was exercised when only its configuration was inspected.
+
+Public comment responses are allowlisted DTOs and never serialize User documents, email, mobile, roles, account identifiers, moderation data, or workflow fields. Only approved, non-deleted comments belonging to a published Article are queryable anonymously. Comment submissions return a minimal pending status, while moderation remains protected by authentication plus the exact Admin role, request-field/status validation, transition checks, and Mongoose update validators.
+
+Protected CMS collections (draft/full Content records, users, roles, comments, testimonials, subscribers, settings, backups, logs, and media administration records) are held in application memory only. They are identity-gated and cleared or hidden on logout, authentication expiry, account change, and role loss. Late fetch and mutation responses from an obsolete Admin scope are rejected before updating shared state. Legacy protected local-storage keys are removed; session storage is not used as a replacement.
 
 
 ## Account deletion and audit

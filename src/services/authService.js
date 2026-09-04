@@ -269,6 +269,8 @@ export const authService = {
     removeStorage("myjourney-access-data");
     removeStorage("myjourney-site-data");
     removeStorage("myjourney-engagement-data");
+    removeStorage("myjourney-media-data");
+    removeStorage("myjourney-content-data");
     clearAuthCookies();
     return { message: "Logged out." };
   },

@@ -195,7 +195,7 @@ class ArticleService {
     }
 
     if (metric === "views") {
-      return articleRepository.update(id, { $inc: { views: 1 } });
+      return articleRepository.incrementPublishedArticleView(id);
     }
 
     if (!userId) {
@@ -216,6 +216,12 @@ class ArticleService {
     if (!article) return null;
 
     return { article, isActive: isAdded, libraryItem };
+  }
+
+  async getDeletedArticleById(id) {
+    const article = await articleRepository.findDeletedById(id);
+    const { formatArticleImageUrls } = require("../utils/imageUrlHelper");
+    return article ? formatArticleImageUrls(article) : null;
   }
 }
 

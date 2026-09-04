@@ -1,9 +1,19 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import { mediaApi, galleryApi } from "../services/apiService";
 import { useAuth } from "../hooks/useAuth";
 
 const MediaCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-media-data";
+
+const runForActiveAdmin = async (activeAdminRef, operation) => {
+  const ownerId = activeAdminRef.current;
+  if (!ownerId) throw Object.assign(new Error("Administrator access is no longer active."), { code: "CMS_ADMIN_CONTEXT_REQUIRED" });
+  const result = await operation();
+  if (activeAdminRef.current !== ownerId) {
+    throw Object.assign(new Error("This administrator response is no longer current."), { code: "CMS_STALE_ADMIN_RESPONSE" });
+  }
+  return result;
+};
 
 const withClientId = (item) => {
   if (!item || typeof item !== "object") return item;
@@ -13,56 +23,50 @@ const withClientId = (item) => {
 export const MediaCmsProvider = ({ children }) => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const isAdmin = isAuthenticated && user?.role === "Admin";
+  const activeAdminId = isAdmin ? String(user?.id || user?._id || "") : "";
+  const activeAdminRef = useRef(activeAdminId);
+  activeAdminRef.current = activeAdminId;
+  const requestVersionRef = useRef(0);
   const [syncStatus, setSyncStatus] = useState("loading");
   const [media, setMedia] = useState([]);
+  const [dataOwnerId, setDataOwnerId] = useState("");
 
-  // Load from local storage fallback
   useEffect(() => {
-    if (authLoading || !isAdmin) return;
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.media) setMedia(parsed.media);
-      }
-    } catch (err) {
-      console.warn("Failed to load local media cache", err);
-    }
-  }, [authLoading, isAdmin]);
-
-  // Debounced save
-  useEffect(() => {
-    if (!isAdmin) return undefined;
-    const timer = setTimeout(() => {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ media }));
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [isAdmin, media]);
+    window.localStorage.removeItem(STORAGE_KEY);
+  }, []);
 
   const fetchMediaData = async () => {
+    const ownerId = activeAdminRef.current;
+    if (!ownerId) return;
+    const requestVersion = ++requestVersionRef.current;
     setSyncStatus("loading");
     try {
       const mediaRes = await mediaApi.list({ includeDeleted: true });
+      if (requestVersion !== requestVersionRef.current || activeAdminRef.current !== ownerId) return;
       if (mediaRes && Array.isArray(mediaRes.files)) {
         setMedia(mediaRes.files.map(withClientId));
       }
+      setDataOwnerId(ownerId);
       setSyncStatus("live");
     } catch (err) {
-      console.warn("Failed to fetch live media, using stale fallback", err);
-      setSyncStatus("stale-fallback");
+      if (requestVersion !== requestVersionRef.current || activeAdminRef.current !== ownerId) return;
+      setMedia([]);
+      setDataOwnerId("");
+      setSyncStatus("unavailable");
     }
   };
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!isAdmin) {
-      setMedia([]);
+    requestVersionRef.current += 1;
+    setMedia([]);
+    setDataOwnerId("");
+    window.localStorage.removeItem(STORAGE_KEY);
+    if (authLoading || !activeAdminId) {
       setSyncStatus("idle");
-      window.localStorage.removeItem(STORAGE_KEY);
       return;
     }
     fetchMediaData();
-  }, [authLoading, isAdmin]);
+  }, [authLoading, activeAdminId]);
 
   const actions = useMemo(() => ({
     async refreshMedia() {
@@ -72,70 +76,72 @@ export const MediaCmsProvider = ({ children }) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", folder);
-      const res = await mediaApi.upload(formData);
+      const res = await runForActiveAdmin(activeAdminRef, () => mediaApi.upload(formData));
       const normalized = withClientId(res.media);
       setMedia((prev) => [normalized, ...prev]);
       return normalized;
     },
     async saveMedia(m) {
-      const res = await mediaApi.create(m);
+      const res = await runForActiveAdmin(activeAdminRef, () => mediaApi.create(m));
       const normalized = withClientId(res.media);
       setMedia((prev) => [normalized, ...prev]);
       return normalized;
     },
     async renameMedia(id, newName) {
-      const res = await mediaApi.rename(id, newName);
+      const res = await runForActiveAdmin(activeAdminRef, () => mediaApi.rename(id, newName));
       const normalized = withClientId(res.media);
       setMedia((prev) => prev.map((m) => (m.id === id || m._id === id) ? normalized : m));
       return normalized;
     },
     async moveMedia(id, folder) {
-      const res = await mediaApi.move(id, folder);
+      const res = await runForActiveAdmin(activeAdminRef, () => mediaApi.move(id, folder));
       const normalized = withClientId(res.media);
       setMedia((prev) => prev.map((m) => (m.id === id || m._id === id) ? normalized : m));
       return normalized;
     },
     async deleteMedia(id) {
-      await mediaApi.delete(id);
+      await runForActiveAdmin(activeAdminRef, () => mediaApi.delete(id));
       setMedia((prev) => prev.filter((m) => m.id !== id && m._id !== id));
     },
     async restoreMedia(id) {
-      const res = await mediaApi.restore(id);
+      const res = await runForActiveAdmin(activeAdminRef, () => mediaApi.restore(id));
       const normalized = withClientId(res.media);
       setMedia((prev) => [normalized, ...prev.filter((m) => m.id !== id && m._id !== id)]);
       return normalized;
     },
     async fetchGallery(params = {}) {
-      return galleryApi.list(params);
+      return runForActiveAdmin(activeAdminRef, () => galleryApi.list(params));
     },
     async fetchGalleryAlbums() {
-      const res = await galleryApi.albums();
+      const res = await runForActiveAdmin(activeAdminRef, () => galleryApi.albums());
       return res.albums || [];
     },
     async saveGalleryItem(item) {
       const isEdit = !!(item.id || item._id);
       let res;
       if (isEdit) {
-        res = await galleryApi.update(item.id || item._id, item);
+        res = await runForActiveAdmin(activeAdminRef, () => galleryApi.update(item.id || item._id, item));
       } else {
-        res = await galleryApi.create(item);
+        res = await runForActiveAdmin(activeAdminRef, () => galleryApi.create(item));
       }
       return res.file;
     },
     async deleteGalleryItem(id) {
-      await galleryApi.delete(id);
+      await runForActiveAdmin(activeAdminRef, () => galleryApi.delete(id));
     },
     async restoreGalleryItem(id) {
-      const res = await galleryApi.restore(id);
+      const res = await runForActiveAdmin(activeAdminRef, () => galleryApi.restore(id));
       return res.file;
     }
-  }), []);
+  }), [activeAdminId]);
+
+  const ownsProtectedState = Boolean(activeAdminId && dataOwnerId === activeAdminId);
 
   const value = useMemo(() => ({
-    media,
+    media: ownsProtectedState ? media : [],
     syncStatus,
     ...actions
-  }), [media, syncStatus, actions]);
+  }), [media, ownsProtectedState, syncStatus, actions]);
 
   return <MediaCmsContext.Provider value={value}>{children}</MediaCmsContext.Provider>;
 };

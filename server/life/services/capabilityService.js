@@ -3,8 +3,8 @@ const webPushConfigured = () => Boolean(process.env.VAPID_PUBLIC_KEY && process.
 const getCapabilities = () => ({
   quickCapture: { available: true },
   search: { available: true, privacy: "user_scoped" },
-  pwa: { available: true, privateApiCaching: false },
-  offlineQueue: { available: true, supportedMutations: ["event", "water", "task", "journal", "finance"] },
+  pwa: { available: null, state: "client_registration_required", privateApiCaching: false },
+  offlineQueue: { available: true, schemaVersion: 2, retentionHours: 24, supportedMutations: ["task.create", "event.log:habit", "event.log:task", "event.log:goal_action"] },
   webPush: { available: webPushConfigured(), state: webPushConfigured() ? "available" : "unavailable", reason: webPushConfigured() ? "" : "VAPID credentials are not configured." },
   aiReview: { available: process.env.LIFE_AI_ENABLED === "true", state: process.env.LIFE_AI_ENABLED === "true" ? "available" : "unavailable" },
   calendar: { available: false, state: "disconnected", providers: ["google", "microsoft", "device"], mode: "read_only_foundation" },

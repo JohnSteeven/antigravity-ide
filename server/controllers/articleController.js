@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const entitlementService = require("../services/entitlementService");
 const { ENTITLEMENTS } = require("../premium/catalog");
 const { serializePublicContent } = require("../premium/contentPreview");
+const { serializePublicComment } = require("../serializers/commentSerializer");
+const { isStoryRecord } = require("../utils/storyContent");
 
 const canReadPremiumContent = async (req) => {
   if (!req.user) return false;
@@ -71,6 +73,7 @@ class ArticleController {
       // full-text search. Admins use the dedicated /admin/all endpoint.
       const query = {
         ...req.query,
+        contentType: "article",
         status: "published",
         limit: Math.min(48, Math.max(1, Number.parseInt(req.query.limit, 10) || 12)),
         ...(req.query.featured !== undefined ? { isFeatured: req.query.featured } : {}),
@@ -86,7 +89,7 @@ class ArticleController {
   async getArticleBySlug(req, res, next) {
     try {
       const article = await articleService.getArticleBySlug(req.params.slug);
-      if (!article || article.status !== "published") {
+      if (!article || article.status !== "published" || isStoryRecord(article)) {
         return res.status(404).json({ message: "Article not found." });
       }
       const canAccessPremium = await canReadPremiumContent(req);
@@ -138,11 +141,15 @@ class ArticleController {
 
   async getComments(req, res, next) {
     try {
+      const article = await articleService.getArticleById(req.params.id);
+      if (!article || article.status !== "published" || article.isDeleted || isStoryRecord(article)) {
+        return res.status(404).json({ message: "Article not found." });
+      }
       const comments = await commentService.getComments({
         articleId: req.params.id,
         status: "approved",
       });
-      res.json({ comments });
+      res.json({ comments: comments.map(serializePublicComment) });
     } catch (err) {
       next(err);
     }
@@ -151,11 +158,11 @@ class ArticleController {
   async addComment(req, res, next) {
     try {
       const article = await articleService.getArticleById(req.params.id);
-      if (!article || article.status !== "published") {
+      if (!article || article.status !== "published" || article.isDeleted || isStoryRecord(article)) {
         return res.status(404).json({ message: "Article not found." });
       }
 
-      const comment = await commentService.createComment({
+      await commentService.createComment({
         body: req.body.body,
         articleId: req.params.id,
         authorId: req.user._id,
@@ -166,7 +173,7 @@ class ArticleController {
       }, req.user._id);
 
       res.status(201).json({
-        comment,
+        status: "pending",
         message: "Comment submitted for moderation.",
       });
     } catch (err) {
@@ -176,7 +183,7 @@ class ArticleController {
 
   async getAdminArticles(req, res, next) {
     try {
-      const data = await articleService.getArticles(req.query);
+      const data = await articleService.getArticles({ ...req.query, contentType: "article" });
       res.json(data);
     } catch (err) {
       next(err);
@@ -197,6 +204,7 @@ class ArticleController {
       const rt = calcReadingTime(bodyHtml || "");
 
       const article = await articleService.createArticle({
+        contentType: "article",
         title,
         slug: finalSlug,
         description: description || "",
@@ -234,6 +242,10 @@ class ArticleController {
 
   async updateArticle(req, res, next) {
     try {
+      const existing = await articleService.getArticleById(req.params.id);
+      if (!existing || isStoryRecord(existing)) {
+        return res.status(404).json({ message: "Article not found." });
+      }
       const {
         title, slug, description, body: bodyHtml, coverImage,
         gallery, videoUrl, audioUrl, pdfAttachment, category,
@@ -294,6 +306,10 @@ class ArticleController {
 
   async deleteArticle(req, res, next) {
     try {
+      const existing = await articleService.getArticleById(req.params.id);
+      if (!existing || isStoryRecord(existing)) {
+        return res.status(404).json({ message: "Article not found." });
+      }
       await runInTransaction(async (session) => {
         // Soft delete the article
         await articleService.softDeleteArticle(req.params.id, req.user._id);
@@ -311,6 +327,10 @@ class ArticleController {
 
   async restoreArticle(req, res, next) {
     try {
+      const existing = await articleService.getDeletedArticleById(req.params.id);
+      if (!existing || isStoryRecord(existing)) {
+        return res.status(404).json({ message: "Article not found." });
+      }
       let restored;
       await runInTransaction(async (session) => {
         restored = await articleService.restoreArticle(req.params.id, req.user._id);
@@ -327,6 +347,10 @@ class ArticleController {
 
   async updateStatus(req, res, next) {
     try {
+      const existing = await articleService.getArticleById(req.params.id);
+      if (!existing || isStoryRecord(existing)) {
+        return res.status(404).json({ message: "Article not found." });
+      }
       const { status } = req.body;
       const article = await articleService.updateArticle(req.params.id, { status }, req.user._id);
       res.json({ article, message: `Article ${status}.` });

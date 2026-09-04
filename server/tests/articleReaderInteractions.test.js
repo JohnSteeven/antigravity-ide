@@ -103,6 +103,7 @@ const loadArticleService = ({ isAdded, count, metric }) => {
   jest.resetModules();
   const articleRepository = {
     updateEngagementCounter: jest.fn().mockResolvedValue({ _id: articleId, [metric]: count }),
+    incrementPublishedArticleView: jest.fn().mockResolvedValue({ _id: articleId, views: count }),
   };
   const toggleArticleReference = jest.fn().mockResolvedValue({
     isAdded,
@@ -117,6 +118,14 @@ const loadArticleService = ({ isAdded, count, metric }) => {
 };
 
 describe("Article engagement service contract", () => {
+  test("view counting uses a published-Article-only repository update", async () => {
+    const runtime = loadArticleService({ count: 9, metric: "views" });
+    const result = await runtime.service.incrementMetric(articleId, "views");
+    expect(runtime.articleRepository.incrementPublishedArticleView).toHaveBeenCalledWith(articleId);
+    expect(runtime.articleRepository.updateEngagementCounter).not.toHaveBeenCalled();
+    expect(result.views).toBe(9);
+  });
+
   test.each([
     ["likes", "likedArticles"],
     ["bookmarks", "bookmarks"],
@@ -143,10 +152,66 @@ describe("Article engagement service contract", () => {
     expect(repository).toContain("async updateEngagementCounter(id, metric, delta)");
     expect(repository).toContain("$max: [0, { $add:");
     expect(repository).not.toContain("let newValue");
+    expect(repository).toContain('{ _id: id, contentType: "article", status: "published", isDeleted: false }');
+    expect(repository).toContain("async incrementPublishedArticleView(id)");
   });
 });
 
 describe("Article interaction API and client contract", () => {
+  test("Article list and detail routes cannot return Story records", async () => {
+    jest.resetModules();
+    const getArticles = jest.fn().mockResolvedValue({ articles: [], pagination: {} });
+    const getArticleBySlug = jest.fn().mockResolvedValue({
+      _id: articleId,
+      slug: "story-in-article-route",
+      status: "published",
+      contentType: "story",
+    });
+    jest.doMock("../services/articleService", () => ({ getArticles, getArticleBySlug }));
+    jest.doMock("../services/commentService", () => ({}));
+    jest.doMock("../services/entitlementService", () => ({}));
+    const controller = require("../controllers/articleController");
+    const listRes = { json: jest.fn() };
+    const detailRes = { status: jest.fn().mockReturnThis(), json: jest.fn(), set: jest.fn().mockReturnThis() };
+
+    await controller.getArticles({ query: { contentType: "story" } }, listRes, jest.fn());
+    expect(getArticles).toHaveBeenCalledWith(expect.objectContaining({
+      contentType: "article",
+      status: "published",
+    }));
+
+    await controller.getArticleBySlug({ params: { slug: "story-in-article-route" } }, detailRes, jest.fn());
+    expect(detailRes.status).toHaveBeenCalledWith(404);
+    expect(detailRes.json).toHaveBeenCalledWith({ message: "Article not found." });
+
+    await controller.getAdminArticles({ query: { contentType: "story" } }, listRes, jest.fn());
+    expect(getArticles).toHaveBeenLastCalledWith({ contentType: "article" });
+  });
+
+  test("Article Admin mutation routes reject Story records before writing", async () => {
+    jest.resetModules();
+    const getArticleById = jest.fn().mockResolvedValue({ _id: articleId, contentType: "story", category: "Stories" });
+    const updateArticle = jest.fn();
+    jest.doMock("../services/articleService", () => ({ getArticleById, updateArticle }));
+    jest.doMock("../services/commentService", () => ({}));
+    jest.doMock("../services/entitlementService", () => ({}));
+    const controller = require("../controllers/articleController");
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await controller.updateArticle({ params: { id: articleId }, body: {}, user: { _id: userId } }, res, jest.fn());
+    await controller.updateStatus({ params: { id: articleId }, body: { status: "published" }, user: { _id: userId } }, res, jest.fn());
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(updateArticle).not.toHaveBeenCalled();
+  });
+
+  test("legacy records are classified by the Stories category instead of appearing in both route families", () => {
+    const { isStoryRecord } = require("../utils/storyContent");
+    expect(isStoryRecord({ category: "Stories" })).toBe(true);
+    expect(isStoryRecord({ category: "Coding" })).toBe(false);
+    expect(isStoryRecord({ contentType: "article", category: "Stories" })).toBe(false);
+  });
+
   test("controllers return one authoritative state/count/library-item shape", async () => {
     jest.resetModules();
     const incrementMetric = jest.fn(async (id, metric, ownerId) => ({

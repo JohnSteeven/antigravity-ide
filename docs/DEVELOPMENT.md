@@ -197,6 +197,15 @@ The second seed should report identical entity totals. Reset removes only recogn
 
 ## Safe development practices
 
+Repository hygiene checks are read-only and suppress any matched credential value:
+
+```bash
+npm run audit:secrets
+npm run audit:assets
+```
+
+The secret scan reports only a signature category plus file and line. It is deliberately high-confidence and does not replace provider-side secret scanning, rotation, or CI controls. The asset inventory reports large tracked files and exact duplicate groups of files at least 100 kB; review results before any removal because uploads may be referenced by persistent content.
+
 - Inspect `git status` and pre-existing diffs before editing.
 - Do not log Mongo URIs, JWTs, OTPs outside development, provider credentials, or user private data.
 - Do not auto-apply migrations as a workaround for connectivity.

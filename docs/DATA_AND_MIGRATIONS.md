@@ -97,6 +97,8 @@ Premium cancellation and Life data deletion are separate operations. Canceling o
 
 Life offers authenticated JSON export and explicit Life-data deletion. `privacyService` scopes export/deletion to the requesting user across all Life-owned models and Life-source notifications.
 
+The browser-side Life mutation queue uses IndexedDB database `myjourney-life-private`, schema version 2. Version 1 records are deliberately cleared because they have no trustworthy owner binding. Accepted records are owner-bound, minimal, and expire after 24 hours; no health, medication, routine, journal, money, or note content is accepted. Logout, session invalidation, account/role change, and successful Life deletion initiate database deletion. Another open tab can temporarily block physical deletion, so replay additionally validates the active owner before every send. Browser storage is not a backup, is not encrypted, and is not part of server export authority.
+
 Account deletion:
 
 1. requires the password plus exact confirmation text;

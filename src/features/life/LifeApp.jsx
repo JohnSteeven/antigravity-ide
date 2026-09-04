@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router";
 import { FiActivity, FiBell, FiBookOpen, FiCalendar, FiDollarSign, FiHeart, FiPlus, FiRepeat, FiSearch, FiSettings, FiTarget, FiTrendingUp } from "react-icons/fi";
+import { useAuthContext } from "../../context/AuthContext";
 import lifeApi from "./api/lifeApi";
 import LifeOnboarding from "./components/LifeOnboarding";
 import { LifeError, LifeLoading } from "./components/LifeUI";
@@ -9,7 +10,7 @@ import LifeOfflineStatus from "./components/LifeOfflineStatus";
 import NotificationCenter from "./components/NotificationCenter";
 import QuickCapture from "./components/QuickCapture";
 import useLifeQuery from "./hooks/useLifeQuery";
-import { startLifeSync } from "./offline/offlineQueue";
+import { setLifeQueueOwner, startLifeSync } from "./offline/offlineQueue";
 import GoalsPage from "./pages/GoalsPage";
 import HabitsPage from "./pages/HabitsPage";
 import HealthPage from "./pages/HealthPage";
@@ -36,6 +37,7 @@ const LifeNavigation = ({ mobile = false, onQuickCapture }) => {
 };
 
 export default function LifeApp() {
+  const { user } = useAuthContext();
   const profileQuery = useLifeQuery(() => lifeApi.profile(), []);
   const [deletedMessage, setDeletedMessage] = useState("");
   const [captureOpen, setCaptureOpen] = useState(false);
@@ -43,7 +45,14 @@ export default function LifeApp() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const openCapture = (type = "") => { setCaptureType(type); setCaptureOpen(true); };
-  useEffect(() => startLifeSync(), []);
+  useEffect(() => {
+    let disposed = false;
+    let stopSync = () => {};
+    setLifeQueueOwner(user?.id || user?._id).then(() => {
+      if (!disposed) stopSync = startLifeSync();
+    }).catch(() => {});
+    return () => { disposed = true; stopSync(); };
+  }, [user?.id, user?._id]);
   useEffect(() => {
     const onKey = (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); setSearchOpen(true); } };
     window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);

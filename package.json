@@ -11,6 +11,8 @@
     "start:ui": "parcel index.html --port 1234 --no-cache",
     "client": "parcel index.html --port 1234 --no-cache",
     "doctor": "node server/scripts/doctor.js",
+    "audit:secrets": "node server/scripts/safeSecretScan.js",
+    "audit:assets": "node server/scripts/repositoryAssetInventory.js",
     "clean:parcel-temp": "node server/scripts/clearParcelTemp.js",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",

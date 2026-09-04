@@ -1,15 +1,26 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import { cmsSeed } from "../data/cmsSeed";
 import { articleApi, categoryApi, subCategoryApi, tagApi } from "../services/apiService";
 import { useAuth } from "../hooks/useAuth";
 
 const ContentCmsContext = createContext(null);
 const STORAGE_KEY = "myjourney-content-data";
-const CACHE_VERSION = "v7"; // Structured Story fixtures and renderer contract
 const ARTICLE_INTERACTION_API = {
   likes: articleApi.like,
   bookmarks: articleApi.bookmark,
   saved: articleApi.save,
+};
+
+const runForActiveScope = async (activeScopeRef, operation, { adminOnly = false } = {}) => {
+  const scope = activeScopeRef.current;
+  if (!scope || (adminOnly && !scope.startsWith("admin:"))) {
+    throw Object.assign(new Error("The required content access is no longer active."), { code: "CMS_CONTENT_CONTEXT_REQUIRED" });
+  }
+  const result = await operation();
+  if (activeScopeRef.current !== scope) {
+    throw Object.assign(new Error("This content response is no longer current."), { code: "CMS_STALE_CONTENT_RESPONSE" });
+  }
+  return result;
 };
 
 const slugify = (value) =>
@@ -46,6 +57,13 @@ const createId = (prefix) =>
 const today = () => new Date().toISOString().slice(0, 10);
 
 export const ContentCmsProvider = ({ children }) => {
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === "Admin";
+  const activeAdminId = isAdmin ? String(user?.id || user?._id || "") : "";
+  const activeScope = authLoading ? "" : activeAdminId ? `admin:${activeAdminId}` : "public";
+  const activeScopeRef = useRef(activeScope);
+  activeScopeRef.current = activeScope;
+  const requestVersionRef = useRef(0);
   const [syncStatus, setSyncStatus] = useState("loading");
   // Persistent content is server-authoritative. Bundled fixtures are never a
   // substitute for MongoDB-backed Articles, Stories, or taxonomy.
@@ -53,6 +71,7 @@ export const ContentCmsProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [tags, setTags] = useState([]);
+  const [dataScope, setDataScope] = useState("");
 
   // Portfolio & site settings slices
   const [site, setSite] = useState(cmsSeed.site);
@@ -62,45 +81,14 @@ export const ContentCmsProvider = ({ children }) => {
   const [skills, setSkills] = useState(cmsSeed.skills);
   const [stats, setStats] = useState(cmsSeed.stats || []);
 
-  // Restore from localStorage only if cache version matches
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Discard stale cache — fetchContentData will populate fresh
-        if (parsed.__version !== CACHE_VERSION) {
-          window.localStorage.removeItem(STORAGE_KEY);
-        } else {
-          if (parsed.site) setSite(parsed.site);
-          if (parsed.story) setStory(parsed.story);
-          if (parsed.timeline) setTimeline(parsed.timeline);
-          if (parsed.projects) setProjects(parsed.projects);
-          if (parsed.skills) setSkills(parsed.skills);
-          if (parsed.stats) setStats(parsed.stats);
-        }
-      }
-    } catch (err) {
-      console.warn("Failed to load local content cache", err);
-    }
-  }, []);
-
-  // Debounced write to localStorage (with version stamp)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ __version: CACHE_VERSION, site, story, timeline, projects, skills, stats })
-      );
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [site, story, timeline, projects, skills, stats]);
-
-  const fetchContentData = async (isAdmin = false) => {
+  const fetchContentData = async (scope = activeScopeRef.current) => {
+    if (!scope) return;
+    const requestVersion = ++requestVersionRef.current;
+    const fetchAsAdmin = scope.startsWith("admin:");
     setSyncStatus("loading");
     try {
       let articlesRes, categoriesRes, subcategoriesRes, tagsRes;
-      if (isAdmin) {
+      if (fetchAsAdmin) {
         [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
           articleApi.adminList({ limit: 1000 }),
           categoryApi.list({ includeDeleted: true }),
@@ -108,9 +96,6 @@ export const ContentCmsProvider = ({ children }) => {
           tagApi.list({ includeDeleted: true }),
         ]);
       } else {
-        // Clear any full CMS records immediately on privilege loss. A failed
-        // public refresh must never retain an Admin-fetched body in memory.
-        setArticles([]);
         [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
           articleApi.list({ limit: 1000 }),
           categoryApi.list({ includeDeleted: false }),
@@ -119,31 +104,50 @@ export const ContentCmsProvider = ({ children }) => {
         ]);
       }
 
+      if (requestVersion !== requestVersionRef.current || activeScopeRef.current !== scope) return;
+
       setArticles(Array.isArray(articlesRes?.articles) ? articlesRes.articles.map(withClientId) : []);
       setCategories(Array.isArray(categoriesRes?.categories) ? categoriesRes.categories.map(withClientId) : []);
       setSubcategories(Array.isArray(subcategoriesRes?.subCategories) ? subcategoriesRes.subCategories.map(withClientId) : []);
       setTags(Array.isArray(tagsRes?.tags) ? tagsRes.tags.map(withClientId) : []);
+      setDataScope(scope);
       setSyncStatus("live");
     } catch (err) {
+      if (requestVersion !== requestVersionRef.current || activeScopeRef.current !== scope) return;
       console.warn("Failed to fetch persistent content", err);
       setArticles([]);
       setCategories([]);
       setSubcategories([]);
       setTags([]);
+      setDataScope("");
       setSyncStatus("unavailable");
     }
   };
 
-  const { isAuthenticated, user } = useAuth();
-  const isAdmin = isAuthenticated && user?.role === "Admin";
-
   useEffect(() => {
-    fetchContentData(isAdmin);
-  }, [isAdmin]);
+    requestVersionRef.current += 1;
+    setArticles([]);
+    setCategories([]);
+    setSubcategories([]);
+    setTags([]);
+    setDataScope("");
+    setSite(cmsSeed.site);
+    setStory(cmsSeed.story);
+    setTimeline(cmsSeed.timeline);
+    setProjects(cmsSeed.projects);
+    setSkills(cmsSeed.skills);
+    setStats(cmsSeed.stats || []);
+    window.localStorage.removeItem(STORAGE_KEY);
+    if (!activeScope) {
+      setSyncStatus("idle");
+      return;
+    }
+    fetchContentData(activeScope);
+  }, [activeScope]);
 
   const actions = useMemo(() => ({
     async refreshContent() {
-      await fetchContentData(isAdmin);
+      await fetchContentData(activeScopeRef.current);
     },
     updateSiteSection(section, value) {
       setSite((current) => ({
@@ -240,10 +244,10 @@ export const ContentCmsProvider = ({ children }) => {
       const targetId = article.id || article._id;
       let saved;
       if (targetId && !String(targetId).startsWith("article-")) {
-        const res = await articleApi.update(targetId, payload);
+        const res = await runForActiveScope(activeScopeRef, () => articleApi.update(targetId, payload), { adminOnly: true });
         saved = res.article;
       } else {
-        const res = await articleApi.create(payload);
+        const res = await runForActiveScope(activeScopeRef, () => articleApi.create(payload), { adminOnly: true });
         saved = res.article;
       }
       const normalized = withClientId(saved);
@@ -254,11 +258,11 @@ export const ContentCmsProvider = ({ children }) => {
       return normalized;
     },
     async deleteArticle(id) {
-      await articleApi.delete(id);
+      await runForActiveScope(activeScopeRef, () => articleApi.delete(id), { adminOnly: true });
       setArticles((prev) => prev.filter((a) => a.id !== id && a._id !== id));
     },
     async restoreArticle(id) {
-      const res = await articleApi.restore(id);
+      const res = await runForActiveScope(activeScopeRef, () => articleApi.restore(id), { adminOnly: true });
       const normalized = withClientId(res.article);
       setArticles((prev) => {
         const filtered = prev.filter((a) => a.id !== id && a._id !== id);
@@ -288,14 +292,14 @@ export const ContentCmsProvider = ({ children }) => {
       }
 
       if (metric === "views") {
-        const response = await articleApi.incrementViews(id);
+        const response = await runForActiveScope(activeScopeRef, () => articleApi.incrementViews(id));
         if (response?.views !== undefined) applyUpdate(response.views);
         return response;
       }
 
       const requestInteraction = ARTICLE_INTERACTION_API[metric];
       if (!requestInteraction) throw new Error("Unsupported Article interaction.");
-      const response = await requestInteraction(id);
+      const response = await runForActiveScope(activeScopeRef, () => requestInteraction(id));
       if (response?.count !== undefined) applyUpdate(response.count);
       return response;
     },
@@ -305,7 +309,7 @@ export const ContentCmsProvider = ({ children }) => {
       if (!article) return;
       const nextStatus = article.status === "published" ? "draft" : "published";
       try {
-        const res = await articleApi.setStatus(id, nextStatus);
+        const res = await runForActiveScope(activeScopeRef, () => articleApi.setStatus(id, nextStatus), { adminOnly: true });
         setArticles((curr) => curr.map((a) => (a.id === id || a._id === id) ? withClientId(res.article) : a));
       } catch (err) {
         console.error("Failed to toggle article status", err);
@@ -331,7 +335,7 @@ export const ContentCmsProvider = ({ children }) => {
         pinned: false,
       };
       try {
-        const res = await articleApi.create(payload);
+        const res = await runForActiveScope(activeScopeRef, () => articleApi.create(payload), { adminOnly: true });
         setArticles((curr) => [withClientId(res.article), ...curr]);
       } catch (err) {
         console.error("Failed to duplicate article", err);
@@ -370,10 +374,10 @@ export const ContentCmsProvider = ({ children }) => {
       const targetId = category.id || category._id;
       let saved;
       if (targetId) {
-        const res = await categoryApi.update(targetId, payload);
+        const res = await runForActiveScope(activeScopeRef, () => categoryApi.update(targetId, payload), { adminOnly: true });
         saved = res.category;
       } else {
-        const res = await categoryApi.create(payload);
+        const res = await runForActiveScope(activeScopeRef, () => categoryApi.create(payload), { adminOnly: true });
         saved = res.category;
       }
       const normalized = withClientId(saved);
@@ -384,11 +388,11 @@ export const ContentCmsProvider = ({ children }) => {
       return normalized;
     },
     async deleteCategory(id) {
-      await categoryApi.delete(id);
+      await runForActiveScope(activeScopeRef, () => categoryApi.delete(id), { adminOnly: true });
       setCategories((prev) => prev.filter((c) => c.id !== id && c._id !== id));
     },
     async restoreCategory(id) {
-      const res = await categoryApi.restore(id);
+      const res = await runForActiveScope(activeScopeRef, () => categoryApi.restore(id), { adminOnly: true });
       const normalized = withClientId(res.category);
       setCategories((prev) => {
         const filtered = prev.filter((c) => c.id !== normalized.id);
@@ -406,10 +410,10 @@ export const ContentCmsProvider = ({ children }) => {
       const targetId = sub.id || sub._id;
       let saved;
       if (targetId) {
-        const res = await subCategoryApi.update(targetId, payload);
+        const res = await runForActiveScope(activeScopeRef, () => subCategoryApi.update(targetId, payload), { adminOnly: true });
         saved = res.subCategory;
       } else {
-        const res = await subCategoryApi.create(payload);
+        const res = await runForActiveScope(activeScopeRef, () => subCategoryApi.create(payload), { adminOnly: true });
         saved = res.subCategory;
       }
       const normalized = withClientId(saved);
@@ -420,11 +424,11 @@ export const ContentCmsProvider = ({ children }) => {
       return normalized;
     },
     async deleteSubcategory(id) {
-      await subCategoryApi.delete(id);
+      await runForActiveScope(activeScopeRef, () => subCategoryApi.delete(id), { adminOnly: true });
       setSubcategories((prev) => prev.filter((s) => s.id !== id && s._id !== id));
     },
     async restoreSubcategory(id) {
-      const res = await subCategoryApi.restore(id);
+      const res = await runForActiveScope(activeScopeRef, () => subCategoryApi.restore(id), { adminOnly: true });
       const normalized = withClientId(res.subCategory);
       setSubcategories((prev) => {
         const filtered = prev.filter((s) => s.id !== normalized.id);
@@ -442,10 +446,10 @@ export const ContentCmsProvider = ({ children }) => {
       const targetId = tag.id || tag._id;
       let saved;
       if (targetId && !String(targetId).startsWith("tag-")) {
-        const res = await tagApi.update(targetId, payload);
+        const res = await runForActiveScope(activeScopeRef, () => tagApi.update(targetId, payload), { adminOnly: true });
         saved = res.tag;
       } else {
-        const res = await tagApi.create(payload);
+        const res = await runForActiveScope(activeScopeRef, () => tagApi.create(payload), { adminOnly: true });
         saved = res.tag;
       }
       const normalized = withClientId(saved);
@@ -456,11 +460,11 @@ export const ContentCmsProvider = ({ children }) => {
       return normalized;
     },
     async deleteTag(id) {
-      await tagApi.delete(id);
+      await runForActiveScope(activeScopeRef, () => tagApi.delete(id), { adminOnly: true });
       setTags((prev) => prev.filter((t) => t.id !== id && t._id !== id));
     },
     async restoreTag(id) {
-      const res = await tagApi.restore(id);
+      const res = await runForActiveScope(activeScopeRef, () => tagApi.restore(id), { adminOnly: true });
       const normalized = withClientId(res.tag);
       setTags((prev) => {
         const filtered = prev.filter((t) => t.id !== normalized.id);
@@ -468,13 +472,15 @@ export const ContentCmsProvider = ({ children }) => {
       });
       return normalized;
     },
-  }), [articles, categories, subcategories, tags, syncStatus, isAdmin]);
+  }), [articles, categories, subcategories, tags, syncStatus, activeScope]);
+
+  const ownsContentState = Boolean(activeScope && dataScope === activeScope);
 
   const value = useMemo(() => ({
-    articles,
-    categories,
-    subcategories,
-    tags,
+    articles: ownsContentState ? articles : [],
+    categories: ownsContentState ? categories : [],
+    subcategories: ownsContentState ? subcategories : [],
+    tags: ownsContentState ? tags : [],
     site,
     story,
     timeline,
@@ -483,7 +489,7 @@ export const ContentCmsProvider = ({ children }) => {
     stats,
     syncStatus,
     ...actions
-  }), [articles, categories, subcategories, tags, site, story, timeline, projects, skills, stats, syncStatus, actions]);
+  }), [articles, categories, subcategories, tags, ownsContentState, site, story, timeline, projects, skills, stats, syncStatus, actions]);
 
   return <ContentCmsContext.Provider value={value}>{children}</ContentCmsContext.Provider>;
 };

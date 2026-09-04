@@ -137,6 +137,9 @@ const request = async (path, options = {}) => {
     err.data = data;
     err.redirect = data.redirect;
     err.article = data.article;
+    if (status === 401 && typeof window !== "undefined") {
+      window.dispatchEvent(new Event("myjourney:auth-invalidated"));
+    }
     throw err;
   }
 
