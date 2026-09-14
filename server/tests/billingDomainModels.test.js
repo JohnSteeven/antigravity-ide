@@ -91,7 +91,7 @@ describe("production billing models", () => {
       "payment_provider_payment_unique", "payment_user_created",
     ]));
     expect(named(Refund)).toEqual(expect.arrayContaining(["refund_reference_unique", "refund_user_idempotency_unique", "refund_provider_unique", "refund_payment_status"]));
-    expect(named(Invoice)).toEqual(expect.arrayContaining(["invoice_number_unique", "invoice_provider_unique", "invoice_user_issued"]));
+    expect(named(Invoice)).toEqual(expect.arrayContaining(["invoice_number_unique", "invoice_payment_unique", "invoice_provider_unique", "invoice_user_issued"]));
     expect(named(BillingEvent)).toEqual(expect.arrayContaining(["billing_event_dedupe", "billing_event_aggregate_order", "billing_event_retry"]));
     [
       [Payment, "payment_user_idempotency_unique"],
@@ -100,6 +100,7 @@ describe("production billing models", () => {
       [Refund, "refund_user_idempotency_unique"],
       [Refund, "refund_provider_unique"],
       [Invoice, "invoice_provider_unique"],
+      [Invoice, "invoice_payment_unique"],
       [BillingEvent, "billing_event_dedupe"],
     ].forEach(([model, name]) => expect(optionsFor(model, name)?.unique).toBe(true));
   });

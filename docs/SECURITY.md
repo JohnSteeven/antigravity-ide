@@ -49,7 +49,7 @@ Premium is resolved server-side from ReaderMembership and access dates/status. D
 - Locked Learn serializers omit bodies, transcripts, protected asset IDs, and URLs.
 - Premium search/indexing excludes protected full text.
 - Billing duration does not grant a different tier.
-- Subscription upgrades cannot be manufactured by the client; provider checkout is unavailable until implemented.
+- Subscription upgrades cannot be manufactured by the client. Razorpay test-mode checkout accepts only a product code, resolves stored-account market and fixed price server-side, verifies the callback HMAC against the stored order, fetches captured Payment/paid Order state, and still defers entitlement activation to Phase 13. Raw-body webhooks are signature-verified before parsing or durable idempotent processing. Billing reads/refunds are owner-scoped and reconciliation is Admin-only.
 
 ## Creator and learner boundaries
 

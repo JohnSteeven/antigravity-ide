@@ -66,6 +66,8 @@ const aiRoutes = require("./routes/aiRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 const readerRoutes = require("./routes/readerRoutes");
 const membershipRoutes = require("./routes/membershipRoutes");
+const billingRoutes = require("./routes/billingRoutes");
+const billingWebhookRoutes = require("./routes/billingWebhookRoutes");
 const communityRoutes = require("./routes/communityRoutes");
 const distributionRoutes = require("./routes/distributionRoutes");
 const searchRoutes = require("./routes/searchRoutes");
@@ -101,6 +103,9 @@ app.use(
     credentials: true,
   })
 );
+// Razorpay requires an HMAC over the untouched request bytes. This route must
+// remain before express.json(), request sanitization, and browser CSRF.
+app.use("/api/billing/webhooks/razorpay", express.raw({ type: "application/json", limit: "512kb" }), billingWebhookRoutes);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -162,6 +167,7 @@ app.use("/api/ai", aiRoutes);  // Legacy — transitional; see comment above
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/reader", readerRoutes);
 app.use("/api/membership", membershipRoutes);
+app.use("/api/billing", billingRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/distribution", distributionRoutes);
 app.use("/api/search", searchRoutes);

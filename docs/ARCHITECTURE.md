@@ -103,9 +103,9 @@ Life's browser offline queue is a narrow, non-authoritative convenience boundary
 Billing provider -> Subscription Service -> Entitlement Service -> Protected feature
 ```
 
-`ReaderMembership` stores the account-level `free` or `premium` plan, one of four billing durations, provider state, and access windows. `subscriptionService` evaluates active, trial, grace, cancellation, and expiration boundaries. `entitlementService` maps active Premium to the global entitlement catalog.
+`ReaderMembership` stores the account-level `free` or `premium` plan, one of four billing durations, provider state, priced-term audit fields, and access windows. `subscriptionService` evaluates active, trial, grace, cancellation, and expiration boundaries. `entitlementService` maps active Premium to the global entitlement catalog.
 
-Duration affects billing time only. It never changes the feature set. The current payment provider adapter deliberately reports checkout, portal, webhooks, and synchronization unavailable.
+Duration affects billing time only. It never changes the feature set. `server/billing` owns immutable integer-minor-unit money and fixed INR/USD catalog rules. Payment, Invoice, Refund, and BillingEvent surround the existing Subscription aggregate with database idempotency and auditable state. The Razorpay adapter supports test-mode Orders, provider-state/signature verification, raw-body webhooks, idempotent refunds, and read-only selected-record reconciliation. It refuses live keys and does not yet activate Premium; see `docs/BILLING_ARCHITECTURE.md`.
 
 ## Creator domain
 

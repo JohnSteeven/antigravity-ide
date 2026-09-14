@@ -8,6 +8,7 @@ const INDEXES = Object.freeze({
   ],
   invoices: [
     [{ invoiceNumber: 1 }, { unique: true, name: "invoice_number_unique" }],
+    [{ paymentId: 1 }, { unique: true, name: "invoice_payment_unique" }],
     [{ provider: 1, providerInvoiceId: 1 }, { unique: true, partialFilterExpression: { providerInvoiceId: { $type: "string" } }, name: "invoice_provider_unique" }],
     [{ userId: 1, issuedAt: -1 }, { name: "invoice_user_issued" }],
   ],

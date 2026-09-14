@@ -12,7 +12,7 @@ The repository is a single npm application: Parcel serves the React client and E
 | Stories | Implemented on the Article domain with dedicated structured sections and approved render layouts. |
 | Reader profile | Server-authoritative interests/goals/library, atomic per-Article progress, real Continue/Completed/time/achievement states, and honest empty states. Migration 011 is required before rollout. |
 | MyJourney Life | Implemented private Premium workspace for today, habits, routines, tasks, goals, health, money, journal, insights, search, notifications, export, and deletion. Optional AI, push, and external integrations require providers. |
-| MyJourney Premium | Implemented global account-level entitlement model. Billing durations are billing choices, not separate feature tiers. Checkout/webhooks are unavailable until a billing provider is implemented. |
+| MyJourney Premium | Global account-level entitlement plus production billing foundation. Fixed INR/USD prices, auditable Payment/Invoice/Refund/Event records, and signature-verified Razorpay test-mode Orders/webhooks/refunds are implemented; Phase 13 activation/UI and live mode remain deferred. |
 | Creators | Implemented application/review workflow, public directory/profile, follow state, ownership, and Creator Studio. Earnings/payout operations are foundation only. |
 | Learn | Implemented Topics, Course catalog/detail, lesson previews and gates, enrollment/progress, Continue Learning, and Video/Podcast/Resource catalogs. Secure media delivery is not configured. Exams expose metadata only. |
 | CMS/Admin | Implemented under `/cms/*`, backed by server-side Admin authorization. |

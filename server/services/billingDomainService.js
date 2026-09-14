@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const BillingEvent = require("../models/BillingEvent");
+const Invoice = require("../models/Invoice");
 const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
 const { Money } = require("../billing/money");
@@ -11,6 +12,59 @@ const { sanitizeBillingMetadata } = require("../billing/safeMetadata");
 const billingError = (message, code, status = 409) => Object.assign(new Error(message), { code, status });
 const isDuplicateKey = (error) => error?.code === 11000 || error?.name === "MongoServerError" && error?.code === 11000;
 const sameId = (left, right) => String(left || "") === String(right || "");
+
+const ensureInvoiceForCapturedPayment = async (payment, { session } = {}) => {
+  if (!payment || !["captured", "partially_refunded", "refunded"].includes(payment.status)) {
+    throw billingError("Only a captured Payment can produce an invoice record.", "PAYMENT_NOT_CAPTURED");
+  }
+  const componentsKnown = [
+    payment.indirectTaxMinor,
+    payment.processorFeeMinor,
+    payment.processorFeeTaxMinor,
+    payment.fxAndCrossBorderCostMinor,
+    payment.appStoreCommissionMinor,
+  ].every(Number.isSafeInteger);
+  const netAmountMinor = componentsKnown
+    ? Math.max(0, payment.capturedAmountMinor
+      - payment.indirectTaxMinor
+      - payment.processorFeeMinor
+      - payment.processorFeeTaxMinor
+      - payment.refundedAmountMinor
+      - payment.chargebackAmountMinor
+      - payment.fxAndCrossBorderCostMinor
+      - payment.appStoreCommissionMinor)
+    : null;
+  return Invoice.findOneAndUpdate(
+    { paymentId: payment._id },
+    {
+      $setOnInsert: {
+        invoiceNumber: `MJI-${crypto.randomUUID()}`,
+        userId: payment.userId,
+        paymentId: payment._id,
+        subscriptionId: payment.subscriptionId || null,
+        productCode: payment.productCode,
+        provider: payment.provider,
+        currency: payment.currency,
+        grossAmountMinor: payment.capturedAmountMinor,
+        indirectTaxMinor: payment.indirectTaxMinor,
+        taxTreatment: payment.market === "INDIA" ? "gst_inclusive" : "taxes_as_applicable",
+        issuedAt: payment.capturedAt || new Date(),
+      },
+      $set: {
+        processorFeeMinor: payment.processorFeeMinor,
+        processorFeeTaxMinor: payment.processorFeeTaxMinor,
+        refundAmountMinor: payment.refundedAmountMinor,
+        chargebackAmountMinor: payment.chargebackAmountMinor,
+        fxAndCrossBorderCostMinor: payment.fxAndCrossBorderCostMinor,
+        appStoreCommissionMinor: payment.appStoreCommissionMinor,
+        netAmountMinor,
+        status: payment.status === "refunded" ? "refunded" : payment.status === "partially_refunded" ? "partially_refunded" : "paid",
+        paidAt: payment.capturedAt || new Date(),
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true, session }
+  );
+};
 
 const validateIdempotencyKey = (value) => {
   const key = String(value || "").trim();
@@ -66,7 +120,7 @@ const createPaymentAttempt = async ({ user, clientSelection, idempotencyKey, pro
 const allowedPredecessors = (nextStatus) => Object.keys(PAYMENT_TRANSITIONS)
   .filter((current) => canTransition(PAYMENT_TRANSITIONS, current, nextStatus));
 
-const transitionPayment = async ({ paymentId, nextStatus, occurredAt = new Date(), providerPaymentId, session }) => {
+const transitionPayment = async ({ paymentId, nextStatus, occurredAt = new Date(), providerPaymentId, updates = {}, session }) => {
   if (!PAYMENT_TRANSITIONS[nextStatus]) throw billingError("Unknown payment status.", "INVALID_PAYMENT_STATUS", 422);
   const timestampFields = nextStatus === "captured"
     ? { capturedAt: occurredAt }
@@ -75,7 +129,14 @@ const transitionPayment = async ({ paymentId, nextStatus, occurredAt = new Date(
       : nextStatus === "failed"
         ? { failedAt: occurredAt }
         : {};
-  const set = { status: nextStatus, ...timestampFields };
+  const allowedUpdates = [
+    "capturedAmountMinor", "indirectTaxMinor", "processorFeeMinor", "processorFeeTaxMinor",
+    "fxAndCrossBorderCostMinor", "appStoreCommissionMinor",
+  ].reduce((safe, key) => {
+    if (updates[key] !== undefined) safe[key] = updates[key];
+    return safe;
+  }, {});
+  const set = { status: nextStatus, ...timestampFields, ...allowedUpdates };
   if (providerPaymentId) set.providerPaymentId = providerPaymentId;
   const payment = await Payment.findOneAndUpdate(
     { _id: paymentId, status: { $in: allowedPredecessors(nextStatus) } },
@@ -173,14 +234,64 @@ const settleRefund = async ({ refundId, providerRefundId, providerEventId, proce
       if (!payment || payment.refundReservedMinor < refund.amountMinor) throw billingError("Refund reservation is inconsistent.", "REFUND_RESERVATION_CONFLICT");
       const refundedAmountMinor = payment.refundedAmountMinor + refund.amountMinor;
       const paymentStatus = refundedAmountMinor === payment.capturedAmountMinor ? "refunded" : "partially_refunded";
-      await Payment.updateOne(
+      const paymentUpdate = await Payment.updateOne(
         { _id: payment._id, refundReservedMinor: { $gte: refund.amountMinor } },
         { $inc: { refundReservedMinor: -refund.amountMinor, refundedAmountMinor: refund.amountMinor }, $set: { status: paymentStatus } },
+        { runValidators: true, session }
+      );
+      if (paymentUpdate.matchedCount !== undefined && paymentUpdate.matchedCount !== 1) {
+        throw billingError("Refund reservation is inconsistent.", "REFUND_RESERVATION_CONFLICT");
+      }
+      await Invoice.updateOne(
+        { paymentId: payment._id },
+        { $inc: { refundAmountMinor: refund.amountMinor }, $set: { status: paymentStatus === "refunded" ? "refunded" : "partially_refunded", netAmountMinor: null } },
         { runValidators: true, session }
       );
       result = await Refund.findOneAndUpdate(
         { _id: refund._id, status: { $in: ["requested", "pending"] } },
         { $set: { status: "processed", providerRefundId, providerEventId: providerEventId || null, processedAt } },
+        { new: true, runValidators: true, session }
+      );
+      if (!result) throw billingError("Refund was concurrently changed.", "REFUND_SETTLEMENT_CONFLICT");
+    });
+  } finally {
+    await session.endSession();
+  }
+  return result;
+};
+
+const markRefundPending = async ({ refundId, providerRefundId }) => {
+  const refund = await Refund.findOneAndUpdate(
+    { _id: refundId, status: { $in: ["requested", "pending"] } },
+    { $set: { status: "pending", providerRefundId } },
+    { new: true, runValidators: true }
+  );
+  if (refund) return refund;
+  const existing = await Refund.findById(refundId);
+  if (existing?.status === "processed") return existing;
+  throw billingError("Refund cannot move to pending from its current state.", "INVALID_REFUND_TRANSITION");
+};
+
+const failRefund = async ({ refundId, providerRefundId, providerEventId, failedAt = new Date(), errorCode }) => {
+  const session = await mongoose.startSession();
+  let result;
+  try {
+    await session.withTransaction(async () => {
+      const refund = await Refund.findById(refundId).session(session);
+      if (!refund) throw billingError("Refund was not found.", "REFUND_NOT_FOUND", 404);
+      if (refund.status === "failed") { result = refund; return; }
+      if (!["requested", "pending"].includes(refund.status)) throw billingError("Refund cannot be failed from its current state.", "INVALID_REFUND_TRANSITION");
+      const paymentUpdate = await Payment.updateOne(
+        { _id: refund.paymentId, refundReservedMinor: { $gte: refund.amountMinor } },
+        { $inc: { refundReservedMinor: -refund.amountMinor } },
+        { runValidators: true, session }
+      );
+      if (paymentUpdate.matchedCount !== undefined && paymentUpdate.matchedCount !== 1) {
+        throw billingError("Refund reservation is inconsistent.", "REFUND_RESERVATION_CONFLICT");
+      }
+      result = await Refund.findOneAndUpdate(
+        { _id: refund._id, status: { $in: ["requested", "pending"] } },
+        { $set: { status: "failed", providerRefundId: providerRefundId || refund.providerRefundId, providerEventId: providerEventId || null, failedAt, "metadata.providerErrorCode": errorCode || null } },
         { new: true, runValidators: true, session }
       );
       if (!result) throw billingError("Refund was concurrently changed.", "REFUND_SETTLEMENT_CONFLICT");
@@ -225,6 +336,7 @@ const claimBillingEvent = async ({
     {
       provider,
       providerEventId,
+      payloadHash: payloadHash || null,
       $or: [
         { processingStatus: "failed" },
         { processingStatus: "processing", processingLeaseUntil: { $lte: now } },
@@ -244,7 +356,11 @@ const claimBillingEvent = async ({
     { new: true }
   ).select("+processingClaimToken");
   if (reclaimed) return { claimed: true, event: reclaimed, claimToken: processingClaimToken };
-  return { claimed: false, event: await BillingEvent.findOne({ provider, providerEventId }), claimToken: null };
+  const existing = await BillingEvent.findOne({ provider, providerEventId });
+  if (existing?.payloadHash && payloadHash && existing.payloadHash !== payloadHash) {
+    throw billingError("A provider event ID was replayed with different content.", "PROVIDER_EVENT_PAYLOAD_MISMATCH", 409);
+  }
+  return { claimed: false, event: existing, claimToken: null };
 };
 
 const completeBillingEvent = async ({ eventId, claimToken, processingStatus = "processed", updates = {} }) => {
@@ -273,27 +389,34 @@ const completeBillingEvent = async ({ eventId, claimToken, processingStatus = "p
   return event;
 };
 
-const failBillingEvent = async ({ eventId, claimToken, error }) => BillingEvent.findOneAndUpdate(
-  { _id: eventId, processingStatus: "processing", processingClaimToken: claimToken },
-  {
-    $set: {
-      processingStatus: "failed",
-      processedAt: new Date(),
-      processingLeaseUntil: null,
-      processingClaimToken: null,
-      errorCode: String(error?.code || "BILLING_EVENT_PROCESSING_FAILED").slice(0, 80),
-      errorSummary: String(error?.message || "Billing event processing failed.").slice(0, 1000),
+const failBillingEvent = async ({ eventId, claimToken, error }) => {
+  const event = await BillingEvent.findOneAndUpdate(
+    { _id: eventId, processingStatus: "processing", processingClaimToken: claimToken },
+    {
+      $set: {
+        processingStatus: "failed",
+        processedAt: new Date(),
+        processingLeaseUntil: null,
+        processingClaimToken: null,
+        errorCode: String(error?.code || "BILLING_EVENT_PROCESSING_FAILED").slice(0, 80),
+        errorSummary: String(error?.message || "Billing event processing failed.").slice(0, 1000),
+      },
     },
-  },
-  { new: true }
-);
+    { new: true }
+  );
+  if (!event) throw billingError("Billing event failure could not be recorded under the active claim.", "BILLING_EVENT_CLAIM_LOST");
+  return event;
+};
 
 module.exports = {
   assertPaymentIdempotencyMatch,
   claimBillingEvent,
   completeBillingEvent,
   createPaymentAttempt,
+  ensureInvoiceForCapturedPayment,
+  failRefund,
   failBillingEvent,
+  markRefundPending,
   remainingRefundableMinor,
   requestRefund,
   settleRefund,

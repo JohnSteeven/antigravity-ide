@@ -4,6 +4,7 @@ const PLANS = Object.freeze({
 });
 
 const { MARKETS, priceCatalog } = require("../billing/priceCatalog");
+const { readRazorpayConfig } = require("../billing/providers/razorpay/config");
 
 const BILLING_PERIODS = Object.freeze([1, 3, 6, 12]);
 
@@ -48,24 +49,27 @@ const PREMIUM_BENEFITS = Object.freeze([
   "Future included Premium experiences",
 ]);
 
-const getPublicDurationCatalog = (market = MARKETS.INTERNATIONAL) => priceCatalog.publicCatalog(market).map((price) => ({
-  billingPeriodMonths: price.durationMonths,
-  displayLabel: BILLING_DURATION_CATALOG.find((duration) => duration.billingPeriodMonths === price.durationMonths)?.displayLabel,
-  productCode: price.productCode,
-  plan: PLANS.PREMIUM,
-  amountMinor: price.amountMinor,
-  // Kept null for legacy clients that treated this field as a major-unit
-  // floating value. New clients must use amountMinor plus currency.
-  price: null,
-  formattedPrice: price.formattedPrice,
-  currency: price.currency,
-  market: price.market,
-  taxTreatment: price.taxTreatment,
-  providerPriceId: null,
-  providerPlanConfigured: price.providerPlanConfigured,
-  priceConfigured: true,
-  checkoutAvailable: false,
-}));
+const getPublicDurationCatalog = (market = MARKETS.INTERNATIONAL) => {
+  const checkoutAvailable = readRazorpayConfig().apiConfigured;
+  return priceCatalog.publicCatalog(market).map((price) => ({
+    billingPeriodMonths: price.durationMonths,
+    displayLabel: BILLING_DURATION_CATALOG.find((duration) => duration.billingPeriodMonths === price.durationMonths)?.displayLabel,
+    productCode: price.productCode,
+    plan: PLANS.PREMIUM,
+    amountMinor: price.amountMinor,
+    // Kept null for legacy clients that treated this field as a major-unit
+    // floating value. New clients must use amountMinor plus currency.
+    price: null,
+    formattedPrice: price.formattedPrice,
+    currency: price.currency,
+    market: price.market,
+    taxTreatment: price.taxTreatment,
+    providerPriceId: null,
+    providerPlanConfigured: price.providerPlanConfigured,
+    priceConfigured: true,
+    checkoutAvailable,
+  }));
+};
 
 module.exports = {
   BILLING_DURATION_CATALOG,

@@ -56,7 +56,7 @@ Every catalog entry declares its product, duration, billing mode, tax treatment,
 | `payment_provider_order_unique` | One internal Payment per Razorpay order. |
 | `payment_provider_payment_unique` | One internal Payment per Razorpay payment/capture. |
 | `payment_user_created` | Owner-scoped billing-history queries. |
-| `invoice_number_unique` / `invoice_provider_unique` | Internal and provider invoice identity correctness. |
+| `invoice_number_unique` / `invoice_payment_unique` / `invoice_provider_unique` | Internal identity, one invoice snapshot per Payment, and provider identity correctness. |
 | `invoice_user_issued` | Owner-scoped invoice history. |
 | `refund_reference_unique` / `refund_user_idempotency_unique` / `refund_provider_unique` | Internal, client-retry, and provider-retry refund deduplication. |
 | `refund_payment_status` | Reconciliation and refund-total review for a Payment. |
@@ -71,6 +71,91 @@ Migration `012-production-billing-domain` creates only the new named indexes and
 
 The stored component foundation supports future calculation of customer payment less indirect tax, processor fees and fee tax, refunds, chargebacks, FX/cross-border costs, and future app-store commissions. Creator allocation is not implemented. Salaries, hosting/server costs, marketing, and ordinary company operating costs are not part of contractual Adjusted Net Revenue deductions.
 
-## Phase 12
+## Phase 12: Razorpay test-mode provider
 
-Phase 12 will add the official Razorpay test-mode adapter, signature-verified raw-body webhook route, refund boundary, authorization, and reconciliation tooling. Detailed provider decisions will be recorded here when that phase is completed.
+The Razorpay adapter is intentionally test-mode only. `RAZORPAY_TEST_MODE=false` and `rzp_live_` key IDs are rejected. No operation falls back to a simulated success. API and webhook capabilities are reported separately and remain unavailable until the complete relevant test configuration exists.
+
+Configuration:
+
+- `RAZORPAY_TEST_MODE=true`
+- `RAZORPAY_KEY_ID` (must begin `rzp_test_`)
+- `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
+- optional `RAZORPAY_WEBHOOK_SECRET_PREVIOUS` while previously signed deliveries are retrying after rotation
+- `RAZORPAY_TIMEOUT_MS` (bounded from 1–30 seconds; default 8 seconds)
+- optional `RAZORPAY_PLAN_<PRODUCT_CODE>_<CURRENCY>` mappings reserved for later subscription lifecycle work; Phase 12 Order checkout does not consume them
+
+### Official provider behavior reviewed
+
+Reviewed on 2026-09-15 against current official Razorpay documentation:
+
+- [Create an Order](https://razorpay.com/docs/api/orders/create/): integer currency subunits, ISO currency, unique receipt up to 40 characters, at most 15 notes, and partial payment disabled for MyJourney.
+- [Standard Checkout integration](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/integration-steps/): verify HMAC-SHA256 over the server-stored `order_id + "|" + razorpay_payment_id`; the callback order ID is not the authority.
+- [Checkout best practices](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/best-practices/): verify captured Payment and paid Order state before fulfillment and use webhooks/API queries for server-to-server truth.
+- [Validate and test webhooks](https://razorpay.com/docs/webhooks/validate-test/): HMAC-SHA256 over untouched raw request bytes using `X-Razorpay-Signature`, duplicate identity from `x-razorpay-event-id`, secret-rotation considerations, and no assumption of event order.
+- [Payment webhook payloads](https://razorpay.com/docs/webhooks/payments/): `payment.authorized`, `payment.captured`, `payment.failed`, and `order.paid` entity snapshots.
+- [Idempotent normal refunds](https://razorpay.com/docs/api/refunds/normal-refunds-idempotent/): positive integer subunits, `X-Refund-Idempotency`, identical-body retries, and `pending`/`processed`/`failed` results.
+- [Refund webhooks](https://razorpay.com/docs/webhooks/refunds/): created, processed, and failed refund snapshots.
+- [Fetch Payment](https://razorpay.com/docs/api/payments/fetch-with-id/), [Fetch Order](https://razorpay.com/docs/api/orders/fetch-with-id/), and [Fetch Orders by receipt](https://razorpay.com/docs/api/orders/fetch-all/): reconciliation inputs.
+
+### Checkout and verification flow
+
+1. Authenticated client sends `productCode` and an `Idempotency-Key`. Browser CSRF and the existing production global API limiter apply.
+2. Server resolves market from the stored account country code and resolves amount/currency/duration from PriceCatalog. Client amount, currency, market, duration, discount, and Premium dates are ignored.
+3. A Payment is atomically created/reused under the owner/idempotency unique index.
+4. One process acquires the Payment order-creation claim. It calls `POST /v1/orders` with the internal Payment reference as the unique receipt, exact integer amount/currency, and no partial payments.
+5. The provider response must echo matching receipt/amount/currency before the provider order ID is stored. Only safe checkout fields (including test key ID, never secret) are returned.
+6. The browser success handler sends the three Razorpay callback values plus internal Payment ID to the server. The server loads that Payment by authenticated owner, verifies the signature using its stored order ID, then fetches both Payment and Order from Razorpay.
+7. Only provider status `captured=true/status=captured` plus Order `status=paid` with exact amount/currency/order linkage can mark Payment captured. This creates/reconciles one internal Invoice snapshot. It does not activate Premium; Phase 13 owns entitlement lifecycle.
+
+If order creation times out, returns a 5xx, loses its database claim, or otherwise becomes ambiguous after the network boundary, the Payment moves to `uncertain`. It is not retried as a new order until reconciliation. A definitive provider 4xx moves the attempt to `failed` and can be deliberately retried under the same internal Payment receipt.
+
+### Webhook flow
+
+`POST /api/billing/webhooks/razorpay` is mounted with `express.raw({type: "application/json"})` before `express.json`, sanitization, cookie parsing, and browser CSRF. The route has no user authentication; authenticity is the provider HMAC. Invalid signatures never parse JSON, claim a BillingEvent, or mutate a financial record.
+
+After signature verification, the handler requires `x-razorpay-event-id`, parses JSON, hashes the exact bytes, and acquires the durable BillingEvent claim. A duplicate event ID cannot run a second side effect; reuse with different content is rejected. Known payment/refund events validate internal order/payment/amount/currency linkage before conditional state changes. Unsupported event types are retained as `ignored`. Processing failures are stored safely as `failed` and return non-success so provider retry/reconciliation can recover. Delayed events that would roll terminal state backward are marked ignored.
+
+The webhook route intentionally bypasses browser CSRF and the application’s user-auth rate assumptions. Cryptographic verification, the 512 KiB body limit, and upstream edge/WAF limits are the appropriate boundary. Phase 22 may add durable queue handoff and distributed admission controls; no process-local structure is used for correctness.
+
+### Refund flow
+
+Authenticated users can request a refund only against their own captured Payment. The server validates positive integer amount, exact Payment currency, remaining captured funds, and idempotency before reserving the amount transactionally. Razorpay receives the internal Refund reference as both receipt and `X-Refund-Idempotency`. A pending or unknown-timeout result remains reserved for webhook/API reconciliation. Processed results atomically move reserved funds to refunded funds and update the internal Invoice. Definitive failures release the reservation. Full and partial refunds share this flow; successful totals cannot exceed captured amount.
+
+### APIs
+
+| Route | Policy | Purpose |
+| --- | --- | --- |
+| `GET /api/billing/capability` | Public, no secrets | Honest test-provider availability. |
+| `POST /api/billing/checkout/orders` | Authenticated + CSRF + idempotency | Create/reuse a server-priced order. |
+| `POST /api/billing/checkout/verify` | Authenticated + CSRF | Verify checkout HMAC and provider state. |
+| `GET /api/billing/payments/:paymentId` | Authenticated owner only | Safe private Payment view. |
+| `POST /api/billing/payments/:paymentId/refunds` | Authenticated owner + CSRF + idempotency | Full/partial refund foundation. |
+| `GET /api/billing/admin/reconcile/payments/:paymentId` | Admin only | Read-only internal/provider comparison. |
+| `POST /api/billing/webhooks/razorpay` | Raw-body provider HMAC | Provider event ingestion; no browser CSRF. |
+
+The legacy `POST /api/membership/subscribe` endpoint now delegates to the same product-code/idempotency checkout service for compatibility. Portal/cancellation/resumption integration remains unavailable until Phase 13.
+
+### Threat review
+
+| Threat | Phase 12 control |
+| --- | --- |
+| Price/currency/duration manipulation | Only product code enters PriceCatalog; provider response and S2S verification must match stored terms. |
+| IDOR/mass assignment | Payment reads, verification, and refunds scope to authenticated user; reconciliation requires Admin; allowlisted mutations only. |
+| Forged callback/webhook | Constant-time HMAC comparison; checkout uses stored order ID; webhook uses raw bytes and configured secret. |
+| Duplicate/replayed events | Unique provider event IDs, content hash comparison, durable claims/leases, conditional transitions, idempotent settlement. |
+| Concurrent refunds | Mongo transaction plus conditional captured/refunded/reserved arithmetic; provider refund idempotency header. |
+| Out-of-order state rollback | Explicit transition graphs and terminal-state ignore policy. |
+| Provider timeout | Ambiguous Order/Refund remains uncertain/pending for reconciliation; no guessed success. |
+| Secret/log exposure | Environment only; safe checkout serializer; bounded redacted metadata; structured logs contain IDs/results but no secrets/raw payload. |
+| CSRF/middleware order | Browser billing routes remain after global CSRF; provider route is raw and mounted before parsing/CSRF. |
+
+### Performance and scale review
+
+Checkout performs one indexed idempotent Payment upsert, one short claim update, one provider call, and one final update. Webhook ingestion performs one unique event insert/claim and indexed aggregate lookups; payload storage is bounded to a small summary/hash. Refund correctness uses a short Mongo transaction around internal records only, never around network I/O. Owner and provider lookup indexes avoid collection scans. Reconciliation is selected-record and read-only, not an unbounded sweep. There are no N+1 loops in request paths.
+
+Provider latency remains synchronous on checkout verification/refund initiation, and verified webhook processing is synchronous after the durable claim. At larger scale, Phase 22 should move post-claim processing/retries/reconciliation to durable queues/workers and add distributed admission limiting. Mongo transaction/topology capacity, provider rate limits, WAF configuration, alerting, and restoration drills require staging evidence; source structure alone does not prove production capacity.
+
+### Deferred after Phase 12
+
+Phase 13 must translate verified Payment/subscription events into renewal, grace, cancellation, expiration, entitlement, UI, notification, and email behavior. Phase 14 standalone Course purchases and Phases 15–17 Creator economics/payouts are not implemented. No Story implementation was changed. Statutory invoice/tax fields, billing-record retention/anonymization, GST treatment, and commercial/legal text require CA/legal/privacy review before production activation.

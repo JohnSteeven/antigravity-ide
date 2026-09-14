@@ -16,16 +16,21 @@ jest.mock("../models/BillingEvent", () => ({
   findOneAndUpdate: jest.fn(),
   findOne: jest.fn(),
 }));
+jest.mock("../models/Invoice", () => ({ findOneAndUpdate: jest.fn(), updateOne: jest.fn() }));
 
 const mongoose = require("mongoose");
 const BillingEvent = require("../models/BillingEvent");
+const Invoice = require("../models/Invoice");
 const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
 const {
   claimBillingEvent,
   createPaymentAttempt,
+  ensureInvoiceForCapturedPayment,
+  failRefund,
   remainingRefundableMinor,
   requestRefund,
+  settleRefund,
   transitionPayment,
 } = require("../services/billingDomainService");
 
@@ -76,6 +81,23 @@ describe("billing domain service", () => {
     expect(remainingRefundableMinor({ capturedAmountMinor: 100, refundedAmountMinor: 200 })).toBe(0);
   });
 
+  test("creates one internal invoice snapshot per captured Payment without inventing unknown tax", async () => {
+    Invoice.findOneAndUpdate.mockResolvedValue({ _id: "invoice-1" });
+    await ensureInvoiceForCapturedPayment({
+      _id: "payment-1", userId: "user-1", productCode: "PREMIUM_MONTHLY", market: "INDIA",
+      amountMinor: 39900, capturedAmountMinor: 39900, currency: "INR", provider: "razorpay",
+      status: "captured", capturedAt: new Date("2026-09-15T00:00:00.000Z"),
+      indirectTaxMinor: null, processorFeeMinor: 1000, processorFeeTaxMinor: 180,
+      refundedAmountMinor: 0, chargebackAmountMinor: 0, fxAndCrossBorderCostMinor: null, appStoreCommissionMinor: 0,
+    });
+    const update = Invoice.findOneAndUpdate.mock.calls[0][1];
+    expect(update.$setOnInsert).toMatchObject({ grossAmountMinor: 39900, currency: "INR", indirectTaxMinor: null, taxTreatment: "gst_inclusive" });
+    expect(update.$set.netAmountMinor).toBeNull();
+    expect(Invoice.findOneAndUpdate).toHaveBeenCalledWith(
+      { paymentId: "payment-1" }, expect.any(Object), expect.objectContaining({ upsert: true })
+    );
+  });
+
   test("rejects a refund greater than remaining captured funds inside a transaction", async () => {
     const session = { withTransaction: jest.fn(async (work) => work()), endSession: jest.fn() };
     mongoose.startSession.mockResolvedValue(session);
@@ -115,6 +137,51 @@ describe("billing domain service", () => {
     expect(Refund.create).toHaveBeenCalledWith([expect.objectContaining({ amountMinor: 400, currency: "USD" })], { session });
   });
 
+  test("settles the remaining full refund atomically and updates the invoice", async () => {
+    const session = { withTransaction: jest.fn(async (work) => work()), endSession: jest.fn() };
+    mongoose.startSession.mockResolvedValue(session);
+    Refund.findById.mockReturnValue(sessionQuery({
+      _id: "refund-2", paymentId: "payment-1", amountMinor: 599, status: "pending",
+    }));
+    Payment.findById.mockReturnValue(sessionQuery({
+      _id: "payment-1", capturedAmountMinor: 999, refundedAmountMinor: 400, refundReservedMinor: 599,
+    }));
+    Payment.updateOne.mockResolvedValue({ matchedCount: 1 });
+    Invoice.updateOne.mockResolvedValue({ matchedCount: 1 });
+    Refund.findOneAndUpdate.mockResolvedValue({ _id: "refund-2", status: "processed" });
+
+    await expect(settleRefund({ refundId: "refund-2", providerRefundId: "rfnd_test123" }))
+      .resolves.toMatchObject({ status: "processed" });
+    expect(Payment.updateOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: "payment-1", refundReservedMinor: { $gte: 599 } }),
+      { $inc: { refundReservedMinor: -599, refundedAmountMinor: 599 }, $set: { status: "refunded" } },
+      expect.objectContaining({ session })
+    );
+    expect(Invoice.updateOne).toHaveBeenCalledWith(
+      { paymentId: "payment-1" },
+      expect.objectContaining({ $inc: { refundAmountMinor: 599 }, $set: expect.objectContaining({ status: "refunded" }) }),
+      expect.objectContaining({ session })
+    );
+  });
+
+  test("a definitive refund failure releases its reservation atomically", async () => {
+    const session = { withTransaction: jest.fn(async (work) => work()), endSession: jest.fn() };
+    mongoose.startSession.mockResolvedValue(session);
+    Refund.findById.mockReturnValue(sessionQuery({
+      _id: "refund-1", paymentId: "payment-1", amountMinor: 400, status: "requested", providerRefundId: null,
+    }));
+    Payment.updateOne.mockResolvedValue({ matchedCount: 1 });
+    Refund.findOneAndUpdate.mockResolvedValue({ _id: "refund-1", status: "failed" });
+
+    await expect(failRefund({ refundId: "refund-1", errorCode: "BAD_REQUEST_ERROR" }))
+      .resolves.toMatchObject({ status: "failed" });
+    expect(Payment.updateOne).toHaveBeenCalledWith(
+      { _id: "payment-1", refundReservedMinor: { $gte: 400 } },
+      { $inc: { refundReservedMinor: -400 } },
+      expect.objectContaining({ session })
+    );
+  });
+
   test("database uniqueness makes concurrent duplicate event delivery a no-op", async () => {
     BillingEvent.create.mockRejectedValue(Object.assign(new Error("duplicate"), { code: 11000 }));
     BillingEvent.findOneAndUpdate.mockReturnValue({ select: jest.fn().mockResolvedValue(null) });
@@ -134,5 +201,14 @@ describe("billing domain service", () => {
     const result = await claimBillingEvent({ provider: "razorpay", providerEventId: "evt_retry", eventType: "refund.processed" });
     expect(result.claimed).toBe(true);
     expect(result.claimToken).toEqual(expect.any(String));
+  });
+
+  test("rejects reuse of a provider event ID with different signed content", async () => {
+    BillingEvent.create.mockRejectedValue(Object.assign(new Error("duplicate"), { code: 11000 }));
+    BillingEvent.findOneAndUpdate.mockReturnValue({ select: jest.fn().mockResolvedValue(null) });
+    BillingEvent.findOne.mockResolvedValue({ _id: "event-1", processingStatus: "processed", payloadHash: "original-hash" });
+    await expect(claimBillingEvent({
+      provider: "razorpay", providerEventId: "evt_changed", eventType: "payment.captured", payloadHash: "changed-hash",
+    })).rejects.toMatchObject({ code: "PROVIDER_EVENT_PAYLOAD_MISMATCH" });
   });
 });

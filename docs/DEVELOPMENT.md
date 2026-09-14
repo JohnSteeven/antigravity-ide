@@ -82,6 +82,10 @@ If MongoDB cannot be selected within the startup timeout, the API exits. That is
 
 Production validates required Mongo/JWT/multiplayer secrets. Development fallbacks are not production-safe.
 
+### Razorpay test billing
+
+Billing remains honestly unavailable unless `RAZORPAY_TEST_MODE=true`, a `rzp_test_` key ID, key secret, and webhook secret are configured. `RAZORPAY_WEBHOOK_SECRET_PREVIOUS` is optional during secret rotation, and `RAZORPAY_TIMEOUT_MS` defaults to 8000. Live keys are rejected. Automated tests mock provider HTTP and never require credentials or network access. See `docs/BILLING_ARCHITECTURE.md` for endpoint, raw-body, idempotency, and reconciliation contracts.
+
 ### Email, SMS, and push
 
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `MAX_EMAIL_RETRIES`

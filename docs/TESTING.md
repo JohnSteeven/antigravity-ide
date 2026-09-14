@@ -25,6 +25,14 @@ npm run test:learn
 npm run test:multiplayer
 ```
 
+Focused billing and Razorpay foundation checks:
+
+```bash
+npx jest --runInBand server/tests/billingMoneyAndCatalog.test.js server/tests/billingDomainModels.test.js server/tests/billingDomainService.test.js server/tests/billingSubscriptionTransitions.test.js server/tests/billingMigration.test.js server/tests/razorpaySignaturesAndClient.test.js server/tests/razorpayBillingService.test.js server/tests/billingAuthorization.test.js server/tests/billingWebhookRawBody.test.js
+```
+
+These use mocked provider HTTP. They cover exact INR/USD terms, integer/currency invariants, indexes, transitions, transaction-shaped refund reservation, callback and raw-body webhook signatures, duplicate/concurrent replay, out-of-order events, ownership/Admin boundaries, provider failures, refunds, and reconciliation without making a real payment or network request.
+
 Focused Life offline privacy checks:
 
 ```bash

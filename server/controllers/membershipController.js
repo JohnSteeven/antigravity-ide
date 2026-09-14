@@ -6,7 +6,7 @@ const MonetizationService = require("../services/monetizationService");
 const PaymentProviderService = require("../services/paymentProviderService");
 const entitlementService = require("../services/entitlementService");
 const subscriptionService = require("../services/subscriptionService");
-const { BILLING_PERIODS, PLANS } = require("../premium/catalog");
+const { PLANS } = require("../premium/catalog");
 
 const asUserId = (req) => req.user?._id || req.user?.id;
 
@@ -49,11 +49,13 @@ exports.subscribe = async (req, res, next) => {
         code: "BILLING_PROVIDER_UNAVAILABLE",
       });
     }
-    const billingPeriodMonths = Number(req.body.billingPeriodMonths);
-    if (!BILLING_PERIODS.includes(billingPeriodMonths)) {
-      return res.status(422).json({ message: "Choose 1 Month, 3 Months, 6 Months, or 1 Year.", code: "INVALID_BILLING_DURATION" });
-    }
-    await PaymentProviderService.createCheckoutSession({ userId: asUserId(req), plan: PLANS.PREMIUM, billingPeriodMonths });
+    const data = await PaymentProviderService.createCheckoutSession({
+      user: req.user,
+      productCode: req.body?.productCode,
+      idempotencyKey: req.get("Idempotency-Key"),
+      metadata: { requestId: req.id, legacyMembershipRoute: true },
+    });
+    return res.status(201).set("Cache-Control", "private, no-store").json({ success: true, data });
   } catch (error) {
     return res.status(error.status || 503).json({ error: "Service Unavailable", message: error.message, code: error.code || "BILLING_PROVIDER_UNAVAILABLE" });
   }

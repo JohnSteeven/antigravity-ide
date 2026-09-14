@@ -14,12 +14,12 @@ const InvoiceSchema = new mongoose.Schema({
   providerInvoiceId: { type: String, default: null, trim: true },
   currency: currencyField({ immutable: true }),
   grossAmountMinor: minorUnitField({ required: true, immutable: true }),
-  indirectTaxMinor: minorUnitField({ defaultValue: 0, immutable: true }),
-  processorFeeMinor: minorUnitField({ defaultValue: 0 }),
-  processorFeeTaxMinor: minorUnitField({ defaultValue: 0 }),
+  indirectTaxMinor: minorUnitField({ defaultValue: null, immutable: true }),
+  processorFeeMinor: minorUnitField({ defaultValue: null }),
+  processorFeeTaxMinor: minorUnitField({ defaultValue: null }),
   refundAmountMinor: minorUnitField({ defaultValue: 0 }),
   chargebackAmountMinor: minorUnitField({ defaultValue: 0 }),
-  fxAndCrossBorderCostMinor: minorUnitField({ defaultValue: 0 }),
+  fxAndCrossBorderCostMinor: minorUnitField({ defaultValue: null }),
   appStoreCommissionMinor: minorUnitField({ defaultValue: 0 }),
   netAmountMinor: minorUnitField({ defaultValue: null }),
   status: { type: String, enum: INVOICE_STATUSES, required: true, default: "draft" },
@@ -37,6 +37,7 @@ InvoiceSchema.pre("validate", function validateInvoiceAmounts(next) {
 });
 
 InvoiceSchema.index({ invoiceNumber: 1 }, { unique: true, name: "invoice_number_unique" });
+InvoiceSchema.index({ paymentId: 1 }, { unique: true, name: "invoice_payment_unique" });
 InvoiceSchema.index(
   { provider: 1, providerInvoiceId: 1 },
   { unique: true, partialFilterExpression: { providerInvoiceId: { $type: "string" } }, name: "invoice_provider_unique" }
