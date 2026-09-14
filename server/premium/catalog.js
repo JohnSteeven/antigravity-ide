@@ -3,6 +3,8 @@ const PLANS = Object.freeze({
   PREMIUM: "premium",
 });
 
+const { MARKETS, priceCatalog } = require("../billing/priceCatalog");
+
 const BILLING_PERIODS = Object.freeze([1, 3, 6, 12]);
 
 const BILLING_DURATION_CATALOG = Object.freeze([
@@ -46,13 +48,22 @@ const PREMIUM_BENEFITS = Object.freeze([
   "Future included Premium experiences",
 ]);
 
-const getPublicDurationCatalog = () => BILLING_DURATION_CATALOG.map((duration) => ({
-  ...duration,
+const getPublicDurationCatalog = (market = MARKETS.INTERNATIONAL) => priceCatalog.publicCatalog(market).map((price) => ({
+  billingPeriodMonths: price.durationMonths,
+  displayLabel: BILLING_DURATION_CATALOG.find((duration) => duration.billingPeriodMonths === price.durationMonths)?.displayLabel,
+  productCode: price.productCode,
   plan: PLANS.PREMIUM,
+  amountMinor: price.amountMinor,
+  // Kept null for legacy clients that treated this field as a major-unit
+  // floating value. New clients must use amountMinor plus currency.
   price: null,
-  currency: null,
+  formattedPrice: price.formattedPrice,
+  currency: price.currency,
+  market: price.market,
+  taxTreatment: price.taxTreatment,
   providerPriceId: null,
-  priceConfigured: false,
+  providerPlanConfigured: price.providerPlanConfigured,
+  priceConfigured: true,
   checkoutAvailable: false,
 }));
 
