@@ -1,0 +1,39 @@
+{
+  "storyNumber": 17,
+  "title": "The Empty Office After Thirty Years",
+  "slug": "the-empty-office-after-thirty-years",
+  "theme": "aging / purpose",
+  "storyLayout": "alternating-wide-moment",
+  "accessLevel": "free",
+  "targetWordCount": 8500,
+  "targetReadingTimeMin": 43,
+  "protagonist": {
+    "name": "Bhabesh Mukherjee",
+    "age": 60,
+    "role": "Chief Accounts Documentation Officer, State Export House, Kolkata (1993–2024)",
+    "coreConflict": "The sudden evaporation of thirty-one years of structural importance into silence on the day of retirement."
+  },
+  "counterpart": {
+    "name": "Sourav Datta",
+    "age": 28,
+    "role": "Incoming Digital Systems Analyst",
+    "dynamic": "The young successor who cannot fathom why triplicate paper ledgers required three decades of devotion."
+  },
+  "setting": {
+    "primary": "Cabin 402, 4th Floor, State Export House, Brabourne Road, Kolkata",
+    "secondary": "Ramu's tea corner under the neem tree; the 5:40 PM tram along Strand Road",
+    "atmosphere": "Fading afternoon light across dusty filing cabinets, hollow echo of cleared desk drawers, the smell of brown ledger paper"
+  },
+  "signatureObjects": [
+    "The brass paperweight shaped like a maritime anchor presented in 2008 for fifteen years of service",
+    "The laminated identity card whose corner had been taped with cellotape in 2011",
+    "The blue ballpoint pen with dried red ink on the cap that had signed 14,000 shipment approvals"
+  ],
+  "structuralMilestones": [
+    "The final 09:15 AM arrival at Brabourne Road through the revolving brass door",
+    "The perfunctory tea-and-samosa farewell meeting in Conference Room B",
+    "Packing the cardboard box with 31 years of personal fragments",
+    "The hollow quiet of Cabin 402 once the nameplate is unfastened",
+    "The walk onto Brabourne Road at 5:30 PM into a city where no file is waiting"
+  ]
+}

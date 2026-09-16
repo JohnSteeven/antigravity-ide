@@ -1,0 +1,40 @@
+{
+  "storyNumber": 20,
+  "title": "The House That Remembered Him",
+  "slug": "the-house-that-remembered-him",
+  "theme": "life in full / mortality",
+  "storyLayout": "chapter-journey",
+  "accessLevel": "free",
+  "targetWordCount": 13500,
+  "targetReadingTimeMin": 68,
+  "protagonist": {
+    "name": "Nirmalendu 'Nirmal' Roy",
+    "lifespan": "1944–2024 (80 years)",
+    "role": "Port surveyor, husband, father, grandfather, sole keeper of 14 Balaram Ghosh Street, Shyambazar",
+    "coreArc": "A complete human life traced from childhood under British air-raid sirens to old age in an empty eight-room mansion, witnessing Kolkata's transformation and the inevitable passage of generations."
+  },
+  "lifelongCompanion": {
+    "name": "Kalyani Roy",
+    "lifespan": "1949–2012",
+    "role": "Wife of 44 years; the warmth, order, and anchor of the household"
+  },
+  "setting": {
+    "primary": "14 Balaram Ghosh Street, Shyambazar, North Kolkata",
+    "secondary": "Baghbazar Ghat; the Port Trust jetty on the Hooghly; the southern terrace roof",
+    "atmosphere": "Green wooden shutters, cool lime-plastered walls, tram bells clanging on Bidhan Sarani, scent of parijat flowers after rain"
+  },
+  "continuityObjects": [
+    "The heavy brass key to the southern terrace gate, notched in 1956",
+    "The parijat tree planted in the inner courtyard in 1950 by Nirmal's mother",
+    "The 1928 Junghans pendulum wall clock requiring winding every Sunday at 08:00",
+    "The wooden study doorframe recording heights across four generations (1954 to 2018)"
+  ],
+  "chronologicalChapters": [
+    "Chapter I (1944–1956): Childhood in the Crowded Mansion — The War, The Uncles, The Tram Bells",
+    "Chapter II (1957–1967): Youth on the River — The Port Trust, The Father's Passing, The New Surveyor",
+    "Chapter III (1968–1980): The House Full of Voices — Marriage to Kalyani, Soma and Aniruddha",
+    "Chapter IV (1981–1999): The High Noon of Life — The Monsoons, Weddings, The Departure of the Young",
+    "Chapter V (2000–2016): The Quiet Rooms — Retirement, The Empty Dining Table, The Loss of Kalyani",
+    "Chapter VI (2017–2024): The Afternoon Sun — The Great-Granddaughter, The Final November, The Legacy of Stone"
+  ]
+}

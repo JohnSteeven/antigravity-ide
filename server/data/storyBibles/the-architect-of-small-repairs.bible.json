@@ -1,0 +1,39 @@
+{
+  "storyNumber": 19,
+  "title": "The Architect of Small Repairs",
+  "slug": "the-architect-of-small-repairs",
+  "theme": "family / forgiveness",
+  "storyLayout": "mixed-editorial",
+  "accessLevel": "premium",
+  "targetWordCount": 11500,
+  "targetReadingTimeMin": 58,
+  "protagonist": {
+    "name": "Debabrata Sen",
+    "age": 64,
+    "role": "Retired structural draughtsman, Dover Lane, Kolkata",
+    "coreConflict": "The belief that broken human relationships can be maintained through physical craftsmanship, avoiding words until time runs out."
+  },
+  "counterpart": {
+    "name": "Ritwik Sen",
+    "age": 34,
+    "role": "Urban architect, Singapore; Debabrata's only son",
+    "dynamic": "The modern architect who views his father's devotion to an old house as stubborn stagnation, yet carries the same inability to apologize."
+  },
+  "setting": {
+    "primary": "The two-storey ancestral brick house on Dover Lane, Ballygunge",
+    "secondary": "The rear garage workshop with seasoned teak planks; the inner courtyard under the guava tree",
+    "atmosphere": "Fragrant wood shavings, raw linseed oil, the rhythmic scraping of a Japanese hand plane, the oppressive humidity of late October"
+  },
+  "signatureObjects": [
+    "The Japanese kanna hand-plane brought by Debabrata's father from Burma in 1948",
+    "The creaking floorboard outside Ritwik's childhood bedroom that sounded an F-sharp",
+    "The grandmother's cedar dowry chest with a split lid joined by three rosewood butterfly dovetails"
+  ],
+  "structuralMilestones": [
+    "Ritwik's arrival with a property developer's power-of-attorney deed",
+    "Debabrata's quiet refusal to debate, offering instead a joint project: fixing the swollen library door",
+    "Working together in the garage: the tactile rhythm of wood, chisel, and square",
+    "The confrontation over the cedar chest and the real reason Ritwik left ten years ago",
+    "The completed repair that does not save the house, but saves father and son"
+  ]
+}

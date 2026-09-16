@@ -1,0 +1,39 @@
+{
+  "storyNumber": 18,
+  "title": "The Photograph with Six People",
+  "slug": "the-photograph-with-six-people",
+  "theme": "memory / second chances",
+  "storyLayout": "book-page",
+  "accessLevel": "free",
+  "targetWordCount": 9400,
+  "targetReadingTimeMin": 47,
+  "protagonist": {
+    "name": "Malati Ghosh",
+    "age": 58,
+    "role": "High school literature teacher, Siliguri",
+    "coreConflict": "The burden of preserving family history across twenty-four years of an unspoken property rift."
+  },
+  "counterpart": {
+    "name": "Dipak Banerjee",
+    "age": 66,
+    "role": "Retired tea-garden manager, Kurseong; eldest maternal cousin",
+    "dynamic": "The proud, unbending cousin who stopped speaking to Malati's father in 2000 over a terrace boundary line."
+  },
+  "setting": {
+    "primary": "Pine View Cottage, Kurseong (altitude 4,864 ft)",
+    "secondary": "The Hill Cart Road bus route through Tindharia; the cedar-lined verandah",
+    "atmosphere": "Cold mountain mist rolling over corrugated tin roofs, smell of pine needles and damp stone, quiet ticking of a mantle clock"
+  },
+  "signatureObjects": [
+    "The 5x7 black-and-white silver gelatin print taken on June 12, 1988 on Yashica FX-3",
+    "The red clothbound album with corner mounts kept inside the steel almirah",
+    "The enamel tea kettle with chipped dark blue paint that had boiled water for all six of them in 1988"
+  ],
+  "structuralMilestones": [
+    "Finding the photograph wedged inside a box of tax receipts after Dipak's hospital admission",
+    "The decision to take the morning bus up the hill cart road without prior telephoning",
+    "The hesitating walk up the mossy gravel drive of Pine View Cottage",
+    "The tea served in chipped bone china while twenty-four years of silence sit between them",
+    "Looking at the photo together and recognizing that what was lost was never the land, but the laughter"
+  ]
+}

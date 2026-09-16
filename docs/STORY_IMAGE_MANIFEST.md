@@ -612,3 +612,250 @@ Across all multi-image stories, character and world elements maintain strict phy
     - **Presentation Aspect**: 3:2 (landscape)
     - **Editorial Status**: Final
     - **Storage Status**: Curated Editorial (Unsplash License)
+
+### 16. The Call He Kept Postponing
+- **Slug**: `the-call-he-kept-postponing`
+- **Layout Preset**: `letter-memory`
+- **Cover Image**: https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=85
+- **Cover Alt**: Vintage telephone on an uncluttered wooden writing desk beside an open notebook and tea cup
+- **Cover Dimensions**: Intrinsic: 1600x1067 (Source Aspect: 3:2) | Presentation: Responsive Cover
+- **Media Moments**:
+  - **Section 0 (I. The Tuesday Notification)**:
+    - **Asset**: https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Vintage telephone on an uncluttered wooden writing desk beside an open notebook and tea cup
+    - **Caption**: The black desk telephone in the hallway of the flat on Prince Anwar Shah Road, where unanswered calls collected like silt.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 3 (II. The Steel Express to Tatanagar)**:
+    - **Asset**: https://images.unsplash.com/photo-1528747045269-390fe33c19f2?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Steel express train passenger coach moving along railway tracks at dusk
+    - **Caption**: The Steel Express from Howrah to Tatanagar, four hours of clattering metal through the red-earth sal forests of Jhargram.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 8 (III. The Margins of the Laboratory Notebook)**:
+    - **Asset**: https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Fountain pen resting on handwritten letter on aged wooden desk
+    - **Caption**: The handwritten margin notes in the 1999 chemistry laboratory notebook, where Niladri recorded his observations on human friendship.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 14 (VI. The Bench on the Sea Beach)**:
+    - **Asset**: https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Solitary beach shore with footprints in wet sand at sunset
+    - **Caption**: The shoreline at Puri where two twenty-year-olds had watched the Bay of Bengal and promised never to become ordinary.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+
+### 17. The Empty Office After Thirty Years
+- **Slug**: `the-empty-office-after-thirty-years`
+- **Layout Preset**: `alternating-wide-moment`
+- **Cover Image**: https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=85
+- **Cover Alt**: Quiet corporate office desk with vintage ledger and warm window light
+- **Cover Dimensions**: Intrinsic: 1600x1067 (Source Aspect: 3:2) | Presentation: Responsive Cover
+- **Media Moments**:
+  - **Section 0 (I. The 17:30 Bell at Brabourne Tower)**:
+    - **Asset**: https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Quiet corporate office desk with vintage ledger and warm window light
+    - **Caption**: Room 402, fourth floor of Brabourne Tower: thirty years of corporate ledgers and empty chairs.
+    - **Placement**: wide-moment
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 3 (II. The Geometry of Room 402)**:
+    - **Asset**: https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Wooden desk with brass desk lamp, inkwell, and organized paper folders
+    - **Caption**: The teak desk, the brass paperweights, and the 1994 Godrej filing cabinet where two hundred careers passed through.
+    - **Placement**: wide-moment
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 8 (IV. The Façade of Dalhousie Square)**:
+    - **Asset**: https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Historic stone colonial office building facade with arched windows in Kolkata
+    - **Caption**: The imperial stone porticoes of B.B.D. Bagh, where three generations of clerks entered at nine and left at five.
+    - **Placement**: wide-moment
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 17 (VIII. The Bench at Lal Dighi)**:
+    - **Asset**: https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: A roadside tea bench in the late afternoon sun on Dalhousie Square
+    - **Caption**: The wooden bench beside the red waters of Lal Dighi, where retirement begins without an announcement.
+    - **Placement**: wide-moment
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+
+### 18. The Photograph with Six People
+- **Slug**: `the-photograph-with-six-people`
+- **Layout Preset**: `book-page`
+- **Cover Image**: https://images.unsplash.com/photo-1516962215378-7fa2e137ae93?auto=format&fit=crop&w=1600&q=85
+- **Cover Alt**: A vintage framed black-and-white photograph resting on a dark wooden table in warm morning light
+- **Cover Dimensions**: Intrinsic: 1600x1067 (Source Aspect: 3:2) | Presentation: Responsive Cover
+- **Media Moments**:
+  - **Section 0 (I. The Silver Frame on the Teak Sideboard)**:
+    - **Asset**: https://images.unsplash.com/photo-1516962215378-7fa2e137ae93?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: A vintage framed black-and-white photograph resting on a dark wooden table in warm morning light
+    - **Caption**: The silver frame on the teak sideboard in Ballygunge: six cousins on a pine verandah in 1984.
+    - **Placement**: book-page
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 3 (II. The Road to Kurseong (1984))**:
+    - **Asset**: https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Sunlit wooden verandah with view of mist-covered pine hills
+    - **Caption**: The mountain highway climbing through the tea gardens of Tindharia toward Kurseong in May 1984.
+    - **Placement**: book-page
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 8 (IV. The Verandah at Dow Hill)**:
+    - **Asset**: https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Wrought iron railing of a colonial hill-station cottage with morning mountain fog
+    - **Caption**: The wooden cottage railing at Dow Hill where six people believed time could be paused by clicking a shutter.
+    - **Placement**: book-page
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 20 (IX. The Velvet Album)**:
+    - **Asset**: https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: A leather-bound photo album lying open on an old walnut tabletop
+    - **Caption**: The green velvet album where forty years of separated lives were gathered back into one room.
+    - **Placement**: book-page
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+
+### 19. The Architect of Small Repairs
+- **Slug**: `the-architect-of-small-repairs`
+- **Layout Preset**: `mixed-editorial`
+- **Cover Image**: https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1600&q=85
+- **Cover Alt**: Antique Japanese wood plane and hand-cut cedar butterfly joint on a weathered woodworking bench
+- **Cover Dimensions**: Intrinsic: 1600x1067 (Source Aspect: 3:2) | Presentation: Responsive Cover
+- **Media Moments**:
+  - **Section 0 (I. The Japanese Kanna of 1948)**:
+    - **Asset**: https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Antique Japanese wood plane and hand-cut cedar butterfly joint on a weathered woodworking bench
+    - **Caption**: The Japanese hand-plane (*kanna*) brought from Rangoon in 1948, its forged carbon blade shaving cedar to tissue.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 3 (II. The Son Who Builds in Steel and Glass)**:
+    - **Asset**: https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Modern architectural blueprints and scale ruler on drafting table
+    - **Caption**: The drafting table at Dover Lane: sixty-story Singapore high-rises versus eighty years of Burma teak joinery.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 8 (III. The Swollen Cedar Door)**:
+    - **Asset**: https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=85
+    - **Alt**: Sunlight shining through a solid Burma teak door with traditional brass bolt
+    - **Caption**: The library door of 18 Dover Lane, rubbing against the marble plinth after four decades of monsoon humidity.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1200x1800 (Source Aspect: 2:3)
+    - **Presentation Aspect**: 2:3 (portrait)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 16 (V-C. The Restoration of the Study Transom and the Linseed Polishing)**:
+    - **Asset**: https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=85
+    - **Alt**: Restored antique teak woodwork with warm hand-rubbed finish in morning light
+    - **Caption**: The nine-pane arched transom above the study door, re-glazed and hand-rubbed with beeswax and linseed oil.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1200x800 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 20 (VII-B. The Guava Tree and the Alluvial Soil)**:
+    - **Asset**: https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=85
+    - **Alt**: An ancient gnarled courtyard tree growing beside red brick walls and stone flagstones
+    - **Caption**: The guava tree planted in 1968, whose roots stabilized the foundation clay of 18 Dover Lane.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1200x800 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+
+### 20. The House That Remembered Him
+- **Slug**: `the-house-that-remembered-him`
+- **Layout Preset**: `chapter-journey`
+- **Cover Image**: https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1600&q=85
+- **Cover Alt**: A historic North Kolkata colonial courtyard house with high timber ceilings and arched verandahs
+- **Cover Dimensions**: Intrinsic: 1600x1067 (Source Aspect: 3:2) | Presentation: Responsive Cover
+- **Media Moments**:
+  - **Section 0 (I. The Blackout Sirens and the Crowded Table (1944–1949))**:
+    - **Asset**: https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: A historic North Kolkata colonial courtyard house with high timber ceilings and arched verandahs
+    - **Caption**: 14 Balaram Ghosh Street, Shyambazar: the inner quadrangle where four generations gathered.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 3 (II. The First Notch and the Southern Roof (1954–1960))**:
+    - **Asset**: https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Wooden boat navigating the misty waters of the Hooghly River at dawn near Baghbazar
+    - **Caption**: The Hooghly River at Baghbazar, where Nirmal spent forty-three years surveying tides and silting channels.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 6 (III. The Red Footprints of Chinsurah (1968–1973))**:
+    - **Asset**: https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Traditional courtyard lit with oil lamps and decorated with floral garlands for a wedding celebration
+    - **Caption**: The inner courtyard in December 1968, when Kalyani arrived in red silk and alta footprints.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 9 (IV. The Promoter's Briefcase and the Unchanging Stones (1981–1992))**:
+    - **Asset**: https://images.unsplash.com/photo-1495344517868-8ebaf0a2044a?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Rain sweeping across colonial wooden balcony overlooking Kolkata rooftops during monsoon
+    - **Caption**: The high terrace during the monsoons of the 1980s, watching the city grow beneath the river clouds.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 12 (V. The Retirement and the Golden Autumn (2000–2010))**:
+    - **Asset**: https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: A quiet courtyard bench strewn with autumn leaves in soft afternoon sunlight
+    - **Caption**: The courtyard bench beneath the parijat tree where Nirmal and Kalyani shared fifty-four autumns.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)
+  - **Section 16 (VI. The Solitude and the Fourth Generation (2017–2022))**:
+    - **Asset**: https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1600&q=85
+    - **Alt**: Morning sunlight streaming through an antique open doorway onto polished old timber floors
+    - **Caption**: The library doorway at 14 Balaram Ghosh Street, where four generations left their height upon the teak.
+    - **Placement**: layout-determined
+    - **Intrinsic Dimensions**: 1600x1067 (Source Aspect: 3:2)
+    - **Presentation Aspect**: 3:2 (landscape)
+    - **Editorial Status**: Final
+    - **Storage Status**: Curated Editorial (Unsplash License)

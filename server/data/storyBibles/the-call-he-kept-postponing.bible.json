@@ -1,0 +1,39 @@
+{
+  "storyNumber": 16,
+  "title": "The Call He Kept Postponing",
+  "slug": "the-call-he-kept-postponing",
+  "theme": "friendship / regret",
+  "storyLayout": "letter-memory",
+  "accessLevel": "free",
+  "targetWordCount": 7500,
+  "targetReadingTimeMin": 38,
+  "protagonist": {
+    "name": "Subir Lahiri",
+    "age": 46,
+    "role": "Senior Regional Claims Auditor, Kolkata",
+    "coreConflict": "The habit of treating time as an elastic, forgiving currency that can always be settled next weekend."
+  },
+  "counterpart": {
+    "name": "Niladri Sen",
+    "age": 46,
+    "role": "Fabrication engineer, Jamshedpur; college friend from Presidency (1996–1999)",
+    "dynamic": "The friend who kept reaching across geography and routine with short, persistent invitations that required only fifteen minutes to answer."
+  },
+  "setting": {
+    "primary": "Prince Anwar Shah Road flat, South Kolkata",
+    "secondary": "The suburban local train to Jamshedpur via Kharagpur; the Telco colony verandah",
+    "atmosphere": "Grey monsoon afternoons, flickering handset screens, unread notifications accumulating beneath spreadsheets"
+  },
+  "signatureObjects": [
+    "The pocket diary with Niladri's original Jamshedpur landline number (0657) written in fading violet Quink ink",
+    "The 90-second voicemail left on October 14th: 'Subir-da, no disaster. Just watching the mist on the river. Pick up when you breathe.'",
+    "The two brass railway keychains bought together at Kharagpur junction in June 1998"
+  ],
+  "structuralMilestones": [
+    "The notification deferred during an audit meeting on a Tuesday afternoon",
+    "The accumulation of missed calls across six years masquerading as harmless delay",
+    "The sudden call from Niladri's younger sister at 6:40 AM on a Saturday",
+    "The four-hour train journey where Subir reads back through their silent digital thread",
+    "The arrival at the silent Telco colony house and the conversation that can never happen"
+  ]
+}
