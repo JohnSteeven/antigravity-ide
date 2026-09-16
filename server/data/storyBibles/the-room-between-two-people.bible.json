@@ -1,0 +1,113 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 11,
+  "slug": "the-room-between-two-people",
+  "title": "The Room Between Two People",
+  "category": "Marriage",
+  "categorySlug": "marriage",
+  "accessLevel": "premium",
+  "layout": "alternating-editorial",
+  "targetReadingTime": "50–55 min",
+  "approximateWordTarget": "10,000–11,000 words",
+
+  "voiceProfile": {
+    "pov": "Close third-person alternating between Nandini and Siddharth, moving fluidly with chapter transitions",
+    "tense": "Past tense with close present-sensory domestic textures",
+    "register": "Restrained, architecturally observant, psychologically forensic, quiet and domestic",
+    "narratorDistance": "Intimate third-person, never judging, charting spatial distance as emotional distance",
+    "distinctiveDevices": [
+      "Rooms, doorways, hallways, and domestic objects as instruments of measurement",
+      "Exact domestic expenses, lease amounts, and square footage details",
+      "Subtle shifts in morning routines indicating seasonal emotional weather"
+    ]
+  },
+
+  "characters": {
+    "protagonist1": {
+      "name": "Nandini Rao",
+      "age": 36,
+      "family": "Daughter of a retired CPWD engineer in Mysore and a Carnatic music teacher; elder sister to Ananya (married, living in Chicago)",
+      "education": "Masters in Art History & Textile Conservation from MS University, Baroda",
+      "career": "Senior Conservator at the Heritage Textile Trust, Bangalore; restores heirloom Mysore silk, kalamkari temple hangings, and pre-independence khadi",
+      "income": "₹1,15,000/month take-home",
+      "habits": [
+        "Checks room humidity with a small brass hygrometer kept on her vanity table",
+        "Washes her hands twice with unscented soap before touching any book or archival fabric",
+        "Drinks boiled water with two bruised cardamoms at 10 PM each evening"
+      ],
+      "beliefs": "Believes that damage rarely happens in explosions; it happens through chronic ambient light, slight chemical changes, and slow neglect",
+      "fears": "That she has organized her life so carefully against sudden grief that she has eliminated joy",
+      "flaws": "Uses professional composure and meticulous cataloging as armor to avoid confrontation; withdraws into silence rather than naming what hurts",
+      "speechStyle": "Low-toned, measured, precise with adjectives, avoids superlatives, speaks slightly slower when angry",
+      "secrets": "Kept a draft of a single-occupancy rental agreement for a 1BHK apartment in Cooke Town on her work laptop for five months",
+      "memories": "The rain in Baroda in 2013 when Siddharth brought her four dry envelopes of Japanese mulberry paper wrapped inside his raincoat"
+    },
+    "protagonist2": {
+      "name": "Siddharth Mehta",
+      "age": 38,
+      "family": "Son of a cloth merchant in Ahmedabad who went bankrupt in 2001; mother lives with his elder brother in Gandhinagar",
+      "education": "B.Arch from CEPT, Ahmedabad; M.Arch in Urban Heritage Conservation",
+      "career": "Independent conservation architect; consults on colonial bungalow restorations, heritage precinct mappings in South India",
+      "income": "Fluctuates between ₹90,000 and ₹2,40,000/month depending on consultancy disbursements",
+      "habits": [
+        "Measures room dimensions by pacing with standard 30-inch strides when nervous",
+        "Sharpens 2B pencils with a surgical scalpel rather than a plastic sharpener",
+        "Leaves half-drunk cups of black tea on window ledges and bookshelves"
+      ],
+      "beliefs": "Believes buildings remember their inhabitants longer than inhabitants remember each other; believes repair is always nobler than demolition",
+      "fears": "Fears becoming his father: financially unpredictable, carrying quiet shame into old age",
+      "flaws": "Treats emotional tension like a structural settlement issue that will stabilise if left unprovoked; postpones hard conversations",
+      "speechStyle": "Warm, analytical, prone to drawing diagrams on paper napkins when explaining feelings, self-effacing humor under stress",
+      "secrets": "Lost ₹4,80,000 on a client default in late 2024 and took an emergency overdraft rather than tell Nandini during her mother's illness",
+      "memories": "Watching Nandini stretch a fragile 18th-century woven border on a mounting board with acupuncture pins in 2017 without her hands shaking once"
+    }
+  },
+
+  "timeline": {
+    "2011": "Meet at an archaeological survey camp in Champaner; both in their mid-twenties",
+    "2015": "Marry in a simple registry in Bangalore followed by a dinner for 40 people in Malleshwaram",
+    "2017": "Move to their first rented 2BHK in Richmond Town; optimistic, hard-working, mutually supportive",
+    "2020": "Pandemic lockdown reveals cracks: the silence becomes thick; career anxieties compound",
+    "2022": "Lease the 3BHK flat on 12th Main, Indiranagar (₹68,000/month); the middle 12x14 ft room is designated 'the studio/nursery'",
+    "2023": "Two failed IUI cycles; they decide to stop without formally discussing whether they are stopping forever",
+    "2024": "The middle room becomes a storage room: unopened cardboard boxes, an unstrung tanpura, architectural samples, silence",
+    "2025 (Present Story Year)": "The lease renewal notice arrives from landlord Mr. Vishwanathan. They have 60 days to either commit to two more years or end the tenancy."
+  },
+
+  "theMiddleRoom": {
+    "dimensions": "12 feet by 14 feet with east-facing clerestory windows",
+    "contents": [
+      "A teak bookshelf with half-unpacked monographs on Deccan architecture and Mughal dyes",
+      "An unstrung Miraj tanpura in a quilted black canvas bag gifted by Nandini's mother",
+      "Nine sealed brown cartons from their 2022 move containing duplicate kitchenware and old journals",
+      "A drafting table with a green cutting mat covered in dust",
+      "A clothes drying rack frequently left standing with damp laundry"
+    ],
+    "symbolicWeight": "Neither inhabited nor cleared. A buffer zone between their separate bedrooms; the physical manifestation of what they have not dared to decide."
+  },
+
+  "relationshipArc": {
+    "opening": "Polite domestic mechanics: morning pour-over coffee, synchronized bathroom turns, grocery lists shared on Google Keep without conversation",
+    "incitingIncident": "Mr. Vishwanathan asks for an 8% rent hike and a signed two-year agreement; Nandini receives a 6-month conservation residency offer in Pondicherry",
+    "risingTension": "A work trip together to Karaikudi to document a 1912 Chettinad courtyard home; being outside their Bangalore flat strips away their protective routines",
+    "crisis": "A late-night confrontation in the middle room after returning from Karaikudi, unpacking the cartons they avoided opening for three years",
+    "turningPoint": "Neither an explosive screaming match nor an artificial romantic reunion; the honest admission of exhaustion and mutual love without certainty",
+    "ending": "They do not know if the marriage will survive twenty more years, but they clear the middle room together, painting the walls off-white, opening the windows, and deciding to live in the same house without hiding."
+  },
+
+  "recurringMotifs": [
+    "The brass hygrometer measuring invisible ambient moisture",
+    "The 12x14 middle room doorway where both stop but rarely enter",
+    "The 1912 Chettinad courtyard with rainwater harvesting urns",
+    "The smell of cardamom water at 10 PM",
+    "The lease renewal agreement lying on the granite kitchen island"
+  ],
+
+  "prohibitions": [
+    "No melodrama, no shouting matches, no infidelity clichés",
+    "Neither spouse is a villain; both are decent, considerate, quietly exhausted people",
+    "No miracle baby or fake pregnancy plot twist",
+    "No easy Hollywood resolution; the ending must feel earned, fragile, and adult"
+  ]
+}

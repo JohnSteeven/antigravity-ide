@@ -1,0 +1,96 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 14,
+  "slug": "the-brother-who-signed-the-papers",
+  "title": "The Brother Who Signed the Papers",
+  "category": "Family",
+  "categorySlug": "family",
+  "accessLevel": "free",
+  "layout": "triple-rhythm",
+  "targetReadingTime": "45–50 min",
+  "approximateWordTarget": "9,000–10,000 words",
+
+  "voiceProfile": {
+    "pov": "Close third-person alternating between Jayant (the elder brother who stayed) and Vivek (the younger brother who left)",
+    "tense": "Past tense, structured across three distinct rhythmic movements",
+    "register": "Grounded, legalistic, familial, emotionally fraught with decades of unspoken ledgers",
+    "narratorDistance": "Dual close third-person; giving equal, agonizing validity to both brothers' positions",
+    "distinctiveDevices": [
+      "The language of Maharashtra Land Revenue code, non-encumbrance certificates, 7/12 extract extracts, and stamp duty papers contrasting with tactile memories of the family wada",
+      "The triple-rhythm layout mapping cleanly to three temporal movements: Act I: The Wada of 1938; Act II: The Sub-Registrar's Office at Swargate; Act III: The Tea Stall on Bajirao Road",
+      "Physical ledgers and prescription receipts accumulated over fourteen years of home medical care"
+    ]
+  },
+
+  "characters": {
+    "protagonist1": {
+      "name": "Jayant Kulkarni",
+      "age": 42,
+      "family": "Elder son of late Shrikant Kulkarni (postal surveyor) and late Malati Kulkarni; husband to Rohini (high school Marathi teacher); father to Sanika (14)",
+      "education": "M.Sc in Chemistry from Fergusson College, Pune; B.Ed",
+      "career": "High school chemistry teacher at Bhave High School, Sadashiv Peth, Pune (20 years of service)",
+      "income": "Government pay commission salary ₹68,000/month",
+      "habits": [
+        "Rides a 2004 Bajaj Chetak scooter that he kicks three times before starting",
+        "Keeps all medical receipts filed by year inside cardboard box files tied with pink tape",
+        "Wears spectacles with silver wireframes that he cleans with his shirt hem"
+      ],
+      "beliefs": "Believes family duty is not an investment with a return; it is a debt you repay with your life; believes staying where you were born is an act of moral gravity",
+      "fears": "Fears being remembered as a fool who sacrificed his own daughter's education to wipe his bedridden mother's back while his brother became rich in Hyderabad",
+      "flaws": "Nurses a quiet, martyred bitterness; uses his caregiving sacrifices as moral leverage to invalidate his brother's contributions",
+      "speechStyle": "Formal Marathi and precise English; patient, quiet, refuses to raise his voice even when insulted",
+      "secrets": "Kept a handwritten notebook listing every single rupee spent on his mother's dialysis, insulin, and diapers from 2011 to 2024: total ₹38,42,110",
+      "memories": "His mother's fingers clutching his wrist during her last winter in the ground-floor room, whispering: 'Jayant, don't let this roof go to strangers.'"
+    },
+    "protagonist2": {
+      "name": "Vivek Kulkarni",
+      "age": 38,
+      "family": "Younger son; married to Anjali (product manager in fintech); father to twins (6); lives in Gachibowli, Hyderabad",
+      "education": "B.Tech from COEP, Pune; MS in Computer Science from University of Texas, Austin",
+      "career": "Co-founder of an AI-driven supply chain startup in Hyderabad; has raised Series A but facing a severe 6-month funding winter and payroll crunch",
+      "income": "Paper net worth on equity, but personal bank liquidity down to ₹4,20,000; needs his ₹1.9 crore share of the sale to keep his company alive",
+      "habits": [
+        "Checks company Slack notifications every ninety seconds",
+        "Drinks Americanos without sugar from insulated travel mugs",
+        "Touches the back of his neck when lying or hiding panic"
+      ],
+      "beliefs": "Believes ancestral nostalgia is a luxury that living people cannot afford; believes sent money is real love, not second-class love",
+      "fears": "Fears total financial collapse, laying off twenty-two engineers who trusted him, and returning to Pune as a bankrupt failure",
+      "flaws": "Assumes money solves everything; minimized his brother's physical caregiving burden because he wire-transferred ₹40,000 every month from the US and Hyderabad",
+      "speechStyle": "Fast-paced, modern corporate idiom mixed with colloquial Marathi, defensive when challenged on family presence",
+      "secrets": "Pledged his personal apartment in Hyderabad as collateral for his company's working capital loan three months ago without telling his wife",
+      "memories": "Playing cricket in the wada courtyard with a tennis ball that always broke the ground-floor stained glass fanlights"
+    }
+  },
+
+  "theProperty": {
+    "name": "Kulkarni Wada",
+    "location": "Sadashiv Peth, Pune; 4,200 square feet plot with a 3-storey timber and stone structure built in 1938 by grandfather Dattatreya Kulkarni",
+    "commercialReality": "Offered ₹3.80 crore by a local redevelopment firm (Surya Developers) to demolish the structure and build a 6-storey residential apartment complex",
+    "splitTerms": "50-50 share between Jayant and Vivek after taxes and registration expenses: ₹1.82 crore each"
+  },
+
+  "timeline": {
+    "1986–2004": "Childhood in the wada; grandfather dies; father dies in 2004; Vivek goes to college and then America; Jayant stays to look after mother",
+    "2011": "Mother Malati suffers first stroke; bedridden for 13 years; Jayant and Rohini manage daily bedsores, medicines, hospitalizations; Vivek sends regular wire transfers",
+    "October 2024": "Mother passes away quietly at age 79. The wada becomes completely silent.",
+    "January 2025": "Vivek flies into Pune with the developer's memorandum of understanding. Jayant must sign the sale deed as co-owner.",
+    "Present Day (Morning to Afternoon)": "The appointment at the Sub-Registrar's Office, Swargate, Pune. 3 hours, 44 signatures, thumb impressions on green bond paper, and the final walk down Bajirao Road."
+  },
+
+  "recurringMotifs": [
+    "The green stamp-duty bond papers with violet government seals",
+    "The grandfather's carved Sagwan teak door with the heavy iron ring latch",
+    "The cardboard box file containing thirteen years of hospital discharge summaries",
+    "The biometric thumbprint scanner flashing red before accepting the ink",
+    "The two cutting chais ordered at the street corner after the ink has dried"
+  ],
+
+  "prohibitions": [
+    "Neither brother is evil; Vivek is not a greedy Silicon Valley caricature; Jayant is not a saint without bitterness",
+    "The financial distress of Vivek is real and terrifying; the physical labor of Jayant was grueling and unrewarded",
+    "No miraculous compromise where the wada is saved as a museum; economic reality is inescapable in urban India",
+    "The ending honors the grief of both brothers without sentimentality"
+  ]
+}

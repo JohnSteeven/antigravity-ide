@@ -58,7 +58,6 @@ const ReadingProgress = ({ enabled }) => {
   }, [enabled]);
 
   if (!enabled) return null;
-  return <div className="story-reader__progress" aria-hidden="true"><span style={{ transform: `scaleX(${progress})` }} /></div>;
   const percentage = Math.round(progress * 100);
   return (
     <div
@@ -66,7 +65,6 @@ const ReadingProgress = ({ enabled }) => {
       role="progressbar"
       aria-label="Story reading progress"
       aria-valuenow={percentage}
-      aria-valuenow={Math.round(progress * 100)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
@@ -102,10 +100,7 @@ export default function StoryEngine({
     }
   }, [composition.diagnostics, story.slug]);
 
-  // Dedicated layout integration for Gold Standards A, B & C
-  const hasIntegratedHeader = layout.id === "chapter-journey" || layout.id === "cinematic-rhythm" || layout.id === "editorial-sidebar";
-  // Dedicated layout integration for Gold Standards & Batch A layouts
-  // Dedicated layout integration for all 10 editorial layouts
+  // Dedicated layout integration for all layouts that own their integrated header
   const hasIntegratedHeader = (
     layout.id === "chapter-journey" ||
     layout.id === "cinematic-rhythm" ||

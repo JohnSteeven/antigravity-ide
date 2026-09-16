@@ -10,7 +10,7 @@ const { serializePublicContent } = require("../premium/contentPreview");
 describe("Phase 4 Story Catalog & Reading Experience Audit (Life Collection)", () => {
   test("launch catalog contains original production life stories", () => {
     expect(Array.isArray(launchStories)).toBe(true);
-    expect(launchStories.length).toBe(launchStories.length >= 10 ? 10 : 5);
+    expect([5, 10, 15]).toContain(launchStories.length);
   });
 
   test("all story slugs are unique, lower-kebab-case, and non-empty", () => {
@@ -138,6 +138,14 @@ describe("Phase 4 Story Catalog & Reading Experience Audit (Life Collection)", (
       expect(freeStories.length).toBe(8);
       expect(premiumStories.map((s) => s.slug).sort()).toEqual([
         "the-house-with-two-expectations",
+        "the-wedding-before-the-dream",
+      ].sort());
+    } else if (launchStories.length === 15) {
+      expect(premiumStories.length).toBe(3);
+      expect(freeStories.length).toBe(12);
+      expect(premiumStories.map((s) => s.slug).sort()).toEqual([
+        "the-house-with-two-expectations",
+        "the-room-between-two-people",
         "the-wedding-before-the-dream",
       ].sort());
     }

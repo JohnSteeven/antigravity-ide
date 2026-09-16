@@ -1,0 +1,86 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 12,
+  "slug": "the-child-who-watched-everything",
+  "title": "The Child Who Watched Everything",
+  "category": "Parenthood",
+  "categorySlug": "parenthood",
+  "accessLevel": "free",
+  "layout": "scene-by-scene",
+  "targetReadingTime": "45 min",
+  "approximateWordTarget": "8,500–9,500 words",
+
+  "voiceProfile": {
+    "pov": "First-person retrospective; narrator speaks from early childhood sensory memories (ages 7, 10, 14) and closes as an adult (age 29)",
+    "tense": "Past tense, strictly preserving child-level sensory observation without precocious adult psychoanalysis",
+    "register": "Observational, acoustic, tactile, tender without sentimentality",
+    "narratorDistance": "Very close; the child reports physical occurrences: the angle of a door, the scrape of a steel tiffin on a stone slab, the weight of an unsaid sentence in a hallway",
+    "distinctiveDevices": [
+      "Measuring household financial and emotional shifts through physical objects (the level of kerosene in the burner, the sound of the front latch)",
+      "Unexplained adult conversations overheard through curtain fabric or bathroom vents",
+      "The child's misunderstanding of adult tragedy that reveals the truth to the reader"
+    ]
+  },
+
+  "characters": {
+    "protagonist": {
+      "name": "Kabir Deshmukh",
+      "age": "Ages 7 (1998), 10 (2001), 14 (2005), and 29 (2020)",
+      "family": "Only child of Arvind Deshmukh (clerk in Railway Accounts, Nagpur) and Shailaja Deshmukh (homemaker and home tutor)",
+      "education": "St. Francis High School, Nagpur (scholarship + fee waivers); later VNIT Nagpur (civil engineering)",
+      "career": "Junior structural project engineer in Mumbai at age 29",
+      "income": "Family income in 1998 was ₹4,200/month; in 2005 was ₹9,800/month; Kabir earns ₹85,000/month in 2020",
+      "habits": [
+        "Checks whether doors are latched properly by pressing with one finger against the brass bolt",
+        "Counts seconds between his father's scooter stopping outside and the kickstand hitting concrete",
+        "Keeps bus tickets and receipt stubs flattened inside school textbooks"
+      ],
+      "beliefs": "Grew up believing that peace in a family depends on nobody making an unnecessary noise",
+      "fears": "Fears being the cause of his parents' unspoken exhaustion; fears that money will run out before his school term ends",
+      "flaws": "Hyper-vigilant; interprets neutral silence as looming disaster; struggles with spontaneous intimacy as an adult",
+      "speechStyle": "Quiet, hesitant in groups, acutely attentive listener, reports facts plainly",
+      "secrets": "Knew since age ten that his mother sold her gold bangles to pay his 8th-grade ICSE board registration fees",
+      "memories": "Watching his father polish his brown Bata leather shoes every Sunday morning with an old cotton vest until the cracked leather reflected the sunlight"
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Arvind Deshmukh (Father)",
+        "age": "38 in 1998, 60 in 2020",
+        "appearance": "Thin wrists, permanent graphite stain on the side of his right middle finger, hair parted neatly with mustard oil",
+        "character": "An honest railway accounts clerk who refused under-the-table speed money; deeply proud, terrified of debt, carried his integrity like a heavy wet wool blanket",
+        "keyDetail": "Never raised his voice; when troubled, he would clean his bicycle spokes with an oily rag for forty-five minutes in the courtyard"
+      },
+      {
+        "name": "Shailaja Deshmukh (Mother)",
+        "age": "34 in 1998, 56 in 2020",
+        "appearance": "Cotton sarees washed so many times the borders had softened like gauze; small blue tattoo on her left forearm",
+        "character": "Taught primary arithmetic to six neighborhood children every evening from 5 to 7 PM to create an emergency fund her husband wouldn't refuse",
+        "keyDetail": "Measured sugar and tea leaves with an old brass teaspoon with a bent handle"
+      }
+    ]
+  },
+
+  "timeline": {
+    "1998 (Age 7)": "Scene 1: The Yellow Kitchen Door. The murmur of numbers after midnight; learning that a 'transfer order' means something heavy is coming.",
+    "2001 (Age 10)": "Scene 2: The Brown Bata Shoes. The shoe polish ritual; discovering the missing gold bangles from the steel Godrej almirah.",
+    "2005 (Age 14)": "Scene 3: The Board Exam Fee. Overhearing the principal's office; the uncle from Amravati who came with advice and left without staying for dinner.",
+    "2010 (Age 19)": "Scene 4: The Hostel Trunk. The platform goodbye at Nagpur station; father handing over five crisp hundred-rupee notes tucked into an identity card holder.",
+    "2020 (Age 29)": "Scene 5: The Glass Apartment in Vashi. Adult Kabir bringing his retired parents to Mumbai; the induction cooktop; understanding at last what they preserved."
+  },
+
+  "recurringMotifs": [
+    "The brown Bata shoes with cracked leather shined until they gleam",
+    "The green plastic kerosene measurement dipstick",
+    "The sound of six children reciting times tables in the front room",
+    "The steel Godrej almirah key tied to the end of his mother's saree pallu",
+    "The quiet at 6:15 AM before the pressure cooker whistle"
+  ],
+
+  "prohibitions": [
+    "Do not give the child adult psychoanalytic vocabulary ('trauma', 'dysfunction', 'narcissism')",
+    "Parents must not be abusive or neglectful; they love each other and love Kabir, but the pressure of financial survival is real and heavy",
+    "No melodramatic shouting matches; the tension exists in whispers, glances, and closed doors",
+    "The adult ending must not be a triumphant victory lap; it is an act of quiet recognition"
+  ]
+}

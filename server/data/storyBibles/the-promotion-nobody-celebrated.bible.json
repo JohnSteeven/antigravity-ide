@@ -1,0 +1,85 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 13,
+  "slug": "the-promotion-nobody-celebrated",
+  "title": "The Promotion Nobody Celebrated",
+  "category": "Career",
+  "categorySlug": "career",
+  "accessLevel": "free",
+  "layout": "editorial-sidebar",
+  "targetReadingTime": "40–45 min",
+  "approximateWordTarget": "8,000–9,000 words",
+
+  "voiceProfile": {
+    "pov": "Close third-person, Meera Nambiar",
+    "tense": "Past tense with acute, sharp present-tense corporate rhythms",
+    "register": "Lucid, analytical, unsentimental, forensic, carrying quiet emotional fatigue",
+    "narratorDistance": "Close third-person; tracking Meera's internal risk ledger as she evaluates both derivative trading algorithms and the collateral damage of her life",
+    "distinctiveDevices": [
+      "Sidebar metrics: quarterly performance indicators, compensation schedules, headcount numbers contrasting with empty calendar blocks",
+      "Exact financial compensation figures and corporate tier levels (VP, SVP, Managing Director, Band 9)",
+      "The physical geography of modern corporate Gurgaon (Cyber City skybridges, Golf Course Road underpasses, 24-hour illuminated glass offices)"
+    ]
+  },
+
+  "characters": {
+    "protagonist": {
+      "name": "Meera Nambiar",
+      "age": 34,
+      "family": "Daughter of a retired State Bank of Travancore cashier in Thrissur; divorced eighteen months earlier from Ashwin (a documentary editor who couldn't bear the Gurgaon executive culture); younger brother Vivek (civil services aspirant in Trivandrum)",
+      "education": "B.Tech from College of Engineering Trivandrum (CET); MBA from a second-tier institute in Pune before breaking into institutional algorithmic trading through pure mathematical capability",
+      "career": "Promoted on the night of the story from Senior Vice President to Managing Director & Head of Quantitative Risk at Nexa Capital, Gurgaon",
+      "income": "New base salary ₹1.4 crore + annual performance stock units (RSUs) projected at ₹90 lakh",
+      "habits": [
+        "Carries two phones; screen time averages 14 hours and 40 minutes per day",
+        "Eats roasted almonds from a glass jar in her office drawer instead of lunch",
+        "Wears custom charcoal trouser suits; has seven identical white Egyptian cotton shirts"
+      ],
+      "beliefs": "Believes talent without leverage is just decorative suffering; wanted the promotion because without power, someone less competent will always decide your fate",
+      "fears": "Fears that if she pauses the velocity of her ambition for even forty-eight hours, she will collapse into the void left by her failed marriage and estranged family",
+      "flaws": "Translates all human relationships into transaction costs and leverage calculations; struggles to receive affection without suspecting an agenda",
+      "speechStyle": "Crisp, concise, uses active verbs, never raises voice in meetings, speaks with absolute economy",
+      "secrets": "Sat in the fire exit staircase of Tower 4B for forty minutes on Diwali night crying silently because she had nowhere to go before her 11 PM New York call",
+      "memories": "Her father's retirement day in 2012 when he was given a brass wall clock and a shawl after thirty-four years of checking vouchers, and swore she would never be discarded like that"
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Sudhir Malhotra",
+        "age": 54,
+        "role": "Former Senior Managing Director and Meera's institutional sponsor; ousted that same morning in a sudden boardroom reshuffle orchestrated by the London parent company",
+        "significance": "Represents the brutal shelf-life of executive power. His empty office at 7 PM with cardboard boxes is what Meera sees two hours after her promotion letter is signed."
+      },
+      {
+        "name": "Ashwin Varma (Ex-Husband)",
+        "age": 36,
+        "role": "Documentary filmmaker; left in 2023. Not a bad man, just someone who realized that being married to Meera meant living in the waiting room of someone else's emergency."
+      }
+    ]
+  },
+
+  "timeline": {
+    "09:15 AM": "Board meeting in Tower 4B; Sudhir Malhotra is quietly terminated; Meera is offered the Managing Director role with immediate operational oversight of 140 risk analysts across Gurgaon and Singapore.",
+    "01:30 PM": "Meera signs the compensation addendum and non-compete extension. No hesitation; she has fought for this desk for eleven years.",
+    "05:00 PM": "Company-wide email blast from global HR. 86 LinkedIn notifications, 42 Slack pings with celebration emojis.",
+    "07:30 PM": "Sudhir leaves the building carrying his personal laptop and two potted ferns. His parting words to Meera: 'Don't mistake their panic for gratitude.'",
+    "09:00 PM": "The office empties. Meera is alone on the 18th floor. A corporate floral bouquet from HR sits on her desk, smelling faintly of cold storage chemicals.",
+    "09:45 PM": "Her phone is completely silent. No personal calls. Her mother in Thrissur had texted at 6 PM: 'Hope work is okay, calling tomorrow so as not to disturb your meetings.'",
+    "11:15 PM": "Meera drives down Golf Course Road in her car. She stops at an all-night diner near Sector 54, ordering yellow dal and roti alone in the neon light. She calculates the ledger of her victory."
+  },
+
+  "recurringMotifs": [
+    "The 18th-floor executive glass wall looking out over the DLF golf course and the yellow ribbon of the expressway",
+    "The corporate floral bouquet with purple hydrangeas and white lilies wrapped in metallic plastic",
+    "The two phones—one corporate encrypted, one personal—the personal phone showing zero missed calls",
+    "Her father's brass retirement clock ticking on a mantelpiece in Thrissur",
+    "The glass jar of roasted almonds in her executive desk drawer"
+  ],
+
+  "prohibitions": [
+    "Do not make Meera regret her ambition in a moralistic or reactionary way; her drive is legitimate, earned, and intelligent",
+    "Do not suggest she should have 'chosen family instead' like a cliché sermon",
+    "The corporate world is depicted with clinical realism, not caricature villains; people are courteous, ruthless, and exhausted",
+    "The ending must capture the specific, cold dignity of solitary achievement"
+  ]
+}

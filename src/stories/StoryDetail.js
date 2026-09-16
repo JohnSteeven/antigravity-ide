@@ -77,14 +77,12 @@ export default function StoryDetail() {
       .then((response) => {
         if (cancelled) return;
         if (!response?.article) return setNotFound(true);
-        if (response.article.contentType === "article") setRedirectToArticle(true);
-        else setStory(response.article);
-        if (response.article.contentType === "article") return setRedirectToArticle(true);
         if (response.article.contentType === "article") {
-          return setRedirectToArticle(true);
+          setRedirectToArticle(true);
+          return;
         }
         setStory(response.article);
-          storyApi.list({ limit: 48 })
+        storyApi.list({ limit: 48 })
             .then((listRes) => {
               if (cancelled) return;
               const articles = (listRes?.articles || []).filter(

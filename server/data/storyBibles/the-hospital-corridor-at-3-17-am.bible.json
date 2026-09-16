@@ -1,0 +1,104 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 15,
+  "slug": "the-hospital-corridor-at-3-17-am",
+  "title": "The Hospital Corridor at 3:17 AM",
+  "category": "Aging Parents",
+  "categorySlug": "aging-parents",
+  "accessLevel": "free",
+  "layout": "cinematic-rhythm",
+  "targetReadingTime": "50–60 min",
+  "approximateWordTarget": "10,000–12,000 words",
+
+  "voiceProfile": {
+    "pov": "Close third-person, Dr. Rahul Sen, with cinematic atmospheric pacing",
+    "tense": "Past tense, paced by the exact ticking minutes of the nighttime ICU vigil (11:45 PM to 05:30 AM)",
+    "register": "Deeply literary, unflinching, acoustic, sensory, stripped of melodrama, emotionally devastating through sheer precision of human behavior",
+    "narratorDistance": "Close third-person; tracking the physical, sensory reality of hospital waiting: the air conditioning hum, the chemical smell of disinfectant, the texture of damp hospital admission slips",
+    "distinctiveDevices": [
+      "Exact timestamps anchoring chapters like cinematic title cards: 11:45 PM, 01:12 AM, 02:24 AM, 03:17 AM, 04:40 AM, 05:30 AM",
+      "The plastic bag of personal possessions given by the nurse at admission as an emotional touchstone",
+      "The contrast between clinical efficiency and the slow, agonizing dismantling of a father's physical body",
+      "Dialogue that is brief, practical, and burdened with decades of unexpressed love"
+    ]
+  },
+
+  "characters": {
+    "protagonist": {
+      "name": "Dr. Rahul Sen",
+      "age": 44,
+      "family": "Son of Debabrata Sen (76, retired postal accounts superintendent, Jadavpur) and late Anjali Sen; elder brother to Shampa (40, lives in Gurgaon, senior HR manager at an IT firm); husband to Piyali (assistant professor of botany, home with their 10-year-old son Soumik in Salt Lake)",
+      "education": "Ph.D in Quantitative Economics from Presidency College / Jadavpur University; teaches at a state university in Kolkata",
+      "career": "Associate Professor of Economics; spent his life believing that rational models could describe human vulnerability",
+      "income": "Government university scale ₹1,25,000/month; has moderate savings, no corporate health insurance; relies on state employee health scheme with rigid reimbursement caps",
+      "habits": [
+        "Checks his watch every four minutes, comparing it against the digital wall clock in the corridor",
+        "Rolls his sleeves up to his elbows when under severe stress, exposing pale forearms",
+        "Carries his father's medical file in an old brown cloth-bound folder tied with coir thread"
+      ],
+      "beliefs": "Believed he was emotionally prepared for his father's decline because he had managed his medications for five years; discovers that clinical preparation is useless against mortality",
+      "fears": "The terror of making the final medical decision—to intubate or withdraw invasive ventilation—and being judged by his sister or haunted by his own conscience",
+      "flaws": "Tends to intellectualize grief into administrative tasks; obsessively checks bills, medicine slips, and oxygen saturation decimals to avoid feeling the abyss",
+      "speechStyle": "Precise, quiet, careful with hospital staff, speaks Bengali with classical phrasing, avoids display of emotion in public spaces",
+      "secrets": "Didn't visit his father for three weeks in October because of a petty disagreement over paying municipal property tax, a delay he now feels is unforgivable",
+      "memories": "Riding on the crossbar of his father's black Hercules bicycle in 1988 through the monsoon water of Gariahat, his father's wet cotton umbrella shielding him while his father got completely soaked"
+    },
+    "theFather": {
+      "name": "Debabrata Sen",
+      "age": 76,
+      "background": "Retired Postal Accounts Superintendent. A man of quiet, iron discipline who hand-wrote every household ledger in blue ink for fifty-two years; never bought a car, never took a loan, never asked anyone for help.",
+      "clinicalState": "Massive left-hemisphere hemorrhagic stroke at 9:30 PM; Glasgow Coma Scale 4; ventilator-dependent in Bed 7 of the Neuro-ICU; pupils non-reactive."
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Shampa Sen-Gupta (Sister)",
+        "age": 40,
+        "role": "Flew in from Delhi on the midnight red-eye; arrives at the hospital at 2:10 AM in corporate office clothes; uses frantic logistical anger as her defense against grief; demands to speak with the chief neurologist; clashes with Rahul over whether to transfer to a private corporate hospital.",
+        "keyMoment": "At 3:45 AM, breaking down while trying to buy a paper cup of black coffee from a jammed hospital vending machine, sobbing with her forehead pressed against the warm plastic glass."
+      },
+      {
+        "name": "Sister Bandana Roy",
+        "age": 48,
+        "role": "Senior ICU night charge nurse. Has seen ten thousand families in this corridor. Not callous, but steady as stone. Treats the dying with gentle, practical dignity.",
+        "keyMoment": "Handing Rahul his father's plastic belongings bag and quietly showing him how to apply petroleum jelly to his father's dry lips with a cotton swab."
+      }
+    ]
+  },
+
+  "thePlasticBag": {
+    "description": "A semi-transparent blue plastic grocery bag with 'Reliance Fresh' printed on the side, handed to Rahul by the emergency triage nurse when Debabrata was wheeled into the ICU.",
+    "contents": [
+      "A pair of worn brown rubber bathroom slippers, size 8, with the right heel worn down flat",
+      "A black nylon folding umbrella tied with a strip of yellow knitting yarn because the strap snap had broken in 2018",
+      "Debabrata's leather spectacles case with adhesive tape around the hinge",
+      "A steel ring holding four keys: front door, Godrej almirah, postal pension locker, and a rusted padlock",
+      "Eighty-four rupees in coins and two twenty-rupee notes folded inside a plastic pouch"
+    ],
+    "emotionalResonance": "The physical condensation of a human life: seventy-six years of dignity reduced to two pounds of damp plastic held between an adult son's knees on a vinyl hospital bench."
+  },
+
+  "timeline": {
+    "11:45 PM": "The Admission. The siren of the ambulance; the fluorescent glare of emergency triage; Debabrata's breathing sounding like water boiling in a closed pot; the transfer to Neuro-ICU Bed 7.",
+    "01:12 AM": "The Corridor Geometry. Rahul alone on the fifth floor; the sound of the cleaning trolley; the pharmacy billing desk demanding ₹42,000 deposit for three ampoules of neuro-protective medication.",
+    "02:24 AM": "The Arrival. Shampa arrives with her roller suitcase from the airport; the immediate tension between the child who stayed to care and the child who succeeded elsewhere; the clash outside the glass door.",
+    "03:17 AM": "The Dead Hour. The hospital is at its quietest and most terrifying. The monitors beep with cold regularity. Rahul sits with the plastic bag; the sudden memory of the Hercules bicycle; the realization that the man who held his hand across Gariahat is never coming back.",
+    "04:40 AM": "The ICU Visit. Rahul and Shampa are permitted five minutes inside Bed 7. The sight of their father: intubated, bruised, yet peaceful. Shampa holds his cold left hand; Rahul applies the petroleum jelly to his lips. No words of grand reconciliation; only the shared witness of love.",
+    "05:30 AM": "The Grey Dawn. The crows begin outside the corridor windows; the first tea seller arrives on the pavement below; the doctor steps out through the double doors to speak with them. They stand together, brother and sister, ready to receive whatever comes."
+  },
+
+  "recurringMotifs": [
+    "The 3:17 AM digital red LED clock on the corridor wall",
+    "The blue plastic bag containing Debabrata's worn slippers and tape-repaired spectacles",
+    "The 8% battery indicator flashing red on Rahul's phone",
+    "The sound of the ventilator bellows in Bed 7: three seconds in, two seconds out",
+    "The memory of the black Hercules bicycle in the 1988 monsoon"
+  ],
+
+  "prohibitions": [
+    "Zero melodrama, zero theatrical sobbing for the sake of drama",
+    "Do not turn Debabrata's life or death into a motivational sermon about 'living every moment to the fullest'",
+    "The medical realities are accurate and restrained; hospital staff are neither angelic saints nor callous monsters, but exhausted professionals doing their shift",
+    "The ending must leave the reader with profound stillness, human dignity, and quiet truth"
+  ]
+}
