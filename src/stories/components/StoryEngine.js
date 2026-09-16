@@ -104,6 +104,20 @@ export default function StoryEngine({
 
   // Dedicated layout integration for Gold Standards A, B & C
   const hasIntegratedHeader = layout.id === "chapter-journey" || layout.id === "cinematic-rhythm" || layout.id === "editorial-sidebar";
+  // Dedicated layout integration for Gold Standards & Batch A layouts
+  // Dedicated layout integration for all 10 editorial layouts
+  const hasIntegratedHeader = (
+    layout.id === "chapter-journey" ||
+    layout.id === "cinematic-rhythm" ||
+    layout.id === "editorial-sidebar" ||
+    layout.id === "alternating-editorial" ||
+    layout.id === "scene-by-scene" ||
+    layout.id === "book-page" ||
+    layout.id === "letter-memory" ||
+    layout.id === "triple-rhythm" ||
+    layout.id === "mixed-editorial" ||
+    layout.id === "alternating-wide-moment"
+  );
 
   return (
     <article

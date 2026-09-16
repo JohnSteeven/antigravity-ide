@@ -2572,6 +2572,876 @@ body.theme-dark .story-badge--free {
   .story-cinematic-flow,
   .story-journey-flow,
   .story-editorial-sidebar-main {
+  .story-editorial-sidebar-main,
+  .story-alternating-flow,
+  .story-scene-flow,
+  .story-book-flow,
+  .story-letter-flow {
     padding-bottom: var(--story-chat-safe-bottom, 80px);
+  }
+}
+
+/* ==========================================================================
+   BATCH A: EDITORIAL STORY LAYOUTS
+   ========================================================================== */
+
+/* --- 1. Alternating Editorial (Story 2) --- */
+.story-alternating-layout {
+  width: 100%;
+  max-width: min(100% - clamp(1.5rem, 5vw, 5rem), 1260px);
+  margin-inline: auto;
+}
+
+.story-alternating-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.5rem, 5vw, 4.5rem);
+  padding-block: clamp(2rem, 4vw, 3.5rem);
+}
+
+.story-alternating-prose-section {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.story-editorial-scene-break {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.story-editorial-scene-break__mark {
+  width: 48px;
+  height: 2px;
+  background: var(--story-terracotta, #b85d38);
+  opacity: 0.6;
+}
+
+/* --- 2. Scene by Scene (Story 3) --- */
+.story-scene-layout {
+  width: 100%;
+  max-width: min(100% - clamp(1.5rem, 5vw, 5rem), 1260px);
+  margin-inline: auto;
+}
+
+.story-scene-header {
+  padding-block: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 3vw, 2.5rem);
+  border-bottom: 1px solid var(--story-border-subtle, rgba(0, 0, 0, 0.08));
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+}
+
+.story-scene-header__back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--story-muted, #736b63);
+  text-decoration: none;
+  margin-bottom: 1.25rem;
+}
+
+.story-scene-header__badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+  margin-bottom: 0.75rem;
+}
+
+.story-scene-header__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--story-text, #1c1917);
+  margin-bottom: 1rem;
+}
+
+.story-scene-header__deck {
+  font-family: var(--story-font-body, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--story-text-secondary, #44403c);
+  max-width: 65ch;
+  margin-bottom: 1.25rem;
+}
+
+.story-scene-header__meta {
+  font-size: 0.88rem;
+  color: var(--story-muted, #736b63);
+}
+
+.story-scene-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.5rem, 5vw, 4.5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-scene-item {
+  position: relative;
+}
+
+.story-scene-marker {
+  margin-bottom: 1.25rem;
+}
+
+.story-scene-marker__pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+  background: rgba(184, 93, 56, 0.08);
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  margin-bottom: 0.5rem;
+}
+
+.story-scene-marker__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-weight: 600;
+  color: var(--story-text, #1c1917);
+  line-height: 1.25;
+}
+
+.story-scene-prose-section {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.story-scene-break-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-block: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.story-scene-break-divider__line {
+  flex: 0 0 40px;
+  height: 1px;
+  background: var(--story-border-subtle, rgba(0, 0, 0, 0.12));
+}
+
+.story-scene-break-divider__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--story-terracotta, #b85d38);
+}
+
+/* --- 3. Book Page (Story 5) --- */
+.story-book-layout {
+  width: 100%;
+  max-width: min(100% - clamp(1.5rem, 5vw, 5rem), 980px);
+  margin-inline: auto;
+}
+
+.story-book-header {
+  text-align: center;
+  padding-block: clamp(3rem, 6vw, 5rem) clamp(2rem, 4vw, 3rem);
+  border-bottom: 2px solid var(--story-border-subtle, rgba(0, 0, 0, 0.08));
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+
+.story-book-header__back {
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.story-book-header__back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--story-muted, #736b63);
+  text-decoration: none;
+}
+
+.story-book-header__kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--story-muted, #736b63);
+  margin-bottom: 1rem;
+}
+
+.story-book-header__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--story-text, #1c1917);
+  margin-bottom: 1.25rem;
+}
+
+.story-book-header__ornament {
+  font-size: 1.4rem;
+  color: var(--story-terracotta, #b85d38);
+  margin-bottom: 1.25rem;
+  opacity: 0.8;
+}
+
+.story-book-header__deck {
+  font-family: var(--story-font-body, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  font-style: italic;
+  line-height: 1.65;
+  color: var(--story-text-secondary, #44403c);
+  max-width: 60ch;
+  margin-inline: auto;
+  margin-bottom: 1.5rem;
+}
+
+.story-book-header__byline {
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--story-muted, #736b63);
+}
+
+.story-book-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3rem, 6vw, 5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-book-chapter {
+  width: 100%;
+}
+
+.story-book-chapter-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.story-book-chapter-num {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+  margin-bottom: 0.5rem;
+}
+
+.story-book-chapter-title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(1.4rem, 2.5vw, 1.95rem);
+  font-weight: 600;
+  color: var(--story-text, #1c1917);
+  line-height: 1.25;
+  margin-bottom: 1rem;
+}
+
+.story-book-chapter-rule {
+  width: 60px;
+  height: 1px;
+  background: var(--story-border-subtle, rgba(0, 0, 0, 0.15));
+  margin-inline: auto;
+}
+
+.story-book-bookplate {
+  margin: 2rem auto 2.5rem;
+  max-width: 680px;
+  padding: 8px;
+  background: var(--story-card-bg, #faf8f5);
+  border: 1px solid var(--story-border-subtle, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.story-book-scene-break {
+  text-align: center;
+  padding-block: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.story-book-scene-break__ornament {
+  font-size: 1.25rem;
+  color: var(--story-terracotta, #b85d38);
+  opacity: 0.7;
+}
+
+.story-book-chapter .story-prose {
+  max-width: 72ch;
+  margin-inline: auto;
+}
+
+/* --- 4. Letter Memory (Story 7) --- */
+.story-letter-layout {
+  width: 100%;
+  max-width: min(100% - clamp(1.5rem, 5vw, 5rem), 960px);
+  margin-inline: auto;
+}
+
+.story-letter-header {
+  padding-block: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 3vw, 2.5rem);
+  border-bottom: 1px dashed var(--story-border-subtle, rgba(0, 0, 0, 0.15));
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  position: relative;
+}
+
+.story-letter-header__back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--story-muted, #736b63);
+  text-decoration: none;
+  margin-bottom: 1.25rem;
+}
+
+.story-letter-header__postmark {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+  margin-bottom: 0.75rem;
+}
+
+.story-letter-header__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--story-text, #1c1917);
+  margin-bottom: 1rem;
+}
+
+.story-letter-header__deck {
+  font-family: var(--story-font-body, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--story-text-secondary, #44403c);
+  max-width: 62ch;
+  margin-bottom: 1.25rem;
+}
+
+.story-letter-header__meta {
+  font-size: 0.85rem;
+  color: var(--story-muted, #736b63);
+  font-style: italic;
+}
+
+.story-letter-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-letter-entry {
+  position: relative;
+}
+
+.story-letter-chapter-header {
+  margin-bottom: 1.25rem;
+}
+
+.story-letter-date-marker {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--story-border-subtle, rgba(0, 0, 0, 0.08));
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.story-letter-date-marker__num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+}
+
+.story-letter-date-marker__label {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  font-weight: 600;
+  color: var(--story-text, #1c1917);
+}
+
+.story-letter-prose-section {
+  max-width: 66ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.story-letter-artifact-frame {
+  padding: 6px;
+  background: #fdfbf7;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+}
+
+.story-letter-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-block: clamp(1.5rem, 3vw, 2rem);
+}
+
+.story-letter-divider__line {
+  flex: 0 0 50px;
+  height: 1px;
+  background: var(--story-border-subtle, rgba(0, 0, 0, 0.12));
+}
+
+.story-letter-divider__stamp {
+  font-size: 0.95rem;
+  color: var(--story-muted, #736b63);
+}
+
+/* ==========================================================================
+   BATCH B — 8. TRIPLE RHYTHM (Story 8)
+   ========================================================================== */
+
+.story-triple-layout {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3.5vw, 2.5rem);
+}
+
+.story-triple-header {
+  margin-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-triple-header__inner {
+  max-width: 72ch;
+  margin-inline: auto;
+  text-align: center;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.story-triple-header__back {
+  margin-bottom: 1.25rem;
+}
+
+.story-triple-header__back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--story-muted, #736b63);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.story-triple-header__back a:hover {
+  color: var(--story-text, #1c1917);
+}
+
+.story-triple-header__meta-strip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.story-triple-header__kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+}
+
+.story-triple-header__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(2.25rem, 5vw, 3.65rem);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--story-text, #1c1917);
+  margin-bottom: 1.25rem;
+}
+
+.story-triple-header__deck {
+  font-family: var(--story-font-body, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--story-text-secondary, #44403c);
+  max-width: 62ch;
+  margin-inline: auto;
+  margin-bottom: 1.5rem;
+}
+
+.story-triple-header__author {
+  font-size: 0.85rem;
+  color: var(--story-muted, #736b63);
+}
+
+.story-triple-header__hero {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.story-triple-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3rem, 6vw, 5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-triple-movement-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding-block: 0.85rem;
+  margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
+  border-top: 1px solid var(--story-border-subtle, rgba(0, 0, 0, 0.08));
+  border-bottom: 1px solid var(--story-border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+.story-triple-movement-badge__num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+}
+
+.story-triple-movement-badge__divider {
+  color: var(--story-muted, #736b63);
+  font-size: 0.85rem;
+}
+
+.story-triple-movement-badge__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--story-text, #1c1917);
+}
+
+.story-triple-prose-container {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.story-triple-wide-visual {
+  max-width: 1200px;
+  margin-inline: auto;
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.story-triple-split {
+  gap: clamp(2rem, 4vw, 3.5rem);
+}
+
+.story-triple-bookplate-visual {
+  max-width: 540px;
+  margin-inline: auto;
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.story-triple-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-block: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.story-triple-divider__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--story-muted, #736b63);
+  opacity: 0.4;
+}
+
+.story-triple-quote {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* ==========================================================================
+   BATCH B — 9. MIXED EDITORIAL (Story 9)
+   ========================================================================== */
+
+.story-mixed-layout {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3.5vw, 2.5rem);
+}
+
+.story-mixed-header {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: center;
+  padding-block: clamp(1.5rem, 3.5vw, 3rem);
+  margin-bottom: clamp(3rem, 6vw, 5rem);
+  border-bottom: 1px solid var(--story-border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+.story-mixed-header__meta-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.story-mixed-header__back {
+  margin-bottom: 1.25rem;
+}
+
+.story-mixed-header__back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--story-muted, #736b63);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.story-mixed-header__back a:hover {
+  color: var(--story-text, #1c1917);
+}
+
+.story-mixed-header__kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+  margin-bottom: 0.85rem;
+}
+
+.story-mixed-header__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(2.35rem, 5vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--story-text, #1c1917);
+  margin-bottom: 1.25rem;
+}
+
+.story-mixed-header__deck {
+  font-family: var(--story-font-body, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.08rem, 1.8vw, 1.25rem);
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--story-text-secondary, #44403c);
+  margin-bottom: 1.5rem;
+}
+
+.story-mixed-header__byline {
+  font-size: 0.85rem;
+  color: var(--story-muted, #736b63);
+}
+
+.story-mixed-header__media-column {
+  position: relative;
+}
+
+.story-mixed-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3rem, 6vw, 4.5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-mixed-prose-container {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.story-mixed-inline-plate {
+  max-width: 580px;
+  margin-inline: auto;
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.story-mixed-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.story-mixed-divider__ornament {
+  font-size: 0.85rem;
+  color: var(--story-terracotta, #b85d38);
+  opacity: 0.65;
+}
+
+.story-mixed-quote {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* ==========================================================================
+   BATCH B — 10. ALTERNATING WIDE MOMENT (Story 10)
+   ========================================================================== */
+
+.story-wide-layout {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3.5vw, 2.5rem);
+}
+
+.story-wide-header {
+  margin-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-wide-header__content {
+  max-width: 72ch;
+  margin-inline: auto;
+  text-align: center;
+  margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
+}
+
+.story-wide-header__back {
+  margin-bottom: 1.25rem;
+}
+
+.story-wide-header__back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--story-muted, #736b63);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.story-wide-header__back a:hover {
+  color: var(--story-text, #1c1917);
+}
+
+.story-wide-header__kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--story-terracotta, #b85d38);
+  margin-bottom: 0.85rem;
+}
+
+.story-wide-header__title {
+  font-family: var(--story-font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(2.35rem, 5vw, 3.85rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--story-text, #1c1917);
+  margin-bottom: 1.25rem;
+}
+
+.story-wide-header__deck {
+  font-family: var(--story-font-body, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--story-text-secondary, #44403c);
+  max-width: 62ch;
+  margin-inline: auto;
+  margin-bottom: 1.5rem;
+}
+
+.story-wide-header__byline {
+  font-size: 0.85rem;
+  color: var(--story-muted, #736b63);
+}
+
+.story-wide-header__hero {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.story-wide-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3rem, 6vw, 5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.story-wide-prose-container {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.story-wide-moment-breakout {
+  max-width: 1200px;
+  margin-inline: auto;
+  margin-top: clamp(2.25rem, 4.5vw, 3.5rem);
+}
+
+.story-wide-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.story-wide-divider__line {
+  width: 80px;
+  height: 1px;
+  background: var(--story-border-subtle, rgba(0, 0, 0, 0.12));
+}
+
+.story-wide-quote-wrap {
+  max-width: 70ch;
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* ==========================================================================
+   BATCH B — Responsive Stacking (Mobile / 390px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .story-triple-layout,
+  .story-mixed-layout,
+  .story-wide-layout {
+    padding-inline: clamp(1.1rem, 5vw, 1.5rem);
+  }
+
+  .story-mixed-header {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .story-triple-split {
+    flex-direction: column !important;
+  }
+
+  .story-triple-movement-badge {
+    flex-wrap: wrap;
+  }
+
+  .story-wide-moment-breakout,
+  .story-triple-wide-visual {
+    width: 100%;
+    margin-inline: 0;
   }
 }
