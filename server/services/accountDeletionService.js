@@ -22,7 +22,12 @@ const privacyService = require("../life/services/privacyService");
 
 const requestDeletion = async (user, password, confirmation) => {
   if (confirmation !== "DELETE MY ACCOUNT") throw Object.assign(new Error("Type DELETE MY ACCOUNT to confirm."), { status: 422 });
-  if (!user.passwordHash || !await bcrypt.compare(String(password || ""), user.passwordHash)) throw Object.assign(new Error("Your password is incorrect."), { status: 403 });
+  let passwordHash = user.passwordHash;
+  if (!passwordHash && user._id) {
+    const fresh = await User.findById(user._id).select("+passwordHash");
+    passwordHash = fresh?.passwordHash;
+  }
+  if (!passwordHash || !await bcrypt.compare(String(password || ""), passwordHash)) throw Object.assign(new Error("Your password is incorrect."), { status: 403 });
   user.scheduledDeletionAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   user.pendingDeletion = true;
   user.pendingDeletionAt = new Date();

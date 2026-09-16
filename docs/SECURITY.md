@@ -4,7 +4,9 @@ This document describes verified repository behavior. It is not a formal securit
 
 ## Authentication
 
-- Passwords are hashed with bcrypt; registration uses cost 12.
+- Passwords are hashed with bcrypt; registration, changes, and administrative resets use the standard cost 12 (`PASSWORD_SALT_ROUNDS`).
+- User `passwordHash` is set to `select: false` by default in the Mongoose schema; it is explicitly requested with `.select("+passwordHash")` solely in authentication, credential verification, password change, and reauthentication flows.
+- Administrative password reset (`POST /api/users/:id/reset-password`) enforces server-authoritative target-user authorization: non-admin operators or roles with `users.manage` cannot reset Administrator accounts. Resets invalidate `tokenVersion` and revoke active sessions and refresh tokens.
 - Access and refresh JWTs use separate secrets.
 - Refresh JWTs include a random `jti`; only hashed refresh tokens are persisted.
 - Access/refresh tokens are delivered in HttpOnly, SameSite=Lax cookies and are not stored by the client in local storage.
@@ -80,6 +82,8 @@ ProtectedMediaAsset stores metadata/ownership, not a claim of secure streaming. 
 
 General CMS uploads are public assets under `/uploads` and accept only allowlisted MIME/extension pairs with magic-byte checks; executable formats such as HTML, SVG, and JavaScript are rejected. ProtectedMediaAsset delivery never falls back to this public mount.
 
+Public editorial and media assets may remain publicly readable under `/uploads`. Private or user-sensitive assets (e.g. Life data, user exports, payment credentials, private learner progress, auth secrets) must never depend on or be stored in this public `/uploads` directory. Dedicated signed storage and CDN routing (e.g. Cloudflare R2 / signed URLs) remains scheduled for Phase 18.
+
 ## Rich content and CMS theme safety
 
 Rich Article/Story HTML is sanitized on write and again on public serialization. Inline styles, scripts, event handlers, data-image URLs, and untrusted iframes are removed. Video embeds are limited to the configured YouTube/Vimeo host allowlist, and new-tab links receive `noopener noreferrer`.
@@ -122,6 +126,12 @@ Protected CMS collections (draft/full Content records, users, roles, comments, t
 Account deletion requires password confirmation, has a seven-day recovery period, revokes sessions, and later removes private account data while preserving published Creator content in deactivated form.
 
 AuditLogger maps events into the ActivityLog schema with action, description, resource, user, request context, module, status, and optional diff. Audit write failure is logged and must not silently alter authorization outcomes.
+
+## Legacy backup safety and disaster recovery
+
+- Legacy JSON backup and restore operations (`backupService`) are blocked in production environments by default; triggering backup in production requires explicit `ALLOW_LEGACY_BACKUP_IN_PRODUCTION=true`.
+- Destructive restore (`deleteMany()`) via the legacy JSON service is permanently blocked in production environments. Complete transactional disaster recovery requires managed replica-set point-in-time recovery and belongs to the later infrastructure hardening phase.
+- Legacy backup generation sanitizes sensitive authentication fields (`passwordHash`, `passwordResetToken`, `passwordResetExpires`, `twoFactor`, `backupCodes`, `passwordHistory`), preventing plaintext credential export to disk.
 
 ## Operational requirements
 

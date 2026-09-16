@@ -26,7 +26,7 @@ const UserSchema = new mongoose.Schema(
     },
     countryCode: { type: String, default: "" },
     mobile: { type: String, required: true, unique: true, trim: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: true, select: false },
     role: { type: String, default: "Reader" },
     status: { type: String, enum: ["ACTIVE", "SUSPENDED", "PENDING_VERIFICATION", "DISABLED"], default: "ACTIVE" },
     tokenVersion: { type: Number, default: 0 },

@@ -6,7 +6,9 @@ module.exports = {
   label: "Password Protected",
   points: SECURITY_SCORE.PASSWORD_CONFIGURED,
   evaluate(user) {
-    const pass = Boolean(user.passwordHash);
+    const pass = user.passwordHash !== undefined
+      ? Boolean(user.passwordHash)
+      : Boolean(!user.provider || user.provider === "password");
     return {
       pass,
       points: pass ? this.points : 0,

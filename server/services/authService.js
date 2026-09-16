@@ -44,10 +44,14 @@ const safeAudit = (data) => activityLogService.createLog(data).catch(() => {});
 const resetTokenHash = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
-const findUserByIdentifier = (identifier) => {
+const findUserByIdentifier = (identifier, select) => {
   const normalized = normalizeIdentifier(identifier);
   if (normalized.type === "mobile" && !isValidE164(normalized.value)) return null;
-  return User.findOne({ [normalized.type]: normalized.value, isDeleted: false });
+  const query = User.findOne({ [normalized.type]: normalized.value, isDeleted: false });
+  if (select && typeof query?.select === "function") {
+    return query.select(select);
+  }
+  return query;
 };
 
 class AuthService {
@@ -123,7 +127,7 @@ class AuthService {
   }
 
   async login(identifier, password, remember, req, res) {
-    const user = await findUserByIdentifier(identifier);
+    const user = await findUserByIdentifier(identifier, "+passwordHash");
     if (!user) {
       await bcrypt.compare(String(password || ""), DUMMY_PASSWORD_HASH);
       const error = new Error("Invalid email/mobile or password.");

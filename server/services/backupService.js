@@ -4,12 +4,39 @@ const mongoose = require("mongoose");
 const backupRepository = require("../repositories/backupRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
 
+const isProduction = () => process.env.NODE_ENV === "production";
+const isLegacyBackupAllowedInProd = () => process.env.ALLOW_LEGACY_BACKUP_IN_PRODUCTION === "true";
+
+const SENSITIVE_USER_FIELDS = [
+  "passwordHash",
+  "passwordResetToken",
+  "passwordResetExpires",
+  "twoFactor",
+  "backupCodes",
+  "passwordHistory",
+];
+
+const sanitizeUserDoc = (doc) => {
+  if (!doc || typeof doc !== "object") return doc;
+  const sanitized = { ...doc };
+  for (const field of SENSITIVE_USER_FIELDS) {
+    delete sanitized[field];
+  }
+  return sanitized;
+};
+
 class BackupService {
   async getBackups() {
     return backupRepository.find();
   }
 
   async triggerBackup(userId) {
+    if (isProduction() && !isLegacyBackupAllowedInProd()) {
+      const err = new Error("Legacy backup is disabled in production. Explicit ALLOW_LEGACY_BACKUP_IN_PRODUCTION=true is required.");
+      err.status = 403;
+      throw err;
+    }
+
     const backupDir = path.join(__dirname, "../backups");
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
@@ -38,7 +65,10 @@ class BackupService {
     for (const modelName of collections) {
       try {
         const Model = mongoose.model(modelName);
-        const docs = await Model.find({}).lean();
+        let docs = await Model.find({}).lean();
+        if (modelName === "User") {
+          docs = docs.map(sanitizeUserDoc);
+        }
         backupData[modelName] = docs;
         recordCounts[modelName.toLowerCase()] = docs.length;
       } catch (err) {
@@ -73,21 +103,36 @@ class BackupService {
   }
 
   async getBackupFilePath(id) {
+    if (isProduction() && !isLegacyBackupAllowedInProd()) {
+      const err = new Error("Legacy backup operations are disabled in production.");
+      err.status = 403;
+      throw err;
+    }
+
     const backup = await backupRepository.findById(id);
     if (!backup) throw new Error("Backup record not found.");
 
-    const filePath = path.join(__dirname, "../backups", backup.fileName);
+    const safeFileName = path.basename(backup.fileName);
+    const filePath = path.join(__dirname, "../backups", safeFileName);
     if (!fs.existsSync(filePath)) {
       throw new Error("Backup file not found on disk.");
     }
-    return { filePath, fileName: backup.fileName };
+    return { filePath, fileName: safeFileName };
   }
 
   async restoreBackup(id, userId) {
+    // Block destructive restore in production unconditionally
+    if (isProduction()) {
+      const err = new Error("Destructive restore using legacy backup is permanently disabled in production. Use managed replica-set point-in-time recovery.");
+      err.status = 403;
+      throw err;
+    }
+
     const backup = await backupRepository.findById(id);
     if (!backup) throw new Error("Backup record not found.");
 
-    const filePath = path.join(__dirname, "../backups", backup.fileName);
+    const safeFileName = path.basename(backup.fileName);
+    const filePath = path.join(__dirname, "../backups", safeFileName);
     if (!fs.existsSync(filePath)) {
       throw new Error("Backup file not found on disk.");
     }
@@ -123,7 +168,8 @@ class BackupService {
     const backup = await backupRepository.softDelete(id);
     if (!backup) throw new Error("Backup log not found.");
 
-    const filePath = path.join(__dirname, "../backups", backup.fileName);
+    const safeFileName = path.basename(backup.fileName);
+    const filePath = path.join(__dirname, "../backups", safeFileName);
     if (fs.existsSync(filePath)) {
       try {
         fs.unlinkSync(filePath);

@@ -91,7 +91,7 @@ const createIdentityChangeService = (dependencies = {}) => {
 
   const reauthenticate = async (userId, reauth = {}) => {
     const user = await deps.User.findOne({ _id: userId, isDeleted: false, status: "ACTIVE" })
-      .select("passwordHash +twoFactor.secret email mobile twoFactor.enabled");
+      .select("+passwordHash +twoFactor.secret email mobile twoFactor.enabled");
     if (!user) throw errorWith("Account is unavailable.", 403, "ACCOUNT_UNAVAILABLE");
 
     const credential = String(reauth.credential || "");

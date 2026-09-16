@@ -266,7 +266,7 @@ class UserController {
       if (!password) {
         return res.status(400).json({ message: "Password is required." });
       }
-      const user = await userService.resetPassword(id, password, req.user._id);
+      const user = await userService.resetPassword(id, password, req.user._id, req.user);
       res.json({ success: true, user: safeUser(user), message: "Password reset completed." });
     } catch (err) {
       next(err);

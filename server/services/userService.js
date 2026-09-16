@@ -1,6 +1,7 @@
 const userRepository = require("../repositories/userRepository");
 const activityLogRepository = require("../repositories/activityLogRepository");
 const bcrypt = require("bcrypt");
+const { PASSWORD_SALT_ROUNDS } = require("../config/security");
 const RefreshToken = require("../models/RefreshToken");
 const Session = require("../models/Session");
 
@@ -164,11 +165,25 @@ class UserService {
     return user;
   }
 
-  async resetPassword(id, newPassword, userId) {
+  async resetPassword(id, newPassword, userId, actor = null) {
     const user = await userRepository.findById(id);
-    if (!user) throw new Error("User not found.");
+    if (!user) {
+      const err = new Error("User not found.");
+      err.status = 404;
+      throw err;
+    }
 
-    const salt = await bcrypt.genSalt(10);
+    const actorUser = actor || (userId ? await userRepository.findById(userId) : null);
+    const isTargetAdmin = user.role === "Admin";
+    const isActorAdmin = actorUser && actorUser.role === "Admin";
+
+    if (isTargetAdmin && !isActorAdmin) {
+      const forbidden = new Error("Forbidden. Non-admin users cannot reset an Administrator's password.");
+      forbidden.status = 403;
+      throw forbidden;
+    }
+
+    const salt = await bcrypt.genSalt(PASSWORD_SALT_ROUNDS || 12);
     user.passwordHash = await bcrypt.hash(newPassword, salt);
     user.tokenVersion = (user.tokenVersion || 0) + 1; // force logout other devices
     user.lastPasswordChange = new Date();
