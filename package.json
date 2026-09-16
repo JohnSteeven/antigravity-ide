@@ -13,6 +13,7 @@
     "doctor": "node server/scripts/doctor.js",
     "audit:secrets": "node server/scripts/safeSecretScan.js",
     "audit:assets": "node server/scripts/repositoryAssetInventory.js",
+    "audit:stories": "node server/scripts/storyEditorialAudit.js",
     "clean:parcel-temp": "node server/scripts/clearParcelTemp.js",
     "server": "node server/index.js",
     "dev:server": "node server/index.js",
@@ -37,6 +38,7 @@
     "fixture:life": "node server/scripts/generateLifeFixtures.js",
     "migrate": "node server/scripts/runMigrations.js",
     "migrate:validate": "node server/scripts/runMigrations.js validate",
+    "migrate:identity:dry-run": "node server/scripts/identityNormalizationDryRun.js",
     "preview:qa": "node server/scripts/serveQaBuild.js",
     "test:multiplayer:preview": "node server/scripts/multiplayerPreviewSmoke.js"
   },

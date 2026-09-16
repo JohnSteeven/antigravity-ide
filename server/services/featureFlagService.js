@@ -52,6 +52,7 @@ class FeatureFlagService {
   static async evaluate(flagKey, context = {}) {
     const flag = await FeatureFlag.findOne({ key: flagKey.toLowerCase() });
     if (!flag) {
+      if (context.requireRegistered) return { allowed: false, status: 'unavailable', reason: 'Feature flag is not configured' };
       // Unregistered feature defaults to enabled for backward compatibility
       return { allowed: true, status: 'enabled', reason: 'Unregistered flag' };
     }

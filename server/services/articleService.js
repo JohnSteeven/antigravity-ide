@@ -101,10 +101,19 @@ class ArticleService {
     // Generate unique slug
     let baseSlug = data.slug || data.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     let slug = baseSlug;
-    let counter = 1;
-    while (await Article.findOne({ slug })) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
+    if (data.slug) {
+      const existing = await Article.findOne({ slug: data.slug });
+      if (existing) {
+        const error = new Error("E11000 duplicate key error: slug already exists");
+        error.code = 11000;
+        throw error;
+      }
+    } else {
+      let counter = 1;
+      while (await Article.findOne({ slug })) {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
     }
     data.slug = slug;
     data.createdBy = userId;
@@ -194,8 +203,20 @@ class ArticleService {
       throw new Error("Invalid metric type.");
     }
 
+    let targetId = id;
+    if (!mongoose.isValidObjectId(id)) {
+      const bySlug = await Article.findOne({
+        slug: String(id).toLowerCase(),
+        contentType: "article",
+        status: "published",
+        isDeleted: false,
+      }).select("_id").lean();
+      if (!bySlug) return null;
+      targetId = bySlug._id;
+    }
+
     if (metric === "views") {
-      return articleRepository.incrementPublishedArticleView(id);
+      return articleRepository.incrementPublishedArticleView(targetId);
     }
 
     if (!userId) {
@@ -210,9 +231,9 @@ class ArticleService {
     };
     const userField = fieldMap[metric];
 
-    const { isAdded, libraryItem } = await ReaderProfileService.toggleArticleReference(userId, userField, id);
+    const { isAdded, libraryItem } = await ReaderProfileService.toggleArticleReference(userId, userField, targetId);
     const incValue = isAdded ? 1 : -1;
-    const article = await articleRepository.updateEngagementCounter(id, metric, incValue);
+    const article = await articleRepository.updateEngagementCounter(targetId, metric, incValue);
     if (!article) return null;
 
     return { article, isActive: isAdded, libraryItem };

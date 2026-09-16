@@ -19,6 +19,23 @@ const PROGRESS_INDEX = [
 ];
 
 const INDEXES = Object.freeze({ readingprogresses: [PROGRESS_INDEX] });
+const MERGE_RECEIPT = "_readerMigration011Merge";
+
+// A winner and its receipt are saved in one Mongo document write. If deletion
+// is interrupted, finish that exact merge before reading the group again;
+// otherwise the winner's already-added time would be counted a second time.
+const finishProgressMerge = async (progress, winner) => {
+  const receipt = winner[MERGE_RECEIPT];
+  if (!receipt || receipt.version !== 1 || !Array.isArray(receipt.duplicateIds)) {
+    throw new Error("Migration 011 found an invalid pending progress merge. Review the backup before continuing.");
+  }
+  await progress.deleteMany({
+    _id: { $in: receipt.duplicateIds },
+    userId: winner.userId,
+    articleId: winner.articleId,
+  });
+  await progress.updateOne({ _id: winner._id }, { $unset: { [MERGE_RECEIPT]: "" } });
+};
 
 const validDate = (value) => value instanceof Date && Number.isFinite(value.getTime());
 const latestDate = (values) => values.filter(validDate).sort((left, right) => right - left)[0] || null;
@@ -108,6 +125,9 @@ module.exports = {
       );
     }
 
+    const pendingMerges = progress.find({ [MERGE_RECEIPT]: { $exists: true } });
+    for await (const winner of pendingMerges) await finishProgressMerge(progress, winner);
+
     const groups = progress.aggregate([
       { $match: { userId: { $type: "objectId" }, articleId: { $type: "objectId" } } },
       { $sort: { lastReadAt: -1, updatedAt: -1, _id: 1 } },
@@ -115,10 +135,12 @@ module.exports = {
     ]);
     for await (const group of groups) {
       const merged = mergeProgressRows(group.rows);
+      const winner = group.rows[0];
+      const receipt = merged.duplicateIds.length ? { version: 1, duplicateIds: merged.duplicateIds } : null;
       await progress.updateOne(
         { _id: merged.winnerId },
         {
-          $set: merged.set,
+          $set: { ...merged.set, ...(receipt ? { [MERGE_RECEIPT]: receipt } : {}) },
           $unset: {
             sessionId: "",
             articleSlug: "",
@@ -129,13 +151,11 @@ module.exports = {
           },
         }
       );
-      if (merged.duplicateIds.length) {
-        await progress.deleteMany({ _id: { $in: merged.duplicateIds } });
-      }
+      if (receipt) await finishProgressMerge(progress, { ...winner, [MERGE_RECEIPT]: receipt });
     }
 
     await progress.dropIndex("userId_1_articleId_1").catch((error) => {
-      if (error.codeName !== "IndexNotFound" && error.code !== 27) throw error;
+      if (!["IndexNotFound", "NamespaceNotFound"].includes(error.codeName) && ![26, 27].includes(error.code)) throw error;
     });
     const indexes = await progress.indexes().catch((error) =>
       error.codeName === "NamespaceNotFound" ? [] : Promise.reject(error));

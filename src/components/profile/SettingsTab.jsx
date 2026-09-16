@@ -169,7 +169,7 @@ const SettingsTab = () => {
                   <FiSmartphone /> Registered Mobile Number
                 </div>
                 <div className="rp-toggle-desc">
-                  {user.mobile ? `${user.countryCode || "+91"} ${user.mobile}` : "Not provided"}
+                  {user.mobile || "Not provided"}
                 </div>
               </div>
               <div style={{ fontSize: "0.82rem", fontWeight: 700, color: user.verified?.mobile ? "#10b981" : "#f59e0b" }}>

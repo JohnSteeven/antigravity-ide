@@ -3,6 +3,7 @@ const { E2E_MONGO_URI, E2E_SERVER_PORT, E2E_UI_PORT } = require("./e2e/support/e
 
 const baseURL = `http://127.0.0.1:${E2E_UI_PORT}`;
 const apiURL = `http://127.0.0.1:${E2E_SERVER_PORT}`;
+const reuseExistingServer = process.env.E2E_REUSE_SERVER === "true";
 
 module.exports = defineConfig({
   testDir: "./e2e",
@@ -28,7 +29,7 @@ module.exports = defineConfig({
       command: "node server/index.js",
       url: `${apiURL}/api/readiness`,
       timeout: 60_000,
-      reuseExistingServer: false,
+      reuseExistingServer,
       env: {
         NODE_ENV: "test",
         SERVER_PORT: String(E2E_SERVER_PORT),
@@ -44,7 +45,7 @@ module.exports = defineConfig({
       command: `npx parcel index.html --port ${E2E_UI_PORT} --no-cache`,
       url: baseURL,
       timeout: 90_000,
-      reuseExistingServer: false,
+      reuseExistingServer,
       env: {
         NODE_ENV: "test",
         PARCEL_PROXY_TARGET: apiURL,

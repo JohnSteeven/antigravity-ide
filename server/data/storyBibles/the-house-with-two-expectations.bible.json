@@ -1,0 +1,83 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 4,
+  "slug": "the-house-with-two-expectations",
+  "title": "The House with Two Expectations",
+  "category": "Family",
+  "accessLevel": "premium",
+  "layout": "editorial-sidebar",
+  "targetReadingTime": "45 min",
+
+  "voiceProfile": {
+    "pov": "Third-person, alternating focal characters: Priya (the daughter) and Vasudha (the mother). Equal weight to both. The story refuses to declare a winner.",
+    "tense": "Past tense throughout, with the exception of a framing device: a single present-tense prologue that opens mid-argument, then pulls back into the past.",
+    "register": "Restrained, meticulous, like a photograph taken by someone who both loved and feared the subjects. Neither Priya nor Vasudha is monstrous. Neither is entirely sympathetic.",
+    "sentenceRhythm": "Formal and measured in the mother's chapters. More fractured and urgent in Priya's. The prose itself embodies the gap between them.",
+    "narratorDistance": "The editorial-sidebar layout is used structurally: some sections carry the main narrative; sidebar sections carry what each character is NOT saying in the same scene. This creates dramatic irony without either character's knowledge.",
+    "distinctiveDevices": [
+      "The sidebar sections are written in a detached, almost documentary voice — like stage directions that reveal what neither character admits",
+      "Objects recur: the dining table as battlefield, the sewing machine Vasudha inherited from her mother and refuses to stop using",
+      "The word 'doctor' is used by both characters to mean something different — never acknowledged"
+    ]
+  },
+
+  "characters": {
+    "protagonist1": {
+      "name": "Priya Iyer",
+      "age": "22 at story start",
+      "background": "Final year, English literature, Madras University. Has secretly applied to a creative writing MFA programme in England.",
+      "appearance": "Long hair always tied back because she does not have time for it. Reads on buses. Wears the same navy sweater in almost every scene.",
+      "psychologicalProfile": {
+        "strengths": ["Disciplined imagination", "Moral clarity (in her own framework)", "Courage when cornered"],
+        "flaws": ["Treats her mother's life as evidence rather than life", "Has decided what the argument is before it starts", "Her love for her mother and her resentment of her mother are so fused she cannot separate them"],
+        "centralDesire": "To become a writer. Not a teacher. Not a doctor. A writer — and to leave home to do it.",
+        "what-she-misunderstands": "Her mother's resistance is not ignorance. Vasudha knows exactly what a creative life costs, because she gave hers up."
+      }
+    },
+    "protagonist2": {
+      "name": "Vasudha Iyer",
+      "age": "49 at story start",
+      "background": "Was a painter — serious, technically trained — before marriage. Has not painted since 1994. Works as a school administrator.",
+      "appearance": "Silver threading into black hair that she refuses to dye. Precise, economical movements. Never wastes a motion.",
+      "psychologicalProfile": {
+        "strengths": ["Has survived things Priya does not know about", "Practically brilliant", "Loves fiercely, if not demonstratively"],
+        "flaws": ["Has confused 'protecting her daughter from her own choices' with 'preventing her daughter from making them'", "Cannot say 'I'm proud of you' without adding 'but'"],
+        "centralDesire": "For Priya to have a stable life — not because she doesn't believe in Priya's talent, but because she has seen what happens when talent runs out of money",
+        "what-she-misunderstands": "Priya knows about the paintings. She found them in the attic, age 14. She has never told Vasudha this."
+      }
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Suresh Iyer (Father)",
+        "role": "Mostly silent. Mediates without commitment. A kind man who chose peace over side-taking years ago. His silence is its own form of complicity.",
+        "key-moment": "The only time he speaks in an argument, he says the wrong name — calls Priya 'Vasudha' — and leaves the room."
+      }
+    ]
+  },
+
+  "theHouseWithTwoExpectations": {
+    "what-it-means": "The title refers to the house itself — the same house contains two irreconcilable expectations: Vasudha's expectation that Priya will stay, and Priya's expectation that she will be allowed to leave. Both expectations live there simultaneously. No one has explicitly named this.",
+    "theAttic": "Contains Vasudha's stored canvases from 1982–1993. Priya found them at 14. This is the story's buried secret. Its revelation — which may or may not happen within the narrative — is the story's hinge."
+  },
+
+  "recurringMotifs": {
+    "theSewingMachine": "Vasudha inherited it from her mother. She repairs clothes on it every Sunday. Priya has been aware of this sound her entire life — it is both comforting and oppressive. It represents continuity that Priya wants to break and Vasudha cannot imagine living without.",
+    "theDiningTableArguments": "Every major conflict happens at or near the dining table. The table is always described with specificity: the particular crack in the surface, the mismatched chairs from different decades.",
+    "theEnvelopeInPriya's bag": "The MFA offer letter. Arrives in Chapter 4. Priya does not open it in front of anyone. We see her read it alone in a stairwell."
+  },
+
+  "storyArc": {
+    "premise": "Priya has been accepted to an MFA programme in England. She must tell her mother. The story covers the three months between receiving the offer and her departure (or not-departure — the ending is ambiguous).",
+    "structure": "The main narrative is set in the present (the three months). The sidebar sections reveal backstory — Vasudha's abandoned painting career, the year Priya found the canvases, the argument that never happened about them.",
+    "ending": "Ambiguous and permanent. The final scene: Priya is at the airport. The check-in queue is moving. Vasudha is not there — they parted at the house. Priya's phone has two unread messages. The story ends before she reads them. We do not know if she boards the plane. We do not know what the messages say. We know she is standing in the queue."
+  },
+
+  "prohibitions": [
+    "Neither character is the villain. The story refuses to adjudicate.",
+    "No speech about 'following your dreams'. The story does not use that phrase or any variant of it.",
+    "Vasudha's painting backstory is revealed gradually — never in a big confession scene.",
+    "The father must not be used as a comic or wise-elder device.",
+    "The ending must resist resolution. Do not have Vasudha arrive at the airport."
+  ]
+}

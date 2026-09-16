@@ -65,6 +65,26 @@ export default function StoriesPage() {
     }
   }, [fetchStories]);
 
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // Derive top-level categories from published story.category only — not tags.
+  // Tags are available for search/discovery but must not appear as filter chips.
+  const categories = useMemo(() => {
+    const set = new Set();
+    allStories.forEach((s) => {
+      if (s.category && s.category !== "Stories") set.add(s.category);
+    });
+    const list = Array.from(set).filter(Boolean).slice(0, 10);
+    return ["All", ...(list.length > 0 ? list : ["Life", "Family", "Friendship"])];
+  }, [allStories]);
+
+  const filteredStories = useMemo(() => {
+    if (selectedCategory === "All") return allStories;
+    return allStories.filter(
+      (s) => s.category === selectedCategory || (Array.isArray(s.tags) && s.tags.includes(selectedCategory))
+    );
+  }, [allStories, selectedCategory]);
+
   // Featured Story: first featured story or first story in list
   const featuredStory = useMemo(() => {
     if (!allStories || !allStories.length) return null;
@@ -100,30 +120,63 @@ export default function StoriesPage() {
     <main className="stories-page" aria-label="Stories destination">
       <StoryHero />
 
-      {/* TODAY'S STORY (Centerpiece) */}
-      {featuredStory && <FeaturedStory story={featuredStory} />}
+      {/* Dynamic Category / Theme filter pills */}
+      <nav className="story-category-filters" aria-label="Filter stories by category or theme">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            className={`story-category-pill${selectedCategory === cat ? " active" : ""}`}
+            onClick={() => setSelectedCategory(cat)}
+            aria-pressed={selectedCategory === cat}
+          >
+            {cat}
+          </button>
+        ))}
+      </nav>
 
-      {/* STORIES YOU MAY HAVE MISSED */}
-      {missedStories.length > 0 && (
-        <section className="story-grid-section story-section-missed">
+      {selectedCategory !== "All" ? (
+        <section className="story-grid-section" aria-label={`Stories in ${selectedCategory}`}>
           <header className="story-section-header">
-            <h2 className="story-section-title">Stories You May Have Missed</h2>
+            <h2 className="story-section-title">Stories in &ldquo;{selectedCategory}&rdquo;</h2>
+            <p className="story-section-sub">{filteredStories.length} {filteredStories.length === 1 ? "story" : "stories"} found.</p>
           </header>
-          <div className="story-grid">
-            {missedStories.map((story) => (
-              <StoryCard key={story.id || story._id || story.slug} story={story} />
-            ))}
-          </div>
+          {filteredStories.length > 0 ? (
+            <div className="story-grid">
+              {filteredStories.map((story) => (
+                <StoryCard key={story.id || story._id || story.slug} story={story} />
+              ))}
+            </div>
+          ) : (
+            <p className="stories-empty-message">No stories found in this category.</p>
+          )}
         </section>
-      )}
+      ) : (
+        <>
+          {/* TODAY'S STORY (Centerpiece) */}
+          {featuredStory && <FeaturedStory story={featuredStory} />}
 
-      {/* TONIGHT'S READ (Atmospheric Editorial Section) */}
+          {/* STORIES YOU MAY HAVE MISSED */}
+          {missedStories.length > 0 && (
+            <section className="story-grid-section story-section-missed">
+              <header className="story-section-header">
+                <h2 className="story-section-title">Stories You May Have Missed</h2>
+              </header>
+              <div className="story-grid">
+                {missedStories.map((story) => (
+                  <StoryCard key={story.id || story._id || story.slug} story={story} />
+                ))}
+              </div>
+            </section>
+          )}
+
+      {/* A STORY TO SLOW DOWN WITH (Atmospheric Editorial Section) */}
       {tonightStory && (
-        <section className="tonight-story-section" aria-label="Tonight's Read">
+        <section className="tonight-story-section" aria-label="A Story to Slow Down With">
           <div className={`tonight-story-layout${tonightImage ? "" : " tonight-story-layout--text-only"}`}>
             <div className="tonight-story-content">
-              <span className="tonight-story-kicker">TONIGHT'S READ</span>
-              <h2 className="tonight-story-heading">A story to slow down with before the day ends.</h2>
+              <span className="tonight-story-kicker">A STORY TO SLOW DOWN WITH</span>
+              <h2 className="tonight-story-heading">A story to read when the world can wait.</h2>
 
               <Link to={`/stories/${tonightStory.slug}`} className="tonight-story-title">
                 {tonightStory.title || "Untitled Story"}
@@ -136,7 +189,7 @@ export default function StoriesPage() {
                   {tonightStory.readingTime || `${tonightStory.readingTimeMin || 10} min read`}
                 </span>
                 <Link to={`/stories/${tonightStory.slug}`} className="story-cta-link story-cta-light">
-                  Read tonight's story <FiArrowRight aria-hidden="true" />
+                  Read this story <FiArrowRight aria-hidden="true" />
                 </Link>
               </div>
             </div>
@@ -191,13 +244,15 @@ export default function StoriesPage() {
       {!loading && allStories.length === 0 && (
         <p className="stories-empty-message">No stories published yet.</p>
       )}
+        </>
+      )}
 
-      {/* DAILY RETURN FOOTER */}
-      <section className="story-daily-footer" aria-label="Daily Return Invitation">
+      {/* STORY LIBRARY FOOTER */}
+      <section className="story-daily-footer" aria-label="Story library">
         <div className="story-daily-footer-content">
-          <span className="story-daily-footer-kicker">DAILY DISCOVERY</span>
-          <h3 className="story-daily-footer-title">Come back tomorrow.</h3>
-          <p className="story-daily-footer-sub">A new story is waiting every day.</p>
+          <span className="story-daily-footer-kicker">STORY LIBRARY</span>
+          <h3 className="story-daily-footer-title">Every story is a life that could have been yours.</h3>
+          <p className="story-daily-footer-sub">Take your time. The library is always here.</p>
         </div>
       </section>
     </main>

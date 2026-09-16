@@ -36,6 +36,7 @@ describe("Reader data foundation migration", () => {
     };
     const readerProfiles = { updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }) };
     const progress = {
+      find: jest.fn(() => asyncRows([])),
       aggregate: jest.fn(() => asyncRows([{ _id: {}, rows: [{ _id: "keep", userId: "user-1", articleId: "article-1", completionPercent: 20 }, { _id: "drop", userId: "user-1", articleId: "article-1", completionPercent: 40 }] }])),
       updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
       deleteMany: jest.fn().mockResolvedValue({ deletedCount: 1 }),
@@ -55,7 +56,7 @@ describe("Reader data foundation migration", () => {
       { _id: "user-1" },
       { $unset: expect.objectContaining({ "profile.comments": "", "profile.savedArticles": "" }) }
     );
-    expect(progress.deleteMany).toHaveBeenCalledWith({ _id: { $in: ["drop"] } });
+    expect(progress.deleteMany).toHaveBeenCalledWith({ _id: { $in: ["drop"] }, userId: "user-1", articleId: "article-1" });
     expect(progress.createIndex).toHaveBeenCalledWith(
       { userId: 1, articleId: 1 },
       expect.objectContaining({ unique: true, partialFilterExpression: { userId: { $type: "objectId" } } })

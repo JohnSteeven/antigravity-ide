@@ -56,6 +56,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const seoRoutes = require("./routes/seoRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const localizationRoutes = require("./routes/localizationRoutes");
+const gameCmsRoutes = require("./routes/gameCmsRoutes");
 
 // ── Stage 3: AI Platform ───────────────────────────────────────────────────────
 // LEGACY: /api/ai/* remains while AskMyJourneyWidget migration completes.
@@ -161,6 +162,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/seo", seoRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/localization", localizationRoutes);
+app.use("/api/cms/game-packs", gameCmsRoutes);
 
 // ── Stage 3–6 routes ─────────────────────────────────────────────────────────
 app.use("/api/ai", aiRoutes);  // Legacy — transitional; see comment above

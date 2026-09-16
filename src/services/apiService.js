@@ -212,6 +212,8 @@ export const articleApi = {
 // ─── Stories ──────────────────────────────────────────────────────────────────
 
 export const storyApi = {
+  adminList: (params = {}) => get(`/api/stories/admin/all?${new URLSearchParams(params).toString()}`),
+  setSaved: (id, saved) => put(`/api/stories/${id}/save`, { saved }),
   /** Fetch published stories — enforced contentType=story on backend */
   list: (params = {}) => {
     const qs = new URLSearchParams(
@@ -338,6 +340,7 @@ export const subCategoryApi = {
 // ─── Settings ─────────────────────────────────────────────────────────────────
 export const settingApi = {
   get: (key) => get(`/api/settings/${key}`),
+  getPublic: (key) => get(`/api/settings/public/${key}`),
   update: (key, value) => put(`/api/settings/${key}`, { value }),
   testSmtp: (testEmail) => post("/api/settings/test-smtp", { testEmail }),
 };
@@ -450,6 +453,18 @@ export const readerApi = {
   completed: () => get("/api/reader/completed"),
   progress: (articleId) => get(`/api/reader/progress/${articleId}`),
   updateProgress: (payload) => post("/api/reader/progress", payload),
+  // Story-scoped reading progress (never affects Article counters or streaks)
+  storyProgress: (articleId) => get(`/api/reader/story-progress/${articleId}`),
+  updateStoryProgress: (payload) => post("/api/reader/story-progress", payload),
+  storyContinueReading: () => get("/api/reader/story-continue-reading"),
+  storyCompleted: () => get("/api/reader/story-completed"),
+};
+
+export const storyProgressApi = {
+  progress: (articleId) => get(`/api/reader/story-progress/${articleId}`),
+  updateProgress: (payload) => post("/api/reader/story-progress", payload),
+  continueReading: () => get("/api/reader/story-continue-reading"),
+  completed: () => get("/api/reader/story-completed"),
 };
 
 // ─── MyJourney Premium ──────────────────────────────────────────────────────

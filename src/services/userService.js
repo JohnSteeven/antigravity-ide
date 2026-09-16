@@ -20,18 +20,14 @@ export const userService = {
 
   findByIdentifier(identifier) {
     const normalized = String(identifier || "").trim().toLowerCase();
-    const normalizedDigits = normalized.replace(/\D/g, "");
     return (
       getUsers().find(
         (user) => {
           const userMobile = String(user.mobile || "").replace(/\s+/g, "");
-          const userMobileDigits = userMobile.replace(/\D/g, "");
 
           return (
             user.email.toLowerCase() === normalized ||
-            userMobile === normalized.replace(/\s+/g, "") ||
-            (normalizedDigits.length >= 10 &&
-              userMobileDigits.endsWith(normalizedDigits))
+            userMobile === normalized.replace(/\s+/g, "")
           );
         }
       ) || null

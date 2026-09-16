@@ -18,6 +18,12 @@ const {
   resendOtpChallenge,
   verifyOtpChallenge,
 } = require("./otpService");
+const {
+  composeE164,
+  isValidE164,
+  normalizeEmail,
+  normalizeIdentifier,
+} = require("../utils/accountIdentity");
 
 const MAX_FAILED_LOGINS = 5;
 const LOGIN_LOCK_MS = 15 * 60 * 1000;
@@ -39,17 +45,9 @@ const resetTokenHash = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
 const findUserByIdentifier = (identifier) => {
-  const rawValue = String(identifier || "").trim();
-  const value = rawValue.toLowerCase();
-  const compactMobile = rawValue.replace(/\s+/g, "");
-  const mobileDigits = rawValue.replace(/\D/g, "");
-  const conditions = [{ email: value }, { username: value }, { mobile: compactMobile }];
-
-  if (mobileDigits.length >= 10) {
-    conditions.push({ mobile: { $regex: `${mobileDigits}$` } });
-  }
-
-  return User.findOne({ $or: conditions, isDeleted: false });
+  const normalized = normalizeIdentifier(identifier);
+  if (normalized.type === "mobile" && !isValidE164(normalized.value)) return null;
+  return User.findOne({ [normalized.type]: normalized.value, isDeleted: false });
 };
 
 class AuthService {
@@ -64,11 +62,17 @@ class AuthService {
       password,
       newsletter,
     } = data;
-    const normalizedMobile = `${countryCode}${String(mobile).replace(/\D/g, "")}`;
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedMobile = composeE164(countryCode, mobile);
+    if (!isValidE164(normalizedMobile)) {
+      const error = new Error("Enter a valid mobile number with an explicit country code.");
+      error.status = 422;
+      throw error;
+    }
 
     const exists = await User.findOne({
       $or: [
-        { email },
+        { email: normalizedEmail },
         { mobile: normalizedMobile },
         { username: username.trim() },
       ],
@@ -80,25 +84,34 @@ class AuthService {
       throw error;
     }
 
-    const user = await User.create({
-      firstName,
-      lastName,
-      username,
-      email,
-      countryCode,
-      mobile: normalizedMobile,
-      passwordHash: await bcrypt.hash(password, 12),
-      status: "PENDING_VERIFICATION",
-      newsletter: Boolean(newsletter),
-      profile: {
-        avatar: "",
-        coverImage: "",
-        bio: "",
-        location: "",
-        website: "",
-        skills: [],
-      },
-    });
+    let user;
+    try {
+      user = await User.create({
+        firstName,
+        lastName,
+        username,
+        email: normalizedEmail,
+        countryCode,
+        mobile: normalizedMobile,
+        passwordHash: await bcrypt.hash(password, 12),
+        status: "PENDING_VERIFICATION",
+        newsletter: Boolean(newsletter),
+        profile: {
+          avatar: "",
+          coverImage: "",
+          bio: "",
+          location: "",
+          website: "",
+          skills: [],
+        },
+      });
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+      const conflict = new Error("An account already exists with this email, mobile, or username.");
+      conflict.status = 409;
+      conflict.code = "IDENTITY_CONFLICT";
+      throw conflict;
+    }
 
     await Notification.create({
       user: user._id,

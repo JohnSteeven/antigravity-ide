@@ -4,7 +4,7 @@ import { FiBookOpen, FiBookmark, FiHeart } from "react-icons/fi";
 import { useReader } from "../../hooks/useReader";
 
 const ArticleItem = ({ article }) => (
-  <Link className="rp-article-row" to={`/articles/${article.slug}`}>
+  <Link className="rp-article-row" to={`/${article.contentType === "story" ? "stories" : "articles"}/${article.slug}`}>
     <div className="rp-article-body">
       <div className="rp-article-title">{article.title}</div>
       <div className="rp-article-meta"><span className="rp-article-cat">{article.category || "Article"}</span></div>
@@ -25,13 +25,14 @@ const SavedTab = () => {
   const [activeSubtab, setActiveSubtab] = useState("saved");
   const tabs = [
     { id: "saved", label: "Saved Articles", icon: <FiBookOpen />, items: library.saved },
+    { id: "savedStories", label: "Saved Stories", icon: <FiBookOpen />, items: library.savedStories || [] },
     { id: "bookmarked", label: "Bookmarks", icon: <FiBookmark />, items: library.bookmarked },
     { id: "liked", label: "Likes", icon: <FiHeart />, items: library.liked },
   ];
   const active = tabs.find((tab) => tab.id === activeSubtab) || tabs[0];
 
-  if (loading && !active.items.length) return <div className="rp-empty">Loading your Article library…</div>;
-  if (error && !active.items.length) return <EmptyState title="Article library is unavailable" description={error} />;
+  if (loading && !active.items.length) return <div className="rp-empty">Loading your reading library…</div>;
+  if (error && !active.items.length) return <EmptyState title="Reading library is unavailable" description={error} />;
 
   return (
     <div>
@@ -55,7 +56,7 @@ const SavedTab = () => {
         {active.items.length ? active.items.map((article) => <ArticleItem key={article.id} article={article} />) : (
           <EmptyState
             title={`No ${active.label.toLowerCase()} yet`}
-            description="Your server-backed Article library will appear here."
+            description="Save something to read later and find it here."
           />
         )}
       </div>

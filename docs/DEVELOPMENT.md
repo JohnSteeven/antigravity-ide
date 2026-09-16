@@ -39,6 +39,14 @@ npm run client
 npm run start:ui
 ```
 
+To assess legacy email/mobile normalization before an approved data change, run this read-only report against the explicitly configured database:
+
+```bash
+npm run migrate:identity:dry-run
+```
+
+It reports aggregate counts only and performs no writes. It is not a substitute for reviewing the target database, resolving duplicate identities, or an approved migration plan.
+
 For the isolated core browser smoke, install Chromium once and run:
 
 ```bash

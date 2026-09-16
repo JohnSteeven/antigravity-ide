@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAuth } from "../hooks/useAuth";
 import { readerApi } from "../services/apiService";
 
-const EMPTY_LIBRARY = Object.freeze({ saved: [], liked: [], bookmarked: [] });
+const EMPTY_LIBRARY = Object.freeze({ saved: [], liked: [], bookmarked: [], savedStories: [] });
 const EMPTY_CONTRACTS = Object.freeze({ dailyQuoteTimeSlots: [] });
 const EMPTY_LIST = Object.freeze([]);
 const LIBRARY_COLLECTIONS = new Set(Object.keys(EMPTY_LIBRARY));
@@ -103,8 +103,9 @@ export const ReaderProvider = ({ children }) => {
     return response?.data || null;
   }, []);
 
-  const applyAuthoritativeLibraryState = useCallback(({ collection, isActive, article, userId }) => {
+  const applyAuthoritativeLibraryState = useCallback(({ collection, isActive, article: rawArticle, userId }) => {
     const mutationUserId = userId ? String(userId) : null;
+    const article = rawArticle?.id ? rawArticle : (rawArticle ? { ...rawArticle, id: String(rawArticle.id || rawArticle._id || "") } : null);
     if (!LIBRARY_COLLECTIONS.has(collection) || typeof isActive !== "boolean" || !article?.id || !mutationUserId) {
       throw new Error("Invalid authoritative Reader library update.");
     }
@@ -119,7 +120,7 @@ export const ReaderProvider = ({ children }) => {
     setProfile((current) => {
       const currentLibrary = current?.library || EMPTY_LIBRARY;
       const withoutArticle = (currentLibrary[collection] || [])
-        .filter((item) => String(item.id) !== String(article.id));
+        .filter((item) => String(item.id || item._id) !== String(article.id));
       return {
         ...(current || {}),
         library: {

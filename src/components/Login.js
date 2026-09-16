@@ -152,13 +152,14 @@ const Login = () => {
                     autoFocus
                     autoComplete="username"
                     aria-invalid={Boolean(errors.identifier)}
+                    aria-describedby={errors.identifier ? "login-identifier-error" : undefined}
                     placeholder="example@email.com"
                     value={form.identifier}
                     onChange={(event) => updateField("identifier", event.target.value)}
                   />
                 </div>
                 {errors.identifier && (
-                  <small className="field-error-text">{errors.identifier}</small>
+                  <small id="login-identifier-error" className="field-error-text">{errors.identifier}</small>
                 )}
               </div>
 
@@ -174,6 +175,7 @@ const Login = () => {
                     id="login-password"
                     autoComplete="current-password"
                     aria-invalid={Boolean(errors.password)}
+                    aria-describedby={errors.password ? "login-password-error" : undefined}
                     placeholder="••••••••"
                     type={showPassword ? "text" : "password"}
                     value={form.password}
@@ -189,7 +191,7 @@ const Login = () => {
                   </button>
                 </div>
                 {errors.password && (
-                  <small className="field-error-text">{errors.password}</small>
+                  <small id="login-password-error" className="field-error-text">{errors.password}</small>
                 )}
               </div>
 

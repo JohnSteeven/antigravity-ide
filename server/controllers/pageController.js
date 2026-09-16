@@ -11,7 +11,6 @@ const AuditLogger = require('../audit/AuditLogger');
 
 exports.getPages = async (req, res) => {
   try {
-    await PageService.seedDefaults(req.user?.id);
     const { status, search } = req.query;
     const query = {};
     if (status) query.status = status;
@@ -29,6 +28,8 @@ exports.getPages = async (req, res) => {
 
 exports.getPageBySlug = async (req, res) => {
   try {
+    // Role/feature-filtered blocks must never be reused for another account.
+    res.set('Cache-Control', 'private, no-store');
     const { slug } = req.params;
     const userRole = req.user?.role?.name || req.user?.role || 'public';
     const page = await PageService.getBySlug(slug, { userRole, userId: req.user?.id });
@@ -55,7 +56,7 @@ exports.getPageById = async (req, res) => {
 
 exports.createPage = async (req, res) => {
   try {
-    const { title, slug, layoutKey, seo, blocks, status, featureFlag } = req.body;
+    const { title, slug, layoutKey, seo, blocks, status, featureFlag, visibility, permissions, publishDate, expireDate } = req.body;
 
     const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
     const existing = await Page.findOne({ slug: cleanSlug });
@@ -70,6 +71,10 @@ exports.createPage = async (req, res) => {
       seo: seo || {},
       blocks: blocks || [],
       status: status || 'draft',
+      visibility: visibility || 'public',
+      permissions: permissions || {},
+      publishDate: publishDate || null,
+      expireDate: expireDate || null,
       featureFlag: featureFlag || null,
       createdBy: req.user?.id,
       updatedBy: req.user?.id,
@@ -99,7 +104,7 @@ exports.updatePage = async (req, res) => {
     if (!page) return res.status(404).json({ error: 'Not Found', message: 'Page not found' });
 
     const oldDoc = page.toObject();
-    const { title, slug, layoutKey, seo, blocks, status, featureFlag, permissions, featuredImage } = req.body;
+    const { title, slug, layoutKey, seo, blocks, status, featureFlag, permissions, featuredImage, visibility, publishDate, expireDate } = req.body;
 
     if (title !== undefined) page.title = title;
     if (slug !== undefined) page.slug = slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
@@ -109,6 +114,9 @@ exports.updatePage = async (req, res) => {
     if (status !== undefined) page.status = status;
     if (featureFlag !== undefined) page.featureFlag = featureFlag;
     if (permissions !== undefined) page.permissions = permissions;
+    if (visibility !== undefined) page.visibility = visibility;
+    if (publishDate !== undefined) page.publishDate = publishDate;
+    if (expireDate !== undefined) page.expireDate = expireDate;
     if (featuredImage !== undefined) page.featuredImage = featuredImage;
 
     // Record History Snapshot

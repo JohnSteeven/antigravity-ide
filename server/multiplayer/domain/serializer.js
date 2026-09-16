@@ -14,10 +14,14 @@ const standingsFor = (room) => room.players
   .filter((player) => player.role === PLAYER_ROLES.PLAYER)
   .map((player) => publicPlayer(player, room.gameData.scores))
   .sort((a, b) => b.score - a.score || a.nickname.localeCompare(b.nickname))
-  .map((player, index, all) => ({
-    ...player,
-    rank: index > 0 && player.score === all[index - 1].score ? all[index - 1].rank : index + 1,
-  }));
+  .reduce((standings, player, index) => {
+    const previous = standings[index - 1];
+    standings.push({
+      ...player,
+      rank: previous && player.score === previous.score ? previous.rank : index + 1,
+    });
+    return standings;
+  }, []);
 
 const serializeRoom = (room, viewerPlayerId) => {
   const viewer = room.players.find((player) => player.playerId === viewerPlayerId);

@@ -41,6 +41,8 @@ Password registration and login use bcrypt. `tokenService` signs a short-lived a
 
 `AuthContext` hydrates through `/api/auth/me`; an expired access cookie can rotate through `/api/auth/refresh-token`. Refresh rotation atomically consumes the persisted token hash before creating a replacement, so replay is rejected. Logout revokes the persisted refresh token/session and clears cookies. Session rows have explicit expiry/TTL state. Optional CSRF middleware uses a readable CSRF cookie plus `x-csrf-token` header for mutations.
 
+Account email and mobile are canonical security identities, not ordinary profile or Admin-editable fields. Profile/Admin update routes reject direct identity and verification writes. The authenticated `/api/users/me/identity-changes` start/resend/verify/cancel flow is CSRF-protected and account-rate-limited; it requires password or available TOTP reauthentication and an OTP delivered to the proposed identity. Owner-bound `IdentityChangeChallenge` records store only bcrypt code hashes, expire after five minutes, cap attempts/resends, and allow one challenge per identity type. Verification conditionally replaces the unchanged current identity, marks the replacement verified, increments the token version, revokes existing refresh/session rows, creates the current session, and records only masked identifiers in the activity log. Email is lowercase-normalized and mobile is full E.164.
+
 ## Authorization
 
 - `authenticate` validates the access JWT, loads the active User, and checks token version.
@@ -76,10 +78,38 @@ Progress persistence validates a published `contentType=article`, applies monoto
 ## Story domain and renderers
 
 Stories use `contentType=story` in the Article domain. `storyController` normalizes `storyLayout` and `storySections`, calculates reading time, validates publishability, and preserves legacy body compatibility.
+Stories use `contentType=story` in the Article domain. `storyController` normalizes `storyLayout` and `storySections`, calculates reading time at 200 wpm from readable section text, validates publishability, and preserves legacy body compatibility.
+In MyJourney, Articles, Learn, and Stories are strictly separated:
+- **Articles**: information, explanation, guides, learning, knowledge.
+- **Learn**: structured teaching, coding, lessons, quizzes, courses.
+- **Stories**: characters, life, events, relationships, choices, consequences, and emotion. Fictional narratives grounded in real human experience.
 
 The client selects established Story renderers/presets such as `book-spread`, `chapter-journey`, `magazine-feature`, `minimal-longform`, and `classic-reader`. New Story work should extend this system, not replace it with a second renderer architecture.
+The canonical production story library is server-persisted in MongoDB via `server/scripts/seedArticles.js`, sourced from `server/data/launchStories/` (8 original stories across batches A, B, and C, totaling 35,718 words and 121 sections). Stories are never bundled in bulk into client Parcel JavaScript; the client loads story data dynamically through `/api/stories`.
+Stories use `contentType=story` in the Article domain. `storyController` normalizes `storyLayout` and `storySections`, calculates reading time at ~200 wpm from readable section text, validates publishability, and preserves legacy body compatibility. When an archived story slug is requested, `storyController.getStoryBySlug` returns a graceful HTTP 200 tombstone (`{ article: null, archived: true, slug, title }`) to ensure bookmarked records do not break user navigation.
 
 All 30 stable presets map to the six approved engines (PROSE, SPLIT RIGHT, SPLIT LEFT, SIDE RAIL, BOOK COLUMNS, and CHAPTER FLOW). CMS preview reuses the public `StoryEngine` or explicit `LegacyStoryReader`. Structured quote sections carry text, attribution, source, and a validated style preset; media carries alt/caption metadata. The verification matrix is maintained in `docs/STORY_PRESET_VERIFICATION.md`.
+Structured section types include `paragraph`, `heading`, `image`, `quote`, `dialogue` (speaker, dialogue, avatar), and `callout` (note, tip, warning, info). Premium stories (such as `The Glass Ledger`) enforce server-authoritative body gating via `contentPreview.redactArticle`, returning empty sections and excerpt-only bodies to unauthenticated or non-premium readers.
+### Story reading progress isolation
+Story reading progress is server-authoritative and completely ring-fenced from Article reading progress via `server/services/storyProgressService.js`. Endpoints (`/api/reader/story-progress`, `/api/reader/story-continue-reading`, `/api/reader/story-completed`) strictly require `contentType: 'story'`. Story reading progress never calls `onArticleCompleted`, never increments `ReaderProfile.totalArticlesRead`, never triggers Article streak increments, and never affects creator economics or Reader achievements.
+
+The client selects established Story renderers/presets such as `book-spread`, `chapter-journey`, `scene-by-scene`, `alternating-editorial`, `editorial-sidebar`, `book-page`, and `minimal-longform`. All 20 assigned launch layouts map to the repository's registered layout IDs in `src/stories/storyLayoutIds.json`.
+
+The canonical production story library is server-persisted in MongoDB via `server/scripts/seedArticles.js`, organized into four batch modules under `server/data/launchStories/` (Batch 1: Stories 1–5; 26,343 words across 61 sections). Legacy stories are safely transitioned to `status: 'archived'` via `server/data/launchStories/archived.json`. Character Bibles and Story Bibles are maintained as non-public editorial artifacts in `server/data/storyBibles/` and are never exposed via public APIs.
+
+Structured section types include `chapter`, `text`, `image`, `quote`, `dialogue` (speaker, dialogue, avatar), and `callout` (note, tip, warning, info). Premium stories (such as `The House with Two Expectations`) enforce server-authoritative body gating via `contentPreview.redactArticle`, returning empty sections and excerpt-only bodies to unauthenticated or non-premium readers.
+
+The client reader experience provides:
+- 30 stable presets over six approved engines (`PROSE`, `SPLIT RIGHT`, `SPLIT LEFT`, `SIDE RAIL`, `BOOK COLUMNS`, and `CHAPTER FLOW`).
+- Accessible reading progress tracking via a native progress bar element with `role="progressbar"`, `aria-label`, and `aria-valuenow`.
+- Accessible reading progress tracking via a native progress bar element with `role="progressbar"`, `aria-label`, and `aria-valuenow`, hooked via `useStoryReadingProgress`.
+- Sequential next/previous story navigation within the curated catalog.
+- Reflection questions cards embedded in the reader footer to prompt reader contemplation.
+- Dynamic category filters on `/stories` derived from published stories in the database.
+- Timeless story-focused messaging (no false daily publishing claims; "A Story to Slow Down With" shelf).
+- Dynamic category filter chips derived strictly from published story categories.
+- Editorial quality and deduplication validation via `server/scripts/storyEditorialAudit.js`.
+- The structural preset verification matrix is maintained in `docs/STORY_PRESET_VERIFICATION.md`.
 
 ## Theme and dark-mode contract
 

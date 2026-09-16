@@ -198,6 +198,7 @@ class ArticleController {
         subcategory, tags, status, isFeatured, isMustRead,
         isTrending, isPinned, publishedAt, scheduledAt, rating,
         author, readingTime, seo, categoryId, accessLevel,
+        structuredBlocks, references, sources, relatedArticles, relatedStories,
       } = req.body;
 
       const finalSlug = slug ? slugify(slug) : slugify(title);
@@ -232,10 +233,18 @@ class ArticleController {
         rating: Number(rating) || 4.0,
         seo: seo || {},
         accessLevel: accessLevel === "premium" ? "premium" : "free",
+        structuredBlocks: Array.isArray(structuredBlocks) ? structuredBlocks : undefined,
+        references: Array.isArray(references) ? references : [],
+        sources: Array.isArray(sources) ? sources : [],
+        relatedArticles: Array.isArray(relatedArticles) ? relatedArticles : [],
+        relatedStories: Array.isArray(relatedStories) ? relatedStories : [],
       }, req.user._id);
 
       res.status(201).json({ article, message: "Article created successfully." });
     } catch (err) {
+      if (err.code === 11000 || (err.name === "MongoServerError" && err.code === 11000) || err.message?.includes("E11000")) {
+        return res.status(409).json({ message: "An article or story with this slug already exists. Please choose a unique slug." });
+      }
       next(err);
     }
   }
@@ -252,6 +261,7 @@ class ArticleController {
         subcategory, tags, status, isFeatured, isMustRead,
         isTrending, isPinned, publishedAt, scheduledAt, rating,
         author, readingTime, seo, categoryId, accessLevel,
+        structuredBlocks, references, sources, relatedArticles, relatedStories,
       } = req.body;
 
       const updateData = {};
@@ -297,9 +307,18 @@ class ArticleController {
       if (seo !== undefined) updateData.seo = seo;
       if (accessLevel !== undefined) updateData.accessLevel = accessLevel === "premium" ? "premium" : "free";
 
+      if (structuredBlocks !== undefined) updateData.structuredBlocks = Array.isArray(structuredBlocks) ? structuredBlocks : [];
+      if (references !== undefined) updateData.references = Array.isArray(references) ? references : [];
+      if (sources !== undefined) updateData.sources = Array.isArray(sources) ? sources : [];
+      if (relatedArticles !== undefined) updateData.relatedArticles = Array.isArray(relatedArticles) ? relatedArticles : [];
+      if (relatedStories !== undefined) updateData.relatedStories = Array.isArray(relatedStories) ? relatedStories : [];
+
       const article = await articleService.updateArticle(req.params.id, updateData, req.user._id);
       res.json({ article, message: "Article updated successfully." });
     } catch (err) {
+      if (err.code === 11000 || (err.name === "MongoServerError" && err.code === 11000) || err.message?.includes("E11000")) {
+        return res.status(409).json({ message: "An article or story with this slug already exists. Please choose a unique slug." });
+      }
       next(err);
     }
   }

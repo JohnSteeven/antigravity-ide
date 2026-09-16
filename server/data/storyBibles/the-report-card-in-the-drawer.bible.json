@@ -1,0 +1,92 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 1,
+  "slug": "the-report-card-in-the-drawer",
+  "title": "The Report Card in the Drawer",
+  "category": "Childhood",
+  "accessLevel": "free",
+  "layout": "chapter-journey",
+  "targetReadingTime": "35–40 min",
+
+  "voiceProfile": {
+    "pov": "Third-person limited, close on Rajan (the child)",
+    "tense": "Past tense throughout",
+    "register": "Quiet, observational, precise. The narrator sees everything Rajan sees — no more, no less.",
+    "sentenceRhythm": "Short declarative sentences during scenes of tension. Longer, clause-layered sentences during memory and reflection. Never melodramatic.",
+    "narratorDistance": "Very close. The reader feels the warmth of the kitchen, the weight of the paper in the drawer, the specific weight of a parent's silence.",
+    "distinctiveDevices": [
+      "Objects as emotional registers — the drawer itself becomes a character",
+      "Dialogue sparse, loaded — what is NOT said is as important as what is said",
+      "No internal monologue tagged as 'he thought' — Rajan's feelings emerge through physical sensation and action"
+    ]
+  },
+
+  "characters": {
+    "protagonist": {
+      "name": "Rajan Nair",
+      "age": "11 at story start",
+      "appearance": "Small for his age, dark-eyed, the kind of child who goes quiet before he goes missing",
+      "background": "Second son in a lower-middle-class family in Thiruvananthapuram, Kerala. Father is a government clerk. Mother is a homemaker.",
+      "psychologicalProfile": {
+        "strengths": ["Acute observation", "Emotional memory", "Loyalty"],
+        "flaws": ["Avoidance", "Shame mistaken for acceptance", "Believes silence is the same as peace"],
+        "centralFear": "That he is the version of himself that disappointed everyone — and that this is permanent",
+        "centralDesire": "To be seen as enough — not for marks, not for rank, but for being Rajan"
+      },
+      "arc": "Does not 'overcome' his underperformance. Learns — decades later — that his father hid the report card not from shame but from grief: the grief of a man who could not find the words to say 'this doesn't change how I love you.'"
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Suresh Nair (Father)",
+        "age": "38 during main story",
+        "occupation": "Government clerk, State Secretariat",
+        "appearance": "Thin, always in a white shirt, reading glasses pushed up on his forehead",
+        "psychologicalProfile": {
+          "strengths": ["Integrity", "Quiet dignity", "Non-violent"],
+          "flaws": ["Emotionally inarticulate", "Carries his own father's silence as a template", "Believes good parenting means not crying in front of children"],
+          "contradictions": "Loves his son deeply but expresses love through provision and discipline, never through words. Hides the report card not as punishment but because he cannot bear to see Rajan's shame — so he hides the evidence of it."
+        }
+      },
+      {
+        "name": "Leela Nair (Mother)",
+        "age": "33 during main story",
+        "role": "Intermediary who knows everything, says less than she knows, protects both men from each other",
+        "appearance": "Smells of coconut oil and cardamom. Wears the same blue saree for housework every day."
+      },
+      {
+        "name": "Arun Nair (Older brother)",
+        "age": "14 during main story",
+        "role": "The 'successful' child — Class topper. Rajan measures himself against Arun, always losing. Arun is oblivious to this.",
+        "note": "Arun is not villainous. He is simply good at school. This makes Rajan's loneliness more acute."
+      }
+    ]
+  },
+
+  "recurringMotifs": {
+    "theDrawer": "A wooden drawer in the parents' bedroom sideboard. Suresh keeps documents in it. When Rajan's worst report card goes missing, Rajan searches everywhere — never thinks to look here. Found decades later by accident when the house is being cleared after Suresh's death.",
+    "theNumberSixtyThree": "Rajan's aggregate score. Returned to throughout the story as a fixed point — the number that defined one year of his childhood.",
+    "silenceAtDinner": "Every scene of family conflict is ultimately expressed as silence at the dinner table. The table is the family's emotional arena.",
+    "theKeralaRain": "Used to mark time — season changes that signal the passage of years in the chapters set in adulthood."
+  },
+
+  "storyArc": {
+    "premise": "Rajan, 11, fails his class 6 end-of-year examination with a score of 63 out of 100 — a mark that, in his school, constitutes a conditional pass. The report card comes home. It sits on the dining table for one afternoon. Then it disappears. No one speaks of it. Rajan spends the summer waiting for punishment that never comes, which he interprets as contempt rather than mercy.",
+    "timeline": [
+      { "chapter": "June 1987", "event": "Report card arrives. The afternoon it is seen. The silence at dinner." },
+      { "chapter": "July 1987", "event": "Rajan searches for the card — under mattresses, behind shelves. Cannot find it. Interprets the silence as erasure." },
+      { "chapter": "August 1987", "event": "School reopens. Rajan returns to class 7. Father never mentions it. Neither does he." },
+      { "chapter": "1995 — Eight Years Later", "event": "Rajan, now 19, preparing for engineering entrance exams. He asks his father what he thought of him as a child. His father says only: 'You were always enough.' Rajan does not believe him." },
+      { "chapter": "2014 — Twenty-Seven Years Later", "event": "Suresh dies. The house in Thiruvananthapuram is being cleared. Rajan opens the old sideboard drawer. Finds the report card — still folded, still inside a brown envelope, alongside a photograph of Rajan from that year. The card was not hidden as punishment. It was kept." }
+    ],
+    "ending": "Bittersweet. The father's love is only decoded after his death. Rajan sits on the floor of the emptying house and weeps — not for the score, not for the years of wrong interpretation, but for all the things two people never said to each other while they had time."
+  },
+
+  "prohibitions": [
+    "No redemption speech. The father does not explain himself before he dies.",
+    "No moral-of-the-story paragraph. The reader arrives at the meaning without being told.",
+    "No comparison to modern parenting — no voice-of-the-author commentary.",
+    "Rajan does not succeed wildly to 'prove' the 63 wrong. He becomes an ordinary person with an ordinary life. This is intentional.",
+    "No villains. No abuse. The pain in this story comes entirely from love expressed in the wrong language."
+  ]
+}

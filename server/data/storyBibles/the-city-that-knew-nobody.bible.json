@@ -1,0 +1,43 @@
+{
+  "storySlug": "the-city-that-knew-nobody",
+  "title": "The City That Knew Nobody",
+  "category": "Life",
+  "accessLevel": "free",
+  "storyLayout": "cinematic-rhythm",
+  "voiceProfile": {
+    "narrator": "Third-person close focus on Tanmay Bose",
+    "tense": "Present tense for sensory urban scenes, past tense for Bankura memories",
+    "register": "Atmospheric, cinematic, observant, unsentimental",
+    "narratorDistance": "Close interiority with wide lens on the city's mechanics"
+  },
+  "characters": [
+    {
+      "name": "Tanmay Bose",
+      "age": 27,
+      "role": "Protagonist",
+      "description": "Junior architect from Bankura, West Bengal. Quiet, watchful, carrying an oversized black drafting tube and a worn leather wallet.",
+      "internalConflict": "Feels swallowed by Bombay's colossal indifference while simultaneously intoxicated by the freedom of being an anonymous stranger."
+    },
+    {
+      "name": "Santosh Kaka",
+      "age": 62,
+      "role": "Supporting",
+      "description": "Cutting-chai vendor near Dadar flower market. Has stood on the same three square feet of pavement for thirty-five years.",
+      "significance": "The solitary human tether in an overwhelming metropolis; offers silent acknowledgment without needing names."
+    },
+    {
+      "name": "Imran & Ketan",
+      "age": 26,
+      "role": "Flatmates",
+      "description": "Call-center supervisor and junior accountant sharing a 1BHK in Goregaon East.",
+      "significance": "Represents the transient, functional solidarity of the millions of young migrants keeping Bombay alive."
+    }
+  ],
+  "motifs": [
+    "The heavy black drafting tube slung across the back like a rifle",
+    "The 8:42 AM slow local from Goregaon with rain whipping through open doors",
+    "The smell of wet marigolds at Dadar market mixed with diesel soot",
+    "The leaking blue plastic bucket catching drops from the bedroom asbestos roof",
+    "The realization that the city's indifference is its greatest gift"
+  ]
+}

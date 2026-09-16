@@ -12,6 +12,7 @@ module.exports = async () => {
   const ReaderMembership = require("../../server/models/ReaderMembership");
   const RefreshToken = require("../../server/models/RefreshToken");
   const Session = require("../../server/models/Session");
+  const { buildSubscriptionFixture } = require("../../server/premium/fixtures");
 
   const passwordHash = await bcrypt.hash(fixtures.password, 4);
   const users = [
@@ -22,6 +23,7 @@ module.exports = async () => {
       username: "e2e_primary_reader",
       email: fixtures.primaryEmail,
       mobile: "+919900000001",
+      role: "Reader",
     },
     {
       _id: fixtures.secondaryUserId,
@@ -30,6 +32,16 @@ module.exports = async () => {
       username: "e2e_secondary_reader",
       email: fixtures.secondaryEmail,
       mobile: "+919900000002",
+      role: "Reader",
+    },
+    {
+      _id: fixtures.adminUserId,
+      firstName: "Privacy",
+      lastName: "Admin",
+      username: "e2e_privacy_admin",
+      email: fixtures.adminEmail,
+      mobile: "+919900000004",
+      role: "Admin",
     },
   ];
 
@@ -40,7 +52,7 @@ module.exports = async () => {
         $set: {
           ...user,
           passwordHash,
-          role: "Reader",
+          role: user.role,
           status: "ACTIVE",
           tokenVersion: 0,
           isDeleted: false,
@@ -88,7 +100,8 @@ module.exports = async () => {
   );
 
   const userIds = users.map((user) => new mongoose.Types.ObjectId(user._id));
-  for (const userId of userIds) {
+  const readerIds = [fixtures.primaryUserId, fixtures.secondaryUserId].map((id) => new mongoose.Types.ObjectId(id));
+  for (const userId of readerIds) {
     await ReaderProfile.findOneAndUpdate(
       { userId },
       {
@@ -113,6 +126,8 @@ module.exports = async () => {
     RefreshToken.deleteMany({ user: { $in: userIds } }),
     Session.deleteMany({ user: { $in: userIds } }),
   ]);
+
+  await Promise.all(readerIds.map((userId) => ReaderMembership.create(buildSubscriptionFixture({ userId }))));
 
   await mongoose.disconnect();
 };

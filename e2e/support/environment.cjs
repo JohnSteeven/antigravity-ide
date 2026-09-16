@@ -26,10 +26,12 @@ module.exports = {
     primaryUserId: "6a9400000000000000000001",
     secondaryUserId: "6a9400000000000000000002",
     articleId: "6a9400000000000000000003",
+    adminUserId: "6a9400000000000000000004",
     articleSlug: "e2e-core-reliability-article",
     articleTitle: "E2E Core Reliability Article",
     primaryEmail: "reader.primary@myjourney.e2e.test",
     secondaryEmail: "reader.secondary@myjourney.e2e.test",
+    adminEmail: "admin@myjourney.e2e.test",
     password: "Reliability!2026",
   },
 };

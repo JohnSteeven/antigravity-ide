@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import { cmsSeed } from "../data/cmsSeed";
-import { articleApi, categoryApi, subCategoryApi, tagApi } from "../services/apiService";
+import { articleApi, storyApi, categoryApi, subCategoryApi, tagApi } from "../services/apiService";
 import { useAuth } from "../hooks/useAuth";
 
 const ContentCmsContext = createContext(null);
@@ -68,6 +68,7 @@ export const ContentCmsProvider = ({ children }) => {
   // Persistent content is server-authoritative. Bundled fixtures are never a
   // substitute for MongoDB-backed Articles, Stories, or taxonomy.
   const [articles, setArticles] = useState([]);
+  const [stories, setStories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -87,13 +88,14 @@ export const ContentCmsProvider = ({ children }) => {
     const fetchAsAdmin = scope.startsWith("admin:");
     setSyncStatus("loading");
     try {
-      let articlesRes, categoriesRes, subcategoriesRes, tagsRes;
+      let articlesRes, categoriesRes, subcategoriesRes, tagsRes, storiesRes;
       if (fetchAsAdmin) {
-        [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
+        [articlesRes, categoriesRes, subcategoriesRes, tagsRes, storiesRes] = await Promise.all([
           articleApi.adminList({ limit: 1000 }),
           categoryApi.list({ includeDeleted: true }),
           subCategoryApi.list({ includeDeleted: true }),
           tagApi.list({ includeDeleted: true }),
+          storyApi.adminList({ limit: 1000 }),
         ]);
       } else {
         [articlesRes, categoriesRes, subcategoriesRes, tagsRes] = await Promise.all([
@@ -107,6 +109,7 @@ export const ContentCmsProvider = ({ children }) => {
       if (requestVersion !== requestVersionRef.current || activeScopeRef.current !== scope) return;
 
       setArticles(Array.isArray(articlesRes?.articles) ? articlesRes.articles.map(withClientId) : []);
+      setStories(Array.isArray(storiesRes?.articles) ? storiesRes.articles.map(withClientId) : []);
       setCategories(Array.isArray(categoriesRes?.categories) ? categoriesRes.categories.map(withClientId) : []);
       setSubcategories(Array.isArray(subcategoriesRes?.subCategories) ? subcategoriesRes.subCategories.map(withClientId) : []);
       setTags(Array.isArray(tagsRes?.tags) ? tagsRes.tags.map(withClientId) : []);
@@ -116,6 +119,7 @@ export const ContentCmsProvider = ({ children }) => {
       if (requestVersion !== requestVersionRef.current || activeScopeRef.current !== scope) return;
       console.warn("Failed to fetch persistent content", err);
       setArticles([]);
+      setStories([]);
       setCategories([]);
       setSubcategories([]);
       setTags([]);
@@ -127,6 +131,7 @@ export const ContentCmsProvider = ({ children }) => {
   useEffect(() => {
     requestVersionRef.current += 1;
     setArticles([]);
+    setStories([]);
     setCategories([]);
     setSubcategories([]);
     setTags([]);
@@ -276,7 +281,7 @@ export const ContentCmsProvider = ({ children }) => {
       const applyUpdate = (newValue) => {
         setArticles((prev) =>
           prev.map((article) =>
-            article.id === id || article._id === id
+            article.id === id || article._id === id || article.slug === id
               ? { ...article, [metric]: Math.max(0, Number(newValue)) }
               : article
           )
@@ -292,14 +297,14 @@ export const ContentCmsProvider = ({ children }) => {
       }
 
       if (metric === "views") {
-        const response = await runForActiveScope(activeScopeRef, () => articleApi.incrementViews(id));
+        const response = await articleApi.incrementViews(id);
         if (response?.views !== undefined) applyUpdate(response.views);
         return response;
       }
 
       const requestInteraction = ARTICLE_INTERACTION_API[metric];
       if (!requestInteraction) throw new Error("Unsupported Article interaction.");
-      const response = await runForActiveScope(activeScopeRef, () => requestInteraction(id));
+      const response = await requestInteraction(id);
       if (response?.count !== undefined) applyUpdate(response.count);
       return response;
     },
@@ -478,6 +483,7 @@ export const ContentCmsProvider = ({ children }) => {
 
   const value = useMemo(() => ({
     articles: ownsContentState ? articles : [],
+    stories: ownsContentState && isAdmin ? stories : [],
     categories: ownsContentState ? categories : [],
     subcategories: ownsContentState ? subcategories : [],
     tags: ownsContentState ? tags : [],
@@ -489,7 +495,7 @@ export const ContentCmsProvider = ({ children }) => {
     stats,
     syncStatus,
     ...actions
-  }), [articles, categories, subcategories, tags, ownsContentState, site, story, timeline, projects, skills, stats, syncStatus, actions]);
+  }), [articles, stories, isAdmin, categories, subcategories, tags, ownsContentState, site, story, timeline, projects, skills, stats, syncStatus, actions]);
 
   return <ContentCmsContext.Provider value={value}>{children}</ContentCmsContext.Provider>;
 };

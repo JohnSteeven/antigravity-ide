@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router";
 import {
   FiBookOpen,
@@ -51,6 +51,7 @@ const ArticleDetail = () => {
   // Track direct-API fetch state for the slug lookup fallback
   const [apiArticle, setApiArticle] = useState(null);
   const [apiLoading, setApiLoading] = useState(true);
+  const inFlightInteractions = useRef(new Set());
 
   useEffect(() => {
     if (!interactionFeedback) return undefined;
@@ -249,10 +250,10 @@ const ArticleDetail = () => {
     return false;
   };
 
-  const currentArticleId = String(article?.id || article?._id);
-  const isLiked = library.liked.some((item) => String(item.id) === currentArticleId);
-  const isBookmarked = library.bookmarked.some((item) => String(item.id) === currentArticleId);
-  const isSaved = library.saved.some((item) => String(item.id) === currentArticleId);
+  const currentArticleId = String(article?.id || article?._id || "");
+  const isLiked = library.liked.some((item) => String(item.id || item._id) === currentArticleId);
+  const isBookmarked = library.bookmarked.some((item) => String(item.id || item._id) === currentArticleId);
+  const isSaved = library.saved.some((item) => String(item.id || item._id) === currentArticleId);
 
   const handleArticleInteraction = async ({
     metric,
@@ -263,7 +264,36 @@ const ArticleDetail = () => {
     failureMessage,
   }) => {
     if (!requireLogin(`${action} this article`)) return;
+
+    const articleId = String(article?.id || article?._id || "");
+    if (!articleId) return;
+
+    const lockKey = `${articleId}:${metric}`;
+    if (inFlightInteractions.current.has(lockKey)) return;
+    inFlightInteractions.current.add(lockKey);
+
+    // 1. Snapshot previous state
+    const wasActive = collection === "liked"
+      ? isLiked
+      : collection === "bookmarked"
+        ? isBookmarked
+        : isSaved;
+    const nextActive = !wasActive;
+    const previousCount = Number(apiArticle?.[metric] ?? article?.[metric] ?? 0);
+    const delta = nextActive ? 1 : -1;
+    const optimisticCount = Math.max(0, previousCount + delta);
+
+    // 2. Immediate optimistic updates
+    setApiArticle((current) => current ? { ...current, [metric]: optimisticCount } : null);
+    applyAuthoritativeLibraryState({
+      collection,
+      isActive: nextActive,
+      article,
+      userId: user?.id,
+    });
     setInteractionFeedback(null);
+
+    // 3. Asynchronous persistence
     try {
       const articleId = article.id || article._id;
       const response = await incrementArticle(articleId, metric);
@@ -291,17 +321,24 @@ const ArticleDetail = () => {
           code: "READER_SESSION_CHANGED",
         });
       }
-      setInteractionFeedback({
-        type: "status",
-        message: response.isActive ? activeMessage : inactiveMessage,
-      });
+      // Authoritative state reconciled silently. No disruptive success toast on normal toggles.
     } catch (error) {
+      // 4. Rollback on failure
+      setApiArticle((current) => current ? { ...current, [metric]: previousCount } : null);
+      applyAuthoritativeLibraryState({
+        collection,
+        isActive: wasActive,
+        article,
+        userId: user?.id,
+      });
       const message = error?.status === 401
         ? `Please sign in to ${action} this article.`
         : error?.status === 404
           ? "This Article is no longer available."
           : failureMessage;
       setInteractionFeedback({ type: "error", message });
+    } finally {
+      inFlightInteractions.current.delete(lockKey);
     }
   };
 

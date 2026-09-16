@@ -13,10 +13,18 @@ const apiRegistry = require('../core/apiRegistry');
 
 // ── Public / Anonymous Endpoints ──────────────────────────────────────────────
 router.get('/feed', optionalAuthenticate, readerController.getPersonalizedFeed);
+// ── Article Reading Progress (Articles only — never affects Story progress) ───
 router.post('/progress', authenticate, readerController.updateProgress);
 router.get('/progress/:articleId', authenticate, readerController.getProgress);
 router.get('/continue-reading', authenticate, readerController.getContinueReading);
 router.get('/completed', authenticate, readerController.getCompleted);
+
+// ── Story Reading Progress (Stories only — never affects Article counters/streaks) ─
+// Separate path enforces contentType:'story' at the service layer. No crossover.
+router.post('/story-progress', authenticate, readerController.updateStoryProgress);
+router.get('/story-progress/:articleId', authenticate, readerController.getStoryProgress);
+router.get('/story-continue-reading', authenticate, readerController.getStoryContinueReading);
+router.get('/story-completed', authenticate, readerController.getStoryCompleted);
 router.get('/learning-paths', readerController.getLearningPaths);
 
 // ── Authenticated Reader Endpoints ────────────────────────────────────────────

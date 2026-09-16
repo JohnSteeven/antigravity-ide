@@ -1,5 +1,6 @@
 const Article = require("../models/Article");
 const articleService = require("../services/articleService");
+const ReaderProfileService = require("../services/readerProfileService");
 const {
   stripHtml,
   normalizeStoryLayout,
@@ -20,9 +21,12 @@ const slugify = (value = "") => String(value)
 
 const STORY_FIELDS = [
   "title", "slug", "description", "body", "coverImage", "coverImageAlt", "coverImageCaption", "author",
+  "title", "slug", "excerpt", "description", "body", "coverImage", "coverImageAlt", "coverImageCaption", "author",
   "status", "scheduledAt", "publishedAt", "storyLayout", "storySections", "reflection",
   "takeaway", "introLocation", "introTime", "storyOrigin", "storyFormat", "isFeatured",
   "isMustRead", "isTrending", "isPinned", "seo", "accessLevel",
+  "isMustRead", "isTrending", "isPinned", "seo", "accessLevel", "tags", "reflectionQuestions",
+  "relatedStories", "creatorProfileId",
 ];
 
 const pickStoryFields = (input = {}) => STORY_FIELDS.reduce((result, field) => {
@@ -83,7 +87,11 @@ const validatePublishableStory = (story) => {
 class StoryController {
   async getStories(req, res, next) {
     try {
-      const query = { ...req.query, contentType: "story", status: "published" };
+      const query = {
+        ...req.query, contentType: "story", status: "published",
+        limit: Math.min(48, Math.max(1, Number.parseInt(req.query.limit, 10) || 12)),
+        ...(req.query.search ? { accessLevel: "free" } : {}),
+      };
       const data = await articleService.getArticles(query);
       res.json({ ...data, articles: data.articles.map((story) => serializePublicContent(withStoryRuntimeMetadata(story), { listing: true })) });
     } catch (err) {
@@ -91,10 +99,42 @@ class StoryController {
     }
   }
 
+  async getAdminStories(req, res, next) {
+    try {
+      res.set("Cache-Control", "private, no-store");
+      res.json(await articleService.getArticles({ ...req.query, contentType: "story" }));
+    } catch (error) { next(error); }
+  }
+
+  async setSaved(req, res, next) {
+    try {
+      if (Object.keys(req.body || {}).some((field) => field !== "saved")) {
+        return res.status(422).json({ message: "Only saved may be updated." });
+      }
+      const result = await ReaderProfileService.setStorySaved(req.user._id, req.params.id, req.body?.saved);
+      res.set("Cache-Control", "private, no-store");
+      return res.json(result);
+    } catch (error) { return next(error); }
+  }
+
   async getStoryBySlug(req, res, next) {
     try {
       const article = await articleService.getArticleBySlug(req.params.slug);
-      if (!article || article.status !== "published") {
+      if (!article) {
+        return res.status(404).json({ message: "Story not found." });
+      }
+      // Archived stories: return a minimal tombstone so saved/bookmarked entries
+      // in Profile/Library do not produce broken links or 404 errors.
+      if (article.status === "archived") {
+        return res.status(200).json({
+          article: null,
+          archived: true,
+          slug: article.slug,
+          title: article.title,
+          message: "This story is no longer available.",
+        });
+      }
+      if (article.status !== "published") {
         return res.status(404).json({ message: "Story not found." });
       }
       if (!isStoryRecord(article)) {
@@ -125,6 +165,9 @@ class StoryController {
       const article = await articleService.createArticle(storyData, req.user._id);
       return res.status(201).json({ article, message: "Story created successfully." });
     } catch (err) {
+      if (err.code === 11000 || (err.name === "MongoServerError" && err.code === 11000) || err.message?.includes("E11000")) {
+        return res.status(409).json({ message: "A story or article with this slug already exists. Please choose a unique slug." });
+      }
       return next(err);
     }
   }
@@ -146,6 +189,9 @@ class StoryController {
       const article = await articleService.updateArticle(req.params.id, updateData, req.user._id);
       return res.json({ article, message: "Story updated successfully." });
     } catch (err) {
+      if (err.code === 11000 || (err.name === "MongoServerError" && err.code === 11000) || err.message?.includes("E11000")) {
+        return res.status(409).json({ message: "A story or article with this slug already exists. Please choose a unique slug." });
+      }
       return next(err);
     }
   }
@@ -153,7 +199,7 @@ class StoryController {
   async updateStoryStatus(req, res, next) {
     try {
       const status = String(req.body.status || "");
-      if (!["draft", "published", "archived", "scheduled"].includes(status)) {
+      if (!["draft", "review", "published", "archived", "scheduled"].includes(status)) {
         return res.status(422).json({ message: "Invalid Story status." });
       }
       const existingDoc = await Article.findOne({ _id: req.params.id, isDeleted: false }).lean();
@@ -168,6 +214,9 @@ class StoryController {
       const article = await articleService.updateArticle(req.params.id, updateData, req.user._id);
       return res.json({ article, message: `Story ${status}.` });
     } catch (err) {
+      if (err.code === 11000 || (err.name === "MongoServerError" && err.code === 11000) || err.message?.includes("E11000")) {
+        return res.status(409).json({ message: "A story or article with this slug already exists. Please choose a unique slug." });
+      }
       return next(err);
     }
   }

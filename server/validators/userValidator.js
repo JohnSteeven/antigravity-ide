@@ -1,4 +1,4 @@
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 const { isDailyQuoteTimeSlot } = require("../config/notificationPreferences");
 
 const ACCOUNT_PROFILE_FIELDS = new Set([
@@ -9,6 +9,26 @@ const ACCOUNT_PROFILE_FIELDS = new Set([
   "website",
   "skills",
 ]);
+
+const PROFILE_ROOT_FIELDS = new Set([
+  "firstName",
+  "lastName",
+  "username",
+  "newsletter",
+  "profile",
+  "notificationPreferences",
+]);
+
+const ADMIN_USER_FIELDS = new Set(["firstName", "lastName", "username", "role", "status"]);
+
+const rejectUnknownFields = (allowed, label) => body().custom((value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+  const unknown = Object.keys(value).find((key) => !allowed.has(key));
+  if (unknown) throw new Error(`Field '${unknown}' cannot be changed through this endpoint.`);
+  return true;
+});
 
 const isHttpUrl = (value) => {
   if (value === "") return true;
@@ -28,12 +48,10 @@ const isSafeProfileImage = (value) => {
 };
 
 const updateProfileValidator = [
+  rejectUnknownFields(PROFILE_ROOT_FIELDS, "Profile update"),
   body("firstName").optional().trim().notEmpty().withMessage("First name cannot be empty."),
   body("lastName").optional().trim().notEmpty().withMessage("Last name cannot be empty."),
   body("username").optional().trim().isLength({ min: 3 }).withMessage("Username must be at least 3 characters."),
-  body("email").optional().trim().isEmail().normalizeEmail().withMessage("Must be a valid email address."),
-  body("countryCode").optional().trim().matches(/^\+\d{1,4}$/).withMessage("Must be a valid country code."),
-  body("mobile").optional().trim().isLength({ min: 8, max: 18 }).withMessage("Must be a valid mobile number."),
   body("newsletter").optional().isBoolean().withMessage("Newsletter preference must be a boolean."),
   body("profile")
     .optional()
@@ -147,11 +165,10 @@ const updateProfileValidator = [
 ];
 
 const updateUserValidator = [
+  rejectUnknownFields(ADMIN_USER_FIELDS, "Admin user update"),
   body("firstName").optional().trim().notEmpty().withMessage("First name cannot be empty."),
   body("lastName").optional().trim().notEmpty().withMessage("Last name cannot be empty."),
   body("username").optional().trim().isLength({ min: 3 }).withMessage("Username must be at least 3 characters."),
-  body("email").optional().trim().isEmail().normalizeEmail().withMessage("Must be a valid email address."),
-  body("mobile").optional().trim().isLength({ min: 8, max: 18 }).withMessage("Must be a valid mobile number."),
   body("role")
     .optional()
     .isIn(["Admin", "Editor", "Reader"])
@@ -162,7 +179,37 @@ const updateUserValidator = [
     .withMessage("Invalid status name. Must be ACTIVE, SUSPENDED, PENDING_VERIFICATION, or DISABLED."),
 ];
 
+const challengeIdValidator = param("challengeId")
+  .isMongoId()
+  .withMessage("A valid identity-change challenge ID is required.");
+
+const startIdentityChangeValidator = [
+  rejectUnknownFields(new Set(["kind", "value", "reauth"]), "Identity change"),
+  body("kind").isIn(["email", "mobile"]).withMessage("Identity type must be email or mobile."),
+  body("value").isString().trim().isLength({ min: 3, max: 254 }).withMessage("A proposed identity value is required."),
+  body("reauth").custom((value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Reauthentication is required.");
+    const unknown = Object.keys(value).find((key) => !["method", "credential"].includes(key));
+    if (unknown) throw new Error(`Unknown reauthentication field: ${unknown}`);
+    return true;
+  }),
+  body("reauth.method").isIn(["password", "totp"]).withMessage("Choose password or authenticator reauthentication."),
+  body("reauth.credential").isString().isLength({ min: 1, max: 256 }).withMessage("A reauthentication credential is required."),
+];
+
+const resendIdentityChangeValidator = [challengeIdValidator];
+const cancelIdentityChangeValidator = [challengeIdValidator];
+const verifyIdentityChangeValidator = [
+  challengeIdValidator,
+  rejectUnknownFields(new Set(["code"]), "Identity verification"),
+  body("code").isString().matches(/^\d{6}$/).withMessage("Enter the six-digit verification code."),
+];
+
 module.exports = {
+  cancelIdentityChangeValidator,
+  resendIdentityChangeValidator,
+  startIdentityChangeValidator,
   updateProfileValidator,
   updateUserValidator,
+  verifyIdentityChangeValidator,
 };

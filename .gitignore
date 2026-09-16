@@ -54,3 +54,6 @@ brain/
 
 # Parcel production cache
 .parcel-cache-prod/
+
+# Temporary scratch directory
+scratch/

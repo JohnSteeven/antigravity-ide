@@ -99,14 +99,16 @@ const createArticleDraft = (categories = []) => ({
   isTrending: false,
   isPinned: false,
   readingTimeMin: 1,
-    seo: {
-      title: "",
-      description: "",
-      keywords: [],
-      canonicalUrl: "",
-      openGraphImage: "",
-      metaRobots: "index,follow",
-    },
+  references: [],
+  sources: [],
+  seo: {
+    title: "",
+    description: "",
+    keywords: [],
+    canonicalUrl: "",
+    openGraphImage: "",
+    metaRobots: "index,follow",
+  },
     mood: "",
     heroQuote: "",
     favoriteQuote: "",
@@ -961,6 +963,7 @@ const ArticleModule = () => {
                 onChange={(e) => update({ status: e.target.value })}
               >
                 <option value="draft">Draft</option>
+                <option value="review">Review</option>
                 <option value="published">Published</option>
                 <option value="scheduled">Scheduled</option>
                 <option value="archived">Archived</option>
@@ -1020,6 +1023,7 @@ const ArticleModule = () => {
               >
                 <option value="all">All Statuses</option>
                 <option value="draft">Drafts</option>
+                <option value="review">Review</option>
                 <option value="published">Published</option>
                 <option value="scheduled">Scheduled</option>
                 <option value="archived">Archived</option>

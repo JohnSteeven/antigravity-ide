@@ -47,6 +47,14 @@ Focused auth/startup checks:
 npx jest --runInBand server/tests/authOtp.test.js server/tests/authClientContract.test.js server/tests/dbStartup.test.js server/tests/runtimeDiagnostics.test.js server/tests/schedulerLifecycle.test.js server/tests/auditLogger.test.js
 ```
 
+Focused account-identity checks:
+
+```bash
+npx jest --runInBand server/tests/accountIdentitySecurity.test.js server/tests/accountIdentityApi.integration.test.js
+```
+
+These cover canonical email/full-E.164 lookup, rejection of direct profile/Admin identity writes, owner-bound secret-selective challenge storage, reauthentication, OTP attempt/resend limits, CSRF and rate-limit wiring, conflict/replay handling, masked audit records, session/token rotation, and the zero-write normalization report. The integration suite requires a Mongo database whose name ends in `_test`.
+
 Focused Reader/Profile checks:
 
 ```bash
@@ -91,12 +99,16 @@ Story/content/security examples:
 
 ```bash
 npx jest --runInBand server/tests/storyContent.test.js server/tests/storyLayouts.test.js server/tests/storyMedia.test.js server/tests/storyRenderingContract.test.js
+npx jest --runInBand server/tests/storyContent.test.js server/tests/storyLayouts.test.js server/tests/storyMedia.test.js server/tests/storyRenderingContract.test.js server/tests/storyEditorialAudit.test.js server/tests/storyReaderPersistence.integration.test.js
+npm run audit:stories
 npx jest --runInBand server/tests/articleAuthorityContract.test.js server/tests/premiumControllers.test.js server/tests/themeSafety.test.js server/tests/themeMigration.test.js server/tests/darkModeThemeContract.test.js
 npx jest --runInBand server/tests/responsiveAccessibilityContract.test.js
 npx jest --runInBand server/tests/launchHonesty.test.js server/tests/seoEvidence.test.js server/tests/routes.test.js
 npx jest --runInBand server/tests/observabilityPrivacy.test.js server/tests/multiplayer/mongoAuthority.test.js
 npx jest --runInBand server/tests/security.test.js server/tests/routes.test.js server/tests/premiumSecurity.test.js server/tests/creatorSecurity.test.js
 ```
+
+`storyEditorialAudit.test.js` and `npm run audit:stories` verify the canonical 8-story launch catalog (35,718 words, 121 sections across batches A, B, and C), reading time calculation at 200 wpm from clean readable text, valid preset bindings, section schemas (including dialogue and callouts), zero verbatim sentence or paragraph duplication across stories, and server-authoritative premium redaction. `storyReaderPersistence.integration.test.js` exercises real Mongo persistence for launch stories, verified query bounds, and API serialization.
 
 `launchHonesty.test.js` proves that missing critical evidence blocks readiness and that launch history endpoints contain no automatic sample creation or embedded Admin credentials. `seoEvidence.test.js` verifies database-derived metrics and the published/public/non-deleted boundary for public metadata.
 

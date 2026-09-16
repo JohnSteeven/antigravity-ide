@@ -10,6 +10,7 @@ The repository is a single npm application: Parcel serves the React client and E
 | --- | --- |
 | Articles | Implemented public catalog/detail and CMS management, with Free/Premium body protection. |
 | Stories | Implemented on the Article domain with dedicated structured sections and approved render layouts. |
+| Stories | Implemented canonical launch catalog (8 stories, 35,718 words) across 30 stable presets, with structured sections (dialogue/callout), server-authoritative Free/Premium protection, dynamic category discovery, accessible reading progress, reflection questions, and sequential navigation. |
 | Reader profile | Server-authoritative interests/goals/library, atomic per-Article progress, real Continue/Completed/time/achievement states, and honest empty states. Migration 011 is required before rollout. |
 | MyJourney Life | Implemented private Premium workspace for today, habits, routines, tasks, goals, health, money, journal, insights, search, notifications, export, and deletion. Optional AI, push, and external integrations require providers. |
 | MyJourney Premium | Global account-level entitlement plus production billing foundation. Fixed INR/USD prices, auditable Payment/Invoice/Refund/Event records, and signature-verified Razorpay test-mode Orders/webhooks/refunds are implemented; Phase 13 activation/UI and live mode remain deferred. |
@@ -99,7 +100,7 @@ Optional provider groups include SMTP, Twilio/SMS, VAPID web push, Redis/multipl
 | `/cms/*` | CMS/Admin UI |
 | `/play-life`, `/play-with-friends/*` | Games and multiplayer |
 
-Authentication routes include `/login`, `/register`, OTP verification, password reset, profile editing, and logout through the account UI.
+Authentication routes include `/login`, `/register`, OTP verification, password reset, profile editing, and logout through the account UI. Email and mobile changes require reauthentication plus server-verified OTP delivery; ordinary profile/Admin updates cannot change account identities.
 
 Authenticated Reader APIs live under `/api/reader`: the allowlisted profile contract, Reader preference updates, periodic Article progress updates, per-Article progress, Continue Reading, and Completed. See [Reader data foundation](docs/READER_DATA.md).
 
@@ -112,6 +113,7 @@ npm run test:creator
 npm run test:learn
 npm run test:multiplayer
 npm run test:e2e
+npm run audit:stories
 npm test -- --runInBand
 npm run check:server
 npm run build

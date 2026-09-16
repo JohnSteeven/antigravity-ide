@@ -27,7 +27,7 @@ const initialForm = {
   lastName: "",
   username: "",
   email: "",
-  countryCode: "+91",
+  countryCode: "",
   mobile: "",
   password: "",
   confirmPassword: "",
@@ -306,6 +306,7 @@ const Register = () => {
                         autoComplete="given-name"
                         autoFocus
                         aria-invalid={Boolean(fieldErrors.firstName)}
+                        aria-describedby={fieldErrors.firstName ? "reg-first-name-error" : undefined}
                         placeholder="First Name"
                         value={form.firstName}
                         onBlur={() => markTouched("firstName")}
@@ -313,7 +314,7 @@ const Register = () => {
                       />
                     </div>
                     {fieldErrors.firstName && (
-                      <small className="field-error-text">{fieldErrors.firstName}</small>
+                      <small id="reg-first-name-error" className="field-error-text">{fieldErrors.firstName}</small>
                     )}
                   </div>
 
@@ -329,6 +330,7 @@ const Register = () => {
                         autoComplete="family-name"
                         disabled={!isFirstNameValid}
                         aria-invalid={Boolean(fieldErrors.lastName)}
+                        aria-describedby={fieldErrors.lastName ? "reg-last-name-error" : undefined}
                         placeholder="Last Name"
                         value={form.lastName}
                         onFocus={() => {
@@ -339,7 +341,7 @@ const Register = () => {
                       />
                     </div>
                     {fieldErrors.lastName && (
-                      <small className="field-error-text">{fieldErrors.lastName}</small>
+                      <small id="reg-last-name-error" className="field-error-text">{fieldErrors.lastName}</small>
                     )}
                   </div>
                 </div>
@@ -358,6 +360,7 @@ const Register = () => {
                         disabled={!isLastNameValid}
                         type="email"
                         aria-invalid={Boolean(fieldErrors.email)}
+                        aria-describedby={fieldErrors.email ? "reg-email-error" : undefined}
                         placeholder="example@email.com"
                         value={form.email}
                         onFocus={() => {
@@ -369,7 +372,7 @@ const Register = () => {
                       />
                     </div>
                     {fieldErrors.email && (
-                      <small className="field-error-text">{fieldErrors.email}</small>
+                      <small id="reg-email-error" className="field-error-text">{fieldErrors.email}</small>
                     )}
                   </div>
 
@@ -387,6 +390,7 @@ const Register = () => {
                         value={form.countryCode}
                         onChange={(event) => updateField("countryCode", event.target.value)}
                       >
+                        <option value="">Select country code</option>
                         {ALL_COUNTRY_CODES.map((c) => (
                           <option key={`${c.country}-${c.code}`} value={c.code}>
                             {c.flag} {c.code} — {c.name}
@@ -400,6 +404,7 @@ const Register = () => {
                           disabled={!isEmailValid}
                           inputMode="numeric"
                           aria-invalid={Boolean(fieldErrors.mobile)}
+                          aria-describedby={fieldErrors.mobile ? "reg-mobile-error" : undefined}
                           placeholder="Mobile Number"
                           value={form.mobile}
                           onFocus={() => {
@@ -412,7 +417,7 @@ const Register = () => {
                       </div>
                     </div>
                     {fieldErrors.mobile && (
-                      <small className="field-error-text">{fieldErrors.mobile}</small>
+                      <small id="reg-mobile-error" className="field-error-text">{fieldErrors.mobile}</small>
                     )}
                   </div>
                 </div>
@@ -432,6 +437,7 @@ const Register = () => {
                         maxLength={64}
                         type={showPassword ? "text" : "password"}
                         aria-invalid={Boolean(fieldErrors.password)}
+                        aria-describedby={fieldErrors.password ? "reg-password-error" : undefined}
                         placeholder="••••••••"
                         value={form.password}
                         onFocus={() => {
@@ -488,7 +494,7 @@ const Register = () => {
                       )}
                     </div>
                     {fieldErrors.password && (
-                      <small className="field-error-text">{fieldErrors.password}</small>
+                      <small id="reg-password-error" className="field-error-text">{fieldErrors.password}</small>
                     )}
                   </div>
 
@@ -506,6 +512,7 @@ const Register = () => {
                         maxLength={64}
                         type={showConfirmPassword ? "text" : "password"}
                         aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                        aria-describedby={fieldErrors.confirmPassword ? "reg-confirm-password-error" : undefined}
                         placeholder="••••••••"
                         value={form.confirmPassword}
                         onFocus={() => {
@@ -530,7 +537,7 @@ const Register = () => {
                       </button>
                     </div>
                     {fieldErrors.confirmPassword && (
-                      <small className="field-error-text">{fieldErrors.confirmPassword}</small>
+                      <small id="reg-confirm-password-error" className="field-error-text">{fieldErrors.confirmPassword}</small>
                     )}
                   </div>
                 </div>

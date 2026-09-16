@@ -20,6 +20,25 @@ app.get("*", (req, res) => res.sendFile(path.join(dist, "index.html")));
 
 const server = http.createServer(app);
 server.on("upgrade", proxy.upgrade);
+if (proxy.upgrade) {
+  server.on("upgrade", (req, socket, head) => {
+    socket.on("error", (err) => {
+      // ignore socket errors on reset
+    });
+    try {
+      proxy.upgrade(req, socket, head);
+    } catch (err) {
+      // ignore
+    }
+  });
+}
+server.on("error", (err) => {
+  console.error("Preview server error:", err.message);
+});
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception in preview server:", err.message);
+});
+
 server.listen(port, () => {
   console.log(`MyJourney QA preview: http://localhost:${port}`);
   console.log(`Proxying API and realtime traffic to ${target}`);

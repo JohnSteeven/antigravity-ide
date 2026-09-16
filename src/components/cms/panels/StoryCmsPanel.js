@@ -36,6 +36,7 @@ import {
   validateStorySections,
 } from "../../../stories/storySections";
 import "./StoryCmsPanel.css";
+import "../../../stories/story-reader.css";
 
 const { getStoryMediaInventory, resolveStoryPrimaryImage } = storyMedia;
 
@@ -152,8 +153,8 @@ const SectionImageFields = ({ section, updateSection, uploadImage, uploading }) 
 };
 
 const StorySectionEditor = ({ section, index, total, updateSection, moveSection, removeSection, uploadSectionImage, uploading }) => {
-  const hasHeading = [STORY_SECTION_TYPES.TEXT, STORY_SECTION_TYPES.TEXT_IMAGE_RIGHT, STORY_SECTION_TYPES.IMAGE_LEFT_TEXT, STORY_SECTION_TYPES.REFLECTION].includes(section.type);
-  const hasBody = [STORY_SECTION_TYPES.TEXT, STORY_SECTION_TYPES.TEXT_IMAGE_RIGHT, STORY_SECTION_TYPES.IMAGE_LEFT_TEXT, STORY_SECTION_TYPES.CHAPTER, STORY_SECTION_TYPES.REFLECTION].includes(section.type);
+  const hasHeading = [STORY_SECTION_TYPES.TEXT, STORY_SECTION_TYPES.TEXT_IMAGE_RIGHT, STORY_SECTION_TYPES.IMAGE_LEFT_TEXT, STORY_SECTION_TYPES.REFLECTION, STORY_SECTION_TYPES.CALLOUT].includes(section.type);
+  const hasBody = [STORY_SECTION_TYPES.TEXT, STORY_SECTION_TYPES.TEXT_IMAGE_RIGHT, STORY_SECTION_TYPES.IMAGE_LEFT_TEXT, STORY_SECTION_TYPES.CHAPTER, STORY_SECTION_TYPES.REFLECTION, STORY_SECTION_TYPES.CALLOUT].includes(section.type);
   const hasImage = [STORY_SECTION_TYPES.TEXT_IMAGE_RIGHT, STORY_SECTION_TYPES.IMAGE_LEFT_TEXT, STORY_SECTION_TYPES.CHAPTER, STORY_SECTION_TYPES.REFLECTION, STORY_SECTION_TYPES.IMAGE, STORY_SECTION_TYPES.WIDE_IMAGE].includes(section.type);
 
   return (
@@ -218,6 +219,35 @@ const StorySectionEditor = ({ section, index, total, updateSection, moveSection,
           </>
         )}
 
+        {section.type === STORY_SECTION_TYPES.DIALOGUE && (
+          <>
+            <label className="story-cms-field">
+              Speaker / Character name
+              <input type="text" value={section.speaker || ""} onChange={(event) => updateSection({ speaker: event.target.value })} placeholder="e.g. Mentor, Elder, Guide" />
+            </label>
+            <label className="story-cms-field">
+              Speaker avatar URL <span className="story-cms-optional">optional</span>
+              <input type="text" value={section.avatar || ""} onChange={(event) => updateSection({ avatar: event.target.value })} placeholder="https://..." />
+            </label>
+            <label className="story-cms-field story-cms-field--wide">
+              Dialogue
+              <textarea rows="4" value={section.dialogue || section.body || ""} onChange={(event) => updateSection({ dialogue: event.target.value, body: event.target.value })} placeholder="Enter speaker words or conversation..." />
+            </label>
+          </>
+        )}
+
+        {section.type === STORY_SECTION_TYPES.CALLOUT && (
+          <label className="story-cms-field">
+            Callout style
+            <select value={section.calloutType || "note"} onChange={(event) => updateSection({ calloutType: event.target.value })}>
+              <option value="note">Note</option>
+              <option value="tip">Tip</option>
+              <option value="warning">Warning</option>
+              <option value="info">Info</option>
+            </select>
+          </label>
+        )}
+
         {section.type === STORY_SECTION_TYPES.CHAPTER && section.image && (
           <label className="story-cms-field">
             Image side
@@ -252,10 +282,10 @@ const LayoutPreview = ({ rows }) => (
 );
 
 export default function StoryCmsPanel() {
-  const { data, uploadMedia, refreshContent } = useCms();
+  const { data, uploadMedia, refreshContent, syncStatus } = useCms();
   const stories = useMemo(
-    () => (data?.articles || []).filter((item) => item?.contentType === "story").sort((a, b) => new Date(b.updatedAt || b.publishedAt || 0) - new Date(a.updatedAt || a.publishedAt || 0)),
-    [data?.articles]
+    () => [...(data?.stories || [])].sort((a, b) => new Date(b.updatedAt || b.publishedAt || 0) - new Date(a.updatedAt || a.publishedAt || 0)),
+    [data?.stories]
   );
   const [draft, setDraft] = useState(newStoryDraft);
   const [mode, setMode] = useState("edit");
@@ -408,7 +438,9 @@ export default function StoryCmsPanel() {
               <span>{story.status || "draft"} · {calculateStoryReadingTime(story)} min</span>
             </button>
           ))}
-          {!stories.length && <p>No Stories yet.</p>}
+          {syncStatus === "loading" && <p role="status">Loading Stories…</p>}
+          {syncStatus === "unavailable" && <p role="alert">Story library is unavailable. <button type="button" onClick={refreshContent}>Retry</button></p>}
+          {syncStatus === "live" && !stories.length && <p>No Stories yet.</p>}
         </div>
       </aside>
 
@@ -447,6 +479,7 @@ export default function StoryCmsPanel() {
                   Status
                   <select value={draft.status} onChange={(event) => updateDraft({ status: event.target.value })}>
                     <option value="draft">Draft / Unpublished</option>
+                    <option value="review">In Review</option>
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
                   </select>

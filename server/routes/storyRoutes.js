@@ -10,9 +10,11 @@ const router = express.Router();
 const validate = handleValidation(validationResult);
 
 // Story-specific authoring endpoints. Article endpoints remain unchanged.
+router.get("/admin/all", authenticate, requireAdmin, storyController.getAdminStories);
 router.post("/", authenticate, requireAdmin, storyWriteValidator, validate, storyController.createStory);
 router.put("/:id", authenticate, requireAdmin, storyWriteValidator, validate, storyController.updateStory);
 router.put("/:id/status", authenticate, requireAdmin, storyController.updateStoryStatus);
+router.put("/:id/save", authenticate, storyController.setSaved);
 
 // Public Story routes.
 router.get("/", optionalAuthenticate, storyController.getStories);

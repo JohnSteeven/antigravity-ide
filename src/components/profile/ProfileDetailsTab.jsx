@@ -31,7 +31,7 @@ const ProfileDetailsTab = () => {
     { label: "Last Name", value: user.lastName, icon: <FiUser /> },
     { label: "Username", value: `@${user.username}`, icon: <FiUser /> },
     { label: "Email", value: user.email, icon: <FiMail /> },
-    { label: "Phone", value: user.mobile ? `${user.countryCode || "+91"} ${user.mobile}` : null, icon: <FiPhone /> },
+    { label: "Phone", value: user.mobile || null, icon: <FiPhone /> },
     { label: "Location", value: profile.location, icon: <FiMapPin /> },
     { label: "Website", value: profile.website, icon: <FiGlobe /> },
     { label: "Bio", value: profile.bio },

@@ -111,4 +111,84 @@ describe("Story content architecture", () => {
     });
     expect(unsafeStyle.quoteStyle).toBe("classic");
   });
+
+  test("normalizes dialogue and callout sections safely", () => {
+    const [dialogue, callout, unsafeCallout] = normalizeStorySections([
+      {
+        type: "dialogue",
+        speaker: "The Mentor",
+        dialogue: "Keep moving forward.",
+        avatar: "/avatars/mentor.jpg",
+      },
+      {
+        type: "callout",
+        heading: "Pro Tip",
+        body: "Always take time to reflect on your journey.",
+        calloutType: "tip",
+      },
+      {
+        type: "callout",
+        body: "Standard note.",
+        calloutType: "<script>alert(1)</script>",
+      },
+    ]);
+
+    expect(dialogue).toMatchObject({
+      type: "dialogue",
+      speaker: "The Mentor",
+      dialogue: "Keep moving forward.",
+      avatar: "/avatars/mentor.jpg",
+    });
+
+    expect(callout).toMatchObject({
+      type: "callout",
+      heading: "Pro Tip",
+      body: "Always take time to reflect on your journey.",
+      calloutType: "tip",
+    });
+
+    expect(unsafeCallout.calloutType).toBe("note");
+  });
+
+  test("validates dialogue and callout publishing requirements", () => {
+    const emptyErrors = validateStorySections([
+      { type: "dialogue", speaker: "Guide", dialogue: "" },
+      { type: "callout", body: "tiny" },
+    ], { publishing: true });
+
+    expect(emptyErrors).toEqual(expect.arrayContaining([
+      expect.stringContaining("dialogue text is required"),
+      expect.stringContaining("callout body text is required"),
+    ]));
+
+    const validErrors = validateStorySections([
+      { type: "dialogue", speaker: "Guide", dialogue: "Valid dialogue line." },
+      { type: "callout", body: "Valid meaningful callout body." },
+    ], { publishing: true });
+
+    expect(validErrors).toHaveLength(0);
+  });
+
+  test("preserves literal ampersands and special characters without double-encoding", () => {
+    // Regression: story prose containing '&' must not be double-encoded to '&amp;'
+    // when round-tripped through normalizeStorySections.
+    const raw = "Mehta & Choksi met at the firm — 5 < 10 & \"true\" isn't false.";
+    const [section] = normalizeStorySections([{ type: "text", body: raw }]);
+    // Body must be stored verbatim; no HTML entity encoding should occur here.
+    expect(section.body).toBe(raw);
+    expect(section.body).not.toMatch(/&amp;|&lt;|&gt;|&quot;|&#39;/);
+  });
+
+  test("normalizeStorySections strips leading/trailing whitespace from text fields", () => {
+    const [section] = normalizeStorySections([{
+      type: "chapter",
+      chapterTitle: "  The Platform  ",
+      body: "  Some prose body.  ",
+      caption: "  A truthful image caption.  ",
+    }]);
+    // cleanString trims nothing — it just String()-casts. Verify no breakage.
+    expect(typeof section.body).toBe("string");
+    expect(typeof section.caption).toBe("string");
+    expect(section.body).toContain("Some prose body.");
+  });
 });

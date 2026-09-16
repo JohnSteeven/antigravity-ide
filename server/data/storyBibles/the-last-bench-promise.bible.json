@@ -1,0 +1,73 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 3,
+  "slug": "the-last-bench-promise",
+  "title": "The Last Bench Promise",
+  "category": "Friendship",
+  "accessLevel": "free",
+  "layout": "scene-by-scene",
+  "targetReadingTime": "~40 min",
+
+  "voiceProfile": {
+    "pov": "Third-person omniscient — two alternating focal characters: Dhruv (present timeline) and Sameer (flashback timeline).",
+    "tense": "Present tense in the 2024 sections (Dhruv tracking down Sameer). Past tense in the 1998 school flashbacks.",
+    "register": "Warmer and more playful than Stories #1–2. The school chapters have a slightly comedic energy — the kind of story you'd tell about your worst friend's best quality. The adult chapters are tired, searching.",
+    "sentenceRhythm": "The school chapters use fast, cut-quick scene transitions — reflecting how memory compresses childhood. The adult chapters are slower, more ruminative.",
+    "narratorDistance": "The omniscient narrator knows what both men feel — but shares this information sparingly. We know Dhruv is afraid Sameer will say no. We do not know until the final scene whether Sameer does.",
+    "distinctiveDevices": [
+      "The 'promise' itself is never stated explicitly in the text — it is understood from context, which the reader pieces together chapter by chapter",
+      "The last bench of Room 9, Class 9B is described with the same detail every time it appears — a fixed landmark in both timelines",
+      "Each scene in 2024 follows immediately from the equivalent memory in 1998 — mirroring structure"
+    ]
+  },
+
+  "characters": {
+    "protagonist": {
+      "name": "Dhruv Malhotra",
+      "age": "11 in flashbacks (1998), 37 in present (2024)",
+      "appearance": "Heavyset, beard going grey at the jaw, drives a ten-year-old Maruti. Looks like a man who has not bought anything for himself in years.",
+      "background": "Delhi. Middle-class family. Works in logistics. Married, two children. Not unhappy — but has spent years aware of something missing.",
+      "psychologicalProfile": {
+        "strengths": ["Loyalty that persists long after it has been tested", "Quiet persistence"],
+        "flaws": ["Has kept the promise in his head for 26 years — perhaps longer than it should have been kept", "Has trouble letting go of people"],
+        "centralDesire": "To find Sameer and honour the promise they made at 11 — to be each other's best men at their respective weddings. Sameer missed Dhruv's wedding (2017). Dhruv is going to Sameer's (2024)."
+      }
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Sameer Qureshi",
+        "age": "11 in flashbacks, 36 in present",
+        "appearance": "Taller than Dhruv. Has the kind of face that is instantly recognisable even after 20 years.",
+        "background": "Family moved from Delhi to Pune in 2001. Sameer and Dhruv lost touch gradually, then completely. Sameer is now a structural engineer. He is getting married.",
+        "psychologicalProfile": {
+          "note": "Sameer did not forget Dhruv. He assumed Dhruv had moved on. He doesn't know Dhruv spent six months tracking down his contact through three mutual acquaintances.",
+          "contradictions": "Sameer calls himself a realist. But he is the one who, at 11, invented the promise in the first place."
+        }
+      }
+    ]
+  },
+
+  "thePromise": {
+    "originalContext": "Room 9, Class 9B, last bench. 1998. Sameer has just been told his family will move to Pune. Both boys are 11. Neither has a vocabulary for grief yet. Sameer says: 'You'll be at my wedding? Even if I go?' Dhruv says: 'Obviously.' Sameer: 'Promise on the last bench.' Dhruv puts his hand flat on the desk. They do not say another word about it. It is the most serious conversation either of them has ever had.",
+    "whatMakesItPoignant": "Neither boy meant it as a literal contract. Both boys kept it as one."
+  },
+
+  "recurringMotifs": {
+    "theLastBench": "Always described identically — carved initials (DM + SQ, not a heart, just initials), one leg shorter than the others, the smell of chalk dust. A fixed point in both timelines.",
+    "theExchangedNote": "In Chapter 3, we learn both boys passed a folded note on the last day. In Chapter 9, we learn what was written on it. The note itself was lost, but Dhruv remembers the words.",
+    "trainPlatform": "Every significant scene in the present involves transit — platforms, airport gates, bus terminals. Dhruv is always in motion toward something. The final scene is the first one where he arrives."
+  },
+
+  "storyArc": {
+    "premise": "Dhruv finds out, through a school WhatsApp group, that Sameer is getting married. He tracks down Sameer's number through three people, sends a message, and gets a reply: 'Dhruv? How did you find me? Come.' The story alternates between the 1998 school friendship (its formation, its texture, the day Sameer announced he was leaving) and the 2024 journey Dhruv makes to Pune for the wedding.",
+    "ending": "Happy, but not unreservedly so. Sameer's wedding is small and warm. Dhruv is introduced as 'my oldest friend — we haven't spoken in twenty years.' During the reception, the two men sit alone for a while. Sameer says: 'You still remembered.' Dhruv says: 'I said I would.' The ending is not about the lost years — it is about the fact that both men, without knowing it, kept the same thing safe."
+  },
+
+  "prohibitions": [
+    "No drama — no rift, no fight, no betrayal. The friendship was not broken. It simply paused for 23 years.",
+    "No nostalgia-bath. The school chapters are affectionate but honest: Sameer could be difficult, Dhruv could be passive.",
+    "Do not resolve the question of why Sameer missed Dhruv's wedding with a dramatic explanation. A brief, honest line is enough.",
+    "The wedding itself is not a set piece. It is quiet and ordinary. The sacred moment is the two men sitting alone."
+  ]
+}

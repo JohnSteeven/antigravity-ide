@@ -69,7 +69,7 @@ const LifeLanding = ({
   incrementArticle,
 }) => {
   const location = useLocation();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const { library, applyAuthoritativeLibraryState } = useReader();
   const { data } = useCms();
   const [query, setQuery] = useState("");
@@ -83,6 +83,7 @@ const LifeLanding = ({
   const [engagementCounts, setEngagementCounts] = useState({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   const sentinelRef = useRef(null);
+  const inFlightLanding = useRef(new Set());
 
   const blueprint = getCategoryBlueprint(category?.slug) || {};
   const categoryModel = {
@@ -218,9 +219,9 @@ const LifeLanding = ({
     return false;
   };
 
-  const featuredArticleId = String(featuredArticle?.id || featuredArticle?._id);
-  const isLiked = library.liked.some((item) => String(item.id) === featuredArticleId);
-  const isBookmarked = library.bookmarked.some((item) => String(item.id) === featuredArticleId);
+  const featuredArticleId = String(featuredArticle?.id || featuredArticle?._id || "");
+  const isLiked = library.liked.some((item) => String(item.id || item._id) === featuredArticleId);
+  const isBookmarked = library.bookmarked.some((item) => String(item.id || item._id) === featuredArticleId);
 
   const applyInteractionResponse = (response, metric, collection) => {
     if (
@@ -231,43 +232,47 @@ const LifeLanding = ({
       String(response?.libraryItem?.id) !== featuredArticleId
     ) throw new Error("Invalid Article interaction response.");
     setEngagementCounts((current) => ({ ...current, [metric]: Number(response.count) }));
-    applyAuthoritativeLibraryState({ collection, isActive: response.isActive, article: response.libraryItem });
+    applyAuthoritativeLibraryState({ collection, isActive: response.isActive, article: response.libraryItem, userId: user?.id });
     return response.isActive;
   };
 
-  const handleLikeToggle = async () => {
+  const handleLandingToggle = async (metric, collection, failureMessage) => {
     if (!featuredArticle) return;
     if (!requireLogin()) return;
-    if (pendingAction) return;
-    setPendingAction("like");
+    const articleId = featuredArticleId;
+    if (!articleId) return;
+
+    const lockKey = `${articleId}:${metric}`;
+    if (inFlightLanding.current.has(lockKey)) return;
+    inFlightLanding.current.add(lockKey);
+
+    const wasActive = collection === "liked" ? isLiked : isBookmarked;
+    const nextActive = !wasActive;
+    const prevCount = Number(engagementCounts[metric] ?? featuredArticle[metric] ?? 0);
+    const nextCount = Math.max(0, prevCount + (nextActive ? 1 : -1));
+
+    // 1. Immediate optimistic UI updates
+    setEngagementCounts((current) => ({ ...current, [metric]: nextCount }));
+    applyAuthoritativeLibraryState({ collection, isActive: nextActive, article: featuredArticle, userId: user?.id });
+    setMessage("");
+
+    // 2. Asynchronous backend persistence
     try {
-      const articleId = featuredArticle.id || featuredArticle._id;
-      const response = await incrementArticle(articleId, "likes");
-      const active = applyInteractionResponse(response, "likes", "liked");
-      setMessage(active ? "Article liked." : "Article unliked.");
+      const response = await incrementArticle(articleId, metric);
+      applyInteractionResponse(response, metric, collection);
+      // Success: Keep state silently without repetitive toast
     } catch {
-      setMessage("Could not update your like. Try again.");
+      // 3. Rollback on failure
+      setEngagementCounts((current) => ({ ...current, [metric]: prevCount }));
+      applyAuthoritativeLibraryState({ collection, isActive: wasActive, article: featuredArticle, userId: user?.id });
+      setMessage(failureMessage);
     } finally {
-      setPendingAction("");
+      inFlightLanding.current.delete(lockKey);
     }
   };
 
-  const handleBookmarkToggle = async () => {
-    if (!featuredArticle) return;
-    if (!requireLogin()) return;
-    if (pendingAction) return;
-    setPendingAction("bookmark");
-    try {
-      const articleId = featuredArticle.id || featuredArticle._id;
-      const response = await incrementArticle(articleId, "bookmarks");
-      const active = applyInteractionResponse(response, "bookmarks", "bookmarked");
-      setMessage(active ? "Article bookmarked." : "Article removed from bookmarks.");
-    } catch {
-      setMessage("Could not update your bookmark. Try again.");
-    } finally {
-      setPendingAction("");
-    }
-  };
+  const handleLikeToggle = () => handleLandingToggle("likes", "liked", "Could not update your like. Try again.");
+  const handleBookmarkToggle = () => handleLandingToggle("bookmarks", "bookmarked", "Could not update your bookmark. Try again.");
 
   const handleShare = async (article = featuredArticle) => {
     if (!article) return;
@@ -408,21 +413,21 @@ const LifeLanding = ({
                 className={`small-outline-btn ${isLiked ? "active like-btn" : ""}`}
                 type="button"
                 onClick={handleLikeToggle}
-                disabled={Boolean(pendingAction)}
+                disabled={Boolean(pendingAction === "share")}
                 aria-pressed={isLiked}
                 aria-label={isLiked ? "Unlike featured article" : "Like featured article"}
               >
-                <FiHeart style={isLiked ? { fill: "#ff4d4f", stroke: "#ff4d4f" } : undefined} /> {pendingAction === "like" ? "Updating…" : formatNumber(engagementCounts.likes ?? featuredArticle.likes)}
+                <FiHeart style={isLiked ? { fill: "#ff4d4f", stroke: "#ff4d4f" } : undefined} /> {formatNumber(engagementCounts.likes ?? featuredArticle.likes)}
               </button>
               <button
                 className={`small-outline-btn ${isBookmarked ? "active bookmark-btn" : ""}`}
                 type="button"
                 onClick={handleBookmarkToggle}
-                disabled={Boolean(pendingAction)}
+                disabled={Boolean(pendingAction === "share")}
                 aria-pressed={isBookmarked}
                 aria-label={isBookmarked ? "Remove featured article bookmark" : "Bookmark featured article"}
               >
-                <FiBookmark style={isBookmarked ? { fill: "currentColor" } : undefined} /> {pendingAction === "bookmark" ? "Updating…" : formatNumber(engagementCounts.bookmarks ?? featuredArticle.bookmarks)}
+                <FiBookmark style={isBookmarked ? { fill: "currentColor" } : undefined} /> {formatNumber(engagementCounts.bookmarks ?? featuredArticle.bookmarks)}
               </button>
               <button
                 className="small-outline-btn"

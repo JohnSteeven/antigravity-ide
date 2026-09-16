@@ -1,0 +1,73 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 2,
+  "slug": "the-friend-who-stopped-waiting",
+  "title": "The Friend Who Stopped Waiting",
+  "category": "Friendship",
+  "accessLevel": "free",
+  "layout": "alternating-editorial",
+  "targetReadingTime": "35–40 min",
+
+  "voiceProfile": {
+    "pov": "First-person, Meera. She is telling this story to no one in particular — perhaps to herself, years later.",
+    "tense": "Mixture: present tense in the 'now' framing (adult Meera), past tense in the flashback chapters.",
+    "register": "Honest, unsentimental, slightly self-accusatory. Meera knows she was wrong and does not excuse herself — but she also does not flagellate herself endlessly. She is reporting what happened.",
+    "sentenceRhythm": "Medium-length sentences. More personal than Story #1 — this voice has contractions, occasional direct address ('you know how it is'), conversational asides.",
+    "narratorDistance": "Very close — Meera is self-aware but limited. She can only tell us what she knows, and she does not know everything Kavitha felt.",
+    "distinctiveDevices": [
+      "The alternating structure: chapters alternate between young Meera (the doer) and adult Meera (the understander)",
+      "Kavitha's perspective is never given directly — we only know Kavitha through Meera's unreliable account",
+      "The final chapter is the only place where Meera reports what Kavitha actually said — a phone call years later"
+    ]
+  },
+
+  "characters": {
+    "protagonist": {
+      "name": "Meera Subramaniam",
+      "age": "17 at story start, 38 in the 'now' frame",
+      "appearance": "Bright-eyed, quick to laugh, the kind of person who never arrives anywhere on time but always makes it worthwhile",
+      "background": "Upper-middle-class family in Chennai. Father is an architect. She takes for granted that the world will bend to her schedule.",
+      "psychologicalProfile": {
+        "strengths": ["Generous when present", "Creative", "Genuinely warm"],
+        "flaws": ["Chronically late — not just physically, but emotionally", "Defaults to believing people will wait", "Confuses intentions with actions"],
+        "centralFlaw": "Meera loves people in theory better than in practice. She always means to call. She always means to show up. The gap between meaning and doing destroyed her oldest friendship.",
+        "arc": "Does not get Kavitha back. The friendship ends. She does not replace it. She simply learns, too late, that some people stop waiting — and that this is their right."
+      }
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Kavitha Rangan",
+        "age": "17 at story start",
+        "appearance": "Quieter. Wears the same three kurtas in rotation. Keeps a journal.",
+        "psychologicalProfile": {
+          "role": "The friend who waits, then stops. Kavitha is not saintly — she does things that are petty and human. But she runs out of goodwill, and Meera never sees it running out.",
+          "what-we-never-know": "Why exactly Kavitha stopped answering. The story deliberately withholds this. Meera offers theories. We are not shown whether they are correct.",
+          "finalAppearance": "One phone call. She picks up. She is kind. She does not explain. She says she is busy, and means it. They do not fight. The friendship is simply over."
+        }
+      },
+      {
+        "name": "Meera's mother",
+        "role": "A recurring warning Meera ignores. Says, early in the story: 'Kavitha waits for you. Don't make her wait forever.' Meera is irritated by this observation at 17. At 38, she understands it was the whole story."
+      }
+    ]
+  },
+
+  "recurringMotifs": {
+    "theFilmTheyNeverWatched": "Meera and Kavitha planned, for two years, to watch a specific Tamil film together — it kept closing before they could go. By the time it reopened at a single-screen theatre, they had stopped being friends. Meera watches it alone.",
+    "TheMissedBirthday": "Kavitha's 18th birthday. Meera promised to come, got distracted, sent a message saying she'd be late. She arrived to find Kavitha's mother washing up the empty dishes.",
+    "PhoneUnanswered": "The alternating structure ends every 'young' chapter with a moment where Kavitha does not answer Meera's call. We watch the pattern of non-answer get more permanent over time."
+  },
+
+  "storyArc": {
+    "premise": "Meera and Kavitha have been friends since age 7. At 17, their paths diverge — Meera gets into a busy college social life; Kavitha gets into a university in another city. Meera keeps promising to visit, to call, to write. She never does, not really. By 21, the friendship is functionally over. Meera spends years telling herself it was mutual drift. At 38, she finds Kavitha's old journal — left behind at a mutual friend's flat — and reads one entry that makes clear it was not drift. It was abandonment.",
+    "ending": "Ambiguous. Meera calls Kavitha. Kavitha answers. They are polite. There is no reunion, no forgiveness scene, no closure speech. 'I just wanted to hear your voice,' Meera says. 'I'm glad you called,' Kavitha says. That is the whole conversation. It is enough. It is also too late."
+  },
+
+  "prohibitions": [
+    "No reconciliation arc. They do not become close again.",
+    "Kavitha must never be made into a saint or a victim — she has her own complexity even if we barely see it.",
+    "No paragraph explaining 'what friendship means'. The story enacts it; it does not explain it.",
+    "Meera does not become a better person after this. She tries. That is all."
+  ]
+}

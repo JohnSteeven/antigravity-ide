@@ -1,0 +1,89 @@
+{
+  "_type": "StoryBible",
+  "_visibility": "internal-editorial-only — never served through any API",
+  "storyNumber": 5,
+  "slug": "the-first-salary-envelope",
+  "title": "The First Salary Envelope",
+  "category": "Money",
+  "accessLevel": "free",
+  "layout": "book-page",
+  "targetReadingTime": "35–40 min",
+
+  "voiceProfile": {
+    "pov": "First-person, Arjun. Present tense in the opening scene; past tense for all prior chapters; present tense returns at the end.",
+    "tense": "Present/past hybrid as above. The story opens with Arjun at the bank counter, envelope in hand — then pulls back to tell us how he got there.",
+    "register": "Earnest, occasionally wry. Arjun does not talk about money abstractly — he talks about it in rupees, in specific amounts. The prose is grounded entirely in particulars.",
+    "sentenceRhythm": "Shorter sentences when Arjun is nervous or uncertain. The payroll scene — when he sees the number for the first time — is described in three sentences that get progressively shorter, then one long sentence about what it felt like.",
+    "narratorDistance": "Very close first-person. Arjun is not a reliable narrator in the conventional sense — he is simply young, and young narrators misread things, which the reader notices before Arjun does.",
+    "distinctiveDevices": [
+      "Exact rupee amounts throughout — not 'a large sum' but '23,400 rupees'. The specificity is essential.",
+      "The book-page layout renders this as if it is Arjun writing something down — a journal, a letter, an account. The reader should feel like a witness.",
+      "The envelope is never described physically until the final scene — and then in precise, tactile detail."
+    ]
+  },
+
+  "characters": {
+    "protagonist": {
+      "name": "Arjun Sharma",
+      "age": "23 at story start",
+      "appearance": "Still has his college bag. Wears a new shirt for his first day that he bought with his mother's money.",
+      "background": "First-generation professional. Father drives a school bus in Jaipur. Mother is a primary school teacher. Arjun is the first in his immediate family to work in a private company. He has just started as a junior analyst at a mid-sized logistics firm in Bangalore.",
+      "psychologicalProfile": {
+        "strengths": ["Precise, careful with money", "Intensely loyal to his family", "Good at his job even when nervous"],
+        "flaws": ["Has built his self-worth entirely on being 'the one who made it'", "Equates money with love — sending money home feels like the only language he knows for expressing care", "Has not yet learned that earning money and becoming a man are different events"],
+        "centralDesire": "To hand his father money — earned by himself — before the end of the month. Not for his father's comfort (his father is managing). For himself. As proof.",
+        "what-happens": "He does it. And the scene is not what he imagined."
+      }
+    },
+    "secondaryCharacters": [
+      {
+        "name": "Rakesh Sharma (Father)",
+        "age": "52",
+        "appearance": "Large hands. A particular way of folding his arms when he is pleased but doesn't want to show it.",
+        "key-moment": "When Arjun hands him the money — via a bank transfer receipt, because Arjun couldn't be there in person — Rakesh does not say thank you. He says 'Don't worry about us.' Arjun is crushed for three days before he understands what his father meant."
+      },
+      {
+        "name": "Sunita Sharma (Mother)",
+        "age": "48",
+        "key-moment": "The phone call the night before Arjun's first day. She says three things: pack enough food, call when you get the salary, remember that we are proud of you already. In that order. The 'already' is the whole story."
+      },
+      {
+        "name": "Rohan (Flatmate in Bangalore)",
+        "age": "24",
+        "role": "Comic relief but also grounding. Has been working for two years. Teaches Arjun how salary day actually works — the anticlimax of it, the transaction fee, the UPI notification. Rohan's parents are wealthy; he spends his salary on himself without ceremony. This contrast is noted without judgment."
+      }
+    ]
+  },
+
+  "theSalaryEnvelope": {
+    "what-it-is": "In the digital age, no actual envelope exists. Arjun's salary is deposited via NEFT. But his father's salary — which Arjun watched arrive his whole childhood — came in a brown paper envelope from the bus depot. Arjun prints his bank credit SMS and folds it into a clean white envelope. This is the envelope of the title.",
+    "what-he-does-with-it": "He photographs it, sends the photo to his mother. He then sends 8,000 rupees to his parents' account. He keeps the folded receipt in his wallet for four months."
+  },
+
+  "recurringMotifs": {
+    "theJaipurBusDepot": "Arjun's childhood image of money: his father emerging from the depot office on the last day of the month, brown envelope in hand. This image recurs three times — at the beginning, middle, and end of the story.",
+    "theNewShirt": "Bought with his mother's money for his first day. He notices on day three that the collar is too stiff. He wears it for a month anyway.",
+    "theTransactionNotification": "The UPI ping. Described twice — once when Arjun receives his salary (he stares at his phone for a full minute), and once when he sends the 8,000 to his father (he stares at his phone for a different reason)."
+  },
+
+  "storyArc": {
+    "premise": "Arjun's first month working. The story is not about the job — barely any office scenes. It is about money: what it means to earn it for the first time, what it means to give some of it away, and the surprising weight of both.",
+    "chapters": [
+      "The first day. The new shirt. The wrong office entrance.",
+      "The first payroll cycle — waiting. Rohan explains the deposit schedule.",
+      "Salary day. The SMS. The eight thousand. The envelope he prints and folds.",
+      "Three days of silence from his father. Arjun's interpretation of it.",
+      "The phone call. What his father actually meant.",
+      "The end of the month. Arjun buys himself one thing — a small thing. The first time he has bought himself something with earned money. The story ends here, in a shop, deciding."
+    ],
+    "ending": "Quiet and complete. Arjun stands in a stationery shop deciding whether to buy a notebook he wants — ₹180. He buys it. The story ends with him walking out, the notebook in his bag, thinking about nothing in particular. The anticlimax is the point."
+  },
+
+  "prohibitions": [
+    "No poverty porn. The family is not desperate — they are managing. The story is about dignity, not survival.",
+    "The father's silence must not be played as coldness. It is the silence of a man who does not know how to accept from his child.",
+    "No 'inspiring' speech from Arjun about hard work. Arjun earns money by showing up and doing the work. That is all.",
+    "The ₹180 notebook is not a symbol of triumph. It is just a notebook. Do not over-explain its significance.",
+    "Rohan's wealthy background is noted once and not returned to — it is not a commentary on class inequality, just texture."
+  ]
+}

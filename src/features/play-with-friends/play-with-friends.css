@@ -39,6 +39,16 @@ body.play-with-friends-active {
   transform: translateY(-2px);
 }
 
+.pwf-game-picker > button:focus-visible,
+.pwf-segmented > button:focus-visible,
+.pwf-icon-button:focus-visible,
+.pwf-primary-button:focus-visible,
+.pwf-back-link:focus-visible,
+.pwf-input-wrap input:focus-visible {
+  outline: 2px solid var(--pwf-yellow, #e9ae3d) !important;
+  outline-offset: 3px !important;
+}
+
 .pwf-game-picker-icon {
   font-size: 1.6rem;
   margin-bottom: 8px;

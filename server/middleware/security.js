@@ -185,12 +185,25 @@ const changePasswordLimiter = rateLimit({
   message: { message: "Too many password change attempts. Please wait 15 minutes before trying again." },
 });
 
+const identityChangeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: env.nodeEnv === "production" ? 12 : 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const accountKey = String(req.user?._id || req.user?.id || req.ip || "unknown");
+    return `identity_${crypto.createHash("sha256").update(accountKey).digest("hex")}`;
+  },
+  message: { message: "Too many account identity requests. Please wait before trying again." },
+});
+
 module.exports = {
   authLimiter,
   changePasswordLimiter,
   csrfProtection,
   emailRateLimiter,
   globalLimiter,
+  identityChangeLimiter,
   issueCsrfToken,
   otpAccountLimiter,
   sanitizeRichHtml,

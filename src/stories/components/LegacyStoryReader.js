@@ -1,5 +1,5 @@
 import React from "react";
-import { FiBookmark, FiShare2 } from "react-icons/fi";
+import StoryActions from "./StoryActions";
 import { getImageUrl } from "../../utils/imageUrlHelper";
 import { calculateStoryReadingTime } from "../storySections";
 import storyMedia from "../storyMedia.cjs";
@@ -9,7 +9,7 @@ import "../story-reader.css";
 
 const { resolveStoryPrimaryImage } = storyMedia;
 
-export default function LegacyStoryReader({ story, saved, copied, onSave, onShare, mode = "public", showBackLink = true }) {
+export default function LegacyStoryReader({ story, saved, copied, saving, saveDisabled, feedback, onSave, onShare, mode = "public", showBackLink = true }) {
   const readingMinutes = calculateStoryReadingTime(story);
   const layout = getStoryLayoutConfig(story.storyLayout);
   const media = resolveStoryPrimaryImage(story, { includeSectionImages: false });
@@ -73,10 +73,7 @@ export default function LegacyStoryReader({ story, saved, copied, onSave, onShar
           </aside>
         )}
 
-        {mode === "public" && <div className="story-reader__actions" aria-label="Story actions">
-          <button type="button" onClick={onSave} aria-pressed={saved}><FiBookmark aria-hidden="true" />{saved ? "Saved to reading list" : "Save story"}</button>
-          <button type="button" onClick={onShare}><FiShare2 aria-hidden="true" />{copied ? "Link copied" : "Share story"}</button>
-        </div>}
+        {mode === "public" && <StoryActions {...{ saved, copied, saving, saveDisabled, feedback, onSave, onShare }} />}
       </div>
     </article>
   );

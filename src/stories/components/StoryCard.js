@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 import { FiArrowRight } from "react-icons/fi";
-import { getImageUrl } from "../../utils/imageUrlHelper";
+import { getImageUrl, handleImageError } from "../../utils/imageUrlHelper";
 import storyMedia from "../storyMedia.cjs";
 
 const { resolveStoryPrimaryImage } = storyMedia;
@@ -10,7 +10,7 @@ export default function StoryCard({ story }) {
   if (!story) return null;
 
   const media = resolveStoryPrimaryImage(story, { preferCover: true });
-  const imageUrl = getImageUrl(media?.src);
+  const imageUrl = getImageUrl(media?.src, story.category);
   const readingTime = story.readingTime || `${story.readingTimeMin || 8} min read`;
   const title = story.title || "Untitled Story";
   const teaser = story.description || story.excerpt || "";
@@ -26,11 +26,23 @@ export default function StoryCard({ story }) {
             loading="lazy"
             width="308"
             height="216"
+            onError={(e) => handleImageError(e, story.category)}
           />
         </Link>
       )}
 
       <div className="story-card-content">
+        <div className="story-badge-group">
+          {story.category && story.category !== "Stories" && (
+            <span className="story-badge story-badge--category">{story.category}</span>
+          )}
+          {story.accessLevel === "premium" ? (
+            <span className="story-badge story-badge--premium">Premium</span>
+          ) : (
+            <span className="story-badge story-badge--free">Free</span>
+          )}
+        </div>
+
         <Link to={`/stories/${story.slug}`} className="story-card-title">
           {title}
         </Link>

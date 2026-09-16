@@ -77,6 +77,10 @@ jest.mock('../controllers/readerController', () => ({
   getCollections: mockOk,
   createCollection: mockOk,
   addToCollection: mockOk,
+  updateStoryProgress: mockOk,
+  getStoryProgress: mockOk,
+  getStoryContinueReading: mockOk,
+  getStoryCompleted: mockOk,
 }));
 
 jest.mock('../controllers/articleController', () => ({

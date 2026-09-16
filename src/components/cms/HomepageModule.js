@@ -27,7 +27,18 @@ export default function HomepageModule() {
       featuredArticles: {
         visible: true,
         title: "Featured Stories",
+        title: "Featured Articles",
         subtitle: "Hand-picked articles worth reading",
+      },
+      featuredStories: {
+        visible: true,
+        title: "Featured Stories",
+        subtitle: "Immersive journeys and visual narratives",
+      },
+      featuredCourses: {
+        visible: true,
+        title: "Featured Learning",
+        subtitle: "Structured masterclasses and learning tracks",
       },
       latestArticles: {
         visible: true,

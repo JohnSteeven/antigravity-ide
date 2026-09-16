@@ -1,10 +1,18 @@
 const express = require("express");
 const { validationResult } = require("express-validator");
-const { updateProfileValidator, updateUserValidator } = require("../validators/userValidator");
+const {
+  cancelIdentityChangeValidator,
+  resendIdentityChangeValidator,
+  startIdentityChangeValidator,
+  updateProfileValidator,
+  updateUserValidator,
+  verifyIdentityChangeValidator,
+} = require("../validators/userValidator");
 const userController = require("../controllers/userController");
 const { handleValidation } = require("../middleware/errorHandler");
 const { authenticate } = require("../middleware/auth");
 const { checkPermission } = require("../middleware/rbac");
+const { identityChangeLimiter } = require("../middleware/security");
 
 const router = express.Router();
 const validate = handleValidation(validationResult);
@@ -12,6 +20,38 @@ const validate = handleValidation(validationResult);
 // Personal Profile routes
 router.get("/me", authenticate, userController.getMe);
 router.put("/me", authenticate, updateProfileValidator, validate, userController.updateProfile);
+router.post(
+  "/me/identity-changes",
+  authenticate,
+  identityChangeLimiter,
+  startIdentityChangeValidator,
+  validate,
+  userController.startIdentityChange
+);
+router.post(
+  "/me/identity-changes/:challengeId/resend",
+  authenticate,
+  identityChangeLimiter,
+  resendIdentityChangeValidator,
+  validate,
+  userController.resendIdentityChange
+);
+router.post(
+  "/me/identity-changes/:challengeId/verify",
+  authenticate,
+  identityChangeLimiter,
+  verifyIdentityChangeValidator,
+  validate,
+  userController.verifyIdentityChange
+);
+router.delete(
+  "/me/identity-changes/:challengeId",
+  authenticate,
+  identityChangeLimiter,
+  cancelIdentityChangeValidator,
+  validate,
+  userController.cancelIdentityChange
+);
 router.patch("/notifications/:id", authenticate, userController.markNotificationAsRead);
 
 // Admin User management routes (requires dynamic checkPermission RBAC middleware)

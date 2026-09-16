@@ -91,11 +91,11 @@ describe('SEO evidence and public-content filtering', () => {
 
     await seoController.getJsonLd({ params: { entityType: 'article', entityId: 'record-id' } }, res, jest.fn());
 
-    expect(mockArticleFindOne).toHaveBeenCalledWith({
+    expect(mockArticleFindOne).toHaveBeenCalledWith(expect.objectContaining({
       _id: 'record-id',
       status: 'published',
       isDeleted: { $ne: true },
-    });
+    }));
     expect(res.status).toHaveBeenCalledWith(404);
   });
 

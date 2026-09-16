@@ -122,7 +122,10 @@ const getCourseDetail = async (slug, userId = null) => {
 };
 
 const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null, admin = false }) => {
-  const course = await Course.findOne({ slug: courseSlug, ...(creatorId || admin ? {} : { publicationStatus: "published" }), isDeleted: false }).lean();
+  // Studio preview authority is limited to the authenticated Creator's own
+  // Course. Free access and preview flags never bypass that ownership check.
+  const courseScope = admin ? {} : creatorId ? { creatorId } : { publicationStatus: "published" };
+  const course = await Course.findOne({ slug: courseSlug, ...courseScope, isDeleted: false }).lean();
   if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
   const owner = creatorId && String(course.creatorId) === String(creatorId);
   const lesson = await CourseLesson.findOne({ _id: lessonId, courseId: course._id, isDeleted: false })

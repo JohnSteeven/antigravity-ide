@@ -185,6 +185,29 @@ export const AuthProvider = ({ children }) => {
         return result;
       },
 
+      async startIdentityChange(payload) {
+        return authService.startIdentityChange(payload);
+      },
+
+      async resendIdentityChange(challengeId) {
+        return authService.resendIdentityChange(challengeId);
+      },
+
+      async cancelIdentityChange(challengeId) {
+        return authService.cancelIdentityChange(challengeId);
+      },
+
+      async verifyIdentityChange(challengeId, code) {
+        const result = await authService.verifyIdentityChange(challengeId, code);
+        if (result?.user) setUser(result.user);
+        if (result?.session) setSession(result.session);
+        await Promise.all([
+          refreshEntitlements(result?.user || user),
+          refreshCreatorAccess(result?.user || user),
+        ]);
+        return result;
+      },
+
       async logout() {
         const result = await authService.logout();
         setUser(null);

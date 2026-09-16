@@ -12,6 +12,7 @@ const createArticleValidator = [
   body("status")
     .optional()
     .isIn(["draft", "published", "archived", "scheduled"])
+    .isIn(["draft", "review", "published", "archived", "scheduled"])
     .withMessage("Invalid status value."),
   body("accessLevel")
     .optional()

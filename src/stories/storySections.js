@@ -8,6 +8,8 @@ export const STORY_SECTION_TYPES = Object.freeze({
   SCENE_BREAK: "scene-break",
   IMAGE: "image",
   WIDE_IMAGE: "wide-image",
+  DIALOGUE: "dialogue",
+  CALLOUT: "callout",
 });
 
 export const STORY_IMAGE_SIZES = Object.freeze(["small", "medium", "portrait"]);
@@ -20,6 +22,8 @@ export const STORY_SECTION_OPTIONS = Object.freeze([
   { type: STORY_SECTION_TYPES.QUOTE, label: "Quote", description: "An editorial quotation with optional attribution." },
   { type: STORY_SECTION_TYPES.REFLECTION, label: "Reflection", description: "A quiet reflective aside." },
   { type: STORY_SECTION_TYPES.SCENE_BREAK, label: "Scene Break", description: "A subtle pause between scenes." },
+  { type: STORY_SECTION_TYPES.DIALOGUE, label: "Dialogue", description: "Character conversation or speech block with speaker." },
+  { type: STORY_SECTION_TYPES.CALLOUT, label: "Callout", description: "Highlighted editorial callout, note, or tip." },
 ]);
 
 const TYPE_ALIASES = Object.freeze({
@@ -35,6 +39,11 @@ const TYPE_ALIASES = Object.freeze({
   "scene_break": STORY_SECTION_TYPES.SCENE_BREAK,
   divider: STORY_SECTION_TYPES.SCENE_BREAK,
   "wide_image": STORY_SECTION_TYPES.WIDE_IMAGE,
+  speech: STORY_SECTION_TYPES.DIALOGUE,
+  conversation: STORY_SECTION_TYPES.DIALOGUE,
+  note: STORY_SECTION_TYPES.CALLOUT,
+  tip: STORY_SECTION_TYPES.CALLOUT,
+  warning: STORY_SECTION_TYPES.CALLOUT,
 });
 
 export const normalizeSectionType = (type) => {
@@ -57,6 +66,12 @@ export const createStorySection = (type = STORY_SECTION_TYPES.TEXT) => {
     return { ...common, heading: "", body: "" };
   }
   if (normalizedType === STORY_SECTION_TYPES.SCENE_BREAK) return common;
+  if (normalizedType === STORY_SECTION_TYPES.DIALOGUE) {
+    return { ...common, speaker: "", dialogue: "", body: "", avatar: "" };
+  }
+  if (normalizedType === STORY_SECTION_TYPES.CALLOUT) {
+    return { ...common, heading: "", body: "", calloutType: "note" };
+  }
   if (normalizedType === STORY_SECTION_TYPES.CHAPTER) {
     return {
       ...common,
@@ -90,7 +105,16 @@ export const stripStoryHtml = (value = "") =>
     .trim();
 
 export const getStorySectionText = (section = {}) =>
-  [section.heading, section.chapterTitle, section.body, section.quote, section.attribution, section.quoteSource]
+  [
+    section.heading,
+    section.chapterTitle,
+    section.body,
+    section.quote,
+    section.attribution,
+    section.quoteSource,
+    section.speaker,
+    section.dialogue,
+  ]
     .map(stripStoryHtml)
     .filter(Boolean)
     .join(" ");
@@ -122,6 +146,12 @@ const normalizeOneSection = (section, index) => {
     type,
     imageSize: normalizeImageSize(section?.imageSize || section?.size),
     alt: section?.alt || section?.altText || "",
+    speaker: section?.speaker || "",
+    dialogue: section?.dialogue || (type === STORY_SECTION_TYPES.DIALOGUE ? section?.body || "" : ""),
+    avatar: section?.avatar || "",
+    calloutType: ["note", "tip", "warning", "info"].includes(String(section?.calloutType || "").toLowerCase())
+      ? String(section?.calloutType || "").toLowerCase()
+      : "note",
   };
   delete normalized.images;
 
@@ -199,6 +229,12 @@ export const validateStorySections = (sections = [], { publishing = false } = {}
     }
     if (publishing && section.type === STORY_SECTION_TYPES.REFLECTION && section.image && !String(section.alt || "").trim()) {
       errors.push(`${label}: image alt text is required.`);
+    }
+    if (publishing && section.type === STORY_SECTION_TYPES.DIALOGUE && !stripStoryHtml(section.dialogue || section.body || "")) {
+      errors.push(`${label}: dialogue text is required.`);
+    }
+    if (publishing && section.type === STORY_SECTION_TYPES.CALLOUT && body.length < 5) {
+      errors.push(`${label}: callout body text is required.`);
     }
   });
 

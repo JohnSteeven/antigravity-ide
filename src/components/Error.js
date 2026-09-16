@@ -19,10 +19,8 @@ const Error = () => {
         {status ? `${status}: ${message}` : message}
       </p>
 
-      <Link to="/">
-        <button className="error-btn">
-          Go Back Home
-        </button>
+      <Link to="/" className="error-btn" role="button">
+        Go Back Home
       </Link>
     </div>
   );

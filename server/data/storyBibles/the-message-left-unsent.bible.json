@@ -1,0 +1,36 @@
+{
+  "storySlug": "the-message-left-unsent",
+  "title": "The Message Left Unsent",
+  "category": "Love",
+  "accessLevel": "free",
+  "storyLayout": "letter-memory",
+  "voiceProfile": {
+    "narrator": "First-person Nikhil Verma",
+    "tense": "Present tense adult reflection (2024), past tense memories (2015–2021)",
+    "register": "Intimate, restrained, lyrical, free of melodrama or self-pity",
+    "narratorDistance": "First-person direct interior monologue"
+  },
+  "characters": [
+    {
+      "name": "Nikhil Verma",
+      "age": 34,
+      "role": "Narrator",
+      "description": "Brand strategist in Delhi. Thoughtful, guarded, prone to over-analyzing moments long after they have passed.",
+      "internalConflict": "Has spent nine years nurturing a phantom conversation in his drafts folder as a surrogate for real closure."
+    },
+    {
+      "name": "Ananya Sen",
+      "age": 33,
+      "role": "Former partner",
+      "description": "Environmental economist now living in Montreal. Practical, courageous, direct.",
+      "significance": "The woman he loved but lacked the courage to ask to stay."
+    }
+  ],
+  "motifs": [
+    "The drafts folder count (1 draft, 428 words, modified 34 times)",
+    "The November mist in Hauz Khas Village with the smell of woodsmoke and coffee",
+    "The green tea mug with the chipped handle they shared in the university hostel",
+    "The button: [Delete Draft] vs [Send Message]",
+    "The quiet dignity of finally letting another person exist without your commentary"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "storySlug": "the-friend-who-became-successful-first",
+  "title": "The Friend Who Became Successful First",
+  "category": "Friendship",
+  "accessLevel": "free",
+  "storyLayout": "triple-rhythm",
+  "voiceProfile": {
+    "narrator": "First-person Siddharth Rao",
+    "tense": "Retrospective past tense moving through three clear temporal movements",
+    "register": "Brutally honest, wry, self-incriminating, ultimately generous",
+    "narratorDistance": "First-person self-critique"
+  },
+  "characters": [
+    {
+      "name": "Siddharth Rao",
+      "age": 32,
+      "role": "Narrator",
+      "description": "Freelance UI designer in Bangalore. Competent, steady, but tortured by the velocity of peer comparison.",
+      "internalConflict": "Wants desperately to celebrate his best friend's fortune, but experiences every round of funding as an indictment of his own worth."
+    },
+    {
+      "name": "Gautam Nair",
+      "age": 32,
+      "role": "Best friend & startup founder",
+      "description": "Founder of a fintech payments gateway. Exhausted, generous, slightly isolated by sudden wealth.",
+      "significance": "The friend whose meteoric ascent creates an unbridgeable social canyon."
+    }
+  ],
+  "motifs": [
+    "The two rickety plastic chairs in the Koramangala rented terrace room (2016)",
+    "The ₹4,800 craft beer bill settled with an imperceptible tap of a metal card",
+    "The whiteboard with startup architecture diagrams covered in permanent marker stains",
+    "The penthouse housewarming party overlooking the Indiranagar tree canopy",
+    "The recognition that envy is grief for an unlived version of oneself"
+  ]
+}

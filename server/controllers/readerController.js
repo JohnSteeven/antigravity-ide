@@ -5,9 +5,10 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-const PersonalizationService = require('../services/personalizationService');
-const ReadingProgressService  = require('../services/readingProgressService');
-const ReaderProfileService    = require('../services/readerProfileService');
+const PersonalizationService    = require('../services/personalizationService');
+const ReadingProgressService    = require('../services/readingProgressService');
+const StoryProgressService      = require('../services/storyProgressService');
+const ReaderProfileService      = require('../services/readerProfileService');
 
 const fail = (res, error, fallback) => {
   const status = Number.isInteger(error?.status) ? error.status : 500;
@@ -134,5 +135,50 @@ exports.getLearningPaths = async (req, res) => {
     res.json({ success: true, data: paths });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch learning paths', message: err.message });
+  }
+};
+
+// ── Story Reading Progress ─────────────────────────────────────────────────────
+// These handlers use StoryProgressService — which gates on contentType:'story'
+// and NEVER touches Article reading counters, streaks, or AchievementService.
+
+exports.updateStoryProgress = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const progress = await StoryProgressService.updateStoryProgress({ ...req.body, userId });
+    res.json({ success: true, data: progress });
+  } catch (err) {
+    fail(res, err, 'Failed to update story progress');
+  }
+};
+
+exports.getStoryProgress = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const progress = await StoryProgressService.getStoryProgress(userId, req.params.articleId);
+    if (!progress) return res.status(404).json({ error: 'Story reading progress not found.' });
+    return res.json({ success: true, data: progress });
+  } catch (err) {
+    return fail(res, err, 'Failed to fetch story reading progress');
+  }
+};
+
+exports.getStoryContinueReading = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const list = await StoryProgressService.getStoryContinueReading(userId);
+    res.json({ success: true, data: list });
+  } catch (err) {
+    fail(res, err, 'Failed to fetch story continue reading list');
+  }
+};
+
+exports.getStoryCompleted = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const list = await StoryProgressService.getStoryCompleted(userId);
+    res.json({ success: true, data: list });
+  } catch (err) {
+    fail(res, err, 'Failed to fetch completed stories list');
   }
 };

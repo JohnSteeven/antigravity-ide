@@ -8,6 +8,60 @@ const CaptionSchema = new mongoose.Schema({
   assetId: { type: mongoose.Schema.Types.ObjectId, ref: "ProtectedMediaAsset", required: true },
 }, { _id: false });
 
+const CodingTestAssertionSchema = new mongoose.Schema({
+  description: { type: String, default: "", maxlength: 300 },
+  testCode: { type: String, default: "", maxlength: 5000 },
+  hidden: { type: Boolean, default: false },
+}, { _id: false });
+
+const CodingBlockSchema = new mongoose.Schema({
+  id: { type: String, default: () => crypto.randomUUID() },
+  blockType: {
+    type: String,
+    enum: [
+      "explanation",
+      "example",
+      "starter_code",
+      "instructions",
+      "expected_output",
+      "hints",
+      "solution",
+      "tests",
+      "project_task",
+    ],
+    default: "explanation",
+  },
+  title: { type: String, default: "", maxlength: 180 },
+  content: { type: String, default: "", maxlength: 10000 },
+  language: { type: String, default: "javascript", maxlength: 40 },
+  starterCode: { type: String, default: "", maxlength: 20000 },
+  instructions: { type: String, default: "", maxlength: 5000 },
+  expectedOutput: { type: String, default: "", maxlength: 5000 },
+  hints: [{ type: String, maxlength: 1000 }],
+  // Protected fields for educator / grading only — excluded by default
+  solutionCode: { type: String, default: "", maxlength: 20000, select: false },
+  tests: { type: [CodingTestAssertionSchema], default: [], select: false },
+  order: { type: Number, default: 0 },
+}, { _id: false });
+
+const QuizOptionSchema = new mongoose.Schema({
+  id: { type: String, default: () => crypto.randomUUID() },
+  text: { type: String, required: true, maxlength: 500 },
+}, { _id: false });
+
+const QuizQuestionSchema = new mongoose.Schema({
+  id: { type: String, default: () => crypto.randomUUID() },
+  question: { type: String, required: true, maxlength: 1000 },
+  options: {
+    type: [QuizOptionSchema],
+    validate: [val => !val || (val.length >= 2 && val.length <= 6), "Must provide between 2 and 6 options."],
+  },
+  explanation: { type: String, default: "", maxlength: 2000 },
+  // Protected answer field — excluded by default from ordinary learner API responses
+  correctOptionIndex: { type: Number, required: true, min: 0, select: false },
+  order: { type: Number, default: 0 },
+}, { _id: false });
+
 const CourseLessonSchema = new mongoose.Schema({
   courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true, index: true },
   moduleId: { type: mongoose.Schema.Types.ObjectId, ref: "CourseModule", required: true, index: true },
@@ -21,6 +75,8 @@ const CourseLessonSchema = new mongoose.Schema({
   transcript: { type: String, default: "", select: false },
   captions: { type: [CaptionSchema], default: [], select: false },
   resourceIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "LearningResource", select: false }],
+  codingBlocks: { type: [CodingBlockSchema], default: [] },
+  quizQuestions: { type: [QuizQuestionSchema], default: [] },
   durationSeconds: { type: Number, default: 0, min: 0, max: 86400 },
   order: { type: Number, required: true, min: 0 },
   isPreview: { type: Boolean, default: false },

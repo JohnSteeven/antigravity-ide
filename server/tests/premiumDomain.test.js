@@ -84,4 +84,24 @@ describe("MyJourney Premium subscription domain", () => {
     if (original === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = original;
   });
+
+  test("existing development Premium rows cannot grant any production entitlement", () => {
+    const original = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "production";
+      for (const billingStatus of ["active", "trialing", "grace_period", "cancel_pending"]) {
+        const subscription = active(1, { provider: "development", billingStatus, trialEnd: new Date("2027-01-01"), graceUntil: new Date("2027-01-01") });
+        const resolution = resolveFromSubscription(subscription, now);
+        expect(resolution.plan).toBe("free");
+        expect(resolution.accessReason).toBe("development_disabled");
+        expect(Object.values(resolution.entitlements).every((allowed) => allowed === false)).toBe(true);
+      }
+      expect(evaluatePremiumAccess(active(1, { provider: "manual" }), now).active).toBe(true);
+      process.env.NODE_ENV = "test";
+      expect(evaluatePremiumAccess(active(1, { provider: "development" }), now).active).toBe(true);
+    } finally {
+      if (original === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = original;
+    }
+  });
 });

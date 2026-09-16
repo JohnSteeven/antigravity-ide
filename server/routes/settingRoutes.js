@@ -5,6 +5,8 @@ const { requireAdmin } = require("../middleware/admin");
 
 const router = express.Router();
 
+router.get("/public/:key", settingController.getPublicSetting);
+
 router.use(authenticate, requireAdmin);
 router.post("/test-smtp", settingController.testSmtp);
 router.get("/:key", settingController.getSetting);

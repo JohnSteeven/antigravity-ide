@@ -437,6 +437,7 @@ describe("Dark Mode surface-authority contract", () => {
     expect(storiesCss).toMatch(/body\.theme-dark \.stories-page,\s*body\.theme-dark \.story-detail-route/);
     expect(storyReaderCss).toMatch(/body\.theme-dark \.story-reader\s*\{[\s\S]*?--story-reader-bg:\s*#141211/);
     expect(storyReaderCss).toContain("Preset differentiation stays within the six stable engines.");
+    expect(storyReaderCss).toContain("Preset differentiation");
   });
 
   test("Dark Mode does not rely on a global color override", () => {

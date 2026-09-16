@@ -2,7 +2,7 @@ export const isEmail = (value) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 
 export const isMobile = (value) =>
-  /^\+?[0-9]{8,15}$/.test(String(value || "").replace(/\s+/g, ""));
+  /^\+[1-9][0-9]{7,14}$/.test(String(value || "").replace(/\s+/g, ""));
 
 export const detectIdentifierType = (value) => {
   if (isEmail(value)) return "email";

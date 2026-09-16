@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { FiArrowLeft, FiSave } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
-import { ALL_COUNTRY_CODES } from "../utils/countryCodes";
 import { getProfileCover, getProfilePhoto } from "../utils/helpers";
 import AvatarUploader from "./AvatarUploader";
-import PasswordStrength from "./PasswordStrength";
+import IdentityChangePanel from "./IdentityChangePanel";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -15,9 +14,6 @@ const EditProfile = () => {
     firstName: user.firstName || "",
     lastName: user.lastName || "",
     username: user.username || "",
-    email: user.email || "",
-    countryCode: user.countryCode || "+91",
-    mobile: user.mobile || "",
     bio: profile.bio || "",
     location: profile.location || "",
     website: profile.website || "",
@@ -38,23 +34,10 @@ const EditProfile = () => {
     setMessage("");
 
     try {
-      if (form.currentPassword || form.newPassword) {
-        if (!form.currentPassword || !form.newPassword) {
-          throw new Error("Both current password and new password are required to change password.");
-        }
-        await changePassword({
-          currentPassword: form.currentPassword,
-          newPassword: form.newPassword,
-        });
-      }
-
       const result = await updateProfile({
         firstName: form.firstName,
         lastName: form.lastName,
         username: form.username,
-        email: form.email,
-        countryCode: form.countryCode,
-        mobile: form.mobile,
         profile: {
           bio: form.bio,
           location: form.location,
@@ -122,27 +105,6 @@ const EditProfile = () => {
             Username
             <input value={form.username} onChange={(event) => updateField("username", event.target.value)} />
           </label>
-          <label>
-            Email
-            <input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} />
-          </label>
-        </div>
-
-        <div className="form-grid country-mobile">
-          <label>
-            Country Code
-            <select value={form.countryCode} onChange={(event) => updateField("countryCode", event.target.value)}>
-              {ALL_COUNTRY_CODES.map((c) => (
-                <option key={`${c.country}-${c.code}`} value={c.code}>
-                  {c.flag} {c.code} — {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Mobile
-            <input value={form.mobile} onChange={(event) => updateField("mobile", event.target.value)} />
-          </label>
         </div>
 
         <label>
@@ -172,6 +134,7 @@ const EditProfile = () => {
           <FiSave /> {isSubmitting ? "Saving..." : "Save Profile & Settings"}
         </button>
       </form>
+      <IdentityChangePanel />
     </main>
   );
 };

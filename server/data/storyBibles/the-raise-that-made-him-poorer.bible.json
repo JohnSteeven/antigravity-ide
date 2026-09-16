@@ -1,0 +1,41 @@
+{
+  "storySlug": "the-raise-that-made-him-poorer",
+  "title": "The Raise That Made Him Poorer",
+  "category": "Money",
+  "accessLevel": "free",
+  "storyLayout": "alternating-wide-moment",
+  "voiceProfile": {
+    "narrator": "Third-person close focus on Bhaskar Sen",
+    "tense": "Past tense with sharp numerical present-tense ledger moments",
+    "register": "Grounded, forensic, analytical, socially acute",
+    "narratorDistance": "Close third-person observing lifestyle inflation"
+  },
+  "characters": [
+    {
+      "name": "Bhaskar Sen",
+      "age": 36,
+      "role": "Protagonist",
+      "description": "Director of Operations at an e-commerce firm in Gurgaon. Son of a Durgapur municipal engineer.",
+      "internalConflict": "Earns ₹31 lakhs a year—ten times his father's peak salary—yet experiences a paralyzing terror on the 28th of every month."
+    },
+    {
+      "name": "Ruchira Sen",
+      "age": 35,
+      "role": "Wife",
+      "description": "Content director at a publishing house. Practical, overwhelmed by the social performance of Gurgaon gated societies."
+    },
+    {
+      "name": "Neil",
+      "age": 7,
+      "role": "Son",
+      "description": "Enrolled in an elite IB school with golf and robotics fees that cost more than a college semester."
+    }
+  ],
+  "motifs": [
+    "The 2:00 AM credit card statement with twelve installments of 'No-Cost EMI'",
+    "The Golf Course Extension Road high-rise with gold-tinted double glazing",
+    "The second European SUV parked in basement slot B-22",
+    "The father's old steel HMT wristwatch ticking with mechanical modesty",
+    "The quiet rebellion of canceling the country club membership and eating street kachoris"
+  ]
+}

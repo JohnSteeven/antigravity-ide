@@ -17,6 +17,27 @@ export default function UniversalSearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef(null);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setAutocomplete([]);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        setAutocomplete([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // Instant autocomplete on typing
   useEffect(() => {
     if (!query || query.length < 2) {
@@ -67,10 +88,15 @@ export default function UniversalSearchBar() {
             if (e.key === 'Enter') handleSearch();
           }}
           placeholder="Search articles, concepts, topics or ask a question..."
+          aria-label="Search articles, concepts, topics or ask a question"
           style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink, #fff)', fontSize: '0.88rem' }}
         />
         {query && (
-          <button onClick={() => { setQuery(''); setIsOpen(false); setResults(null); }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
+          <button
+            onClick={() => { setQuery(''); setIsOpen(false); setResults(null); }}
+            aria-label="Clear search"
+            style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
             <FiX />
           </button>
         )}

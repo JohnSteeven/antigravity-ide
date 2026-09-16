@@ -118,6 +118,7 @@ const archiveConversation = async (conversationId, userId) => {
  */
 const saveUserMessage = async (conversationId, userId, { content, inputMode = "typed", clientRequestId = null }) => {
   const trimmed = String(content || "").trim().slice(0, agentConfig.limits.messageChars);
+  const normalizedRequestId = clientRequestId ? String(clientRequestId).slice(0, 128) : null;
   if (!trimmed) throw new AgentError(errorCodes.REQUEST_INVALID, "Message content is required.", 422);
 
   let message;
@@ -128,13 +129,16 @@ const saveUserMessage = async (conversationId, userId, { content, inputMode = "t
       role: "user",
       content: trimmed,
       inputMode,
-      clientRequestId: clientRequestId ? String(clientRequestId).slice(0, 128) : null,
+      clientRequestId: normalizedRequestId,
     });
   } catch (error) {
     if (error?.code === 11000) {
       // Duplicate key = idempotent retry — load and return the existing message
-      message = await AgentMessage.findOne({ userId, conversationId, clientRequestId }).lean();
+      message = await AgentMessage.findOne({ userId, conversationId, clientRequestId: normalizedRequestId }).lean();
       if (!message) throw AgentError.from(error, { code: errorCodes.INTERNAL, message: "Duplicate message lookup failed." });
+      if (message.role !== "user" || message.content !== trimmed || (message.inputMode && message.inputMode !== inputMode)) {
+        throw new AgentError(errorCodes.REQUEST_INVALID, "This request identifier was already used for another message.", 409);
+      }
       return message;
     }
     throw AgentError.from(error);

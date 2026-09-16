@@ -18,6 +18,7 @@ const StorySectionSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: ["text", "text-image-right", "image-left-text", "chapter", "quote", "reflection", "scene-break", "image", "wide-image"],
+      enum: ["text", "text-image-right", "image-left-text", "chapter", "quote", "reflection", "scene-break", "image", "wide-image", "dialogue", "callout"],
       default: "text",
     },
     heading: { type: String, default: "" },
@@ -39,8 +40,61 @@ const StorySectionSchema = new mongoose.Schema(
       enum: ["classic", "pull-quote", "aside"],
       default: "classic",
     },
+    // Dialogue section fields
+    speaker: { type: String, default: "" },
+    dialogue: { type: String, default: "" },
+    avatar: { type: String, default: "" },
+    // Callout section fields
+    calloutType: {
+      type: String,
+      enum: ["note", "tip", "warning", "info"],
+      default: "note",
+    },
     // Retained only so historical multi-image data can be linearized safely.
     images: [{ type: mongoose.Schema.Types.Mixed }],
+  },
+  { _id: false }
+);
+
+const ARTICLE_BLOCK_TYPES = Object.freeze([
+  "paragraph",
+  "heading",
+  "image",
+  "quote",
+  "callout",
+  "code",
+  "list",
+  "table",
+  "divider",
+]);
+
+const ArticleBlockSchema = new mongoose.Schema(
+  {
+    id: { type: String, default: "" },
+    type: {
+      type: String,
+      enum: ARTICLE_BLOCK_TYPES,
+      required: true,
+    },
+    headingLevel: { type: Number, min: 1, max: 6, default: 2 },
+    text: { type: String, default: "" },
+    body: { type: String, default: "" },
+    image: { type: String, default: "" },
+    alt: { type: String, default: "" },
+    caption: { type: String, default: "" },
+    quote: { type: String, default: "" },
+    attribution: { type: String, default: "" },
+    calloutType: {
+      type: String,
+      enum: ["note", "tip", "warning", "info"],
+      default: "note",
+    },
+    code: { type: String, default: "" },
+    language: { type: String, default: "javascript", maxlength: 40 },
+    items: [{ type: String }],
+    tableHeaders: [{ type: String }],
+    tableRows: [[{ type: String }]],
+    order: { type: Number, default: 0 },
   },
   { _id: false }
 );
@@ -153,9 +207,26 @@ const ArticleSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["draft", "published", "archived", "scheduled"],
+      enum: ["draft", "review", "published", "archived", "scheduled"],
       default: "draft",
       index: true,
     },
+
+    // Structured Article Blocks (typed alternative to HTML body)
+    structuredBlocks: { type: [ArticleBlockSchema], default: undefined },
+
+    // References & Sources
+    references: [
+      {
+        title: { type: String, default: "", trim: true, maxlength: 200 },
+        url: { type: String, default: "", trim: true, maxlength: 500 },
+      },
+    ],
+    sources: [{ type: String, default: "", trim: true, maxlength: 500 }],
+
+    // Related content links
+    relatedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
+    relatedStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
 
     // Homepage / listing flags
     isFeatured: { type: Boolean, default: false, index: true },

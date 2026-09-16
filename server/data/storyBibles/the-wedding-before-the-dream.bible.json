@@ -1,0 +1,36 @@
+{
+  "storySlug": "the-wedding-before-the-dream",
+  "title": "The Wedding Before the Dream",
+  "category": "Marriage",
+  "accessLevel": "premium",
+  "storyLayout": "mixed-editorial",
+  "voiceProfile": {
+    "narrator": "Third-person alternating close focus between Divya and Madhav",
+    "tense": "Past tense with close present-tense sensory scenes",
+    "register": "Measured, domestic, deeply psychological, nuanced",
+    "narratorDistance": "Dual close third-person"
+  },
+  "characters": [
+    {
+      "name": "Divya Shukla",
+      "age": 29,
+      "role": "Protagonist",
+      "description": "Wildlife researcher with an incomplete thesis on swamp deer migrations. Married for four years.",
+      "internalConflict": "Loved her husband but felt suffocated by the domestic script of an extended Lucknow legal family."
+    },
+    {
+      "name": "Madhav Shukla",
+      "age": 31,
+      "role": "Protagonist / Husband",
+      "description": "Civil court litigator. Diligent, affectionate, burdened by his father's expectations.",
+      "internalConflict": "Trapped between familial filial duty and the realization that his wife's vitality is quietly dying in their courtyard."
+    }
+  ],
+  "motifs": [
+    "The heavy Nikon field binoculars hidden beneath folded silk sarees in the wardrobe",
+    "The courtyard clock in Lucknow that chimes with a heavy brass gong every quarter hour",
+    "The mud-splattered Mahindra Thar hired for the weekend trip to Dudhwa",
+    "The cup of ginger tea shared on a wooden veranda at sunrise without relatives watching",
+    "A marriage redefined not as surrender, but as a mutual pact of rescue"
+  ]
+}

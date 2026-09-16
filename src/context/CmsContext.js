@@ -16,6 +16,7 @@ const CmsContextOrchestrator = ({ children }) => {
 
   const combinedData = useMemo(() => ({
     articles: content.articles,
+    stories: content.stories,
     categories: content.categories,
     subcategories: content.subcategories,
     tags: content.tags,

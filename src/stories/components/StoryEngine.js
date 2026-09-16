@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { FiArrowLeft, FiBookmark, FiShare2 } from "react-icons/fi";
+import { FiArrowLeft } from "react-icons/fi";
+import StoryActions from "./StoryActions";
 import StoryLayoutRenderer from "./StoryLayoutRenderer";
 import { calculateStoryReadingTime, normalizeStorySections, STORY_SECTION_TYPES } from "../storySections";
 import { getStoryLayoutConfig } from "../storyLayoutConfig";
@@ -58,14 +59,21 @@ const ReadingProgress = ({ enabled }) => {
 
   if (!enabled) return null;
   return <div className="story-reader__progress" aria-hidden="true"><span style={{ transform: `scaleX(${progress})` }} /></div>;
+  const percentage = Math.round(progress * 100);
+  return (
+    <div
+      className="story-reader__progress"
+      role="progressbar"
+      aria-label="Story reading progress"
+      aria-valuenow={percentage}
+      aria-valuenow={Math.round(progress * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <span style={{ transform: `scaleX(${progress})` }} />
+    </div>
+  );
 };
-
-const BottomActions = ({ saved, copied, onSave, onShare }) => (
-  <div className="story-reader__actions" aria-label="Story actions">
-    <button type="button" onClick={onSave} aria-pressed={saved}><FiBookmark aria-hidden="true" />{saved ? "Saved to reading list" : "Save story"}</button>
-    <button type="button" onClick={onShare}><FiShare2 aria-hidden="true" />{copied ? "Link copied" : "Share story"}</button>
-  </div>
-);
 
 export default function StoryEngine({
   story,
@@ -74,6 +82,9 @@ export default function StoryEngine({
   showBackLink = true,
   saved = false,
   copied = false,
+  saving = false,
+  saveDisabled = false,
+  feedback = null,
   onSave = () => {},
   onShare = () => {},
 }) {
@@ -91,6 +102,9 @@ export default function StoryEngine({
     }
   }, [composition.diagnostics, story.slug]);
 
+  // Dedicated layout integration for Gold Standards A, B & C
+  const hasIntegratedHeader = layout.id === "chapter-journey" || layout.id === "cinematic-rhythm" || layout.id === "editorial-sidebar";
+
   return (
     <article
       className={`story-reader story-reader--${layout.engine} story-reader--preset-${layout.id} story-reader--${mode}`}
@@ -101,8 +115,28 @@ export default function StoryEngine({
     >
       <ReadingProgress enabled={mode === "public" && readingMinutes >= 15} />
       <div className="story-reader__shell">
-        <StoryHeader {...{ story, readingMinutes, backHref, showBackLink }} />
-        <StoryLayoutRenderer {...{ story, sections, layout, mode, readingMinutes, saved, copied, onSave, onShare }} railMedia={composition.railMedia} />
+        {!hasIntegratedHeader && (
+          <StoryHeader {...{ story, readingMinutes, backHref, showBackLink }} />
+        )}
+        <StoryLayoutRenderer
+          {...{
+            story,
+            sections,
+            layout,
+            mode,
+            readingMinutes,
+            saved,
+            copied,
+            saving,
+            saveDisabled,
+            feedback,
+            onSave,
+            onShare,
+            backHref,
+            showBackLink,
+          }}
+          railMedia={composition.railMedia}
+        />
 
         {story.reflection && !hasReflectionSection && (
           <aside className="story-reader__reflection story-reader__reflection--ending">
@@ -111,7 +145,9 @@ export default function StoryEngine({
           </aside>
         )}
 
-        {mode === "public" && !sideRail && <BottomActions {...{ saved, copied, onSave, onShare }} />}
+        {mode === "public" && !sideRail && layout.id !== "editorial-sidebar" && (
+          <StoryActions {...{ saved, copied, saving, saveDisabled, feedback, onSave, onShare }} />
+        )}
       </div>
     </article>
   );

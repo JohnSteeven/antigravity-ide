@@ -4,6 +4,7 @@ const Article = require("../models/Article");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
 const ReaderProfile = require("../models/ReaderProfile");
+const { identityChangeService } = require("../services/identityChangeService");
 
 const safeUser = (user) => {
   const nextUser = user.toSafeJSON ? user.toSafeJSON() : user;
@@ -50,9 +51,6 @@ class UserController {
         "firstName",
         "lastName",
         "username",
-        "email",
-        "countryCode",
-        "mobile",
         "newsletter",
       ];
 
@@ -116,6 +114,50 @@ class UserController {
     }
   }
 
+  async startIdentityChange(req, res, next) {
+    try {
+      const challenge = await identityChangeService.start(req.user._id, req.body);
+      res.status(201).json({ challenge });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async resendIdentityChange(req, res, next) {
+    try {
+      const challenge = await identityChangeService.resend(req.user._id, req.params.challengeId);
+      res.json({ challenge });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async cancelIdentityChange(req, res, next) {
+    try {
+      res.json(await identityChangeService.cancel(req.user._id, req.params.challengeId));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async verifyIdentityChange(req, res, next) {
+    try {
+      const result = await identityChangeService.verify(
+        req.user._id,
+        req.params.challengeId,
+        req.body.code,
+        req,
+        res
+      );
+      res.json({
+        ...result,
+        user: safeUser(result.user),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // --- Admin User Operations ---
 
   async getUsers(req, res, next) {
@@ -163,14 +205,12 @@ class UserController {
   async updateUser(req, res, next) {
     try {
       const { id } = req.params;
-      const { role, status, firstName, lastName, email, mobile } = req.body;
+      const { role, status, firstName, lastName } = req.body;
       const updateData = {};
       if (role !== undefined) updateData.role = role;
       if (status !== undefined) updateData.status = status;
       if (firstName !== undefined) updateData.firstName = firstName;
       if (lastName !== undefined) updateData.lastName = lastName;
-      if (email !== undefined) updateData.email = email;
-      if (mobile !== undefined) updateData.mobile = mobile;
 
       const updated = await userService.updateUserProfile(id, updateData, req.user._id);
       res.json({ success: true, user: safeUser(updated), message: "User updated successfully." });

@@ -10,6 +10,9 @@ const isAfter = (value, now) => {
 
 const evaluatePremiumAccess = (subscription, now = new Date()) => {
   if (!subscription || subscription.plan !== PLANS.PREMIUM) return { active: false, reason: "free" };
+  if (process.env.NODE_ENV === "production" && subscription.provider === "development") {
+    return { active: false, reason: "development_disabled" };
+  }
   if (!BILLING_PERIODS.includes(Number(subscription.billingPeriodMonths))) return { active: false, reason: "invalid_duration" };
 
   const status = subscription.billingStatus;
@@ -92,4 +95,4 @@ const scheduleCancellation = async (userId, now = new Date()) => {
   return subscription;
 };
 
-module.exports = { evaluatePremiumAccess, getSubscriptionForUser, scheduleCancellation };
+module.exports = { evaluatePremiumAccess, getSubscriptionForUser, scheduleCancellation, transitionSubscription };

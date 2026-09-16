@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 import { FiArrowRight } from "react-icons/fi";
-import { getImageUrl } from "../../utils/imageUrlHelper";
+import { getImageUrl, handleImageError } from "../../utils/imageUrlHelper";
 import storyMedia from "../storyMedia.cjs";
 
 const { resolveStoryPrimaryImage } = storyMedia;
@@ -10,7 +10,7 @@ export default function FeaturedStory({ story }) {
   if (!story) return null;
 
   const media = resolveStoryPrimaryImage(story, { preferCover: true });
-  const imageUrl = getImageUrl(media?.src);
+  const imageUrl = getImageUrl(media?.src, story.category);
   const readingTime = story.readingTime || `${story.readingTimeMin || 8} min read`;
   const title = story.title || "Untitled Story";
   const teaser = story.description || story.excerpt || "";
@@ -34,6 +34,18 @@ export default function FeaturedStory({ story }) {
             <span className="todays-story-kicker">TODAY'S STORY</span>
             <span className="todays-story-date-sep">•</span>
             <span className="todays-story-date">{formattedDate}</span>
+            {story.category && story.category !== "Stories" && (
+              <>
+                <span className="todays-story-date-sep">•</span>
+                <span className="story-badge story-badge--category">{story.category}</span>
+              </>
+            )}
+            <span className="todays-story-date-sep">•</span>
+            {story.accessLevel === "premium" ? (
+              <span className="story-badge story-badge--premium">Premium</span>
+            ) : (
+              <span className="story-badge story-badge--free">Free</span>
+            )}
           </div>
 
           <Link to={`/stories/${story.slug}`} className="todays-story-title">
@@ -59,6 +71,7 @@ export default function FeaturedStory({ story }) {
               className="todays-story-image"
               width="720"
               height="540"
+              onError={(e) => handleImageError(e, story.category)}
             />
           </Link>
         )}

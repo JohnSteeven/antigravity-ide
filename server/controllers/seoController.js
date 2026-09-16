@@ -94,8 +94,9 @@ exports.getSitemap = async (req, res) => {
 
 exports.getRobotsTxt = async (req, res) => {
   try {
-    const baseUrl = process.env.CLIENT_URL || 'https://myjourney.com';
-    const txt = `User-agent: *\nDisallow: /admin/\nDisallow: /api/\nAllow: /\n\nSitemap: ${baseUrl}/api/seo/sitemap.xml\n`;
+    const baseUrl = SEOService.siteOrigin();
+    const privateRoutes = ['cms', 'admin', 'api', 'profile', 'edit-profile', 'creator-studio', 'life', 'agent', 'login', 'register', 'verify-otp', 'forgot-password', 'reset-password'];
+    const txt = `User-agent: *\n${privateRoutes.map((route) => `Disallow: /${route}`).join('\n')}\nAllow: /\n\nSitemap: ${baseUrl}/api/seo/sitemap.xml\n`;
     res.header('Content-Type', 'text/plain');
     res.send(txt);
   } catch (err) {
@@ -111,10 +112,10 @@ exports.getJsonLd = async (req, res, next) => {
     }
 
     const doc = entityType === 'article'
-      ? await Article.findOne({ _id: entityId, status: 'published', isDeleted: { $ne: true } }).lean()
-      : await Page.findOne({ _id: entityId, status: 'published', visibility: 'public' }).lean();
+      ? await Article.findOne({ _id: entityId, ...SEOService.publicArticleFilter() }).lean()
+      : await Page.findOne({ _id: entityId, ...SEOService.publicPageFilter() }).lean();
 
-    if (!doc) return res.status(404).json({ error: 'Published content not found.' });
+    if (!doc || !SEOService.isIndexable(doc)) return res.status(404).json({ error: 'Published content not found.' });
 
     const jsonLd = SEOService.generateJsonLd(entityType === 'article' ? 'Article' : 'WebPage', doc);
     return res.json({ success: true, data: jsonLd });

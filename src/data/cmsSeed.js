@@ -1,6 +1,7 @@
 import { categoryBlueprints } from "../domain/knowledgeArchitecture";
 import premiumArticles from "./premiumArticles.json";
 import storyFixtures from "./storyFixtures.cjs";
+import launchStories from "./launchStories.json";
 
 export const cmsSeed = {
   site: {
@@ -79,6 +80,7 @@ export const cmsSeed = {
     ],
   },
   articles: [...premiumArticles.filter((item) => item.contentType !== "story"), ...storyFixtures],
+  articles: [...premiumArticles.filter((item) => item.contentType !== "story"), ...launchStories],
   categories: categoryBlueprints,
   tags: [
     {

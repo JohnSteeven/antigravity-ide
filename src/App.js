@@ -31,6 +31,7 @@ import AskMyJourneyWidget from "./components/shared/AskMyJourneyWidget.jsx";
 
 import LifePremiumGate from "./features/premium/LifePremiumGate.jsx";
 import "./features/premium/premium.css";
+import "./stories/story-reader.css";
 
 const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"));
 const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));

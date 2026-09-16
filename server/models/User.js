@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    countryCode: { type: String, default: "+91" },
+    countryCode: { type: String, default: "" },
     mobile: { type: String, required: true, unique: true, trim: true },
     passwordHash: { type: String, required: true },
     role: { type: String, default: "Reader" },

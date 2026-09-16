@@ -8,6 +8,8 @@ const STORY_SECTION_TYPES = Object.freeze([
   "scene-break",
   "image",
   "wide-image",
+  "dialogue",
+  "callout",
 ]);
 
 const {
@@ -92,6 +94,12 @@ const normalizeStorySections = (sections) => {
       attribution: cleanString(raw.attribution),
       quoteSource: cleanString(raw.quoteSource || raw.source),
       quoteStyle: normalizeQuoteStyle(raw.quoteStyle || raw.stylePreset),
+      speaker: cleanString(raw.speaker),
+      dialogue: cleanString(raw.dialogue || (type === "dialogue" ? raw.body : "")),
+      avatar: cleanString(raw.avatar),
+      calloutType: ["note", "tip", "warning", "info"].includes(cleanString(raw.calloutType).toLowerCase())
+        ? cleanString(raw.calloutType).toLowerCase()
+        : "note",
     };
 
     // Historical three-column/multi-image sections are always linearized.
@@ -122,7 +130,7 @@ const normalizeStorySections = (sections) => {
 const getStoryWordCount = (story = {}) => {
   const sections = Array.isArray(story.storySections) ? normalizeStorySections(story.storySections) : [];
   const content = sections.length
-    ? sections.map((section) => [section.heading, section.chapterTitle, section.body, section.quote, section.attribution, section.quoteSource].join(" ")).join(" ")
+    ? sections.map((section) => [section.heading, section.chapterTitle, section.body, section.quote, section.attribution, section.quoteSource, section.speaker, section.dialogue].join(" ")).join(" ")
     : story.body || "";
   return stripHtml([story.title, story.description, story.reflection, content].join(" "))
     .split(/\s+/)
@@ -157,6 +165,8 @@ const validateStorySections = (sections, { publishing = false } = {}) => {
     if (publishing && section.type === "quote" && !stripHtml(section.quote)) errors.push(`${label}: quote text is required.`);
     if (publishing && section.type === "reflection" && body.length < 10) errors.push(`${label}: reflection text is required.`);
     if (publishing && section.type === "reflection" && section.image && !section.alt.trim()) errors.push(`${label}: image alt text is required.`);
+    if (publishing && section.type === "dialogue" && !stripHtml(section.dialogue || section.body)) errors.push(`${label}: dialogue text is required.`);
+    if (publishing && section.type === "callout" && body.length < 5) errors.push(`${label}: callout body text is required.`);
   });
 
   return errors;

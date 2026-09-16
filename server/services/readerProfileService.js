@@ -74,7 +74,7 @@ class ReaderProfileService {
       ...(profile.savedArticles || []),
     ];
 
-    const [summaries, articles] = await Promise.all([
+    const [summaries, articles, stories] = await Promise.all([
       ReadingProgress.aggregate([
         { $match: { userId } },
         {
@@ -121,6 +121,14 @@ class ReaderProfileService {
         ? Article.find({
           _id: { $in: libraryIds },
           contentType: 'article',
+          status: 'published',
+          isDeleted: false,
+        }).select(ARTICLE_CARD_FIELDS).lean()
+        : [],
+      profile.savedStories?.length
+        ? Article.find({
+          _id: { $in: profile.savedStories },
+          contentType: 'story',
           status: 'published',
           isDeleted: false,
         }).select(ARTICLE_CARD_FIELDS).lean()
@@ -186,6 +194,7 @@ class ReaderProfileService {
         saved: orderArticles(profile.savedArticles, articles),
         liked: orderArticles(profile.likedArticles, articles),
         bookmarked: orderArticles(profile.bookmarks, articles),
+        savedStories: orderArticles(profile.savedStories, stories).map((story) => ({ ...story, contentType: 'story' })),
       },
       contracts: {
         dailyQuoteTimeSlots: DAILY_QUOTE_TIME_SLOTS,
@@ -293,6 +302,44 @@ class ReaderProfileService {
       profile,
       isAdded: (profile[field] || []).some((id) => String(id) === String(normalizedArticleId)),
       libraryItem: serializeArticle(article),
+    };
+  }
+
+  // An explicit desired state makes network retries safe. There is no public
+  // save counter or reading-time claim associated with a Story library marker.
+  static async setStorySaved(userId, storyId, saved) {
+    if (typeof saved !== 'boolean') {
+      throw Object.assign(new Error('saved must be a boolean.'), { status: 422 });
+    }
+    const normalizedUserId = asObjectId(userId);
+    const normalizedStoryId = asObjectId(storyId);
+    const story = await Article.findOne({
+      _id: normalizedStoryId, contentType: 'story', status: 'published', isDeleted: false,
+    }).select(ARTICLE_CARD_FIELDS).lean();
+    if (!story) throw Object.assign(new Error('Published Story not found.'), { status: 404 });
+
+    const update = {
+      [saved ? '$addToSet' : '$pull']: { savedStories: normalizedStoryId },
+      $setOnInsert: { userId: normalizedUserId },
+    };
+    let profile;
+    try {
+      profile = await ReaderProfile.findOneAndUpdate(
+        { userId: normalizedUserId }, update,
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
+    } catch (error) {
+      // A simultaneous first profile request may win the unique userId insert.
+      if (error.code !== 11000) throw error;
+      profile = await ReaderProfile.findOneAndUpdate(
+        { userId: normalizedUserId }, update, { new: true }
+      );
+    }
+    if (!profile) throw Object.assign(new Error('Reader library is unavailable.'), { status: 503 });
+    return {
+      storyId: String(normalizedStoryId),
+      isActive: (profile.savedStories || []).some((id) => String(id) === String(normalizedStoryId)),
+      libraryItem: { ...serializeArticle(story), contentType: 'story' },
     };
   }
 

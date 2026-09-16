@@ -81,6 +81,14 @@ const StoryText = ({ section, headingLevel = 2 }) => {
 };
 
 const SplitSection = ({ section, imageLeft = false, eager = false }) => {
+  const imageSource = getImageUrl(section.image);
+  if (!imageSource) {
+    return (
+      <section className="story-reader__section story-reader__section--prose">
+        <StoryText section={section} />
+      </section>
+    );
+  }
   const media = <StoryFigure section={section} eager={eager} />;
   const text = <StoryText section={section} />;
   const chapterCompanionClass = Number.isInteger(section._storyChapterOwnerIndex) ? " story-reader__section--chapter-companion" : "";
@@ -144,7 +152,7 @@ const ChapterSection = ({ section, eager = false, bookCell = false }) => {
     return <section id={section.id} className={`story-reader__section story-reader__section--prose story-reader__chapter${bookClass}${companionClass}`}>{chapterText}</section>;
   }
 
-  if (placement === "inline") {
+  if (placement === "inline" || (!placement && section.imagePlacement === "inline")) {
     return (
       <section id={section.id} className={`story-reader__section story-reader__section--prose story-reader__chapter story-reader__section--inline-media${bookClass}${section._storyMediaMoment ? ` story-reader__section--media-moment-${section._storyMediaMoment}` : ""}`}>
         {chapterText}
@@ -159,6 +167,54 @@ const ChapterSection = ({ section, eager = false, bookCell = false }) => {
       {imageLeft ? media : chapterText}
       {imageLeft ? chapterText : media}
     </section>
+  );
+};
+
+const DialogueSection = ({ section }) => {
+  const speaker = section.speaker || "Speaker";
+  const content = section.dialogue || section.body || "";
+  if (!content) return null;
+  const avatarUrl = section.avatar ? getImageUrl(section.avatar) : null;
+
+  return (
+    <figure className="story-reader__dialogue">
+      {avatarUrl && (
+        <img
+          src={avatarUrl}
+          alt={speaker}
+          className="story-reader__dialogue-avatar"
+          loading="lazy"
+          width="48"
+          height="48"
+        />
+      )}
+      <div className="story-reader__dialogue-content">
+        <figcaption className="story-reader__dialogue-speaker">{speaker}</figcaption>
+        <blockquote className="story-reader__dialogue-speech">
+          <StoryBody body={content} />
+        </blockquote>
+      </div>
+    </figure>
+  );
+};
+
+const CalloutSection = ({ section }) => {
+  const calloutType = ["note", "tip", "warning", "info"].includes(section.calloutType)
+    ? section.calloutType
+    : "note";
+  const heading = section.heading;
+  const body = section.body;
+  if (!heading && !body) return null;
+
+  return (
+    <aside
+      className={`story-reader__callout story-reader__callout--${calloutType}`}
+      role="note"
+      aria-label={`${calloutType.toUpperCase()}: ${heading || "Important note"}`}
+    >
+      {heading && <h4 className="story-reader__callout-title">{heading}</h4>}
+      <StoryBody body={body} className="story-reader__callout-body" />
+    </aside>
   );
 };
 
@@ -187,6 +243,12 @@ export default function StorySectionRenderer({ section, index = 0, mode = "publi
   }
 
   switch (section.type) {
+    case STORY_SECTION_TYPES.DIALOGUE:
+      return <DialogueSection section={section} />;
+
+    case STORY_SECTION_TYPES.CALLOUT:
+      return <CalloutSection section={section} />;
+
     case STORY_SECTION_TYPES.TEXT_IMAGE_RIGHT:
       if (!section.image || stripStoryHtml(section.body || "").length < 20) {
         return <section className="story-reader__section story-reader__section--prose"><StoryText section={section} /></section>;

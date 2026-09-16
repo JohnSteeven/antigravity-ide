@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { ACCESS_LEVELS, COURSE_LEVELS, PUBLICATION_STATUSES } = require("../learn/constants");
+const { ACCESS_LEVELS, COURSE_LEVELS, COURSE_MONETIZATION_TYPES, PUBLICATION_STATUSES } = require("../learn/constants");
 const { CREATOR_WORKFLOW_STATUSES } = require("../creators/constants");
 
 const CourseSchema = new mongoose.Schema({
@@ -12,6 +12,7 @@ const CourseSchema = new mongoose.Schema({
   language: { type: String, required: true, trim: true, maxlength: 60, index: true },
   level: { type: String, enum: COURSE_LEVELS, default: "all_levels", index: true },
   accessLevel: { type: String, enum: ACCESS_LEVELS, default: "free", index: true },
+  monetizationType: { type: String, enum: COURSE_MONETIZATION_TYPES, default: "FREE", index: true },
   coverImage: { type: String, default: "" },
   coverImageAlt: { type: String, default: "", maxlength: 240 },
   estimatedDurationMinutes: { type: Number, default: 0, min: 0, max: 100000 },
@@ -35,6 +36,7 @@ const CourseSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 CourseSchema.index({ publicationStatus: 1, accessLevel: 1, publishedAt: -1 });
+CourseSchema.index({ publicationStatus: 1, monetizationType: 1, publishedAt: -1 });
 CourseSchema.index({ creatorId: 1, workflowStatus: 1, updatedAt: -1 });
 CourseSchema.index({ topicIds: 1, publicationStatus: 1, publishedAt: -1 });
 CourseSchema.index({ title: "text", subtitle: "text", description: "text" });

@@ -22,10 +22,6 @@ const CategoryPage = () => {
         (item.visibility === undefined || item.visibility === 'public')
     ) || categoryBlueprintBySlug[slug];
 
-  if (slug === "news") {
-    return <NewsPage category={category} />;
-  }
-
   // Fetch published articles from the API for use in the category landing
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +39,10 @@ const CategoryPage = () => {
 
     return () => { cancelled = true; };
   }, []);
+
+  if (slug === "news") {
+    return <NewsPage category={category} />;
+  }
 
   if (!category) {
     if (syncStatus === "loading") {

@@ -72,7 +72,17 @@ const executeToolWithAudit = async (toolKey, input, context, messageId = null) =
 
   try {
     // Authorization (auth, entitlements, permission level, feature flags)
-    await authorizeTool(tool, context);
+    const authorization = await authorizeTool(tool, context);
+    // No confirmation execution endpoint is active yet. A model-requested
+    // action must never bypass this boundary merely because it is registered.
+    if (authorization.requiresConfirmation) {
+      throw new AgentError(
+        errorCodes.CONFIRMATION_REQUIRED,
+        "This action requires a confirmation flow that is not yet available.",
+        409,
+        { tool: toolKey }
+      );
+    }
 
     // Input validation + execution happen inside registry.execute()
     const result = await registry.execute(toolKey, input, {
@@ -98,9 +108,9 @@ const executeToolWithAudit = async (toolKey, input, context, messageId = null) =
   } catch (error) {
     const latencyMs = Date.now() - startMs;
     const agentError = error instanceof AgentError ? error : AgentError.from(error);
-    const status = agentError.code === errorCodes.PERMISSION_DENIED || agentError.code === errorCodes.AUTH_REQUIRED || agentError.code === errorCodes.ENTITLEMENT_REQUIRED
+    const status = [errorCodes.PERMISSION_DENIED, errorCodes.AUTH_REQUIRED, errorCodes.ENTITLEMENT_REQUIRED, errorCodes.CONFIRMATION_REQUIRED].includes(agentError.code)
       ? "denied"
-      : agentError.code === errorCodes.TIMEOUT
+      : [errorCodes.TIMEOUT, errorCodes.TOOL_TIMEOUT].includes(agentError.code)
         ? "timed_out"
         : "failed";
 
@@ -187,7 +197,9 @@ const runAgentTurn = async ({
     user,
     conversationId,
     clientRequestId,
-    idempotencyKey: clientRequestId,
+    // The persisted message identity is stable on retries and unique even if
+    // an API caller omits clientRequestId or reuses it in another conversation.
+    idempotencyKey: String(userMessage._id),
     entitlementResolution: null, // Loaded lazily in permissionService
   };
 

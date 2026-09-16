@@ -1,5 +1,6 @@
 const { body } = require("express-validator");
 const env = require("../config/env");
+const { normalizeEmail } = require("../utils/accountIdentity");
 
 const registerValidator = [
   body("firstName")
@@ -19,7 +20,7 @@ const registerValidator = [
   body("email")
     .trim()
     .isEmail()
-    .normalizeEmail()
+    .customSanitizer(normalizeEmail)
     .withMessage("Must be a valid email address."),
   body("countryCode")
     .trim()

@@ -1,0 +1,93 @@
+{
+  "_note": "This file lists all 22 legacy, demo, layout-fixture, and non-canonical stories archived during the Phase 4 catalog reset. Archival sets status='archived', isFeatured=false, isTrending=false, isMustRead=false. User saved/bookmarked records are preserved without 404s or orphan pointers.",
+  "archivedStories": [
+    {
+      "slug": "the-day-everything-changed",
+      "archiveReason": "Legacy incident demo record — not aligned with CHARACTERS + LIFE vision"
+    },
+    {
+      "slug": "missing-my-flight-changed-my-life",
+      "archiveReason": "Legacy incident demo record — not aligned with CHARACTERS + LIFE vision"
+    },
+    {
+      "slug": "the-second-chance-rainstorm",
+      "archiveReason": "Legacy test fixture from premiumArticles.json"
+    },
+    {
+      "slug": "the-midnight-train-to-kyoto",
+      "archiveReason": "Legacy travel fixture from premiumArticles.json"
+    },
+    {
+      "slug": "the-silence-between-chapters",
+      "archiveReason": "Legacy reflection layout-demo fixture from storyFixtures.cjs"
+    },
+    {
+      "slug": "mountain-pass-light",
+      "archiveReason": "Legacy travel layout-demo fixture from storyFixtures.cjs"
+    },
+    {
+      "slug": "the-day-everything-shifted",
+      "archiveReason": "Legacy layout-demo fixture from storyFixtures.cjs"
+    },
+    {
+      "slug": "echoes-of-the-coast",
+      "archiveReason": "Legacy travel layout-demo fixture from storyFixtures.cjs"
+    },
+    {
+      "slug": "architects-of-the-unseen",
+      "archiveReason": "Legacy coding layout-demo fixture from storyFixtures.cjs"
+    },
+    {
+      "slug": "the-long-way-home-a-20-minute-odyssey",
+      "archiveReason": "Legacy 2-minute demo fixture from storyFixtures.cjs"
+    },
+    {
+      "slug": "chronicles-of-a-life-in-code-book-spread-edition",
+      "archiveReason": "Legacy coding book-spread layout-demo from storyFixtures.cjs"
+    },
+    {
+      "slug": "the-city-i-almost-left-behind",
+      "archiveReason": "Legacy demo story — replaced by canonical 10-story Life Collection"
+    },
+    {
+      "slug": "a-train-ride-i-still-remember",
+      "archiveReason": "Legacy travel demo story — replaced by canonical 10-story Life Collection"
+    },
+    {
+      "slug": "notes-from-a-decade-of-reinvention",
+      "archiveReason": "Legacy 1-minute personal growth demo story"
+    },
+    {
+      "slug": "the-weight-of-borrowed-marks",
+      "archiveReason": "Pre-Phase-4 launch story — replaced by canonical 10-story Life Collection"
+    },
+    {
+      "slug": "the-increment-trap",
+      "archiveReason": "Pre-Phase-4 corporate/coding theme — not aligned with CHARACTERS + LIFE vision"
+    },
+    {
+      "slug": "two-seats-at-the-junction",
+      "archiveReason": "Pre-Phase-4 launch story — replaced by canonical 10-story Life Collection"
+    },
+    {
+      "slug": "the-distance-between-us",
+      "archiveReason": "Pre-Phase-4 launch story — replaced by canonical 10-story Life Collection"
+    },
+    {
+      "slug": "the-cost-of-the-clean-slate",
+      "archiveReason": "Pre-Phase-4 corporate theme — not aligned with CHARACTERS + LIFE vision"
+    },
+    {
+      "slug": "thirty-days-north-the-solitary-signal",
+      "archiveReason": "Pre-Phase-4 launch story — replaced by canonical 10-story Life Collection"
+    },
+    {
+      "slug": "the-architect-of-small-repairs",
+      "archiveReason": "Legacy demo version — reserved for Story 19 in Batch 4 (new longform version)"
+    },
+    {
+      "slug": "the-glass-ledger",
+      "archiveReason": "Pre-Phase-4 corporate governance / audit theme — not aligned with CHARACTERS + LIFE vision"
+    }
+  ]
+}

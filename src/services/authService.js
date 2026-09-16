@@ -80,7 +80,10 @@ const getCsrfToken = async () => {
   return csrfTokenRequest;
 };
 
-const sanitizeError = (error, status) => {
+const sanitizeError = (error, status, code) => {
+  if (["OTP_DELIVERY_UNAVAILABLE", "REAUTH_METHOD_UNAVAILABLE"].includes(code)) {
+    return error.message;
+  }
   if (status === 401) {
     return "Your session has expired or is invalid. Please log in again.";
   }
@@ -141,7 +144,7 @@ export const apiRequest = async (path, options = {}) => {
   if (!response.ok) {
     const rawMsg = data.message || "Authentication request failed.";
     const status = response.status;
-    const friendlyMsg = sanitizeError(new Error(rawMsg), status);
+    const friendlyMsg = sanitizeError(new Error(rawMsg), status, data.code);
     const error = new Error(friendlyMsg);
     error.code = data.code;
     error.status = status;
@@ -253,6 +256,34 @@ export const authService = {
     return apiRequest("/api/users/me", {
       method: "PUT",
       body: JSON.stringify(updates),
+    });
+  },
+
+  async startIdentityChange(payload) {
+    return apiRequest("/api/users/me/identity-changes", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async resendIdentityChange(challengeId) {
+    return apiRequest(`/api/users/me/identity-changes/${challengeId}/resend`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+  },
+
+  async verifyIdentityChange(challengeId, code) {
+    return apiRequest(`/api/users/me/identity-changes/${challengeId}/verify`, {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+  },
+
+  async cancelIdentityChange(challengeId) {
+    return apiRequest(`/api/users/me/identity-changes/${challengeId}`, {
+      method: "DELETE",
+      body: JSON.stringify({}),
     });
   },
 

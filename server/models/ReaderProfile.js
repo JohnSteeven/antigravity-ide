@@ -45,6 +45,8 @@ const ReaderProfileSchema = new mongoose.Schema(
     bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
     likedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
     savedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
+    // Stories share Article persistence, but never enter Article progress.
+    savedStories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
 
     // Streaks
     currentStreakDays: { type: Number, default: 0 },

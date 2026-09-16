@@ -215,6 +215,7 @@ class LocalAgentProvider {
     let toolResultsCollected = [];
     let allToolCalls = [];
     let iterations = 0;
+    const usage = { inputTokens: 0, outputTokens: 0 };
 
     // First pass: ask model if it needs tools
     let messages = buildMessages(userMessage, contextMessages);
@@ -244,6 +245,20 @@ class LocalAgentProvider {
 
       const latencyMs = Date.now() - start;
 
+      if (response.status < 200 || response.status >= 300) {
+        throw new AgentError(errorCodes.PROVIDER_UNAVAILABLE, "Local provider request failed.", 503, null, true);
+      }
+
+      // Each tool iteration is a separate provider request. Retain usage for
+      // every call, not just the final answer, without inventing missing usage.
+      const reportedUsage = response.body?.usage || {};
+      for (const [key, providerKey] of [["inputTokens", "prompt_tokens"], ["outputTokens", "completion_tokens"]]) {
+        const tokens = reportedUsage[providerKey];
+        if (Number.isSafeInteger(tokens) && tokens >= 0 && Number.isSafeInteger(usage[key] + tokens)) {
+          usage[key] += tokens;
+        }
+      }
+
       if (!response.body?.choices?.[0]?.message?.content) {
         throw new AgentError(errorCodes.PROVIDER_RESPONSE_INVALID, "Local provider returned an unexpected response.", 502);
       }
@@ -263,7 +278,7 @@ class LocalAgentProvider {
           toolResultsCollected.push({ toolKey, output: result.output });
         } catch (toolError) {
           allToolCalls.push({ toolKey, input, status: "failed", error: toolError?.code });
-          if (toolError?.code === errorCodes.AUTH_REQUIRED || toolError?.code === errorCodes.ENTITLEMENT_REQUIRED) {
+          if ([errorCodes.AUTH_REQUIRED, errorCodes.ENTITLEMENT_REQUIRED, errorCodes.PERMISSION_DENIED, errorCodes.CONFIRMATION_REQUIRED].includes(toolError?.code)) {
             throw toolError;
           }
         }
@@ -274,13 +289,11 @@ class LocalAgentProvider {
     }
 
     const finalContent = stripToolCalls(responseContent).slice(0, agentConfig.limits.assistantChars);
-    const usage = response?.body?.usage || {};
 
     return {
       content: finalContent,
       toolCalls: allToolCalls,
-      inputTokens: usage.prompt_tokens || 0,
-      outputTokens: usage.completion_tokens || 0,
+      ...usage,
     };
   }
 }

@@ -23,10 +23,10 @@ const EngagementBar = ({
       setPendingAction("");
     }
   };
-  const actionsPending = Boolean(pendingAction);
+  const actionsPending = Boolean(pendingAction === "share");
 
   return (
-    <div className="premium-stats-bar" aria-busy={actionsPending}>
+    <div className="premium-stats-bar" aria-busy={Boolean(pendingAction)}>
       <button
         className={`stat-btn ${isLiked ? "active like-btn" : ""}`}
         type="button"
@@ -37,7 +37,7 @@ const EngagementBar = ({
         title={isLiked ? "Unlike article" : "Like article"}
       >
         <FiHeart />
-        <span>{pendingAction === "like" ? "Updating…" : Number(article.likes || 0).toLocaleString()}</span>
+        <span>{Number(article.likes || 0).toLocaleString()}</span>
       </button>
 
       <button
@@ -50,7 +50,7 @@ const EngagementBar = ({
         title={isBookmarked ? "Remove article bookmark" : "Bookmark article"}
       >
         <FiBookmark />
-        <span>{pendingAction === "bookmark" ? "Updating…" : Number(article.bookmarks || 0).toLocaleString()}</span>
+        <span>{Number(article.bookmarks || 0).toLocaleString()}</span>
       </button>
 
       <button
@@ -63,7 +63,7 @@ const EngagementBar = ({
         title={isSaved ? "Remove from saved articles" : "Save article"}
       >
         <FiBookOpen />
-        <span>{pendingAction === "save" ? "Updating…" : isSaved ? "Saved ✓" : "Save"}</span>
+        <span>{isSaved ? "Saved ✓" : "Save"}</span>
       </button>
 
       <button

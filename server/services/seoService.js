@@ -9,8 +9,52 @@ const SEOMetadata = require('../models/SEOMetadata');
 const Article = require('../models/Article');
 const Page = require('../models/Page');
 const Category = require('../models/Category');
+const { isStoryRecord } = require('../utils/storyContent');
+
+const NO_INDEX = /(?:^|[,\s])(?:noindex|none)(?:$|[,\s])/i;
+const escapeXml = (value) => String(value).replace(/[<>&"']/g, (character) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[character]));
+const safeUrl = (value, baseUrl) => {
+  try {
+    if (!value) return '';
+    const url = new URL(value, baseUrl);
+    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : '';
+  } catch { return ''; }
+};
+const dateIso = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+};
 
 class SEOService {
+  static publicArticleFilter() {
+    return { status: 'published', isDeleted: { $ne: true }, 'seo.metaRobots': { $not: NO_INDEX } };
+  }
+
+  static publicPageFilter(now = new Date()) {
+    return {
+      status: 'published', visibility: 'public',
+      'seo.noIndex': { $ne: true }, 'seo.robots': { $not: NO_INDEX },
+      featureFlag: { $in: [null, ''] },
+      $and: [
+        { $or: [{ publishDate: null }, { publishDate: { $lte: now } }] },
+        { $or: [{ expireDate: null }, { expireDate: { $gte: now } }] },
+        { $or: [{ 'permissions.roles.0': { $exists: false } }, { 'permissions.roles': 'public' }] },
+      ],
+    };
+  }
+
+  static isIndexable(data = {}) {
+    return data.seo?.noIndex !== true && !NO_INDEX.test(data.seo?.metaRobots || data.seo?.robots || '');
+  }
+
+  static siteOrigin() {
+    const configured = process.env.CLIENT_URL;
+    const url = safeUrl(configured || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:1234'));
+    if (!url) throw Object.assign(new Error('A valid CLIENT_URL is required for public SEO metadata.'), { status: 503, code: 'SEO_ORIGIN_UNAVAILABLE' });
+    return new URL(url).origin;
+  }
+
   /**
    * Analyze SEO score and recommendations for content
    */
@@ -72,17 +116,26 @@ class SEOService {
    * Generate JSON-LD Schema.org structured data
    */
   static generateJsonLd(type = 'Article', data = {}) {
-    const baseUrl = process.env.CLIENT_URL || 'https://myjourney.com';
+    const baseUrl = SEOService.siteOrigin();
+    const articleType = type === 'Article' || type === 'BlogPosting';
+    const route = articleType ? `/${isStoryRecord(data) ? 'stories' : 'articles'}/${encodeURIComponent(data.slug || '')}`
+      : data.slug === 'home' ? '/' : `/${encodeURIComponent(data.slug || '')}`;
+    const canonical = safeUrl(data.seo?.canonicalUrl || data.seo?.canonical, baseUrl) || `${baseUrl}${route}`;
 
-    if (type === 'Article' || type === 'BlogPosting') {
+    if (articleType) {
+      const image = safeUrl(data.seo?.openGraphImage || data.coverImage || data.image, baseUrl);
+      const published = dateIso(data.publishedAt);
+      const modified = dateIso(data.updatedAt);
       return {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: data.title,
-        description: data.metaDescription || data.excerpt,
-        image: data.image ? [data.image] : [],
-        datePublished: data.createdAt,
-        dateModified: data.updatedAt,
+        description: data.seo?.description || data.description || data.excerpt || '',
+        image: image ? [image] : [],
+        mainEntityOfPage: canonical,
+        isAccessibleForFree: data.accessLevel !== 'premium',
+        ...(published ? { datePublished: published } : {}),
+        ...(modified ? { dateModified: modified } : {}),
         ...(data.authorName || data.author ? {
           author: {
             '@type': 'Person',
@@ -91,11 +144,7 @@ class SEOService {
         } : {}),
         publisher: {
           '@type': 'Organization',
-          name: 'MyJourney CMS',
-          logo: {
-            '@type': 'ImageObject',
-            url: `${baseUrl}/logo.png`,
-          },
+          name: 'MyJourney',
         },
       };
     }
@@ -104,7 +153,8 @@ class SEOService {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       name: data.title,
-      description: data.metaDescription,
+      description: data.seo?.metaDescription || data.metaDescription || '',
+      url: canonical,
     };
   }
 
@@ -112,31 +162,43 @@ class SEOService {
    * Generate dynamic XML Sitemap string
    */
   static async generateSitemap() {
-    const baseUrl = process.env.CLIENT_URL || 'https://myjourney.com';
-    const articles = await Article.find({ status: 'published', isDeleted: { $ne: true } }).select('slug updatedAt').lean();
-    const pages = await Page.find({ status: 'published', visibility: 'public' }).select('slug updatedAt').lean();
-    const categories = await Category.find({
+    const baseUrl = SEOService.siteOrigin();
+    const [articles, pages, categories] = await Promise.all([
+      Article.find(SEOService.publicArticleFilter()).select('slug updatedAt contentType category seo').lean(),
+      Page.find(SEOService.publicPageFilter()).select('slug updatedAt seo').lean(),
+      Category.find({
       isDeleted: false,
       isActive: true,
       status: 'published',
+      visibility: 'public',
       includeInSitemap: true,
-    }).select('slug updatedAt').lean();
+      }).select('slug updatedAt').lean(),
+    ]);
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-    xml += `  <url><loc>${baseUrl}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n`;
+    const emitted = new Set();
+    const add = (path, record = {}, changefreq = 'weekly', priority = '0.8') => {
+      const location = `${baseUrl}${path}`;
+      const canonical = safeUrl(record.seo?.canonicalUrl || record.seo?.canonical, baseUrl);
+      if (!SEOService.isIndexable(record) || (canonical && canonical !== location) || emitted.has(location)) return;
+      emitted.add(location);
+      const modified = dateIso(record.updatedAt);
+      xml += `  <url><loc>${escapeXml(location)}</loc>${modified ? `<lastmod>${modified}</lastmod>` : ''}<changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>\n`;
+    };
+    add('/', {}, 'daily', '1.0');
 
     articles.forEach((a) => {
-      xml += `  <url><loc>${baseUrl}/article/${a.slug}</loc><lastmod>${new Date(a.updatedAt).toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+      if (a.slug) add(`/${isStoryRecord(a) ? 'stories' : 'articles'}/${encodeURIComponent(a.slug)}`, a);
     });
 
     pages.forEach((p) => {
-      xml += `  <url><loc>${baseUrl}/p/${p.slug}</loc><lastmod>${new Date(p.updatedAt).toISOString()}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
+      if (p.slug) add(p.slug === 'home' ? '/' : `/${encodeURIComponent(p.slug)}`, p, 'monthly', '0.7');
     });
 
     categories.forEach((c) => {
-      xml += `  <url><loc>${baseUrl}/category/${c.slug}</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>\n`;
+      if (c.slug) add(`/category/${encodeURIComponent(c.slug)}`, c, 'weekly', '0.6');
     });
 
     xml += `</urlset>`;

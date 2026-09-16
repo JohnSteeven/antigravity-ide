@@ -217,4 +217,33 @@ describe("responsive and accessibility contracts", () => {
 
     contracts.forEach(([source, markers]) => markers.forEach((marker) => expect(source).toContain(marker)));
   });
+
+  test("Phase 2 design tokens, reading limits, and global reduced-motion rules are defined", () => {
+    const css = read("index.css");
+    expect(css).toContain("--space-1:");
+    expect(css).toContain("--space-11:");
+    expect(css).toContain("--reading-max-width: 720px;");
+    expect(css).toContain("--content-max-width: 1200px;");
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation-duration:\s*0\.01ms !important/);
+    expect(css).toContain(".empty-state,");
+    expect(css).toContain(".error-page");
+    expect(css).toContain(".loading-screen");
+    expect(css).toContain(".breadcrumbs-list");
+  });
+
+  test("Phase 2 shared components follow semantic HTML and accessibility guidelines", () => {
+    const errorComponent = read("src", "components", "Error.js");
+    const breadcrumbsComponent = read("src", "components", "shared", "Breadcrumbs.js");
+    const emptyStateComponent = read("src", "components", "shared", "EmptyState.js");
+    const pwfCss = read("src", "features", "play-with-friends", "play-with-friends.css");
+    const playLifeCss = read("src", "features", "play-life", "play-life.css");
+
+    expect(errorComponent).not.toContain("<button");
+    expect(errorComponent).toContain('role="button"');
+    expect(breadcrumbsComponent).toContain("<ol");
+    expect(breadcrumbsComponent).toContain('aria-current={isLast ? "page" : undefined}');
+    expect(emptyStateComponent).toContain('role={role}');
+    expect(pwfCss).toContain(".pwf-game-picker > button:focus-visible");
+    expect(playLifeCss).toContain(".play-life button:focus-visible");
+  });
 });

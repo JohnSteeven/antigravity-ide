@@ -71,6 +71,8 @@ Migration 011 moves saved/liked/bookmarked Article relations from `User.profile`
 
 Migration 012 creates the Payment, Invoice, Refund, and expanded BillingEvent correctness/query indexes and normalizes legacy BillingEvent processing fields without deleting financial data. It is idempotent but intentionally fails on duplicate legacy provider identities instead of silently merging them. Review duplicate preflight results, confirm a transaction-capable MongoDB topology, back up, apply in staging, and run `npm run migrate:validate` before billing activation. It was not applied by the Phase 10–12 source change.
 
+Account identity normalization is deliberately a read-only readiness check, not an automatic migration. `npm run migrate:identity:dry-run` reads User email/mobile and verification-state metadata, then reports aggregate normalizable, invalid, ambiguous, duplicate, verified-conflict, and manual-review counts without emitting raw identifiers or performing writes. Confirm the target database before running it; resolve reported collisions and legacy phone values through an approved, separately reviewed data change.
+
 Playwright browser smoke setup uses only a database whose name ends in `_e2e` or `_test` (default `myjourney_e2e`). It upserts deterministic test-owned users/content and resets only their Reader/session state. The smoke proves new ReaderProfile and ReadingProgress writes without depending on migration 011; it does not migrate legacy Reader data or apply any migration.
 
 Migration index validation compares key order and security-relevant options (including unique, sparse, TTL, partial-filter, and collation settings); an index is not accepted merely because its name matches. Migration 008 uses a partial unique Agent-message idempotency index without the mutually exclusive `sparse` option.
@@ -92,6 +94,20 @@ Safety properties:
 - reset targets only recognized fixture identities and their dependent data.
 
 The environment guard does not prove that a non-production URI is safe. Operators must verify the actual connected database before running either command.
+
+## Launch Story catalog seed
+
+```bash
+npm run seed:articles
+```
+
+Safety and lifecycle properties:
+- Seeds canonical launch stories (8 stories across batches A, B, C; 35,718 words, 121 sections) from `server/data/launchStories/` alongside baseline Articles into MongoDB.
+- Upserts by `slug` with `contentType: "story"` and structured `storySections`, preserving existing IDs.
+- Calculates reading time from section text at 200 words per minute.
+- Enforces strict section schemas (`paragraph`, `heading`, `image`, `quote`, `dialogue`, `callout`).
+- Sets server-authoritative `accessLevel` (`free` or `premium`).
+- Production runtime serves stories from MongoDB via `/api/stories`; client Parcel JS does not embed the full story library text.
 
 ## Retention and lifecycle
 

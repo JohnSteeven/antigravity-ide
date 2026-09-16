@@ -18,7 +18,7 @@ class UserRepository {
   }
 
   async findByEmail(email) {
-    return User.findOne({ email: email.toLowerCase().trim(), isDeleted: false });
+    return User.findOne({ email: String(email || "").toLowerCase().trim(), isDeleted: false });
   }
 
   async findByUsername(username) {
@@ -26,7 +26,7 @@ class UserRepository {
   }
 
   async findByMobile(mobile) {
-    return User.findOne({ mobile, isDeleted: false });
+    return User.findOne({ mobile: String(mobile || "").trim(), isDeleted: false });
   }
 
   async create(data) {

@@ -944,6 +944,15 @@ body.play-life-active {
   .pl-session-glance { gap: 22px; }
 }
 
+.play-life button:focus-visible,
+.play-life a:focus-visible,
+.play-life input:focus-visible,
+.play-life textarea:focus-visible,
+.play-life-card-link:focus-visible {
+  outline: 2px solid var(--gold, #b58b5f) !important;
+  outline-offset: 3px !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .play-life *,
   .play-life *::before,
