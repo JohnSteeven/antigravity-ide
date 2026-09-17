@@ -69,10 +69,16 @@ const sendEngagementResponse = (res, result, metric) => {
 class ArticleController {
   async getArticles(req, res, next) {
     try {
+      // Normalize legacy incidents category filter to experiences
+      const normalizedCategory = req.query.category && String(req.query.category).toLowerCase().trim() === "incidents"
+        ? "Experiences"
+        : req.query.category;
+
       // Public listing is never an alternate route to drafts or protected
       // full-text search. Admins use the dedicated /admin/all endpoint.
       const query = {
         ...req.query,
+        ...(normalizedCategory ? { category: normalizedCategory } : {}),
         contentType: "article",
         status: "published",
         limit: Math.min(48, Math.max(1, Number.parseInt(req.query.limit, 10) || 12)),
@@ -89,9 +95,45 @@ class ArticleController {
   async getArticleBySlug(req, res, next) {
     try {
       const article = await articleService.getArticleBySlug(req.params.slug);
-      if (!article || article.status !== "published" || isStoryRecord(article)) {
+      if (!article || isStoryRecord(article)) {
         return res.status(404).json({ message: "Article not found." });
       }
+
+      // Safe archived tombstone behavior: never leak body or structured prose
+      if (article.status === "archived" || article.isArchived) {
+        return res.status(200).json({
+          article: {
+            id: String(article._id || article.id),
+            _id: String(article._id || article.id),
+            slug: article.slug,
+            title: article.title,
+            description: article.description || "",
+            excerpt: article.excerpt || "",
+            category: article.category || "Experiences",
+            categorySlug: article.categorySlug || "experiences",
+            status: "archived",
+            isArchived: true,
+            archived: true,
+            body: "",
+            structuredBlocks: [],
+            storySections: [],
+            seo: {
+              title: `${article.title} (Archived)`,
+              description: "This article has been archived and is no longer available.",
+              metaRobots: "noindex,follow",
+            },
+          },
+          archived: true,
+          slug: article.slug,
+          title: article.title,
+          message: "This article has been archived and is no longer available.",
+        });
+      }
+
+      if (article.status !== "published") {
+        return res.status(404).json({ message: "Article not found." });
+      }
+
       const canAccessPremium = await canReadPremiumContent(req);
       privateContentResponse(res).json({ article: serializePublicContent(article, { canAccessPremium }) });
     } catch (err) {

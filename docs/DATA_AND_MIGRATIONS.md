@@ -25,6 +25,8 @@ Current ordered migrations:
 9. `009-auth-session-expiry`
 10. `010-theme-safety-foundation`
 11. `011-reader-data-foundation`
+12. `012-production-billing-domain`
+13. `013-phase5-article-catalog-reset`
 
 Server startup does not run these automatically.
 
@@ -70,6 +72,8 @@ The 2026-08-23 local audit found migrations 001–010 all pending in the `myjour
 Migration 011 moves saved/liked/bookmarked Article relations from `User.profile` to `ReaderProfile`, removes deprecated parallel Reader/activity fields, normalizes authenticated ReadingProgress records, merges competing `(userId, articleId)` rows without losing maximum progress or accumulated time, and creates the partial unique authority index. It preserves anonymous legacy rows but the authenticated Reader API does not use them. Legacy completion rows without a real `completedAt` are not assigned an inferred timestamp. This migration was created for reviewed application and is not applied by this change.
 
 Migration 012 creates the Payment, Invoice, Refund, and expanded BillingEvent correctness/query indexes and normalizes legacy BillingEvent processing fields without deleting financial data. It is idempotent but intentionally fails on duplicate legacy provider identities instead of silently merging them. Review duplicate preflight results, confirm a transaction-capable MongoDB topology, back up, apply in staging, and run `npm run migrate:validate` before billing activation. It was not applied by the Phase 10–12 source change.
+
+Migration 013 (`013-phase5-article-catalog-reset`) prepares the platform for the canonical Phase 5 Article catalog. It targets existing Article records (`contentType: "article"`) exclusively, soft-archiving legacy and prototype articles with `status: "archived"`, `isArchived: true`, and `archivedAt: timestamp`, while explicitly preserving Phase 4 Stories (`contentType: "story"`, `storyLayout`, `category: "Stories"`), News articles, and Phase 6 Coding articles. It safely migrates legacy `"Incidents"` taxonomy to canonical `"Experiences"`. It never deletes Article documents (`Article.deleteMany()` is prohibited). Operators can inspect exact before/affected counts and slug lists before application via `node server/scripts/articleResetDryRun.js`. The new canonical catalog will be seeded independently via `server/scripts/seedPhase5Articles.js`.
 
 Account identity normalization is deliberately a read-only readiness check, not an automatic migration. `npm run migrate:identity:dry-run` reads User email/mobile and verification-state metadata, then reports aggregate normalizable, invalid, ambiguous, duplicate, verified-conflict, and manual-review counts without emitting raw identifiers or performing writes. Confirm the target database before running it; resolve reported collisions and legacy phone values through an approved, separately reviewed data change.
 

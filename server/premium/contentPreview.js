@@ -13,8 +13,9 @@ const publicFields = [
   "_id", "id", "title", "slug", "description", "excerpt", "coverImage",
   "coverImageAlt", "author", "publishedAt", "readingTimeMin", "readingTime",
   "category", "categorySlug", "tags", "contentType", "storyLayout", "status",
-  "isFeatured", "isMustRead", "isTrending", "isPinned", "views", "likes",
-  "bookmarks", "saved", "rating", "accessLevel",
+  "isArchived", "archivedAt", "isFeatured", "isMustRead", "isTrending", "isPinned",
+  "views", "likes", "bookmarks", "saved", "rating", "accessLevel",
+  "editorialProvenance", "travelVerification",
 ];
 
 const toPlainObject = (content) => {
@@ -22,8 +23,21 @@ const toPlainObject = (content) => {
   return typeof content.toObject === "function" ? content.toObject({ virtuals: true }) : { ...content };
 };
 
+const sanitizeEditorialProvenance = (provenance) => {
+  if (!provenance || typeof provenance !== "object") return undefined;
+  const sanitized = { ...provenance };
+  delete sanitized.confidentialNotes;
+  return sanitized;
+};
+
 const pickPublicFields = (source) => publicFields.reduce((result, field) => {
-  if (source[field] !== undefined) result[field] = source[field];
+  if (source[field] !== undefined) {
+    if (field === "editorialProvenance") {
+      result[field] = sanitizeEditorialProvenance(source[field]);
+    } else {
+      result[field] = source[field];
+    }
+  }
   return result;
 }, {});
 
@@ -33,6 +47,20 @@ const sanitizePublicDetail = (source) => {
     "__v", "authorId", "createdBy", "updatedBy", "deletedAt", "isDeleted",
     "creatorWorkflowStatus", "contentRightsConfirmedAt",
   ].forEach((field) => delete result[field]);
+
+  if (result.editorialProvenance) {
+    result.editorialProvenance = sanitizeEditorialProvenance(result.editorialProvenance);
+  }
+
+  // Safe tombstone behavior: archived articles never expose prose or structured blocks
+  if (result.status === "archived" || result.isArchived) {
+    result.body = "";
+    result.structuredBlocks = [];
+    result.storySections = [];
+    result.isArchived = true;
+    return result;
+  }
+
   result.body = sanitizeRichHtml(result.body || "");
   if (Array.isArray(result.storySections)) {
     result.storySections = result.storySections.map((section) => ({
@@ -53,6 +81,7 @@ const createPremiumPreview = (content) => {
     previewMode: PREVIEW_POLICY.mode,
     body: "",
     storySections: [],
+    structuredBlocks: [],
   };
 };
 

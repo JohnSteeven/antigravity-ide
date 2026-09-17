@@ -201,6 +201,18 @@ const appRouter = createBrowserRouter([
         element: withRouteFallback(<CategoryPage />, "Opening Category..."),
       },
       {
+        path: "category/incidents",
+        element: <Navigate to="/category/experiences" replace />,
+      },
+      {
+        path: "categories/incidents",
+        element: <Navigate to="/category/experiences" replace />,
+      },
+      {
+        path: "categories/experiences",
+        element: <Navigate to="/category/experiences" replace />,
+      },
+      {
         path: "about",
         element: withRouteFallback(<ReadMyStory />, "Opening About..."),
       },

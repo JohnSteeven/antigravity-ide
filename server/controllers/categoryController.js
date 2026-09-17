@@ -12,7 +12,12 @@ class CategoryController {
 
   async getCategoryBySlug(req, res, next) {
     try {
-      const category = await categoryService.getCategoryBySlug(req.params.slug);
+      const requestedSlug = String(req.params.slug || "").toLowerCase().trim();
+      const normalizedSlug = requestedSlug === "incidents" ? "experiences" : requestedSlug;
+      let category = await categoryService.getCategoryBySlug(normalizedSlug);
+      if (!category && normalizedSlug !== requestedSlug) {
+        category = await categoryService.getCategoryBySlug(requestedSlug);
+      }
       if (!category) return res.status(404).json({ message: "Category not found." });
       res.json({ category });
     } catch (err) {

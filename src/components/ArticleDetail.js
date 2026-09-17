@@ -222,6 +222,46 @@ const ArticleDetail = () => {
     return <Navigate to="/articles" replace />;
   }
 
+  if (article.status === "archived" || article.isArchived || article.archived) {
+    const categorySlug = article.categorySlug || "experiences";
+    return (
+      <main className="article-detail-page article-archived-tombstone">
+        <DocumentMetadata
+          content={{
+            ...article,
+            seo: {
+              title: `${article.title} (Archived)`,
+              description: "This article has been archived and is no longer available.",
+              metaRobots: "noindex,follow",
+            },
+          }}
+          kind="Article"
+        />
+        <div className="container" style={{ maxWidth: "720px", margin: "80px auto", padding: "0 24px", textAlign: "center" }}>
+          <div className="empty-state" style={{ padding: "48px 24px", background: "var(--surface-card, #ffffff)", borderRadius: "16px", border: "1px solid var(--border-subtle, #e2e8f0)", boxShadow: "var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05))" }}>
+            <span className="section-kicker" style={{ display: "inline-block", fontSize: "0.85rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted, #64748b)", marginBottom: "16px" }}>
+              Archived Content
+            </span>
+            <h1 style={{ fontSize: "2rem", marginBottom: "16px", color: "var(--text-primary, #0f172a)" }}>
+              {article.title}
+            </h1>
+            <p style={{ fontSize: "1.1rem", color: "var(--text-secondary, #475569)", marginBottom: "32px", lineHeight: 1.6 }}>
+              This article has been safely archived as part of the Phase 5 catalog refresh and its prose is no longer active.
+            </p>
+            <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+              <Link to="/articles" className="primary-btn" style={{ textDecoration: "none" }}>
+                Browse Current Articles
+              </Link>
+              <Link to={`/category/${categorySlug}`} className="secondary-btn" style={{ textDecoration: "none" }}>
+                Explore {article.category || "Categories"}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (article.premiumRequired) {
     return (
       <>

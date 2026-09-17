@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { EDITORIAL_BYLINE } = require("../config/constants");
 
 const SeoSchema = new mongoose.Schema(
   {
@@ -17,7 +18,6 @@ const StorySectionSchema = new mongoose.Schema(
     id: { type: String, default: "" },
     type: {
       type: String,
-      enum: ["text", "text-image-right", "image-left-text", "chapter", "quote", "reflection", "scene-break", "image", "wide-image"],
       enum: ["text", "text-image-right", "image-left-text", "chapter", "quote", "reflection", "scene-break", "image", "wide-image", "dialogue", "callout"],
       default: "text",
     },
@@ -95,6 +95,52 @@ const ArticleBlockSchema = new mongoose.Schema(
     tableHeaders: [{ type: String }],
     tableRows: [[{ type: String }]],
     order: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const EditorialProvenanceSchema = new mongoose.Schema(
+  {
+    provenanceType: {
+      type: String,
+      enum: ["first_person_authorized", "reported_case_study", null],
+      default: null,
+    },
+    // For first_person_authorized:
+    subjectIdentity: { type: String, default: "", trim: true },
+    authorizationReference: { type: String, default: "", trim: true },
+    editorialConsentConfirmed: { type: Boolean, default: false },
+    // For reported_case_study:
+    caseStudySource: { type: String, default: "", trim: true },
+    sourceDocumentation: [{ type: String, trim: true }],
+    // Internal confidential editorial notes (never exposed publicly)
+    confidentialNotes: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
+const TravelVerificationSchema = new mongoose.Schema(
+  {
+    lastVerifiedAt: { type: Date, default: null },
+    budgetVerifiedAt: { type: Date, default: null },
+    currency: { type: String, default: "USD", trim: true, uppercase: true },
+    budgetAssumptions: { type: String, default: "", trim: true },
+    officialSources: [
+      {
+        title: { type: String, default: "", trim: true, maxlength: 200 },
+        url: { type: String, default: "", trim: true, maxlength: 500 },
+      },
+    ],
+    visaVerification: {
+      requirementsSummary: { type: String, default: "", trim: true },
+      verifiedAt: { type: Date, default: null },
+      officialPortalUrl: { type: String, default: "", trim: true },
+    },
+    transportAssumptions: { type: String, default: "", trim: true },
+    openingHoursVerifiedAt: { type: Date, default: null },
+    openingHoursNotes: { type: String, default: "", trim: true },
+    ticketFeesVerifiedAt: { type: Date, default: null },
+    ticketFeesNotes: { type: String, default: "", trim: true },
   },
   { _id: false }
 );
@@ -203,14 +249,15 @@ const ArticleSchema = new mongoose.Schema(
     coverImageAlt: { type: String, default: "" },
     coverImageCaption: { type: String, default: "" },
 
-    // Status
+    // Status & Archival
     status: {
       type: String,
-      enum: ["draft", "published", "archived", "scheduled"],
       enum: ["draft", "review", "published", "archived", "scheduled"],
       default: "draft",
       index: true,
     },
+    isArchived: { type: Boolean, default: false, index: true },
+    archivedAt: { type: Date, default: null },
 
     // Structured Article Blocks (typed alternative to HTML body)
     structuredBlocks: { type: [ArticleBlockSchema], default: undefined },
@@ -223,6 +270,10 @@ const ArticleSchema = new mongoose.Schema(
       },
     ],
     sources: [{ type: String, default: "", trim: true, maxlength: 500 }],
+
+    // Phase 5 Editorial Provenance & Travel Verification
+    editorialProvenance: { type: EditorialProvenanceSchema, default: undefined },
+    travelVerification: { type: TravelVerificationSchema, default: undefined },
 
     // Related content links
     relatedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Article" }],
@@ -246,7 +297,7 @@ const ArticleSchema = new mongoose.Schema(
 
     // Author
     authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    author: { type: String, default: "Noble John Steeven", trim: true },
+    author: { type: String, default: EDITORIAL_BYLINE, trim: true },
     creatorProfileId: { type: mongoose.Schema.Types.ObjectId, ref: "CreatorProfile", default: null, index: true },
     creatorWorkflowStatus: {
       type: String,
@@ -284,6 +335,7 @@ const ArticleSchema = new mongoose.Schema(
 );
 
 ArticleSchema.index({ isDeleted: 1, status: 1, publishedAt: -1 });
+ArticleSchema.index({ isArchived: 1, status: 1, publishedAt: -1 });
 ArticleSchema.index({ creatorProfileId: 1, creatorWorkflowStatus: 1, updatedAt: -1 });
 
 // Compound indexes for common queries

@@ -9,7 +9,7 @@ const PAGE_SIZE = 12;
 
 const ArticlesPage = () => {
   const { data } = useCms();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const showFeatured = searchParams.get("featured") === "true";
 
   const [articles, setArticles] = useState([]);
@@ -23,6 +23,19 @@ const ArticlesPage = () => {
   const [tag, setTag] = useState("all");
   const [sort, setSort] = useState("latest");
   const [page, setPage] = useState(1);
+
+  // Normalize legacy category=incidents query param to experiences
+  useEffect(() => {
+    const rawCategory = searchParams.get("category");
+    if (rawCategory && rawCategory.toLowerCase() === "incidents") {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("category", "experiences");
+      setSearchParams(nextParams, { replace: true });
+      setCategory("Experiences");
+    } else if (rawCategory) {
+      setCategory(rawCategory);
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -45,7 +58,9 @@ const ArticlesPage = () => {
         const params = { page, limit: PAGE_SIZE, sort };
         if (showFeatured) params.featured = "true";
         if (search) params.search = search;
-        if (category !== "all") params.category = category;
+        if (category !== "all") {
+          params.category = category.toLowerCase() === "incidents" ? "Experiences" : category;
+        }
         if (tag !== "all") params.tags = tag;
 
         const response = await articleApi.list(params);
@@ -74,7 +89,7 @@ const ArticlesPage = () => {
   }, [category, page, retryToken, search, showFeatured, sort, tag]);
 
   const categories = useMemo(() => {
-    const order = ["life", "reflections", "incidents", "lessons", "travel", "news", "coding"];
+    const order = ["life", "reflections", "experiences", "lessons", "travel", "news", "coding"];
     return [...(data?.categories || [])].sort((a, b) => {
       const keyA = String(a.slug || a.name || "").toLowerCase();
       const keyB = String(b.slug || b.name || "").toLowerCase();

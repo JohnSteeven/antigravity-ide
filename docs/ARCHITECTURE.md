@@ -80,9 +80,27 @@ Progress persistence validates a published `contentType=article`, applies monoto
 Stories use `contentType=story` in the Article domain. `storyController` normalizes `storyLayout` and `storySections`, calculates reading time, validates publishability, and preserves legacy body compatibility.
 Stories use `contentType=story` in the Article domain. `storyController` normalizes `storyLayout` and `storySections`, calculates reading time at 200 wpm from readable section text, validates publishability, and preserves legacy body compatibility.
 In MyJourney, Articles, Learn, and Stories are strictly separated:
-- **Articles**: information, explanation, guides, learning, knowledge.
+- **Articles**: information, explanation, guides, learning, knowledge. Phase 5 establishes the canonical 5-category public article catalog (Life, Reflections, Experiences, Lessons, Travel) with configured byline `MyJourney Editorial`.
 - **Learn**: structured teaching, coding, lessons, quizzes, courses.
 - **Stories**: characters, life, events, relationships, choices, consequences, and emotion. Fictional narratives grounded in real human experience.
+
+### Phase 5 Article Catalog Architecture
+Phase 5 establishes the platform article foundation, safe legacy catalog reset, and canonical taxonomy:
+- **Canonical Categories**: Five public Article categories:
+  1. *Life* (`slug: "life"`): Habits, relationships, personal growth, ordinary living.
+  2. *Reflections* (`slug: "reflections"`): Essays on meaning, change, and self-awareness.
+  3. *Experiences* (`slug: "experiences"`): Real encounters, turning points, and pivotal moments (replaces legacy "Incidents").
+  4. *Lessons* (`slug: "lessons"`): Actionable insights shaped into reusable knowledge.
+  5. *Travel* (`slug: "travel"`): Destinations, verified logistics, budgets, and cultural encounters.
+  *Note*: News is retained as an external feed and excluded from reset; Coding belongs to Phase 6 and remains intact.
+- **Backwards Compatibility**: Legacy bookmarks to `/categories/incidents`, `/category/incidents`, and `/articles?category=incidents` seamlessly normalize and redirect to `/category/experiences` and `/articles?category=experiences`.
+- **Archived Article Tombstone Behavior**: Direct requests for archived articles return HTTP 200 tombstone responses with empty body prose (`body: ""`, `structuredBlocks: []`, `storySections: []`), `status: "archived"`, `isArchived: true`, and `seo: { metaRobots: "noindex,follow" }`. The frontend renders a clean tombstone notice with canonical navigation and sets `noindex` via the existing `DocumentMetadata` component.
+- **Experiences Editorial Provenance**: Experiences pieces forbid fabricated accounts and require typed provenance:
+  - `first_person_authorized`: requires authorization reference or subject identity and consent confirmation.
+  - `reported_case_study`: requires verifiable case study sources and source documentation.
+  - Confidential editorial notes (`confidentialNotes`) are strictly stripped by public serializers.
+- **Travel Verification Metadata**: Travel articles carry structured verification timestamps (`lastVerifiedAt`, `budgetVerifiedAt`), currency codes, budget/transport assumptions, official source references, visa guidance, and opening/ticket fee verification. Invented current facts are prohibited.
+- **Authorship**: Platform articles use the configured editorial byline: `MyJourney Editorial`.
 
 The client selects established Story renderers/presets such as `book-spread`, `chapter-journey`, `magazine-feature`, `minimal-longform`, and `classic-reader`. New Story work should extend this system, not replace it with a second renderer architecture.
 The canonical production story library is server-persisted in MongoDB via `server/scripts/seedArticles.js`, sourced from `server/data/launchStories/` (8 original stories across batches A, B, and C, totaling 35,718 words and 121 sections). Stories are never bundled in bulk into client Parcel JavaScript; the client loads story data dynamically through `/api/stories`.
