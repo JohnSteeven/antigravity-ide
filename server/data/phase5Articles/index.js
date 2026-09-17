@@ -15,10 +15,13 @@ const {
 } = require("./categories");
 const { EDITORIAL_BYLINE } = require("../../config/constants");
 
+const lifeArticles = require("./life");
+const reflectionsArticles = require("./reflections");
+
 // Catalog blueprint registry: structured by category
 const phase5Catalog = Object.freeze({
-  life: [],
-  reflections: [],
+  life: lifeArticles,
+  reflections: reflectionsArticles,
   experiences: [],
   lessons: [],
   travel: [],

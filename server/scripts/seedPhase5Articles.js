@@ -89,11 +89,11 @@ async function seedPhase5Articles(options = {}) {
     const existing = await Article.findOne({ slug: blueprint.slug });
     if (existing) {
       // Guard: Never overwrite a Story record
-      if (existing.contentType === "story" || existing.storyLayout) {
+      if (existing.contentType === "story") {
         console.warn(`[Phase 5 Seeder] Skipping slug "${blueprint.slug}" — matches existing Story record.`);
         continue;
       }
-      await Article.updateOne({ _id: existing._id }, { $set: articlePayload });
+      await Article.updateOne({ _id: existing._id }, { $set: articlePayload, $unset: { storyLayout: 1 } });
       updatedCount++;
     } else {
       await Article.create(articlePayload);

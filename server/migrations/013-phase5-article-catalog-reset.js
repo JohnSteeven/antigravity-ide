@@ -38,9 +38,9 @@ const compatible = (index, keys, options) =>
   && (options.partialFilterExpression === undefined
     || same(index.partialFilterExpression, options.partialFilterExpression));
 
-// Explicit targeting query: only legacy articles that are NOT News, NOT Coding, and NOT Stories
+// Explicit targeting query: strictly legacy articles that are NOT News, NOT Coding, and NOT Stories
 const buildTargetFilter = () => ({
-  contentType: { $in: ["article", null, undefined] },
+  contentType: "article",
   category: { $nin: [/^news$/i, /^coding$/i, /^stories$/i] },
   categorySlug: { $nin: ["news", "coding", "stories"] },
   // Explicit Story guards
@@ -153,7 +153,7 @@ const up = async (db, options = {}) => {
   await articles.updateMany(
     {
       $or: [{ category: /^incidents$/i }, { categorySlug: "incidents" }],
-      contentType: { $ne: "story" },
+      contentType: "article",
     },
     [
       {

@@ -87,6 +87,9 @@ describe("Phase 5 Step 1: Article Catalog Foundation & Safe Reset", () => {
     test("target filter strictly excludes Stories, News, and Coding", () => {
       const filter = migration013.buildTargetFilter();
 
+      // Check strict contentType: "article"
+      expect(filter.contentType).toBe("article");
+
       // Check category exclusion
       expect(filter.category.$nin).toBeDefined();
       const patterns = filter.category.$nin;
