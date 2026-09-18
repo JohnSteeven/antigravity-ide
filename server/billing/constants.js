@@ -19,7 +19,8 @@ const PAYMENT_TRANSITIONS = Object.freeze({
   authorized: Object.freeze(["captured", "failed"]),
   captured: Object.freeze(["partially_refunded", "refunded", "reversed"]),
   partially_refunded: Object.freeze(["partially_refunded", "refunded", "reversed"]),
-  failed: Object.freeze([]),
+  // A later verified capture/authorisation may recover the same provider order.
+  failed: Object.freeze(["authorized", "captured"]),
   refunded: Object.freeze([]),
   reversed: Object.freeze([]),
 });

@@ -37,10 +37,18 @@ const PaymentSchema = new mongoose.Schema({
   authorizedAt: { type: Date, default: null },
   capturedAt: { type: Date, default: null },
   failedAt: { type: Date, default: null },
+  entitlementAppliedAt: { type: Date, default: null },
+  entitlementStart: { type: Date, default: null },
+  entitlementEnd: { type: Date, default: null },
+  entitlementRevokedAt: { type: Date, default: null },
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
 }, { timestamps: true, minimize: true });
 
 PaymentSchema.pre("validate", function validateAmounts(next) {
+  if (this.entitlementAppliedAt && (!this.entitlementStart || !this.entitlementEnd
+    || this.entitlementEnd <= this.entitlementStart || !this.subscriptionId)) {
+    return next(new Error("Applied Premium payment requires membership and a valid attributed window."));
+  }
   if (this.capturedAmountMinor > this.amountMinor) return next(new Error("Captured amount cannot exceed the authoritative payment amount."));
   if (this.refundedAmountMinor + this.refundReservedMinor > this.capturedAmountMinor) return next(new Error("Refunded and reserved amounts cannot exceed the captured amount."));
   if (this.chargebackAmountMinor > this.capturedAmountMinor) return next(new Error("Chargeback amount cannot exceed the captured amount."));

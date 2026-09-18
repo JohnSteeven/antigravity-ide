@@ -471,7 +471,11 @@ export const storyProgressApi = {
 export const membershipApi = {
   catalog: () => get("/api/membership/plans"),
   me: () => get("/api/membership/me/entitlements"),
-  selectDuration: (billingPeriodMonths) => post("/api/membership/subscribe", { billingPeriodMonths }),
+  selectDuration: (billingPeriodMonths, idempotencyKey) => request("/api/membership/subscribe", {
+    method: "POST", headers: { "Idempotency-Key": idempotencyKey },
+    body: JSON.stringify({ productCode: ({ 1: "PREMIUM_MONTHLY", 3: "PREMIUM_3_MONTH", 6: "PREMIUM_6_MONTH", 12: "PREMIUM_12_MONTH" })[billingPeriodMonths] }),
+  }),
+  verifyPayment: (payload) => post("/api/billing/checkout/verify", payload),
   cancelRenewal: () => post("/api/membership/cancel", {}),
 };
 

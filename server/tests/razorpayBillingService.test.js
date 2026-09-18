@@ -5,6 +5,7 @@ jest.mock("../models/Payment", () => ({
   updateOne: jest.fn(),
 }));
 jest.mock("../models/Refund", () => ({ findOne: jest.fn() }));
+jest.mock("../services/premiumLifecycleService", () => ({ activateCapturedPayment: jest.fn(), noteFailedPayment: jest.fn() }));
 jest.mock("../services/billingDomainService", () => ({
   claimBillingEvent: jest.fn(),
   completeBillingEvent: jest.fn(),
@@ -20,6 +21,7 @@ jest.mock("../services/billingDomainService", () => ({
 const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
 const domain = require("../services/billingDomainService");
+const lifecycle = require("../services/premiumLifecycleService");
 const { hmacHex } = require("../billing/providers/razorpay/signatures");
 const { RazorpayBillingService } = require("../services/razorpayBillingService");
 
@@ -87,6 +89,7 @@ describe("Razorpay billing orchestration", () => {
       listOrdersByReceipt: jest.fn(),
     };
     service = new RazorpayBillingService({ environment, client });
+    lifecycle.activateCapturedPayment.mockResolvedValue(payment({ providerOrderId: "order_test123", status: "captured", capturedAmountMinor: 39900 }));
   });
 
   test("creates an order from the server-owned Payment and returns safe checkout data", async () => {
@@ -165,7 +168,7 @@ describe("Razorpay billing orchestration", () => {
       providerPaymentId: "pay_test123",
       updates: { capturedAmountMinor: 39900, processorFeeMinor: 763, processorFeeTaxMinor: 137 },
     }));
-    expect(domain.ensureInvoiceForCapturedPayment).toHaveBeenCalledTimes(1);
+    expect(lifecycle.activateCapturedPayment).toHaveBeenCalledTimes(1);
   });
 
   test("invalid callback signature performs no provider lookup or state mutation", async () => {
@@ -176,7 +179,9 @@ describe("Razorpay billing orchestration", () => {
       razorpayPaymentId: "pay_test123", razorpaySignature: "0".repeat(64),
     })).rejects.toMatchObject({ code: "INVALID_RAZORPAY_SIGNATURE" });
     expect(client.fetchPayment).not.toHaveBeenCalled();
+    expect(lifecycle.activateCapturedPayment).not.toHaveBeenCalled();
     expect(domain.transitionPayment).not.toHaveBeenCalled();
+    expect(lifecycle.activateCapturedPayment).not.toHaveBeenCalled();
   });
 
   test.each([

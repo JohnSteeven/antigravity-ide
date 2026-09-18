@@ -12,6 +12,25 @@ describe("Premium frontend and CMS contracts", () => {
     expect(auth).not.toContain("localStorage.setItem(\"premium\"");
   });
 
+  test("existing account/checkout UI uses authoritative dates, prepaid status and verified server refresh", () => {
+    const dashboard = read("src", "components", "SubscriptionDashboard.jsx");
+    const page = read("src", "features", "premium", "PremiumPage.jsx");
+    const api = read("src", "services", "apiService.js");
+    const auth = read("src", "context", "AuthContext.js");
+    expect(dashboard).toContain("accountAccess.startedAt");
+    expect(dashboard).toContain("accountAccess?.paymentIssue");
+    expect(dashboard).toContain("accountAccess?.nextAccessStart");
+    expect(dashboard).toContain("no automatic renewal");
+    expect(dashboard).not.toContain('"Renews"');
+    expect(page).toContain("duration.formattedPrice");
+    expect(page).toContain("openRazorpayCheckout(response.data, membershipApi.verifyPayment)");
+    expect(page).toContain("await refreshEntitlements()");
+    expect(api).toContain('"Idempotency-Key": idempotencyKey');
+    expect(api).toContain('"/api/billing/checkout/verify"');
+    expect(auth).toContain("scheduleBoundary");
+    expect(auth).toContain('document.addEventListener("visibilitychange"');
+  });
+
   test("Premium page exposes four duration choices without tiers, prices, or fake success", () => {
     const page = read("src", "features", "premium", "PremiumPage.jsx");
     expect(page).toContain('displayLabel: "1 Month"');

@@ -8,12 +8,12 @@
 const express = require('express');
 const router = express.Router();
 const membershipController = require('../controllers/membershipController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
 // Public endpoints
-router.get('/plans', membershipController.getPlans);
+router.get('/plans', optionalAuthenticate, membershipController.getPlans);
 
 // Authenticated reader endpoints
 router.get('/me', authenticate, membershipController.getMyMembership);

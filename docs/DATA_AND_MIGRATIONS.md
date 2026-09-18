@@ -30,6 +30,10 @@ Current ordered migrations:
 
 Server startup does not run these automatically.
 
+Phase 13 adds optional ReaderMembership `paidPeriods`, `latestSuccessfulPaymentAt`, and `lastPaymentIssue`, plus Payment `entitlementAppliedAt`, `entitlementStart`, `entitlementEnd`, and `entitlementRevokedAt`. Payment dates retain historical purchase attribution; expired membership periods are pruned on the next activation/refund, without deleting the financial audit. Invoice membership association may be populated during recovery of a previously captured Payment. Existing rows need no eager rewrite: absence of `paidPeriods` uses legacy windows, converted transactionally on first verified purchase; an empty array means no paid entitlement.
+
+No Phase 13 migration or new index is needed. User uniqueness, provider payment/order uniqueness, Payment owner/history indexes, Invoice payment uniqueness, and BillingEvent replay uniqueness already cover all lifecycle queries and writes. Migration 013 and Article data are unchanged. Activation, cancellation audit, and refund revocation require a Mongo replica set/sharded topology; standalone Mongo cannot provide these transactions and is never replaced with an in-memory server.
+
 Launch, deployment, and test-execution collections are historical evidence stores. Read endpoints never seed them. New release records default to non-production, deployment environment/status must be supplied explicitly, and absent test coverage remains `null`; these safe defaults do not rewrite existing records and require no data migration.
 
 
@@ -115,7 +119,7 @@ Safety and lifecycle properties:
 
 ## Retention and lifecycle
 
-Premium cancellation and Life data deletion are separate operations. Canceling or expiring Premium removes access; it does not delete Life records. Paid cancellation retains access through the current paid period.
+Premium cancellation and Life data deletion are separate operations. Expiration removes access; cancellation retains access through already-paid dates and never deletes Life records. Full refund revokes only the refunded purchase's dates; other independently valid purchases remain available. A refunded stacked term can leave a gap until the next purchase's original start date. Partial, pending, and failed refunds do not revoke a paid term.
 
 Life offers authenticated JSON export and explicit Life-data deletion. `privacyService` scopes export/deletion to the requesting user across all Life-owned models and Life-source notifications.
 

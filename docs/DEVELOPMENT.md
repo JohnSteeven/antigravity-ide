@@ -18,6 +18,23 @@ MongoDB is mandatory for the API. Set `MONGO_URI` to the intended local/developm
 
 Do not replace configured databases with hard-coded localhost values. Before seeding or applying migrations, confirm both `NODE_ENV` and the actual connected host/database.
 
+Premium payment activation and refunds require a Mongo replica set or sharded cluster for transactions. A standalone local Mongo service remains useful for other development, but cannot safely fulfill paid lifecycle operations. Never silently fall back to in-memory entitlements.
+
+To provision the Phase 13 integration database separately from the usual service, start an isolated Mongo process in a separate terminal (use an empty directory dedicated to this test replica):
+
+```powershell
+New-Item -ItemType Directory -Force .tmp/phase13-mongo
+mongod --dbpath .tmp/phase13-mongo --port 27019 --replSet phase13test --bind_ip 127.0.0.1
+```
+
+Initialize only that new test replica once, then wait until it becomes primary:
+
+```bash
+mongosh --port 27019 --eval "rs.initiate({_id:'phase13test',members:[{_id:0,host:'127.0.0.1:27019'}]})"
+```
+
+`premiumLifecycle.integration.test.js` defaults to `myjourney_premium_lifecycle_test` on this replica. `PREMIUM_LIFECYCLE_MONGO_URI` can select another local replica-set database ending in `_test`; production/shared application databases are rejected. The suite does not apply migrations or seed Article/Story catalogs. Stop the isolated test process after verification.
+
 ## Start
 
 ```bash

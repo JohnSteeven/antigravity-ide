@@ -1,6 +1,6 @@
 # Billing architecture
 
-This document is the durable source of truth for MyJourney billing work. It covers the production billing foundation introduced in V1 Phases 10–12. Premium lifecycle UI, standalone Course purchases, Creator revenue sharing, payouts, and background-worker infrastructure remain outside this scope.
+This document is the durable source of truth for MyJourney billing work. It covers the billing foundation introduced in V1 Phases 10–12 and the Phase 13 prepaid Premium lifecycle. Standalone Course purchases, Creator revenue sharing, payouts, and background-worker infrastructure remain outside this scope.
 
 ## Domain boundaries
 
@@ -106,7 +106,7 @@ Reviewed on 2026-09-15 against current official Razorpay documentation:
 4. One process acquires the Payment order-creation claim. It calls `POST /v1/orders` with the internal Payment reference as the unique receipt, exact integer amount/currency, and no partial payments.
 5. The provider response must echo matching receipt/amount/currency before the provider order ID is stored. Only safe checkout fields (including test key ID, never secret) are returned.
 6. The browser success handler sends the three Razorpay callback values plus internal Payment ID to the server. The server loads that Payment by authenticated owner, verifies the signature using its stored order ID, then fetches both Payment and Order from Razorpay.
-7. Only provider status `captured=true/status=captured` plus Order `status=paid` with exact amount/currency/order linkage can mark Payment captured. This creates/reconciles one internal Invoice snapshot. It does not activate Premium; Phase 13 owns entitlement lifecycle.
+7. Only provider status `captured=true/status=captured` plus Order `status=paid` with exact amount/currency/order linkage can mark Payment captured. Phase 13 then transactionally activates the canonical ReaderMembership and creates/reconciles its associated Invoice snapshot. A failed activation remains recoverable by the same verified callback/webhook; no second order is needed.
 
 If order creation times out, returns a 5xx, loses its database claim, or otherwise becomes ambiguous after the network boundary, the Payment moves to `uncertain`. It is not retried as a new order until reconciliation. A definitive provider 4xx moves the attempt to `failed` and can be deliberately retried under the same internal Payment receipt.
 
@@ -134,7 +134,7 @@ Authenticated users can request a refund only against their own captured Payment
 | `GET /api/billing/admin/reconcile/payments/:paymentId` | Admin only | Read-only internal/provider comparison. |
 | `POST /api/billing/webhooks/razorpay` | Raw-body provider HMAC | Provider event ingestion; no browser CSRF. |
 
-The legacy `POST /api/membership/subscribe` endpoint now delegates to the same product-code/idempotency checkout service for compatibility. Portal/cancellation/resumption integration remains unavailable until Phase 13.
+The legacy `POST /api/membership/subscribe` endpoint delegates to the same product-code/idempotency checkout service. `GET /api/membership/me` and `/me/entitlements` return the same safe canonical status. `POST /api/membership/cancel` supports audited application cancellation of paid prepaid/manual terms while retaining access. Provider portal, recurring cancellation/resumption, and synchronization remain unavailable; prepaid Razorpay Orders do not claim automatic renewal.
 
 ### Threat review
 
@@ -156,6 +156,47 @@ Checkout performs one indexed idempotent Payment upsert, one short claim update,
 
 Provider latency remains synchronous on checkout verification/refund initiation, and verified webhook processing is synchronous after the durable claim. At larger scale, Phase 22 should move post-claim processing/retries/reconciliation to durable queues/workers and add distributed admission limiting. Mongo transaction/topology capacity, provider rate limits, WAF configuration, alerting, and restoration drills require staging evidence; source structure alone does not prove production capacity.
 
-### Deferred after Phase 12
+## Phase 13: Premium lifecycle and entitlement activation
 
-Phase 13 must translate verified Payment/subscription events into renewal, grace, cancellation, expiration, entitlement, UI, notification, and email behavior. Phase 14 standalone Course purchases and Phases 15–17 Creator economics/payouts are not implemented. No Story implementation was changed. Statutory invoice/tax fields, billing-record retention/anonymization, GST treatment, and commercial/legal text require CA/legal/privacy review before production activation.
+### Canonical authority and legacy compatibility
+
+`ReaderMembership` remains the only entitlement authority, read by `subscriptionService`/`entitlementService` for Article/Story previews, protected bodies/sections, Premium Learn, and Life middleware. There is one membership per user, never a separate billing entitlement system. The User model has no independent Premium grant field; arbitrary legacy/client flags cannot grant access.
+
+New paid memberships store purchase-attributed `paidPeriods` on ReaderMembership. Their union is the authoritative paid window. The existing start/end fields are a projection; they cannot bridge a gap after refund. Payment retains historical start/end/applied/revoked dates and membership/provider/order references. Expired periods are pruned on lifecycle mutations; financial/audit records remain. Legacy rows with no periods array retain existing explicit trial/grace/paid-date behavior until a verified purchase converts remaining valid access to a `legacy` period. An empty array grants no paid access. Development-provider grants remain disabled in production.
+
+### Activation, renewal and expiration rules
+
+- Both verified checkout and signed `payment.captured`/`order.paid` events invoke the same activation service. The service rereads authoritative Payment state, requires full capture and non-full-refund, and resolves duration/amount/currency/provider from PriceCatalog. Client dates, amount, currency, duration, and status are never inputs.
+- Entitlement takes effect at the application's successful verification time. New/expired access starts then. If an unexpired paid term exists, the new term starts at the latest retained end, preserving all purchased time. UTC calendar-month addition clamps month-end dates. Provider event creation time is audit evidence and never backdates/truncates a newly verified purchase.
+- Concurrent distinct purchases are allocated in transaction commit order. Once assigned, each purchase's dates remain fixed. Overlapping legacy windows are unioned for access; a current window requires `start <= now < end`.
+- Expiration is enforced on every lookup without cron. Raw `active` status cannot grant past an end, before a future start, or through a refund gap. API status derives `expired`/`scheduled` immediately even when stored status normalization has not run.
+
+### Cancellation, failures and grace
+
+All catalog purchases use `prepaid_term`. Razorpay Order checkout does not schedule a subscription or automatic renewal. Audited application cancellation sets `cancelAtPeriodEnd`/`canceledAt` and preserves paid periods; repeating it is idempotent. An explicit later verified purchase activates another prepaid term and clears cancellation. Memberships with recurring provider subscription IDs require reconciliation and provider cancellation remains honestly unavailable. Unsupported/stale subscription webhook types are recorded as ignored, so they cannot replace a newer prepaid purchase.
+
+A failed attempt updates only Payment and an allowlisted account issue summary, never paid dates/status or grace. Existing legacy `past_due`/`grace_period` rows still retain already-paid time; explicitly existing grace dates can apply after paid expiry, but Phase 13 creates no grace. Verified authorisation/capture may recover a failed order with another provider payment attempt. Captured/refunded states cannot roll back to failed/authorized. Account issue ordering uses authoritative internal Payment creation time relative to the latest successful activation and latest issue attempt; an older failed order cannot replace a newer success. The successful-activation timestamp remains monotonic when an earlier request commits later, preserving the stale-failure boundary. Repeated state transitions preserve original capture/failure dates. Successful activation clears the issue.
+
+### Refund/revocation and overlapping purchases
+
+Pending/failed/partial refunds leave paid access intact; there is no invented proportional-day reduction. When processed refund totals equal captured funds, settlement atomically removes only the matching Payment's period and marks its historical attribution revoked. Other purchases and legacy periods remain. Later purchases are never shortened or shifted: refunding an earlier stacked term can leave a gap until the next term's original start. The access helper denies that gap and the account API reports the next start. A currently valid independent later/overlapping period still grants access. Replayed refunds neither refund money nor revoke twice.
+
+### Idempotency, concurrency and event ordering
+
+The existing unique BillingEvent provider/event claim protects webhook delivery. Payment's `entitlementAppliedAt` is the cross-channel fulfillment marker: different capture/order event IDs and checkout confirmation for the same Payment cannot extend twice. ReaderMembership mutation, Payment attribution, Invoice association, and a deterministic internal `premium.activated` BillingEvent are one Mongo transaction. Cancellation state/audit are also transactional. Full-refund money settlement, Invoice snapshot, purchase-scoped revocation, and `premium.revoked` audit share settlement's transaction. There is no process-local correctness state.
+
+Transactions serialize competing writes to the same membership and Payment. The Mongo driver retries transient conflicts; first-membership unique-index races retry from a fresh transaction snapshot, bounded to three attempts. Provider HTTP runs before/after these short internal transactions, never inside them. A capture recorded before activation failure can be retried safely. Activation/refund races cannot resurrect fully refunded access; invoice recovery preserves refunded totals. Subscription transition helpers reject older/equal-time competing updates and treat a repeated event ID as a read-only repeat. No synthetic provider sequencing is assumed.
+
+### Account/client contract and support surface
+
+The existing membership API allowlists active/plan/name/code, duration, started/current start/end dates, next access start, effective status/reason, source, prepaid mode, `autoRenew=false` for Orders (otherwise unknown), cancellation fields, and `{status, occurredAt}` payment issue. It omits internal references, raw periods, customer/subscription IDs, secrets, credentials, signatures, and raw webhook data; responses are private/no-store.
+
+The existing `/premium` page uses product-code/idempotent checkout and Razorpay's real test Checkout script. Public plan reads optionally authenticate through the existing middleware, derive market from the stored account, and return private/no-store formatted INR/USD prices; query/client currency never chooses authoritative terms. Its callback asks the server to verify and then refreshes canonical membership; it never sets a local Premium flag. Retries reuse the same account/duration order key until successful verification. The existing subscription dashboard refreshes on entry and shows prepaid expiry/start dates, renewal links, payment issues, and scheduled access. Shared account state refreshes at date boundaries and on tab focus/visibility. Browser state is presentation only. Existing Admin plan/configuration and read-only reconciliation routes retain Admin authorization; no new manual grant/support control is introduced.
+
+### Schema/index/migration and remaining provider validation
+
+Optional membership period/success/issue fields and optional Payment attribution dates are lazy-compatible with old rows. Invoice membership association can be populated during capture recovery. Existing membership/user/provider uniqueness, Payment owner/provider indexes, Invoice payment uniqueness, and BillingEvent replay indexes cover the operations. No new migration/index is necessary, and migration 013 is unchanged. Persistent lifecycle behavior requires a real Mongo replica set/sharded topology.
+
+Real Razorpay test-account checkout/API connectivity, captured/paid verification, dashboard webhook delivery/retries/rotation, failed-attempt recovery, full/partial refund delivery and reconciliation still require staging evidence. Recurring provider cancellation is unavailable rather than simulated. No real-money transaction or live-mode validation occurred. Local real-Mongo/stub-provider checks are structural evidence; browser checkout/account QA remains required. See [Razorpay webhook delivery semantics](https://razorpay.com/docs/webhooks/faqs/) and [refund API scope](https://razorpay.com/docs/api/refunds/).
+
+Standalone Course purchases and Creator economics/payouts are not implemented. Statutory invoice/tax fields, billing-record retention/anonymization, GST treatment, and commercial/legal text still require CA/legal/privacy review before production activation.

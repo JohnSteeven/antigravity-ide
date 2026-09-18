@@ -7,7 +7,8 @@ const { currencyField, minorUnitField } = require("../billing/modelFields");
 const InvoiceSchema = new mongoose.Schema({
   invoiceNumber: { type: String, required: true, immutable: true, default: () => `MJI-${crypto.randomUUID()}` },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
-  subscriptionId: { type: mongoose.Schema.Types.ObjectId, ref: "ReaderMembership", default: null, immutable: true },
+  // Filled from the canonical membership when an older captured invoice is recovered.
+  subscriptionId: { type: mongoose.Schema.Types.ObjectId, ref: "ReaderMembership", default: null },
   paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment", required: true, immutable: true },
   productCode: { type: String, enum: Object.values(PRODUCT_CODES), required: true, immutable: true },
   provider: { type: String, required: true, immutable: true, trim: true, lowercase: true },

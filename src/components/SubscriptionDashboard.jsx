@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 import { membershipApi } from "../services/apiService";
@@ -20,6 +20,10 @@ export default function SubscriptionDashboard() {
   const premiumActive = accountAccess?.plan === "premium";
   const cancelPending = Boolean(accountAccess?.cancelAtPeriodEnd);
   const expired = accountAccess?.subscriptionStatus === "expired" || accountAccess?.accessReason === "period_expired";
+  const prepaid = accountAccess?.billingMode === "prepaid_term";
+
+  // Visiting the account page fetches current server dates/status after payment.
+  useEffect(() => { refreshEntitlements(); }, []);
 
   useDialogFocus({
     open: confirming,
@@ -51,24 +55,28 @@ export default function SubscriptionDashboard() {
         <p className="premium-kicker">Account membership</p>
         <h1 id="membership-heading">{premiumActive ? "MyJourney Premium" : "MyJourney Free"}</h1>
         {accessError && <p className="premium-status" role="alert">Subscription state is unavailable. Premium features remain securely locked until it can be verified.</p>}
+        {accountAccess?.paymentIssue && <p className="premium-status" role="status">A payment attempt failed. Previously paid access remains available until its expiry date.</p>}
 
         {premiumActive ? (
           <>
             <p className="premium-account__state">{cancelPending ? "Renewal canceled" : "Active"}</p>
             <dl>
               <div><dt>Current membership</dt><dd>{labelForDuration(accountAccess.billingPeriodMonths)}</dd></div>
+              <div><dt>Started</dt><dd>{formatDate(accountAccess.startedAt)}</dd></div>
               <div><dt>Access until</dt><dd>{formatDate(accountAccess.currentPeriodEnd)}</dd></div>
-              <div><dt>{cancelPending ? "Ends" : "Renews"}</dt><dd>{formatDate(accountAccess.currentPeriodEnd)}</dd></div>
+              <div><dt>Billing</dt><dd>{prepaid ? "Prepaid — no automatic renewal" : "Automatic renewal status unavailable"}</dd></div>
             </dl>
+            {prepaid && <Link className="premium-primary-action" to="/premium">Renew Premium</Link>}
             {cancelPending ? (
               <p>Your Premium access remains active until the date above. Your private MyJourney Life history is not deleted.</p>
-            ) : (
+            ) : accountAccess.cancellationAvailable && !prepaid ? (
               <button type="button" className="premium-secondary-action" onClick={() => setConfirming(true)}>Cancel renewal</button>
-            )}
+            ) : null}
           </>
         ) : (
           <>
             <p>{expired ? "Your previous Premium period has ended." : "Your account includes MyJourney's free experiences."}</p>
+            {accountAccess?.nextAccessStart && <p>Your next paid Premium period starts {formatDate(accountAccess.nextAccessStart)}.</p>}
             <p>Your private Life history remains associated with this account and returns when Premium access is restored.</p>
             <Link className="premium-primary-action" to="/premium">Explore Premium</Link>
           </>
