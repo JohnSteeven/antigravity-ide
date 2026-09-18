@@ -1,25 +1,30 @@
 "use strict";
 
-const article1 = require("./how-to-read-a-financial-statement-when-you-are-not-an-accountant");
-const article2 = require("./the-discipline-of-saying-no-to-good-opportunities");
-const article3 = require("./how-to-write-so-people-actually-read");
-const article4 = require("./the-first-ninety-days-in-a-new-leadership-role");
-const article5 = require("./how-to-think-in-systems-not-in-events");
-const article6 = require("./the-mechanics-of-effective-negotiation");
-const article7 = require("./how-to-conduct-a-meaningful-annual-review");
-const article8 = require("./the-craft-of-difficult-conversations");
-const article9 = require("./how-to-build-a-personal-knowledge-system");
-const article10 = require("./the-art-of-decision-making-under-uncertainty");
+/**
+ * Phase 5 Canonical Lessons Index
+ * Exactly 10 canonical articles: 2 Pillars (>= 9,000 words), 8 Longforms (>= 6,000 words).
+ */
+
+const whatFailureActuallyTeaches = require("./what-failure-actually-teaches");
+const theDisciplineOfDoingSomethingForYears = require("./the-discipline-of-doing-something-for-years");
+const learningToMakeDecisionsWithoutCertainty = require("./learning-to-make-decisions-without-certainty");
+const theDifferenceBetweenConfidenceAndCompetence = require("./the-difference-between-confidence-and-competence");
+const whatGoodMentorsActuallyDo = require("./what-good-mentors-actually-do");
+const whyConsistencyMattersMoreThanIntensity = require("./why-consistency-matters-more-than-intensity");
+const howToRecognizeWhenYouNeedToChangeYourMind = require("./how-to-recognize-when-you-need-to-change-your-mind");
+const whatDifficultConversationsRequire = require("./what-difficult-conversations-require");
+const learningToWorkWithPeopleYouDoNotNaturallyLike = require("./learning-to-work-with-people-you-do-not-naturally-like");
+const theSkillOfFinishing = require("./the-skill-of-finishing");
 
 module.exports = [
-  article1,
-  article2,
-  article3,
-  article4,
-  article5,
-  article6,
-  article7,
-  article8,
-  article9,
-  article10,
+  whatFailureActuallyTeaches,
+  theDisciplineOfDoingSomethingForYears,
+  learningToMakeDecisionsWithoutCertainty,
+  theDifferenceBetweenConfidenceAndCompetence,
+  whatGoodMentorsActuallyDo,
+  whyConsistencyMattersMoreThanIntensity,
+  howToRecognizeWhenYouNeedToChangeYourMind,
+  whatDifficultConversationsRequire,
+  learningToWorkWithPeopleYouDoNotNaturallyLike,
+  theSkillOfFinishing,
 ];

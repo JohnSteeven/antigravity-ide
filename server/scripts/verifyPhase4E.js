@@ -208,7 +208,7 @@ const runTests = async () => {
   console.log("\n--- Backup Create/Restore Tests ---");
   const backup = await backupService.triggerBackup(userId);
   console.log(`✓ Backup created: "${backup.fileName}" (size: ${backup.size})`);
-  
+
   const { filePath } = await backupService.getBackupFilePath(backup._id);
   if (!filePath) throw new Error("Backup file path retrieval failed.");
   console.log("✓ Backup download file path verification passed.");

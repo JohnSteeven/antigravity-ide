@@ -16,13 +16,13 @@ const assertFixtureEnvironment = () => {
 async function seedArticles() {
   assertFixtureEnvironment();
   console.log("Starting Article Seeding Script...");
-  
+
   // Find default admin or first user as author
   let authorUser = await User.findOne({ role: { $in: ["Admin", "admin"] } });
   if (!authorUser) {
     authorUser = await User.findOne({});
   }
-  
+
   const authorId = authorUser ? authorUser._id : new mongoose.Types.ObjectId();
   const authorName = authorUser ? `${authorUser.firstName} ${authorUser.lastName}`.trim() : "Noble John Steeven";
 
@@ -62,7 +62,7 @@ async function seedArticles() {
       // Find matching category to map categoryId
       const categorySlug = art.category.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
       const categoryModel = await Category.findOne({ slug: categorySlug });
-      
+
       const { relatedStories, ...artFields } = art;
 
       const mappedArticle = {
@@ -119,7 +119,7 @@ async function seedArticles() {
         { $set: mappedArticle },
         { upsert: true, new: true }
       );
-      
+
       console.log(`Seeded Article: "${art.title}"`);
     }
 

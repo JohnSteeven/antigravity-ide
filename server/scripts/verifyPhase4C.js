@@ -9,7 +9,7 @@ const Article = require("../models/Article");
 async function runTests() {
   console.log("Phase 4C Verification starting...");
   console.log("===============================");
-  
+
   await connectDb();
   console.log("MongoDB connected.");
 
@@ -185,7 +185,7 @@ async function runTests() {
 
   console.log("\n===============================");
   console.log("✓ ALL PHASE 4C VERIFICATION TESTS PASSED!");
-  
+
   mongoose.connection.close();
 }
 

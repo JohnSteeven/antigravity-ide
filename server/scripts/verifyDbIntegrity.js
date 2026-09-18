@@ -89,7 +89,7 @@ async function verifyDb() {
             isDeleted: false
           });
         }
-        
+
         // Ensure parent Category has it in its string array `subcategories`
         if (!parentCat.subcategories.includes(art.subcategory)) {
           parentCat.subcategories.push(art.subcategory);
@@ -109,7 +109,7 @@ async function verifyDb() {
 
   const catNames = new Set(activeCategories.map(c => c.name.toLowerCase()));
   const catIds = new Set(activeCategories.map(c => c._id.toString()));
-  
+
   // 1. All Articles reference valid Categories
   let allArticlesHaveValidCategory = true;
   const invalidArtCategories = [];
@@ -295,7 +295,7 @@ async function verifyDb() {
 
   console.log("=========================================");
   console.log(process.exitCode ? "✗ SOME INTEGRITY CHECKS FAILED" : "✓ ALL INTEGRITY CHECKS PASSED");
-  
+
   await mongoose.connection.close();
 }
 

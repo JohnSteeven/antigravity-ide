@@ -1,23 +1,29 @@
 "use strict";
 
-const exp1 = require("./rebuilding-an-engineering-culture-after-rapid-scaling");
-const exp2 = require("./the-pivot-that-saved-a-decade-old-manufacturing-firm");
-const exp3 = require("./navigating-a-critical-data-outage-a-post-incident-study");
-const exp4 = require("./how-a-distributed-team-redesigned-its-communication-cadence");
-const exp5 = require("./transitioning-from-monolith-to-modular-systems-in-fintech");
-const exp6 = require("./the-multi-year-modernization-of-a-legacy-supply-chain");
-const exp7 = require("./revamping-an-open-source-community-governance-model");
-const exp8 = require("./reorganizing-a-hospital-triage-workflow-under-capacity-strain");
-const exp9 = require("./a-cross-border-regulatory-overhaul-and-its-operational-impact");
+/**
+ * Phase 5 Canonical Experiences Index
+ * Exactly 9 canonical articles, each >= 6,000 words.
+ * Editorial Provenance: reported_case_study
+ */
+
+const startingAgainAfterACareerEnds = require("./starting-again-after-a-career-ends");
+const whatAMajorMoveDoesToAFamily = require("./what-a-major-move-does-to-a-family");
+const rebuildingLifeAfterANaturalDisaster = require("./rebuilding-life-after-a-natural-disaster");
+const returningToEducationLaterInLife = require("./returning-to-education-later-in-life");
+const caringForAParentAcrossDistance = require("./caring-for-a-parent-across-distance");
+const lifeAfterASeriousFinancialSetback = require("./life-after-a-serious-financial-setback");
+const beginningAgainAfterABusinessFailure = require("./beginning-again-after-a-business-failure");
+const adjustingToLifeInANewCountry = require("./adjusting-to-life-in-a-new-country");
+const changingCareersInMidlife = require("./changing-careers-in-midlife");
 
 module.exports = [
-  exp1,
-  exp2,
-  exp3,
-  exp4,
-  exp5,
-  exp6,
-  exp7,
-  exp8,
-  exp9,
+  startingAgainAfterACareerEnds,
+  whatAMajorMoveDoesToAFamily,
+  rebuildingLifeAfterANaturalDisaster,
+  returningToEducationLaterInLife,
+  caringForAParentAcrossDistance,
+  lifeAfterASeriousFinancialSetback,
+  beginningAgainAfterABusinessFailure,
+  adjustingToLifeInANewCountry,
+  changingCareersInMidlife,
 ];
