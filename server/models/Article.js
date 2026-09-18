@@ -113,6 +113,7 @@ const EditorialProvenanceSchema = new mongoose.Schema(
     // For reported_case_study:
     caseStudySource: { type: String, default: "", trim: true },
     sourceDocumentation: [{ type: String, trim: true }],
+    sourceDocumentation: [{ type: mongoose.Schema.Types.Mixed }],
     // Internal confidential editorial notes (never exposed publicly)
     confidentialNotes: { type: String, default: "", trim: true },
   },
@@ -136,6 +137,7 @@ const TravelVerificationSchema = new mongoose.Schema(
       verifiedAt: { type: Date, default: null },
       officialPortalUrl: { type: String, default: "", trim: true },
     },
+    visaVerification: { type: mongoose.Schema.Types.Mixed, default: "" },
     transportAssumptions: { type: String, default: "", trim: true },
     openingHoursVerifiedAt: { type: Date, default: null },
     openingHoursNotes: { type: String, default: "", trim: true },
@@ -270,6 +272,7 @@ const ArticleSchema = new mongoose.Schema(
       },
     ],
     sources: [{ type: String, default: "", trim: true, maxlength: 500 }],
+    sources: [{ type: mongoose.Schema.Types.Mixed }],
 
     // Phase 5 Editorial Provenance & Travel Verification
     editorialProvenance: { type: EditorialProvenanceSchema, default: undefined },

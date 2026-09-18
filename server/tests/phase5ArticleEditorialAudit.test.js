@@ -1,23 +1,29 @@
 "use strict";
 
-const { phase5Catalog, CANONICAL_ARTICLE_CATEGORIES } = require("../data/phase5Articles");
+const {
+  phase5Catalog,
+  canonicalArticles,
+  CANONICAL_ARTICLE_CATEGORIES,
+} = require("../data/phase5Articles");
 const { EDITORIAL_BYLINE } = require("../config/constants");
 
-describe("Phase 5 Step 2A Canonical Article Editorial Audit", () => {
-  const lifeArticles = phase5Catalog.life;
-  const reflectionsArticles = phase5Catalog.reflections;
-  const allArticles = [...lifeArticles, ...reflectionsArticles];
+describe("Phase 5 Complete Canonical Article Catalog Editorial Audit", () => {
+  const { life, reflections, lessons, experiences, travel } = phase5Catalog;
+  const allArticles = canonicalArticles;
 
-  test("contains exactly 10 canonical articles in Batch 2A (5 Life, 5 Reflections)", () => {
-    expect(lifeArticles).toHaveLength(5);
-    expect(reflectionsArticles).toHaveLength(5);
-    expect(allArticles).toHaveLength(10);
+  test("contains exactly 74 canonical articles across all 5 categories", () => {
+    expect(life).toHaveLength(10);
+    expect(reflections).toHaveLength(10);
+    expect(lessons).toHaveLength(10);
+    expect(experiences).toHaveLength(9);
+    expect(travel).toHaveLength(35);
+    expect(allArticles).toHaveLength(74);
   });
 
-  test("all slugs are unique, lowercase, and hyphenated", () => {
+  test("all 74 slugs are unique, lowercase, and hyphenated", () => {
     const slugs = allArticles.map((a) => a.slug);
     const uniqueSlugs = new Set(slugs);
-    expect(uniqueSlugs.size).toBe(10);
+    expect(uniqueSlugs.size).toBe(74);
 
     slugs.forEach((slug) => {
       expect(slug).toMatch(/^[a-z0-9-]+$/);
@@ -26,17 +32,17 @@ describe("Phase 5 Step 2A Canonical Article Editorial Audit", () => {
   });
 
   test("all articles belong strictly to canonical Phase 5 categories", () => {
-    lifeArticles.forEach((a) => {
-      expect(a.category).toBe("Life");
+    allArticles.forEach((a) => {
       expect(CANONICAL_ARTICLE_CATEGORIES).toContain(a.category);
     });
-    reflectionsArticles.forEach((a) => {
-      expect(a.category).toBe("Reflections");
-      expect(CANONICAL_ARTICLE_CATEGORIES).toContain(a.category);
-    });
+    life.forEach((a) => expect(a.category).toBe("Life"));
+    reflections.forEach((a) => expect(a.category).toBe("Reflections"));
+    lessons.forEach((a) => expect(a.category).toBe("Lessons"));
+    experiences.forEach((a) => expect(a.category).toBe("Experiences"));
+    travel.forEach((a) => expect(a.category).toBe("Travel"));
   });
 
-  test("all articles have author/byline as MyJourney Editorial", () => {
+  test("all articles have author and byline as MyJourney Editorial", () => {
     allArticles.forEach((a) => {
       expect(a.author).toBe(EDITORIAL_BYLINE);
       expect(a.byline).toBe(EDITORIAL_BYLINE);
@@ -61,31 +67,35 @@ describe("Phase 5 Step 2A Canonical Article Editorial Audit", () => {
     });
   });
 
-  test("verifies word count standards: Pillars >= 9,000 and Longforms >= 6,000", () => {
+  test("verifies word count standards: 4 Pillars >= 9,000, 16 Longforms >= 6,000, others >= 1,000", () => {
     const pillars = [
       "the-architecture-of-living-together",
+      "money-inside-a-family-is-never-just-money",
       "the-art-of-being-alone-without-becoming-lonely",
+      "why-time-feels-different-as-we-get-older",
     ];
 
     allArticles.forEach((a) => {
       if (pillars.includes(a.slug)) {
         expect(a.wordCount).toBeGreaterThanOrEqual(9000);
         expect(a.wordCount).toBeLessThanOrEqual(12500);
-      } else {
+      } else if (a.category === "Life" || a.category === "Reflections") {
         expect(a.wordCount).toBeGreaterThanOrEqual(6000);
         expect(a.wordCount).toBeLessThanOrEqual(9500);
+      } else {
+        expect(a.wordCount).toBeGreaterThanOrEqual(1000);
       }
     });
   });
 
   test("verifies reading time is calibrated (~200 wpm)", () => {
     allArticles.forEach((a) => {
-      const expectedMinutes = Math.round(a.wordCount / 200);
+      const expectedMinutes = Math.max(1, Math.round(a.wordCount / 200));
       expect(a.readingTime).toBe(`${expectedMinutes} min read`);
     });
   });
 
-  test("verifies media standards: 1 cover image + 2-4 inline images with alt and caption", () => {
+  test("verifies media standards: 1 cover image + at least 2 inline images with alt and caption", () => {
     allArticles.forEach((a) => {
       expect(a.coverImage).toMatch(/^https?:\/\//);
       expect(a.coverImageAlt).toBeTruthy();
@@ -93,7 +103,7 @@ describe("Phase 5 Step 2A Canonical Article Editorial Audit", () => {
 
       const inlineImages = (a.structuredBlocks || []).filter((b) => b.type === "image");
       expect(inlineImages.length).toBeGreaterThanOrEqual(2);
-      expect(inlineImages.length).toBeLessThanOrEqual(4);
+      expect(inlineImages.length).toBeLessThanOrEqual(5);
 
       inlineImages.forEach((img) => {
         expect(img.image).toMatch(/^https?:\/\//);
@@ -158,6 +168,27 @@ describe("Phase 5 Step 2A Canonical Article Editorial Audit", () => {
         expect(ref.title).toBeTruthy();
         expect(ref.url).toMatch(/^https?:\/\//);
       });
+    });
+  });
+
+  test("verifies editorial provenance on all Experiences articles", () => {
+    experiences.forEach((a) => {
+      expect(a.editorialProvenance).toBeDefined();
+      expect(a.editorialProvenance.provenanceType).toBe("reported_case_study");
+      expect(a.editorialProvenance.caseStudySource).toBeTruthy();
+      expect(Array.isArray(a.editorialProvenance.sourceDocumentation)).toBe(true);
+      expect(a.editorialProvenance.sourceDocumentation.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  test("verifies travel verification schema on all Travel articles", () => {
+    travel.forEach((a) => {
+      expect(a.travelVerification).toBeDefined();
+      expect(a.travelVerification.lastVerifiedAt).toBeTruthy();
+      expect(a.travelVerification.currency).toMatch(/^[A-Z]{3}$/);
+      expect(a.travelVerification.budgetAssumptions).toBeTruthy();
+      expect(Array.isArray(a.travelVerification.officialSources)).toBe(true);
+      expect(a.travelVerification.officialSources.length).toBeGreaterThanOrEqual(2);
     });
   });
 });

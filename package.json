@@ -64,7 +64,11 @@
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
-      "**/server/tests/**/*.test.js"
+      "<rootDir>/server/tests/**/*.test.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/\\.tmp/"
     ],
     "collectCoverageFrom": [
       "server/config/seeder.js"

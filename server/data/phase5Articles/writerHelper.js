@@ -5,7 +5,11 @@ const path = require("path");
 
 // Helper to write article file with code formatting
 function writeArticleModule(categoryDir, filename, config) {
-  const targetPath = path.join(__dirname, categoryDir, filename);
+  const dirPath = path.join(__dirname, categoryDir);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+  const targetPath = path.join(dirPath, filename);
   const code = `"use strict";
 
 const { buildCanonicalArticle } = require("../articleBuilder");

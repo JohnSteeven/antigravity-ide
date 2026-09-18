@@ -106,6 +106,8 @@ function buildCanonicalArticle(config) {
     accessLevel = "free",
     status = "published",
     publishedAt = new Date("2025-01-15T08:00:00.000Z"),
+    editorialProvenance,
+    travelVerification,
   } = config;
 
   // Order structured blocks
@@ -147,6 +149,8 @@ function buildCanonicalArticle(config) {
     sources,
     relatedArticleSlugs,
     publishedAt,
+    ...(editorialProvenance ? { editorialProvenance } : {}),
+    ...(travelVerification ? { travelVerification } : {}),
     seo: {
       title: `${title} | MyJourney`,
       description: excerpt,

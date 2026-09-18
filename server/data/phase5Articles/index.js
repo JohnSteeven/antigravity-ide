@@ -17,15 +17,26 @@ const { EDITORIAL_BYLINE } = require("../../config/constants");
 
 const lifeArticles = require("./life");
 const reflectionsArticles = require("./reflections");
+const lessonsArticles = require("./lessons");
+const experiencesArticles = require("./experiences");
+const travelArticles = require("./travel");
 
 // Catalog blueprint registry: structured by category
 const phase5Catalog = Object.freeze({
   life: lifeArticles,
   reflections: reflectionsArticles,
-  experiences: [],
-  lessons: [],
-  travel: [],
+  lessons: lessonsArticles,
+  experiences: experiencesArticles,
+  travel: travelArticles,
 });
+
+const canonicalArticles = Object.freeze([
+  ...lifeArticles,
+  ...reflectionsArticles,
+  ...lessonsArticles,
+  ...experiencesArticles,
+  ...travelArticles,
+]);
 
 /**
  * Validate a candidate Phase 5 article object before insertion
@@ -42,8 +53,13 @@ const validatePhase5ArticleBlueprint = (article) => {
     errors.push(`Category must be one of: ${CANONICAL_ARTICLE_CATEGORIES.join(", ")}`);
   }
   if (article.category === "Experiences") {
-    if (!article.editorialProvenance) {
-      errors.push("Experiences articles require editorialProvenance.");
+    if (!article.editorialProvenance || article.editorialProvenance.provenanceType !== "reported_case_study") {
+      errors.push("Experiences articles require valid editorialProvenance with provenanceType 'reported_case_study'.");
+    }
+  }
+  if (article.category === "Travel") {
+    if (!article.travelVerification || !article.travelVerification.lastVerifiedAt || !article.travelVerification.currency) {
+      errors.push("Travel articles require valid travelVerification with lastVerifiedAt and currency.");
     }
   }
   return { valid: errors.length === 0, errors };
@@ -55,5 +71,6 @@ module.exports = {
   CANONICAL_CATEGORY_SLUGS,
   PHASE5_CATEGORY_METADATA,
   phase5Catalog,
+  canonicalArticles,
   validatePhase5ArticleBlueprint,
 };

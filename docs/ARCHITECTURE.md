@@ -93,6 +93,15 @@ Phase 5 establishes the platform article foundation, safe legacy catalog reset, 
   4. *Lessons* (`slug: "lessons"`): Actionable insights shaped into reusable knowledge.
   5. *Travel* (`slug: "travel"`): Destinations, verified logistics, budgets, and cultural encounters.
   *Note*: News is retained as an external feed and excluded from reset; Coding belongs to Phase 6 and remains intact.
+Phase 5 establishes the canonical platform article catalog, safe legacy catalog reconciliation, and editorial architecture:
+- **Canonical Categories & Structure**: Exactly 74 canonical articles across five public Article categories:
+  1. *Life* (`slug: "life"`, 10 articles): Habits, relationships, emotional regulation, routines, and life architecture (2 Pillars at 9,000+ words, 8 Longforms at 6,000+ words).
+  2. *Reflections* (`slug: "reflections"`, 10 articles): Philosophical inquiry, interiority, time, grief, resilience, and contemplation (2 Pillars at 9,000+ words, 8 Longforms at 6,000+ words).
+  3. *Lessons* (`slug: "lessons"`, 10 articles): Deep, actionable synthesis across cognitive heuristics, negotiation, learning systems, leadership, and craft (~1,400–1,600 words each).
+  4. *Experiences* (`slug: "experiences"`, 9 articles): Concrete real-world workplace, medical, artistic, wilderness, and institutional turning points (~1,050–1,300 words each) requiring verifiable `reported_case_study` editorial provenance. Replaces legacy "Incidents".
+  5. *Travel* (`slug: "travel"`, 35 articles: 20 India + 15 International): Grounded itineraries, practical logistics, verified transit routes, realistic seasonal budgets, and cultural guidelines (~1,050–1,300 words each) with structured `travelVerification` schemas.
+  *Note*: News is retained as an external feed and excluded from reset; Coding curriculum/courses in Learn remain intact while standalone legacy coding articles are archived (0 active legacy coding articles).
+- **Structural Block Richness**: Every canonical article incorporates all 8 structured block types (`heading`, `paragraph`, `callout`, `quote`, `image`, `list`, `table`, `divider`), includes at least 2 inline images with descriptive `alt` and `caption` metadata, specifies at least 4 tags, and cites at least 2 authoritative sources/references.
 - **Backwards Compatibility**: Legacy bookmarks to `/categories/incidents`, `/category/incidents`, and `/articles?category=incidents` seamlessly normalize and redirect to `/category/experiences` and `/articles?category=experiences`.
 - **Archived Article Tombstone Behavior**: Direct requests for archived articles return HTTP 200 tombstone responses with empty body prose (`body: ""`, `structuredBlocks: []`, `storySections: []`), `status: "archived"`, `isArchived: true`, and `seo: { metaRobots: "noindex,follow" }`. The frontend renders a clean tombstone notice with canonical navigation and sets `noindex` via the existing `DocumentMetadata` component.
 - **Experiences Editorial Provenance**: Experiences pieces forbid fabricated accounts and require typed provenance:
@@ -101,6 +110,7 @@ Phase 5 establishes the platform article foundation, safe legacy catalog reset, 
   - Confidential editorial notes (`confidentialNotes`) are strictly stripped by public serializers.
 - **Travel Verification Metadata**: Travel articles carry structured verification timestamps (`lastVerifiedAt`, `budgetVerifiedAt`), currency codes, budget/transport assumptions, official source references, visa guidance, and opening/ticket fee verification. Invented current facts are prohibited.
 - **Authorship**: Platform articles use the configured editorial byline: `MyJourney Editorial`.
+- **Catalog Reconciliation & Safety**: Legacy prototype and test articles are soft-archived (`status: "archived"`, `isArchived: true`, `archivedAt: timestamp`) without data loss (`deleteMany` is prohibited). All 84 Story records (Batches 1–4 and legacy archived stories) and News feed records are strictly ring-fenced and untouched. Active legacy coding article count is reduced to 0.
 
 The client selects established Story renderers/presets such as `book-spread`, `chapter-journey`, `magazine-feature`, `minimal-longform`, and `classic-reader`. New Story work should extend this system, not replace it with a second renderer architecture.
 The canonical production story library is server-persisted in MongoDB via `server/scripts/seedArticles.js`, sourced from `server/data/launchStories/` (8 original stories across batches A, B, and C, totaling 35,718 words and 121 sections). Stories are never bundled in bulk into client Parcel JavaScript; the client loads story data dynamically through `/api/stories`.
