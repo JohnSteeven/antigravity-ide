@@ -4,6 +4,7 @@ import { creatorApi, membershipApi } from "../services/apiService";
 import { purgePrivateBrowserData } from "../utils/privateBrowserData";
 
 const FREE_ACCESS = Object.freeze({
+  active: false,
   plan: "free",
   subscriptionStatus: null,
   billingPeriodMonths: null,
@@ -87,6 +88,26 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     refreshSession();
   }, [refreshSession]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const refresh = () => { if (document.visibilityState === "visible") refreshEntitlements(user); };
+    const end = accountAccess?.currentPeriodEnd && new Date(accountAccess.currentPeriodEnd).getTime();
+    const nextStart = accountAccess?.nextAccessStart && new Date(accountAccess.nextAccessStart).getTime();
+    const boundary = [end, nextStart].filter((value) => Number.isFinite(value) && value > Date.now()).sort((a, b) => a - b)[0];
+    let timer;
+    const scheduleBoundary = () => {
+      if (!boundary) return;
+      timer = setTimeout(() => {
+        if (Date.now() >= boundary) refreshEntitlements(user);
+        else scheduleBoundary();
+      }, Math.min(Math.max(0, boundary - Date.now()) + 50, 2147483647));
+    };
+    scheduleBoundary();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { clearTimeout(timer); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [user, accountAccess?.currentPeriodEnd, accountAccess?.nextAccessStart, refreshEntitlements]);
 
   useEffect(() => {
     const nextBoundary = user ? `${user.id || user._id}:${user.role || ""}:${user.status || ""}` : "";

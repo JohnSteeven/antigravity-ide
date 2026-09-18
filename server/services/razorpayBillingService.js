@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
+const { activateCapturedPayment, noteFailedPayment } = require("./premiumLifecycleService");
 const { RazorpayClient } = require("../billing/providers/razorpay/client");
 const { assertRazorpayApiConfigured, assertRazorpayWebhookConfigured, readRazorpayConfig } = require("../billing/providers/razorpay/config");
 const { verifyPaymentSignature, verifyWebhookSignature } = require("../billing/providers/razorpay/signatures");
@@ -8,7 +9,6 @@ const {
   claimBillingEvent,
   completeBillingEvent,
   createPaymentAttempt,
-  ensureInvoiceForCapturedPayment,
   failBillingEvent,
   failRefund,
   markRefundPending,
@@ -162,6 +162,7 @@ class RazorpayBillingService {
 
   assertPaymentTerms(payment, entity) {
     if (!entity
+      || typeof entity.id !== "string" || !entity.id.trim()
       || entity.order_id !== payment.providerOrderId
       || entity.amount !== payment.amountMinor
       || entity.currency !== payment.currency) {
@@ -208,8 +209,8 @@ class RazorpayBillingService {
         processorFeeTaxMinor: tax,
       },
     });
-    await ensureInvoiceForCapturedPayment(captured);
-    return captured;
+    const activated = await activateCapturedPayment(captured._id);
+    return activated;
   }
 
   async processPaymentEvent(payload, eventType) {
@@ -241,7 +242,10 @@ class RazorpayBillingService {
           processorFeeTaxMinor: tax,
         } : {},
       });
-      if (nextStatus === "captured") await ensureInvoiceForCapturedPayment(transitioned);
+      if (nextStatus === "captured") {
+        await activateCapturedPayment(transitioned._id);
+      }
+      if (nextStatus === "failed") await noteFailedPayment(transitioned._id);
       return { processingStatus: "processed", payment: transitioned, previousStatus: payment.status, newStatus: transitioned.status };
     } catch (error) {
       if (error.code === "INVALID_PAYMENT_TRANSITION") {

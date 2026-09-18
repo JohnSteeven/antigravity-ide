@@ -7,6 +7,7 @@ jest.mock("../middleware/auth", () => ({
   },
 }));
 jest.mock("../models/Payment", () => ({ findOne: jest.fn() }));
+jest.mock("../services/premiumLifecycleService", () => ({ activateCapturedPayment: jest.fn(), noteFailedPayment: jest.fn() }));
 jest.mock("../services/billingDomainService", () => ({
   claimBillingEvent: jest.fn(), completeBillingEvent: jest.fn(), createPaymentAttempt: jest.fn(),
   ensureInvoiceForCapturedPayment: jest.fn(),

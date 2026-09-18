@@ -10,7 +10,7 @@ const { PLANS } = require("../premium/catalog");
 
 const asUserId = (req) => req.user?._id || req.user?.id;
 
-exports.getPlans = async (req, res) => res.json({ success: true, data: MonetizationService.getPublicCatalog() });
+exports.getPlans = async (req, res) => res.set("Cache-Control", "private, no-store").json({ success: true, data: MonetizationService.getPublicCatalog(req.user) });
 
 exports.createPlan = async (req, res, next) => {
   try {
@@ -68,7 +68,7 @@ exports.cancelSubscription = async (req, res, next) => {
     if (existing.provider === "development" && process.env.NODE_ENV === "production") {
       return res.status(403).json({ message: "Development Premium records are disabled in production.", code: "DEVELOPMENT_PREMIUM_DISABLED" });
     }
-    if (!["manual", "development"].includes(existing.provider)) {
+    if (existing.providerSubscriptionId || !["manual", "development", "razorpay"].includes(existing.provider)) {
       await PaymentProviderService.cancelAtPeriodEnd(existing);
     }
     const membership = await subscriptionService.scheduleCancellation(asUserId(req));

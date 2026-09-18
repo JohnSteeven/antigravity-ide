@@ -33,6 +33,16 @@ npx jest --runInBand server/tests/billingMoneyAndCatalog.test.js server/tests/bi
 
 These use mocked provider HTTP. They cover exact INR/USD terms, integer/currency invariants, indexes, transitions, transaction-shaped refund reservation, callback and raw-body webhook signatures, duplicate/concurrent replay, out-of-order events, ownership/Admin boundaries, provider failures, refunds, and reconciliation without making a real payment or network request.
 
+Focused Phase 13 lifecycle checks:
+
+```bash
+npx jest --runInBand --runTestsByPath server/tests/premiumLifecycle.test.js server/tests/premiumLifecycle.integration.test.js server/tests/premiumCheckoutClient.test.js server/tests/premiumDomain.test.js server/tests/premiumSecurity.test.js server/tests/razorpayBillingService.test.js server/tests/billingDomainService.test.js server/tests/billingSubscriptionTransitions.test.js server/tests/billingAuthorization.test.js
+```
+
+The integration suite uses real MongoDB transactions and concurrent writes with stubbed provider HTTP. Provision an isolated local replica set on port 27019 named `phase13test`, database `myjourney_premium_lifecycle_test`, or supply `PREMIUM_LIFECYCLE_MONGO_URI` for another local replica-set database ending in `_test`. It rejects non-local databases and standalone topology, creates indexes, and cleans only its own generated user identities. No real payment or production migration is performed. See `docs/DEVELOPMENT.md` for provisioning.
+
+Coverage includes callback/webhook/order replay convergence, concurrent same/different purchase activation, invoice/audit association and partial-refund capture recovery, active/expired renewal, cancellation and stale subscription delivery, failure/retry/stale failure, partial/full/refund replay, refund/activation races, independent overlapping purchase preservation, refund gaps, exact expiry denial, canonical Learn/API/contentPreview gating despite legacy User flags, safe account serialization, exact market-specific prices, and client callbacks that wait for server verification. Provider/browser fixtures are structural evidence only. Run the full Jest gate once after focused checks and final syntax/migration/build/diff validation; report any unrelated timeout and rerun only that exact suite once.
+
 Focused Life offline privacy checks:
 
 ```bash

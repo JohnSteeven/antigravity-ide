@@ -52,4 +52,15 @@ describe("subscription transition foundation", () => {
       subscriptionId: "sub-1", nextStatus: "active", providerEventId: "evt_repeat",
     })).resolves.toMatchObject({ billingStatus: "active" });
   });
+
+  test("equal-time competing events cannot silently overwrite subscription state", async () => {
+    const occurredAt = new Date("2026-09-10T00:00:00Z");
+    ReaderMembership.findOneAndUpdate.mockResolvedValue(null);
+    ReaderMembership.findById.mockReturnValue(sessionQuery({
+      _id: "sub-1", billingStatus: "active", latestProviderEventAt: occurredAt, latestProviderEventId: "evt_first",
+    }));
+    await expect(transitionSubscription({ subscriptionId: "sub-1", nextStatus: "canceled",
+      providerEventId: "evt_competing", occurredAt })).rejects.toMatchObject({ code: "INVALID_SUBSCRIPTION_TRANSITION" });
+    expect(ReaderMembership.findOneAndUpdate.mock.calls[0][0].$or).toContainEqual({ latestProviderEventAt: { $lt: occurredAt } });
+  });
 });

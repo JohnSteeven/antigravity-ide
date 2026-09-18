@@ -39,7 +39,7 @@ describe("MyJourney Premium subscription domain", () => {
 
   test("valid trial and grace windows grant the same Premium access", () => {
     const trial = active(3, { billingStatus: "trialing", trialEnd: new Date("2026-09-01T00:00:00.000Z") });
-    const grace = active(6, { billingStatus: "past_due", graceUntil: new Date("2026-08-20T00:00:00.000Z") });
+    const grace = active(6, { billingStatus: "past_due", currentPeriodEnd: new Date("2026-08-13T00:00:00.000Z"), graceUntil: new Date("2026-08-20T00:00:00.000Z") });
     expect(evaluatePremiumAccess(trial, now)).toMatchObject({ active: true, reason: "trial" });
     expect(evaluatePremiumAccess(grace, now)).toMatchObject({ active: true, reason: "grace" });
     expect(resolveFromSubscription(trial, now).entitlements[ENTITLEMENTS.LIFE_ACCESS]).toBe(true);
@@ -55,7 +55,7 @@ describe("MyJourney Premium subscription domain", () => {
     const boundary = new Date(now);
     expect(evaluatePremiumAccess(active(1, { currentPeriodEnd: boundary }), now).active).toBe(false);
     expect(evaluatePremiumAccess(active(1, { billingStatus: "trialing", trialEnd: boundary }), now).active).toBe(false);
-    expect(evaluatePremiumAccess(active(1, { billingStatus: "grace_period", graceUntil: boundary }), now).active).toBe(false);
+    expect(evaluatePremiumAccess(active(1, { billingStatus: "grace_period", currentPeriodEnd: boundary, graceUntil: boundary }), now).active).toBe(false);
     expect(evaluatePremiumAccess(active(1, { billingStatus: "expired" }), now).active).toBe(false);
   });
 

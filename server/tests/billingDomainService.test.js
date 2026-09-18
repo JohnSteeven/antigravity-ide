@@ -1,4 +1,5 @@
 jest.mock("mongoose", () => ({ startSession: jest.fn() }));
+jest.mock("../services/premiumLifecycleService", () => ({ revokeFullyRefundedPayment: jest.fn() }));
 jest.mock("../models/Payment", () => ({
   findOneAndUpdate: jest.fn(),
   findOne: jest.fn(),
@@ -157,11 +158,13 @@ describe("billing domain service", () => {
       { $inc: { refundReservedMinor: -599, refundedAmountMinor: 599 }, $set: { status: "refunded" } },
       expect.objectContaining({ session })
     );
-    expect(Invoice.updateOne).toHaveBeenCalledWith(
+    expect(Invoice.findOneAndUpdate).toHaveBeenCalledWith(
       { paymentId: "payment-1" },
-      expect.objectContaining({ $inc: { refundAmountMinor: 599 }, $set: expect.objectContaining({ status: "refunded" }) }),
-      expect.objectContaining({ session })
+      expect.objectContaining({ $set: expect.objectContaining({ refundAmountMinor: 999, status: "refunded" }) }),
+      expect.objectContaining({ session, upsert: true })
     );
+    expect(require("../services/premiumLifecycleService").revokeFullyRefundedPayment)
+      .toHaveBeenCalledWith(expect.objectContaining({ session, payment: expect.objectContaining({ _id: "payment-1" }) }));
   });
 
   test("a definitive refund failure releases its reservation atomically", async () => {

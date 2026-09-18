@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { membershipApi } from "../../services/apiService";
+import { openRazorpayCheckout } from "../../services/razorpayCheckout";
 import { useAuth } from "../../hooks/useAuth";
 import "./premium.css";
 
@@ -12,17 +13,21 @@ const FALLBACK_DURATIONS = [
 ];
 
 export default function PremiumPage() {
-  const { isAuthenticated, accountAccess } = useAuth();
+  const { isAuthenticated, accountAccess, refreshEntitlements, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [catalog, setCatalog] = useState(null);
   const [selected, setSelected] = useState(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const checkoutKeys = useRef({});
+  const accountId = user?.id || user?._id || "";
+
+  useEffect(() => { checkoutKeys.current = {}; }, [accountId]);
 
   useEffect(() => {
     membershipApi.catalog().then((response) => setCatalog(response?.data || null)).catch(() => setCatalog(null));
-  }, []);
+  }, [accountId]);
 
   const durations = catalog?.durations || FALLBACK_DURATIONS;
   const isPremium = accountAccess?.plan === "premium";
@@ -50,7 +55,18 @@ export default function PremiumPage() {
     setBusy(true);
     setMessage("");
     try {
-      await membershipApi.selectDuration(selected);
+      if (!catalog?.billing?.checkoutAvailable) {
+        throw Object.assign(new Error("Billing is not configured yet. Your selection did not change your account."), { code: "BILLING_PROVIDER_UNAVAILABLE" });
+      }
+      const selectionKey = `${accountId}:${selected}`;
+      const idempotencyKey = checkoutKeys.current[selectionKey] || crypto.randomUUID();
+      checkoutKeys.current[selectionKey] = idempotencyKey;
+      const response = await membershipApi.selectDuration(selected, idempotencyKey);
+      await openRazorpayCheckout(response.data, membershipApi.verifyPayment);
+      const access = await refreshEntitlements();
+      delete checkoutKeys.current[selectionKey];
+      setMessage(access?.active ? "Your Premium membership is active." : "Payment verification finished. Check your account for current access.");
+      navigate("/profile/subscription");
     } catch (error) {
       setMessage(error.code === "BILLING_PROVIDER_UNAVAILABLE"
         ? "Billing is not configured yet. Your selection did not change your account."
@@ -98,7 +114,7 @@ export default function PremiumPage() {
                 onKeyDown={(event) => moveDurationSelection(event, index)}
               >
                 <strong>{duration.displayLabel}</strong>
-                <span>{duration.priceConfigured ? "Configured price" : "Price not configured"}</span>
+                <span>{duration.formattedPrice || "Price unavailable"}</span>
               </button>
             );
           })}
@@ -106,7 +122,9 @@ export default function PremiumPage() {
         <button type="button" className="premium-primary-action" disabled={!selected || busy} onClick={continueSelection}>
           {busy ? "Checking billing…" : "Continue"}
         </button>
-        <p className="premium-provider-note">No payment will be taken while billing is unconfigured.</p>
+        <p className="premium-provider-note">{catalog?.billing?.checkoutAvailable
+          ? "Razorpay test checkout. Premium terms are prepaid and do not renew automatically."
+          : "No payment will be taken while billing is unconfigured."}</p>
         {message && <p className="premium-status" role="status">{message}</p>}
       </section>
     </main>

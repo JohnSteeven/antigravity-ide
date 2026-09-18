@@ -41,7 +41,6 @@ const ensureInvoiceForCapturedPayment = async (payment, { session } = {}) => {
         invoiceNumber: `MJI-${crypto.randomUUID()}`,
         userId: payment.userId,
         paymentId: payment._id,
-        subscriptionId: payment.subscriptionId || null,
         productCode: payment.productCode,
         provider: payment.provider,
         currency: payment.currency,
@@ -51,6 +50,7 @@ const ensureInvoiceForCapturedPayment = async (payment, { session } = {}) => {
         issuedAt: payment.capturedAt || new Date(),
       },
       $set: {
+        subscriptionId: payment.subscriptionId || null,
         processorFeeMinor: payment.processorFeeMinor,
         processorFeeTaxMinor: payment.processorFeeTaxMinor,
         refundAmountMinor: payment.refundedAmountMinor,
@@ -118,7 +118,7 @@ const createPaymentAttempt = async ({ user, clientSelection, idempotencyKey, pro
 };
 
 const allowedPredecessors = (nextStatus) => Object.keys(PAYMENT_TRANSITIONS)
-  .filter((current) => canTransition(PAYMENT_TRANSITIONS, current, nextStatus));
+  .filter((current) => current !== nextStatus && canTransition(PAYMENT_TRANSITIONS, current, nextStatus));
 
 const transitionPayment = async ({ paymentId, nextStatus, occurredAt = new Date(), providerPaymentId, updates = {}, session }) => {
   if (!PAYMENT_TRANSITIONS[nextStatus]) throw billingError("Unknown payment status.", "INVALID_PAYMENT_STATUS", 422);
@@ -146,7 +146,12 @@ const transitionPayment = async ({ paymentId, nextStatus, occurredAt = new Date(
   if (payment) return payment;
   const existing = await Payment.findById(paymentId).session(session || null);
   if (!existing) throw billingError("Payment was not found.", "PAYMENT_NOT_FOUND", 404);
-  if (existing.status === nextStatus) return existing;
+  if (existing.status === nextStatus || nextStatus === "captured" && existing.status === "partially_refunded") {
+    if (nextStatus === "captured" && providerPaymentId && !sameId(existing.providerPaymentId, providerPaymentId)) {
+      throw billingError("Captured Payment is already bound to another provider payment.", "PROVIDER_PAYMENT_MISMATCH");
+    }
+    return existing;
+  }
   throw billingError(`Payment cannot move from ${existing.status} to ${nextStatus}.`, "INVALID_PAYMENT_TRANSITION");
 };
 
@@ -242,11 +247,13 @@ const settleRefund = async ({ refundId, providerRefundId, providerEventId, proce
       if (paymentUpdate.matchedCount !== undefined && paymentUpdate.matchedCount !== 1) {
         throw billingError("Refund reservation is inconsistent.", "REFUND_RESERVATION_CONFLICT");
       }
-      await Invoice.updateOne(
-        { paymentId: payment._id },
-        { $inc: { refundAmountMinor: refund.amountMinor }, $set: { status: paymentStatus === "refunded" ? "refunded" : "partially_refunded", netAmountMinor: null } },
-        { runValidators: true, session }
-      );
+      if (paymentStatus === "refunded") {
+        await require("./premiumLifecycleService").revokeFullyRefundedPayment({ payment, processedAt, session });
+      }
+      await ensureInvoiceForCapturedPayment({
+        ...(typeof payment.toObject === "function" ? payment.toObject() : payment),
+        status: paymentStatus, refundedAmountMinor,
+      }, { session });
       result = await Refund.findOneAndUpdate(
         { _id: refund._id, status: { $in: ["requested", "pending"] } },
         { $set: { status: "processed", providerRefundId, providerEventId: providerEventId || null, processedAt } },

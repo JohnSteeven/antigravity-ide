@@ -1,6 +1,7 @@
 const ReaderMembership = require("../models/ReaderMembership");
 const { BILLING_PERIODS, PLANS } = require("../premium/catalog");
 const { SUBSCRIPTION_TRANSITIONS, canTransition } = require("../billing/constants");
+const { currentPaidWindow, validDate } = require("../premium/entitlementWindows");
 
 const asDate = (value) => value ? new Date(value) : null;
 const isAfter = (value, now) => {
@@ -18,12 +19,26 @@ const evaluatePremiumAccess = (subscription, now = new Date()) => {
   const status = subscription.billingStatus;
   if (["expired", "incomplete"].includes(status)) return { active: false, reason: status };
 
+  if (Array.isArray(subscription.paidPeriods)) {
+    if (!["active", "cancel_pending", "canceled", "past_due", "grace_period"].includes(status)) {
+      return { active: false, reason: "unsupported_status" };
+    }
+    const window = currentPaidWindow(subscription.paidPeriods, now);
+    if (window) return { active: true, reason: subscription.cancelAtPeriodEnd ? "paid_period" : "active" };
+    const future = subscription.paidPeriods.some((period) => validDate(period.start) > now && validDate(period.end) > now);
+    return { active: false, reason: future ? "period_not_started" : "period_expired" };
+  }
+
+  const start = validDate(status === "trialing" ? subscription.trialStart || subscription.currentPeriodStart : subscription.currentPeriodStart);
+  if (start && start > now) return { active: false, reason: "period_not_started" };
+
   if (status === "trialing") {
     const active = isAfter(subscription.trialEnd || subscription.currentPeriodEnd, now);
     return { active, reason: active ? "trial" : "trial_expired" };
   }
 
   if (["past_due", "grace_period"].includes(status)) {
+    if (isAfter(subscription.currentPeriodEnd, now)) return { active: true, reason: "paid_period" };
     const active = isAfter(subscription.graceUntil, now);
     return { active, reason: active ? "grace" : "grace_expired" };
   }
@@ -59,9 +74,9 @@ const transitionSubscription = async ({ subscriptionId, nextStatus, providerEven
       billingStatus: { $in: predecessors },
       $or: [
         { latestProviderEventAt: null },
-        { latestProviderEventAt: { $lte: occurredAt } },
-        { latestProviderEventId: providerEventId },
+        { latestProviderEventAt: { $lt: occurredAt } },
       ],
+      ...(providerEventId ? { latestProviderEventId: { $ne: providerEventId } } : {}),
     },
     {
       $set: {
@@ -84,15 +99,7 @@ const transitionSubscription = async ({ subscriptionId, nextStatus, providerEven
 };
 
 const scheduleCancellation = async (userId, now = new Date()) => {
-  const subscription = await ReaderMembership.findOne({ userId });
-  if (!subscription) throw Object.assign(new Error("Premium membership was not found."), { status: 404, code: "SUBSCRIPTION_NOT_FOUND" });
-  const access = evaluatePremiumAccess(subscription, now);
-  if (!access.active) throw Object.assign(new Error("Premium membership is not currently active."), { status: 409, code: "SUBSCRIPTION_NOT_ACTIVE" });
-  subscription.cancelAtPeriodEnd = true;
-  subscription.canceledAt = now;
-  subscription.billingStatus = "cancel_pending";
-  await subscription.save();
-  return subscription;
+  return require("./premiumLifecycleService").cancelPaidMembership(userId, now);
 };
 
 module.exports = { evaluatePremiumAccess, getSubscriptionForUser, scheduleCancellation, transitionSubscription };

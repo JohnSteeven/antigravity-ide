@@ -45,7 +45,7 @@ CORS allows the configured `CLIENT_URL` with credentials. Production should use 
 
 ## Premium enforcement
 
-Premium is resolved server-side from ReaderMembership and access dates/status. Database lookup failures fail closed.
+Premium is resolved server-side from ReaderMembership and access dates/status. Phase 13 purchase-attributed periods require `start <= now < end`; a future window, refund gap, expired end, or empty ledger cannot grant access. Legacy rows without a ledger retain explicit trial/grace/paid-window rules. Database lookup failures fail closed, and User/client Premium flags are never entitlement inputs.
 
 - Anonymous/Free Article and Story responses do not contain Premium bodies/structured sections.
 - Public Article/Story listings omit full bodies and internal ownership/workflow fields. Public detail serialization sanitizes legacy stored rich HTML before it reaches React raw-HTML renderers.
@@ -53,7 +53,9 @@ Premium is resolved server-side from ReaderMembership and access dates/status. D
 - Locked Learn serializers omit bodies, transcripts, protected asset IDs, and URLs.
 - Premium search/indexing excludes protected full text.
 - Billing duration does not grant a different tier.
-- Subscription upgrades cannot be manufactured by the client. Razorpay test-mode checkout accepts only a product code, resolves stored-account market and fixed price server-side, verifies the callback HMAC against the stored order, fetches captured Payment/paid Order state, and still defers entitlement activation to Phase 13. Raw-body webhooks are signature-verified before parsing or durable idempotent processing. Billing reads/refunds are owner-scoped and reconciliation is Admin-only.
+- Subscription upgrades cannot be manufactured by the client. Razorpay test-mode checkout accepts only a product code, resolves stored-account market and fixed price server-side, verifies the callback HMAC against the stored order, and fetches captured Payment/paid Order state. Verified capture atomically applies catalog-owned duration and records Payment attribution, ReaderMembership windows, Invoice association, and audit evidence. Raw-body webhooks are signature-verified before parsing or durable idempotent processing. Billing reads/refunds are owner-scoped and reconciliation is Admin-only.
+- A Payment activation marker plus Mongo transactions prevents duplicate extension across callback/webhook identities and concurrent application instances. Terminal captures/refunds cannot roll back to failure. Full-refund revocation shares settlement's transaction and removes only its purchase; partial/pending/failed refunds do not revoke paid access.
+- Account membership responses are allowlisted and `private, no-store`; they expose dates/status/plan/payment-issue summaries, never raw periods, internal Payment references, provider customer/subscription IDs, signatures, secrets, or raw webhook payloads. Recurring provider cancellation remains unavailable; prepaid local cancellation writes an audit event without claiming a provider operation.
 
 ## Creator and learner boundaries
 

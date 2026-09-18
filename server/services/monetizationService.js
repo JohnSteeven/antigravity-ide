@@ -1,12 +1,13 @@
 const ReaderMembership = require("../models/ReaderMembership");
 const { getPublicDurationCatalog, PREMIUM_BENEFITS } = require("../premium/catalog");
 const PaymentProviderService = require("./paymentProviderService");
+const { resolveMarket } = require("../billing/priceCatalog");
 
 class MonetizationService {
-  static getPublicCatalog() {
+  static getPublicCatalog(user) {
     return {
       product: { plan: "premium", name: "MyJourney Premium", benefits: PREMIUM_BENEFITS },
-      durations: getPublicDurationCatalog(),
+      durations: getPublicDurationCatalog(resolveMarket({ countryCode: user?.countryCode })),
       billing: PaymentProviderService.capability(),
     };
   }

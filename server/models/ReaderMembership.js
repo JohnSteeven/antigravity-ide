@@ -9,6 +9,16 @@ const mongoose = require('mongoose');
 const { BILLING_PERIODS, PLANS, SUBSCRIPTION_STATUSES } = require('../premium/catalog');
 const { MARKETS, PRODUCT_CODES } = require('../billing/priceCatalog');
 const { currencyField, minorUnitField } = require('../billing/modelFields');
+const PaidPeriodSchema = new mongoose.Schema({
+  paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment', default: null },
+  source: { type: String, enum: ['payment', 'legacy'], required: true },
+  productCode: { type: String, enum: Object.values(PRODUCT_CODES), default: null },
+  billingPeriodMonths: { type: Number, enum: BILLING_PERIODS, required: true },
+  start: { type: Date, required: true },
+  end: { type: Date, required: true, validate: {
+    validator(value) { return value > this.start; }, message: 'Paid period must end after it starts.',
+  } },
+}, { _id: false });
 
 const ReaderMembershipSchema = new mongoose.Schema(
   {
@@ -32,6 +42,15 @@ const ReaderMembershipSchema = new mongoose.Schema(
       index: true,
     },
     latestPaymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment', default: null },
+    // Absence preserves legacy windows; [] explicitly grants no paid access.
+    paidPeriods: { type: [PaidPeriodSchema], default: undefined },
+    latestSuccessfulPaymentAt: { type: Date, default: null },
+    lastPaymentIssue: { type: new mongoose.Schema({
+      paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment', required: true },
+      status: { type: String, enum: ['failed'], required: true },
+      occurredAt: { type: Date, required: true },
+      attemptCreatedAt: { type: Date, required: true },
+    }, { _id: false }), default: null },
     startedAt: { type: Date, default: null },
     currentPeriodStart: { type: Date, default: null },
     currentPeriodEnd: { type: Date, default: null },
