@@ -36,6 +36,14 @@ No Phase 13 migration or new index is needed. User uniqueness, provider payment/
 
 Launch, deployment, and test-execution collections are historical evidence stores. Read endpoints never seed them. New release records default to non-production, deployment environment/status must be supplied explicitly, and absent test coverage remains `null`; these safe defaults do not rewrite existing records and require no data migration.
 
+### Phase 6 Learn Interactive Coding Curriculum Data Model & Migration Status
+
+Phase 6 introduces coding lessons, exercises, quizzes, and progress gating into the existing Learn persistence domain:
+- **`CourseLesson`**: Extended with embedded `codingBlocks` (`CodingBlockSchema`) representing initial code, editable code, solution code, test suites, and structured validation rules (`type`, `target`, `expectedOutput`, `hint`). Also supports embedded `quizQuestions` (`question`, `options`, `correctOptionIndex`, `explanation`).
+- **`CourseEnrollment`**: Extended with `exercisePassed` (boolean, default false), `exerciseAttempts` (number, default 0), `quizPassed` (boolean, default false), `quizScore` (number, default null), and `solutionViewed` (boolean, default false) on individual lesson progress subdocuments.
+- **Migration & Index Status**: No database migration or new collection is required. Embedded subdocuments and field extensions are natively supported by Mongoose defaults on existing collections with existing indexes (`(userId, courseId)`). `npm run migrate:validate` validates cleanly with zero missing indexes.
+- **Canonical Seeder**: `server/scripts/seedCodingCurriculum.js` (`npm run seed:coding-curriculum`) provides idempotent seeding of all 4 canonical coding tracks (HTML Foundations, CSS Foundations, JavaScript Foundations, and Python Foundations), 55 lessons, and the system author `MyJourney Learning` (`myjourney-learning`).
+
 
 ## Commands
 

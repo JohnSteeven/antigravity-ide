@@ -119,6 +119,49 @@ exports.progress = async (req, res, next) => {
   } catch (error) { return next(error); }
 };
 
+exports.recordExerciseAttempt = async (req, res, next) => {
+  try {
+    return res.json({
+      success: true,
+      data: await courseService.recordExerciseAttempt({
+        userId: userId(req),
+        courseId: req.params.courseId,
+        lessonId: req.params.lessonId,
+        blockId: req.body.blockId,
+        passed: req.body.passed === true,
+      }),
+    });
+  } catch (error) { return next(error); }
+};
+
+exports.evaluateQuiz = async (req, res, next) => {
+  try {
+    return res.json({
+      success: true,
+      data: await courseService.evaluateQuiz({
+        courseSlug: req.params.slug,
+        lessonId: req.params.lessonId,
+        userId: userId(req),
+        answers: req.body.answers,
+      }),
+    });
+  } catch (error) { return next(error); }
+};
+
+exports.revealSolution = async (req, res, next) => {
+  try {
+    return res.json({
+      success: true,
+      data: await courseService.revealSolution({
+        courseSlug: req.params.slug,
+        lessonId: req.params.lessonId,
+        userId: userId(req),
+        blockId: req.body.blockId,
+      }),
+    });
+  } catch (error) { return next(error); }
+};
+
 exports.continueLearning = async (req, res, next) => {
   try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await courseService.continueLearning(userId(req), req.query.limit) }); }
   catch (error) { return next(error); }

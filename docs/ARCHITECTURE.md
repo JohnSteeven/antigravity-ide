@@ -185,6 +185,37 @@ Discovery pages (`/learn`, `/learn/courses`, `/learn/courses?topic=...`) share `
 
 Course detail exposes curriculum metadata in a focused container (`/learn/courses/:slug`). Preview lessons are public; non-preview Premium lessons require `premium_learn`. Enrollment and progress are private to the learner and power Continue Learning. Locked serializers remove lesson bodies, transcripts, asset identifiers, and resource URLs.
 
+### Interactive Coding Curriculum Architecture (Phase 6)
+
+Phase 6 introduces a safe, fully client-side interactive coding curriculum with four canonical tracks (HTML Foundations, CSS Foundations, JavaScript Foundations, and Python Foundations) comprising 55 total lessons authored by the system identity `MyJourney Learning` (`myjourney-learning`).
+
+#### 1. Pedagogical Flow
+Every coding lesson enforces a 12-step sequential pedagogical arc:
+`EXPLANATION → EXAMPLE → EDITABLE CODE → RUN → OUTPUT → EXPLANATION OF RESULT → TRY YOURSELF → HINT → CHECK → SOLUTION → QUIZ → NEXT LESSON → PROJECT`
+
+Learners read clear concept explanations, inspect runnable examples, edit code in the interactive editor, run and view real output, work on an active practice task, optionally request hints or revealed solutions, test their knowledge with an embedded quiz, and advance through the curriculum towards milestone capstone projects.
+
+#### 2. Zero Server-Side Code Execution Policy
+The backend server **never** executes, compiles, spawns, or evaluates learner-submitted code under any circumstance. Native child process modules (`child_process`, `exec`, `execSync`, `spawn`) and JavaScript runtime evaluators (`eval`, `new Function`) are strictly forbidden on the server for learner code. All execution occurs in isolated browser environments on the client device.
+
+#### 3. Client-Side Execution Sandboxes
+Execution is partitioned by technology stack:
+- **HTML, CSS, and JavaScript**: Executed inside an isolated sandboxed iframe (`htmlSandboxHarness.js`) using `sandbox="allow-scripts"` strictly without `allow-same-origin`.
+  - **Opaque Origin**: With `srcdoc` and absent `allow-same-origin`, the iframe executes in an opaque origin (`"null"`). Parent-to-iframe communication does not rely on `event.origin === window.location.origin`. Instead, every postMessage is strictly validated against `event.source === expectedIframe.contentWindow`, a cryptographically random per-run `channelNonce`, a rigid message-type enum (`MJ_CONSOLE_LOG`, `MJ_CONSOLE_ERROR`, `MJ_SANDBOX_READY`), and validated payload schemas with a 64 KB maximum output buffer.
+  - **Content Security Policy**: An inline CSP meta tag is injected into the sandbox document head: `default-src 'none'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none';` ensuring zero network egress and no top-frame navigation.
+  - **Navigation Neutralization**: Form submissions are intercepted with `e.preventDefault()` to prevent accidental or malicious top-frame redirection.
+- **Python**: Executed client-side via Pyodide v0.26.4 inside an isolated Web Worker (`pythonWorkerManager.js`).
+  - **Network Neutralization**: Python-accessible network globals (`fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`) are neutralized inside the worker prior to executing user code.
+  - **Hard Execution Timeout**: A strict 10-second timeout budget is enforced. If learner code loops infinitely or stalls, `worker.terminate()` immediately kills the thread and re-instantiates a clean worker.
+  - **Safe Streams**: Standard output (`sys.stdout`) and standard error (`sys.stderr`) are redirected to an in-memory buffer truncated at 64 KB.
+
+#### 4. Progress Authority & Solution Security
+- **Educational Evidence vs. Anti-Cheat**: Client-side validation (`ValidationRunner`) provides instant pedagogical feedback and test execution. However, the server remains the authoritative record of progress.
+- **Answer Protection**: Public serializers (`serializeLesson`) unconditionally redact `solutionCode`, test suites, and quiz `correctOptionIndex`. Learner clients cannot extract solutions from API payloads.
+- **Server Quiz Grading**: Quiz answers are evaluated strictly on the server (`POST /api/learn/courses/:courseId/lessons/:lessonId/quiz/evaluate`), which checks the submitted option against the protected lesson definition and updates `CourseEnrollment.quizPassed` and `quizScore`.
+- **Solution Reveal Auditing**: When a learner reveals a solution (`POST /api/learn/courses/:courseId/lessons/:lessonId/solution/reveal`), the server records `solutionViewed = true` on the enrollment row. Revealing the solution never grants `exercisePassed` or `completed`.
+- **Progress Gates**: Marking a lesson complete (`POST /api/learn/courses/:courseId/lessons/:lessonId/progress`) server-enforces all lesson requirements: lessons with coding blocks require `exercisePassed: true`, and lessons with quizzes require `quizPassed: true`.
+
 ## Media abstraction
 
 ProtectedMediaAsset records metadata and ownership. `server/learn/mediaProviderService.js` is an explicit provider boundary. The repository currently supports metadata/catalog workflows but not direct uploads, adaptive streaming, malware scanning, or signed delivery. Calls requiring real delivery return an unavailable error.

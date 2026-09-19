@@ -136,7 +136,27 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
     ? { allowed: true, reason: "preview" }
     : await resolveLearnAccess({ userId, accessLevel: course.accessLevel, owner, admin });
   if (!access.allowed) throw errorWith("MyJourney Premium is required for this lesson.", 403, "PREMIUM_REQUIRED");
-  return { course: serializeCourse(course), lesson: serializeLesson(lesson, { allowed: true }), accessReason: access.reason };
+
+  let progress = null;
+  if (userId && !owner && !admin) {
+    try {
+      const enrollment = await CourseEnrollment.findOne({ userId, courseId: course._id }).select("lessonProgress").lean();
+      const lp = enrollment?.lessonProgress?.find((item) => item.lessonStableKey === lesson.stableKey);
+      if (lp) {
+        progress = {
+          exercisePassed: Boolean(lp.exercisePassed),
+          quizPassed: Boolean(lp.quizPassed),
+          solutionViewed: Boolean(lp.solutionViewed),
+          completed: Boolean(lp.completedAt),
+          exerciseAttempts: lp.exerciseAttempts || 0,
+        };
+      }
+    } catch {
+      progress = null;
+    }
+  }
+
+  return { course: serializeCourse(course), lesson: serializeLesson(lesson, { allowed: true }), accessReason: access.reason, progress };
 };
 
 const createCourse = async (creator, input) => {
@@ -217,6 +237,36 @@ const replaceCurriculum = async (creatorId, courseId, input) => {
         transcript: String(lesson.transcript || ""),
         captions: Array.isArray(lesson.captions) ? lesson.captions.slice(0, 20) : [],
         resourceIds: Array.isArray(lesson.resourceIds) ? lesson.resourceIds.slice(0, 30) : [],
+        codingBlocks: Array.isArray(lesson.codingBlocks) ? lesson.codingBlocks.map((block, bIndex) => ({
+          id: String(block.id || crypto.randomUUID()),
+          blockType: block.blockType || "explanation",
+          title: String(block.title || "").trim(),
+          content: String(block.content || ""),
+          language: String(block.language || "javascript"),
+          starterCode: String(block.starterCode || ""),
+          instructions: String(block.instructions || ""),
+          expectedOutput: String(block.expectedOutput || ""),
+          hints: Array.isArray(block.hints) ? block.hints.map((h) => String(h).slice(0, 1000)) : [],
+          validationRules: block.validationRules || null,
+          solutionCode: String(block.solutionCode || ""),
+          tests: Array.isArray(block.tests) ? block.tests.map((t) => ({
+            description: String(t.description || ""),
+            testCode: String(t.testCode || ""),
+            hidden: Boolean(t.hidden),
+          })) : [],
+          order: Number(block.order ?? bIndex),
+        })) : [],
+        quizQuestions: Array.isArray(lesson.quizQuestions) ? lesson.quizQuestions.map((q, qIndex) => ({
+          id: String(q.id || crypto.randomUUID()),
+          question: String(q.question || "").trim(),
+          options: Array.isArray(q.options) ? q.options.map((o) => ({
+            id: String(o.id || crypto.randomUUID()),
+            text: String(typeof o === "string" ? o : (o.text || "")).trim(),
+          })) : [],
+          explanation: String(q.explanation || "").trim(),
+          correctOptionIndex: Number(q.correctOptionIndex ?? 0),
+          order: Number(q.order ?? qIndex),
+        })) : [],
         durationSeconds: Number(lesson.durationSeconds || 0),
         order: lessonIndex,
         isPreview: Boolean(lesson.isPreview),
@@ -267,6 +317,142 @@ const enroll = async (userId, courseId) => {
   return enrollment;
 };
 
+const recordExerciseAttempt = async ({ userId, courseId, courseSlug, lessonId, blockId, passed }) => {
+  const courseQuery = courseId ? { _id: courseId } : { slug: courseSlug };
+  const [course, lesson] = await Promise.all([
+    Course.findOne({ ...courseQuery, publicationStatus: "published", isDeleted: false }).lean(),
+    CourseLesson.findOne({ _id: lessonId, isDeleted: false }).lean(),
+  ]);
+  if (!course || !lesson) throw errorWith("Course Lesson not found.", 404, "LESSON_NOT_FOUND");
+  await ensureCourseAccess(course, userId);
+
+  const enrollment = await CourseEnrollment.findOne({ userId, courseId: course._id });
+  if (!enrollment) throw errorWith("Enroll in this Course before recording progress.", 403, "ENROLLMENT_REQUIRED");
+
+  const block = (lesson.codingBlocks || []).find((b) => String(b.id) === String(blockId));
+  if (!block) throw errorWith("Coding block not found.", 404, "CODING_BLOCK_NOT_FOUND");
+
+  let progress = enrollment.lessonProgress.find((item) => item.lessonStableKey === lesson.stableKey);
+  if (!progress) {
+    enrollment.lessonProgress.push({
+      lessonId: lesson._id,
+      lessonStableKey: lesson.stableKey,
+      startedAt: new Date(),
+      lessonContentVersion: lesson.contentVersion,
+    });
+    progress = enrollment.lessonProgress[enrollment.lessonProgress.length - 1];
+  }
+  progress.exerciseAttempts = (progress.exerciseAttempts || 0) + 1;
+  progress.lastActivityAt = new Date();
+  if (passed === true) {
+    progress.exercisePassed = true;
+  }
+  enrollment.lastActivityAt = new Date();
+  await enrollment.save();
+
+  return {
+    recorded: true,
+    success: true,
+    exercisePassed: Boolean(progress.exercisePassed),
+    exerciseAttempts: progress.exerciseAttempts,
+  };
+};
+
+const evaluateQuiz = async ({ courseSlug, courseId, lessonId, userId, answers }) => {
+  const courseQuery = courseId ? { _id: courseId } : { slug: courseSlug };
+  const course = await Course.findOne({ ...courseQuery, publicationStatus: "published", isDeleted: false }).lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  await ensureCourseAccess(course, userId);
+
+  const lesson = await CourseLesson.findOne({ _id: lessonId, courseId: course._id, isDeleted: false })
+    .select("+quizQuestions.correctOptionIndex +quizQuestions.explanation")
+    .lean();
+  if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
+  if (!lesson.quizQuestions || !lesson.quizQuestions.length) {
+    throw errorWith("This lesson does not contain quiz questions.", 400, "NO_QUIZ_QUESTIONS");
+  }
+
+  const enrollment = await CourseEnrollment.findOne({ userId, courseId: course._id });
+  if (!enrollment) throw errorWith("Enroll in this Course before taking quizzes.", 403, "ENROLLMENT_REQUIRED");
+
+  const results = lesson.quizQuestions.map((q) => {
+    const selected = answers ? answers[String(q.id)] : undefined;
+    const isCorrect = selected !== undefined && Number(selected) === q.correctOptionIndex;
+    return {
+      questionId: String(q.id),
+      correct: isCorrect,
+      selectedOptionIndex: selected !== undefined ? Number(selected) : null,
+      correctOptionIndex: q.correctOptionIndex,
+      explanation: q.explanation || "",
+    };
+  });
+
+  const correctCount = results.filter((r) => r.correct).length;
+  const total = results.length;
+  const scorePercent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+  const passed = scorePercent >= 70;
+
+  let progress = enrollment.lessonProgress.find((item) => item.lessonStableKey === lesson.stableKey);
+  if (!progress) {
+    enrollment.lessonProgress.push({
+      lessonId: lesson._id,
+      lessonStableKey: lesson.stableKey,
+      startedAt: new Date(),
+      lessonContentVersion: lesson.contentVersion,
+    });
+    progress = enrollment.lessonProgress[enrollment.lessonProgress.length - 1];
+  }
+  progress.quizScore = scorePercent;
+  progress.lastActivityAt = new Date();
+  if (passed) {
+    progress.quizPassed = true;
+  }
+  enrollment.lastActivityAt = new Date();
+  await enrollment.save();
+
+  return { success: true, passed, score: scorePercent, correctCount, totalQuestions: total, results };
+};
+
+const revealSolution = async ({ courseSlug, courseId, lessonId, userId, blockId }) => {
+  const courseQuery = courseId ? { _id: courseId } : { slug: courseSlug };
+  const course = await Course.findOne({ ...courseQuery, publicationStatus: "published", isDeleted: false }).lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  await ensureCourseAccess(course, userId);
+
+  const lesson = await CourseLesson.findOne({ _id: lessonId, courseId: course._id, isDeleted: false })
+    .select("+codingBlocks.solutionCode")
+    .lean();
+  if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
+
+  const block = (lesson.codingBlocks || []).find((b) => !blockId || String(b.id) === String(blockId));
+  if (!block) throw errorWith("Coding block not found.", 404, "CODING_BLOCK_NOT_FOUND");
+
+  const enrollment = await CourseEnrollment.findOne({ userId, courseId: course._id });
+  if (!enrollment) throw errorWith("Enroll in this Course before viewing solutions.", 403, "ENROLLMENT_REQUIRED");
+
+  let progress = enrollment.lessonProgress.find((item) => item.lessonStableKey === lesson.stableKey);
+  if (!progress) {
+    enrollment.lessonProgress.push({
+      lessonId: lesson._id,
+      lessonStableKey: lesson.stableKey,
+      startedAt: new Date(),
+      lessonContentVersion: lesson.contentVersion,
+    });
+    progress = enrollment.lessonProgress[enrollment.lessonProgress.length - 1];
+  }
+  progress.solutionViewed = true;
+  progress.lastActivityAt = new Date();
+  enrollment.lastActivityAt = new Date();
+  await enrollment.save();
+
+  return {
+    success: true,
+    blockId: String(block.id),
+    solutionCode: block.solutionCode || "",
+    solutionViewed: true,
+  };
+};
+
 const recordProgress = async ({ userId, courseId, lessonId, positionSeconds = 0, completed = false, idempotencyKey }) => {
   const [course, lesson, enrollment] = await Promise.all([
     Course.findOne({ _id: courseId, publicationStatus: "published", isDeleted: false }).lean(),
@@ -280,6 +466,7 @@ const recordProgress = async ({ userId, courseId, lessonId, positionSeconds = 0,
   if (completed && lesson.completionMode === "consume" && lesson.durationSeconds > 0 && position < lesson.durationSeconds * 0.9) {
     throw errorWith("Complete the required lesson content before marking it finished.", 422, "LESSON_COMPLETION_NOT_ELIGIBLE");
   }
+
   let progress = enrollment.lessonProgress.find((item) => item.lessonStableKey === lesson.stableKey);
   const wasNewProgress = !progress;
   if (!progress) {
@@ -289,6 +476,22 @@ const recordProgress = async ({ userId, courseId, lessonId, positionSeconds = 0,
   progress.positionSeconds = position;
   progress.lastActivityAt = new Date();
   if (completed && !progress.completedAt) progress.completedAt = new Date();
+
+  if (completed) {
+    if (lesson.completionMode === "consume" && lesson.durationSeconds > 0 && position < lesson.durationSeconds * 0.9) {
+      throw errorWith("Complete the required lesson content before marking it finished.", 422, "LESSON_COMPLETION_NOT_ELIGIBLE");
+    }
+    const hasCoding = lesson.lessonType === "coding" || (Array.isArray(lesson.codingBlocks) && lesson.codingBlocks.length > 0);
+    if (hasCoding && !progress.exercisePassed) {
+      throw errorWith("Complete and pass the coding exercise before marking this lesson finished.", 422, "EXERCISE_COMPLETION_REQUIRED");
+    }
+    const hasQuiz = Array.isArray(lesson.quizQuestions) && lesson.quizQuestions.length > 0;
+    if (hasQuiz && !progress.quizPassed) {
+      throw errorWith("Pass the lesson quiz before marking this lesson finished.", 422, "QUIZ_COMPLETION_REQUIRED");
+    }
+    if (!progress.completedAt) progress.completedAt = new Date();
+  }
+
   enrollment.currentLessonId = lesson._id;
   enrollment.lastActivityAt = new Date();
   enrollment.completedLessonCount = enrollment.lessonProgress.filter((item) => item.completedAt).length;
@@ -322,12 +525,15 @@ module.exports = {
   createCourse,
   curriculumForCourse,
   enroll,
+  evaluateQuiz,
   findAvailableSlug,
   getCourseDetail,
   getLesson,
   listCourses,
+  recordExerciseAttempt,
   recordProgress,
   replaceCurriculum,
+  revealSolution,
   submitCourse,
   updateCourse,
 };

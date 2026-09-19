@@ -56,6 +56,19 @@ npm run client
 npm run start:ui
 ```
 
+### Development seeding
+
+Development seeders populate local database fixtures idempotently:
+
+```bash
+npm run seed:articles
+npm run seed:creator-demo
+npm run seed:creator-demo:reset
+npm run seed:coding-curriculum
+```
+
+`npm run seed:coding-curriculum` seeds all 4 canonical interactive coding tracks (HTML Foundations, CSS Foundations, JavaScript Foundations, and Python Foundations; 55 lessons total) under the system author `MyJourney Learning` (`myjourney-learning`).
+
 To assess legacy email/mobile normalization before an approved data change, run this read-only report against the explicitly configured database:
 
 ```bash

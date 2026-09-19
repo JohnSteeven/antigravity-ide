@@ -8,6 +8,11 @@ const LessonProgressSchema = new mongoose.Schema({
   positionSeconds: { type: Number, default: 0, min: 0 },
   lastActivityAt: { type: Date, default: Date.now },
   lessonContentVersion: { type: Number, default: 1 },
+  exercisePassed: { type: Boolean, default: false },
+  exerciseAttempts: { type: Number, default: 0, min: 0 },
+  quizPassed: { type: Boolean, default: false },
+  quizScore: { type: Number, default: 0, min: 0 },
+  solutionViewed: { type: Boolean, default: false },
 }, { _id: false });
 
 const CourseEnrollmentSchema = new mongoose.Schema({

@@ -38,6 +38,7 @@ const CodingBlockSchema = new mongoose.Schema({
   instructions: { type: String, default: "", maxlength: 5000 },
   expectedOutput: { type: String, default: "", maxlength: 5000 },
   hints: [{ type: String, maxlength: 1000 }],
+  validationRules: { type: mongoose.Schema.Types.Mixed, default: null },
   // Protected fields for educator / grading only — excluded by default
   solutionCode: { type: String, default: "", maxlength: 20000, select: false },
   tests: { type: [CodingTestAssertionSchema], default: [], select: false },

@@ -66,6 +66,31 @@ Premium is resolved server-side from ReaderMembership and access dates/status. P
 - Learner enrollments/progress are scoped to authenticated user IDs.
 - Admin Creator/Topic/report review requires Admin middleware.
 
+## Interactive coding execution and curriculum security
+
+- **Zero Server-Side Code Execution Policy**: Learner-submitted code is strictly never executed, compiled, evaluated, or spawned on the backend server. The use of `child_process`, `exec`, `execSync`, `spawn`, `eval`, and `new Function` is prohibited on the server for learner code.
+- **Sandboxed Iframe Isolation (HTML/CSS/JS)**:
+  - Code runs inside an isolated iframe generated with `sandbox="allow-scripts"` strictly without `allow-same-origin`.
+  - Opaque Origin & Origin Verification: Under `srcdoc` without `allow-same-origin`, the execution origin is opaque (`"null"`). Parent-to-child message validation therefore does not rely on `event.origin === window.location.origin`. Instead, parent message listeners enforce:
+    1. `event.source === expectedIframe.contentWindow`
+    2. Cryptographically random per-run `channelNonce`
+    3. Strict allowed message-type enum (`MJ_CONSOLE_LOG`, `MJ_CONSOLE_ERROR`, `MJ_SANDBOX_READY`)
+    4. Strict payload schema validation
+    5. Maximum output buffer size truncation (64 KB)
+  - Content Security Policy: Strict CSP headers are injected into the sandbox head: `default-src 'none'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none';` preventing data egress and top-frame navigation.
+  - Form Navigation Denial: All `<form>` submit events are intercepted with `e.preventDefault()`.
+- **Python Web Worker Isolation (Pyodide)**:
+  - Pinned Pyodide version v0.26.4 loaded inside a dedicated Web Worker (`pythonWorkerManager.js`).
+  - Network Neutralization: Network globals (`fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`) are neutralized inside the worker scope before user code execution.
+  - Strict 10-Second Timeout: Execution is bounded by an unyielding 10-second timer. If code hangs or loops infinitely, `worker.terminate()` immediately terminates the execution thread and respawns a clean worker.
+  - Output Buffer Safety: Stdout and stderr are captured and truncated to a maximum of 64 KB.
+- **Progress Authority & Solution Security**:
+  - Client-side validation runner is educational evidence, not anti-cheat.
+  - Solutions (`solutionCode`), test suites (`tests`), and quiz answers (`correctOptionIndex`) are strictly stripped by public serializers (`serializeLesson`).
+  - Quiz grading occurs strictly server-side (`POST /api/learn/courses/:courseId/lessons/:lessonId/quiz/evaluate`).
+  - Progress updates (`POST /api/learn/courses/:courseId/lessons/:lessonId/progress`) enforce `exercisePassed: true` and `quizPassed: true` before advancing course progress.
+  - Solution reveals (`POST /api/learn/courses/:courseId/lessons/:lessonId/solution/reveal`) record `solutionViewed = true` without granting `exercisePassed` or `completed`.
+
 ## Life privacy
 
 - Life routes require authentication and, except for export/delete privacy routes, `life_access` entitlement.

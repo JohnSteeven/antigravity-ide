@@ -25,6 +25,20 @@ npm run test:learn
 npm run test:multiplayer
 ```
 
+### Focused Learn and Interactive Coding Curriculum checks
+
+```bash
+npm run test:learn
+```
+
+This suite executes:
+- `server/tests/learn/codingCurriculum.test.js`: All 55 lessons across 4 courses (HTML, CSS, JavaScript, Python), module structure, canonical pedagogical fields, exercise definitions, quizzes, projects, and curriculum integrity.
+- `server/tests/learn/codingExecutionSecurity.test.js`: Zero server-side code execution verification (confirms absence of `child_process`, `exec`, `spawn`, `eval`), sandboxed iframe harness source contract (`sandbox="allow-scripts"` without `allow-same-origin`), opaque origin postMessage validation (`channelNonce`, message types, payload boundaries), form navigation prevention, and CSP enforcement.
+- `server/tests/learn/codingProgressAndValidation.test.js`: Server-authoritative progress gating (`exercisePassed`, `quizPassed`), enrollment tracking, quiz grading isolation on the server, solution reveal without granting completion, and serialization stripping of solutions, tests, and quiz answers.
+- `server/tests/learn/pythonWorkerAbstraction.test.js`: Pyodide Web Worker isolation, pinned Pyodide version v0.26.4, worker message handling, network API neutralization, timeout enforcement (10s), and stdout/stderr buffer management.
+- `server/tests/learnDomain.test.js`: Course, module, lesson, and enrollment domain rules.
+- `server/tests/learnLessonPreviewSecurity.test.js`: Preview vs gated lesson authorization and locked serializer privacy.
+
 Focused billing and Razorpay foundation checks:
 
 ```bash

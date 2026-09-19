@@ -16,6 +16,7 @@ The repository is a single npm application: Parcel serves the React client and E
 | MyJourney Premium | Global account-level entitlement with fixed INR/USD prices, auditable billing records, and signature-verified Razorpay test checkout/webhooks/refunds. Phase 13 adds transactional prepaid activation/renewal, date-based expiration, cancellation, payment issues, purchase-scoped revocation, and authoritative account status. Live provider validation remains required. |
 | Creators | Implemented application/review workflow, public directory/profile, follow state, ownership, and Creator Studio. Earnings/payout operations are foundation only. |
 | Learn | Implemented Topics, Course catalog/detail, lesson previews and gates, enrollment/progress, Continue Learning, and Video/Podcast/Resource catalogs. Secure media delivery is not configured. Exams expose metadata only. |
+| Learn | Implemented Topics, Course catalog/detail, interactive coding curriculum (Phase 6: 4 canonical tracks in HTML, CSS, JavaScript, and Python across 55 lessons; safe client-only sandbox execution via sandboxed iframe with opaque origin validation and Pyodide v0.26.4 worker with 10s execution timeout and zero server code execution), lesson previews and gates, enrollment/progress, Continue Learning, and Video/Podcast/Resource catalogs. Secure media delivery is not configured. Exams expose metadata only. |
 | CMS/Admin | Implemented under `/cms/*`, backed by server-side Admin authorization. |
 | Launch/SEO evidence | Admin launch audits fail closed and never seed sample results; SEO health is derived from published records and public metadata excludes drafts/private/deleted content. |
 | Games/multiplayer | Play Life and Play With Friends are implemented; local realtime can run without Redis, while scaled production requires Redis. |
@@ -129,9 +130,11 @@ These commands are **development only**. Confirm `NODE_ENV=development` and a lo
 ```bash
 npm run seed:creator-demo
 npm run seed:creator-demo:reset
+npm run seed:coding-curriculum
 ```
 
 The seed is idempotent and the reset is scoped to recognized fixture identities. Fixture accounts have unusable password hashes and are not general login credentials.
+The seed scripts are idempotent. `seed:coding-curriculum` seeds all 4 canonical tracks (55 lessons), modules, and the system author `MyJourney Learning` (`myjourney-learning`). The creator-demo reset is scoped to recognized fixture identities. Fixture accounts have unusable password hashes and are not general login credentials.
 
 ## Migrations
 

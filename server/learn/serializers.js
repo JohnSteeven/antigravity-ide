@@ -19,6 +19,7 @@ const metadataBase = (source) => ({
 const serializeCourse = (source, { curriculum = [], enrollment = null } = {}) => ({
   ...metadataBase(source),
   subtitle: source.subtitle,
+  monetizationType: source.monetizationType || (source.accessLevel === "premium" ? "PREMIUM_INCLUDED" : "FREE"),
   coverImage: source.coverImage,
   coverImageAlt: source.coverImageAlt,
   level: source.level,
@@ -54,6 +55,25 @@ const serializeLesson = (source, { allowed = false } = {}) => ({
     resourceIds: source.resourceIds || [],
     completionMode: source.completionMode,
     contentVersion: source.contentVersion,
+    codingBlocks: Array.isArray(source.codingBlocks) ? source.codingBlocks.map((b) => ({
+      id: String(b.id || ""),
+      blockType: b.blockType || "explanation",
+      title: b.title || "",
+      content: b.content || "",
+      language: b.language || "javascript",
+      starterCode: b.starterCode || "",
+      instructions: b.instructions || "",
+      expectedOutput: b.expectedOutput || "",
+      hints: Array.isArray(b.hints) ? b.hints : [],
+      validationRules: b.validationRules || null,
+      order: b.order || 0,
+    })) : [],
+    quizQuestions: Array.isArray(source.quizQuestions) ? source.quizQuestions.map((q) => ({
+      id: String(q.id || ""),
+      question: q.question,
+      options: Array.isArray(q.options) ? q.options.map((o) => ({ id: String(o.id || ""), text: o.text })) : [],
+      order: q.order || 0,
+    })) : [],
   } : {}),
 });
 
