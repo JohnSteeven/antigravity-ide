@@ -67,6 +67,66 @@ describe("Phase 6: Coding Progress Enforcement & Client Validation Engine", () =
       });
     });
 
+    test("recordProgress rejects completing a coding lesson when client attempts to inject exercisePassed:true directly in payload", async () => {
+      const mockCourse = {
+        _id: "course-101",
+        slug: "course-101",
+        accessLevel: "free",
+        structuralVersion: 1,
+        publicationStatus: "published",
+        isDeleted: false,
+      };
+
+      const mockLesson = {
+        _id: "lesson-code-1",
+        courseId: "course-101",
+        stableKey: "stable-code-1",
+        lessonType: "coding",
+        codingBlocks: [{ id: "b1" }],
+        contentVersion: 1,
+      };
+
+      // Server enrollment record has exercisePassed: false
+      const mockEnrollment = {
+        userId: "user-1",
+        courseId: "course-101",
+        status: "active",
+        lessonProgress: [
+          {
+            lessonId: "lesson-code-1",
+            lessonStableKey: "stable-code-1",
+            exercisePassed: false,
+            completed: false,
+          },
+        ],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      jest.spyOn(Course, "findOne").mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockCourse),
+      });
+      jest.spyOn(CourseLesson, "findOne").mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockLesson),
+      });
+      jest.spyOn(CourseEnrollment, "findOne").mockResolvedValue(mockEnrollment);
+
+      // Even if client injects exercisePassed: true into the generic progress body,
+      // the server ignores client-supplied flags and relies exclusively on server-stored enrollment state
+      await expect(
+        courseService.recordProgress({
+          userId: "user-1",
+          courseId: "course-101",
+          lessonId: "lesson-code-1",
+          completed: true,
+          exercisePassed: true, // INJECTED / FORGED BY CLIENT
+        })
+      ).rejects.toMatchObject({
+        status: 422,
+        code: "EXERCISE_COMPLETION_REQUIRED",
+      });
+    });
+
     test("recordProgress blocks completing a quiz lesson if quiz was not passed", async () => {
       const mockCourse = {
         _id: "course-101",

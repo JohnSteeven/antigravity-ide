@@ -503,6 +503,12 @@ const CodingLanding = ({
             <EmptyState
               title="No code modules found"
               message="Adjust search query or filter criteria."
+              message="Looking for interactive coding tracks? Explore our HTML, CSS, JavaScript, and Python courses in MyJourney Learn."
+              action={
+                <Link to="/learn" className="view-more-link" style={{ marginTop: "1rem", display: "inline-block" }}>
+                  Explore Interactive Coding Tracks →
+                </Link>
+              }
             />
           )}
         </SectionShell>

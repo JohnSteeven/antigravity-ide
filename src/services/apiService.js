@@ -539,6 +539,13 @@ export const learnApi = {
   progress: (courseId, payload) => patch(`/api/learn/courses/${courseId}/progress`, payload),
   exerciseAttempt: (courseId, lessonId, payload) => post(`/api/learn/courses/${courseId}/lessons/${lessonId}/exercise-attempt`, payload),
   evaluateQuiz: (slug, lessonId, payload) => post(`/api/learn/courses/${slug}/lessons/${lessonId}/quiz/evaluate`, payload),
+  evaluateQuiz: (slugOrParams, lessonId, payload) => {
+    if (typeof slugOrParams === "object" && slugOrParams !== null) {
+      const { courseSlug, slug, lessonId: lid, ...rest } = slugOrParams;
+      return post(`/api/learn/courses/${courseSlug || slug}/lessons/${lid}/quiz/evaluate`, rest);
+    }
+    return post(`/api/learn/courses/${slugOrParams}/lessons/${lessonId}/quiz/evaluate`, payload);
+  },
   revealSolution: (slug, lessonId, payload) => post(`/api/learn/courses/${slug}/lessons/${lessonId}/solution`, payload),
   continueLearning: () => get("/api/learn/continue"),
   videos: (params = {}) => get(`/api/learn/videos${queryString(params)}`),

@@ -40,9 +40,7 @@ export default function QuizSection({
 
     setSubmitting(true);
     try {
-      const result = await learnApi.evaluateQuiz({
-        courseSlug,
-        lessonId,
+      const result = await learnApi.evaluateQuiz(courseSlug, lessonId, {
         answers: selectedAnswers,
       });
 

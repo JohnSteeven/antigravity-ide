@@ -318,7 +318,7 @@ describe("Phase 6: Coding Execution Security & Anti-RCE Guardrails", () => {
   });
 
   describe("Client Sandbox Security Guarantees", () => {
-    test("htmlSandboxHarness enforces sandbox without allow-same-origin and sets strict CSP", () => {
+    test("htmlSandboxHarness enforces sandbox without allow-same-origin and sets strict CSP contract", () => {
       const harnessPath = path.resolve(__dirname, "../../../src/features/learn/sandbox/htmlSandboxHarness.js");
       const content = fs.readFileSync(harnessPath, "utf-8");
 
@@ -327,8 +327,15 @@ describe("Phase 6: Coding Execution Security & Anti-RCE Guardrails", () => {
       expect(content).not.toMatch(/SANDBOX_PERMISSIONS.*allow-same-origin/);
 
       // Verify strict CSP
+      // Verify strict CSP directives: scripts execute inline, network & top-navigation are completely denied
+      expect(content).toMatch(/default-src 'none'/);
+      expect(content).toMatch(/script-src 'unsafe-inline'/);
+      expect(content).toMatch(/style-src 'unsafe-inline'/);
       expect(content).toMatch(/connect-src 'none'/);
       expect(content).toMatch(/form-action 'none'/);
+      expect(content).toMatch(/object-src 'none'/);
+      expect(content).toMatch(/frame-src 'none'/);
+      expect(content).toMatch(/base-uri 'none'/);
 
       // Verify postMessage origin and source check
       expect(content).toMatch(/event\.source\s*!==\s*expectedWindow/);

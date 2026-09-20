@@ -328,6 +328,9 @@ const recordExerciseAttempt = async ({ userId, courseId, courseSlug, lessonId, b
 
   const enrollment = await CourseEnrollment.findOne({ userId, courseId: course._id });
   if (!enrollment) throw errorWith("Enroll in this Course before recording progress.", 403, "ENROLLMENT_REQUIRED");
+  if (!enrollment.structuralVersionAtEnrollment) {
+    enrollment.structuralVersionAtEnrollment = course.structuralVersion || 1;
+  }
 
   const block = (lesson.codingBlocks || []).find((b) => String(b.id) === String(blockId));
   if (!block) throw errorWith("Coding block not found.", 404, "CODING_BLOCK_NOT_FOUND");
@@ -429,6 +432,9 @@ const revealSolution = async ({ courseSlug, courseId, lessonId, userId, blockId 
 
   const enrollment = await CourseEnrollment.findOne({ userId, courseId: course._id });
   if (!enrollment) throw errorWith("Enroll in this Course before viewing solutions.", 403, "ENROLLMENT_REQUIRED");
+  if (!enrollment.structuralVersionAtEnrollment) {
+    enrollment.structuralVersionAtEnrollment = course.structuralVersion || 1;
+  }
 
   let progress = enrollment.lessonProgress.find((item) => item.lessonStableKey === lesson.stableKey);
   if (!progress) {

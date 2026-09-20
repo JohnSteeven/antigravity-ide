@@ -554,18 +554,23 @@ export default function LessonWorkspace() {
                 </button>
               </nav>
 
-              {/* Live Preview Tab */}
-              {(language === "html" || language === "css") && activeTab === "preview" && (
-                <div className="learn-output-panel__preview">
-                  <iframe
-                    ref={iframeRef}
-                    title="Isolated Preview"
-                    sandbox={SANDBOX_PERMISSIONS}
-                    srcDoc={srcdoc}
-                    className="learn-sandbox-iframe"
-                  />
-                </div>
-              )}
+              {/* Live Preview / Sandbox Execution Surface */}
+              <div
+                className={`learn-output-panel__preview ${
+                  (language === "html" || language === "css") && activeTab === "preview"
+                    ? ""
+                    : "learn-output-panel__preview--offscreen"
+                }`}
+                aria-hidden={!((language === "html" || language === "css") && activeTab === "preview")}
+              >
+                <iframe
+                  ref={iframeRef}
+                  title="Isolated Preview"
+                  sandbox={SANDBOX_PERMISSIONS}
+                  srcDoc={srcdoc}
+                  className="learn-sandbox-iframe"
+                />
+              </div>
 
               {/* Console Output Tab */}
               {activeTab === "console" && (
