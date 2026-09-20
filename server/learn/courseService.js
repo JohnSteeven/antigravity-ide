@@ -481,7 +481,6 @@ const recordProgress = async ({ userId, courseId, lessonId, positionSeconds = 0,
   }
   progress.positionSeconds = position;
   progress.lastActivityAt = new Date();
-  if (completed && !progress.completedAt) progress.completedAt = new Date();
 
   if (completed) {
     if (lesson.completionMode === "consume" && lesson.durationSeconds > 0 && position < lesson.durationSeconds * 0.9) {
