@@ -8,6 +8,7 @@ import DashboardOverview from "./cms/DashboardOverview";
 import ArticleModule from "./cms/ArticleModule";
 import StoryCmsPanel from "./cms/panels/StoryCmsPanel";
 import CreatorReviewModule from "./cms/CreatorReviewModule.jsx";
+import CodingManagementModule from "./cms/CodingManagementModule";
 import CategoryModule from "./cms/CategoryModule";
 import SubCategoryModule from "./cms/SubCategoryModule";
 import TagModule from "./cms/TagModule";
@@ -77,6 +78,7 @@ const MODULE_TITLES = {
   articles: { kicker: "Writing", title: "Articles & Drafts" },
   stories: { kicker: "Narrative", title: "Stories & Reading Layouts" },
   creators: { kicker: "Creator platform", title: "Creator Applications & Editorial Review" },
+  coding: { kicker: "Curriculum", title: "Coding Tracks & Learning Materials" },
   categories: { kicker: "Structure", title: "Category Management" },
   subcategories: { kicker: "Structure", title: "Subcategory Management" },
   tags: { kicker: "Taxonomy", title: "Tag List" },
@@ -186,6 +188,7 @@ export default function AdminDashboard() {
         <Route path="articles" element={<ArticleModule />} />
         <Route path="stories" element={<StoryCmsPanel />} />
         <Route path="creators" element={<CreatorReviewModule />} />
+        <Route path="coding/*" element={<CodingManagementModule />} />
         <Route path="categories" element={<CategoryModule />} />
         <Route path="subcategories" element={<SubCategoryModule />} />
         <Route path="tags" element={<TagModule />} />

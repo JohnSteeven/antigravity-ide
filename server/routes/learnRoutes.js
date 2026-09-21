@@ -11,6 +11,7 @@ const engagementLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 180, standa
 const reportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 12, standardHeaders: true, legacyHeaders: false });
 
 router.get("/", optionalAuthenticate, controllers.home);
+router.get("/home", optionalAuthenticate, controllers.home);
 router.get("/topics/admin", authenticate, requireAdmin, controllers.listAdminTopics);
 router.get("/topics", searchLimiter, controllers.listTopics);
 router.post("/topics", authenticate, requireAdmin, controllers.createTopic);
@@ -25,6 +26,9 @@ router.patch("/courses/:courseId/progress", authenticate, progressLimiter, contr
 router.post("/courses/:courseId/lessons/:lessonId/exercise-attempt", authenticate, progressLimiter, controllers.recordExerciseAttempt);
 router.post("/courses/:slug/lessons/:lessonId/quiz/evaluate", authenticate, progressLimiter, controllers.evaluateQuiz);
 router.post("/courses/:slug/lessons/:lessonId/solution", authenticate, progressLimiter, controllers.revealSolution);
+router.post("/courses/:slug/lessons/:lessonId/submissions", authenticate, progressLimiter, controllers.createSubmission);
+router.get("/courses/:slug/lessons/:lessonId/submissions", authenticate, searchLimiter, controllers.listSubmissions);
+router.get("/courses/:slug/lessons/:lessonId/submissions/:submissionId", authenticate, searchLimiter, controllers.getSubmission);
 router.post("/engagement", authenticate, engagementLimiter, controllers.recordEngagement);
 router.post("/reports", authenticate, reportLimiter, controllers.reportContent);
 router.get("/reports/admin", authenticate, requireAdmin, controllers.listContentReports);
@@ -35,8 +39,20 @@ router.get("/podcasts", searchLimiter, controllers.listPodcasts);
 router.get("/podcasts/:slug", optionalAuthenticate, controllers.getPodcast);
 router.get("/resources", searchLimiter, controllers.listResources);
 router.get("/resources/:slug", optionalAuthenticate, controllers.getResource);
+router.get("/coding/resources", optionalAuthenticate, searchLimiter, controllers.listLearnerCodingResources);
+router.get("/coding/stats", optionalAuthenticate, searchLimiter, controllers.getCodingStats);
 router.get("/exams", searchLimiter, controllers.listExams);
 router.get("/media/capability", controllers.mediaCapability);
 router.get("/media/:assetId/access", authenticate, controllers.assetAccess);
+
+// Admin Coding Management (Admin-only)
+router.get("/admin/coding/courses", authenticate, requireAdmin, controllers.getAdminCodingCourses);
+router.patch("/admin/coding/courses/:id", authenticate, requireAdmin, controllers.updateAdminCodingCourse);
+router.get("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, controllers.getAdminCodingLesson);
+router.patch("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, controllers.updateAdminCodingLesson);
+router.get("/admin/coding/materials", authenticate, requireAdmin, controllers.listAdminCodingMaterials);
+router.post("/admin/coding/materials", authenticate, requireAdmin, controllers.createAdminCodingMaterial);
+router.patch("/admin/coding/materials/:id", authenticate, requireAdmin, controllers.updateAdminCodingMaterial);
+router.delete("/admin/coding/materials/:id", authenticate, requireAdmin, controllers.deleteAdminCodingMaterial);
 
 module.exports = router;

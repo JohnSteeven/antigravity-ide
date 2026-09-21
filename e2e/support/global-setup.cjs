@@ -129,5 +129,34 @@ module.exports = async () => {
 
   await Promise.all(readerIds.map((userId) => ReaderMembership.create(buildSubscriptionFixture({ userId }))));
 
+  const { seedCodingCurriculum } = require("../../server/scripts/seedCodingCurriculum");
+  await seedCodingCurriculum();
+
+  const LearningResource = require("../../server/models/LearningResource");
+  const Course = require("../../server/models/Course");
+  const htmlCourse = await Course.findOne({ slug: "html-foundations" });
+  if (htmlCourse) {
+    await LearningResource.findOneAndUpdate(
+      { slug: "html5-semantic-reference-guide" },
+      {
+        $set: {
+          title: "HTML5 Semantic Reference Guide",
+          slug: "html5-semantic-reference-guide",
+          description: "Comprehensive printable cheat-sheet for HTML5 semantic elements.",
+          resourceType: "code_file",
+          resourceCategory: "cheatsheet",
+          courseId: htmlCourse._id,
+          accessLevel: "free",
+          isSystemOwned: true,
+          filename: "html5-reference.html",
+          textContent: "<!DOCTYPE html>\n<html>\n<body>Semantic elements guide</body>\n</html>",
+          publicationStatus: "published",
+          sortOrder: 1,
+        },
+      },
+      { upsert: true, new: true }
+    );
+  }
+
   await mongoose.disconnect();
 };

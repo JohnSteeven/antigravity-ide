@@ -13,6 +13,7 @@ const mediaService = require("./mediaService");
 const MediaProvider = require("./mediaProviderService");
 const engagementService = require("../creators/engagementService");
 const directoryService = require("../creators/directoryService");
+const streakService = require("./streakService");
 const { escapeRegex, slugify } = require("../creators/utils");
 
 const userId = (req) => req.user?._id || req.user?.id || null;
@@ -249,6 +250,114 @@ exports.reviewContentReport = async (req, res, next) => {
     report.privateResolutionNote = String(req.body.privateResolutionNote || "").trim().slice(0, 4000);
     await report.save();
     return res.json({ success: true, data: { id: String(report._id), status: report.status } });
+  } catch (error) { return next(error); }
+};
+
+exports.getAdminCodingCourses = async (req, res, next) => {
+  try {
+    const data = await courseService.getAdminCodingCourses();
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.updateAdminCodingCourse = async (req, res, next) => {
+  try {
+    const data = await courseService.updateAdminCodingCourse(req.params.id, req.body);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.getAdminCodingLesson = async (req, res, next) => {
+  try {
+    const data = await courseService.getAdminCodingLesson(req.params.lessonId);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.updateAdminCodingLesson = async (req, res, next) => {
+  try {
+    const data = await courseService.updateAdminCodingLesson(req.params.lessonId, req.body);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.listAdminCodingMaterials = async (req, res, next) => {
+  try {
+    const data = await courseService.listAdminCodingMaterials(req.query);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.createAdminCodingMaterial = async (req, res, next) => {
+  try {
+    const data = await courseService.createAdminCodingMaterial(req.body);
+    return res.status(201).json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.updateAdminCodingMaterial = async (req, res, next) => {
+  try {
+    const data = await courseService.updateAdminCodingMaterial(req.params.id, req.body);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.deleteAdminCodingMaterial = async (req, res, next) => {
+  try {
+    const data = await courseService.deleteAdminCodingMaterial(req.params.id);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.listLearnerCodingResources = async (req, res, next) => {
+  try {
+    const data = await courseService.listLearnerCodingResources(req.query, userId(req));
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.getCodingStats = async (req, res, next) => {
+  try {
+    const data = await streakService.calculateCodingStats({
+      userId: userId(req),
+      clientTimezone: req.query.timezone,
+    });
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.createSubmission = async (req, res, next) => {
+  try {
+    const data = await courseService.createSubmission({
+      courseSlug: req.params.slug,
+      lessonId: req.params.lessonId,
+      userId: userId(req),
+      payload: req.body,
+    });
+    return res.status(201).json(data);
+  } catch (error) { return next(error); }
+};
+
+exports.listSubmissions = async (req, res, next) => {
+  try {
+    const data = await courseService.listSubmissions({
+      courseSlug: req.params.slug,
+      lessonId: req.params.lessonId,
+      userId: userId(req),
+    });
+    return res.json(data);
+  } catch (error) { return next(error); }
+};
+
+exports.getSubmission = async (req, res, next) => {
+  try {
+    const data = await courseService.getSubmission({
+      courseSlug: req.params.slug,
+      lessonId: req.params.lessonId,
+      submissionId: req.params.submissionId,
+      userId: userId(req),
+    });
+    return res.json(data);
   } catch (error) { return next(error); }
 };
 

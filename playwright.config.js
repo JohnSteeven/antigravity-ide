@@ -42,7 +42,7 @@ module.exports = defineConfig({
       },
     },
     {
-      command: `npx parcel index.html --port ${E2E_UI_PORT} --no-cache`,
+      command: `node server/scripts/serveQaBuild.js`,
       url: baseURL,
       timeout: 90_000,
       reuseExistingServer,
@@ -51,6 +51,8 @@ module.exports = defineConfig({
         PARCEL_PROXY_TARGET: apiURL,
         PARCEL_API_URL: apiURL,
         PARCEL_AUTH_API_URL: apiURL,
+        PREVIEW_PORT: String(E2E_UI_PORT),
+        PREVIEW_API_TARGET: apiURL,
       },
     },
   ],

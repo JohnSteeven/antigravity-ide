@@ -560,7 +560,31 @@ export const learnApi = {
   report: (payload) => post("/api/learn/reports", payload),
   adminReports: (params = {}) => get(`/api/learn/reports/admin${queryString(params)}`),
   reviewReport: (id, payload) => patch(`/api/learn/reports/admin/${id}`, payload),
+  // Admin Coding Management
+  adminCodingCourses: () => get("/api/learn/admin/coding/courses"),
+  adminCodingUpdateCourse: (id, payload) => patch(`/api/learn/admin/coding/courses/${id}`, payload),
+  adminCodingLesson: (lessonId) => get(`/api/learn/admin/coding/lessons/${lessonId}`),
+  adminCodingUpdateLesson: (lessonId, payload) => patch(`/api/learn/admin/coding/lessons/${lessonId}`, payload),
+  adminCodingMaterials: (params = {}) => get(`/api/learn/admin/coding/materials${queryString(params)}`),
+  adminCodingCreateMaterial: (payload) => post("/api/learn/admin/coding/materials", payload),
+  adminCodingUpdateMaterial: (id, payload) => patch(`/api/learn/admin/coding/materials/${id}`, payload),
+  adminCodingDeleteMaterial: (id) => del(`/api/learn/admin/coding/materials/${id}`),
+  // Learner Coding Resources
+  // Learner Coding Resources & Stats
+  codingResources: (params = {}) => get(`/api/learn/coding/resources${queryString(params)}`),
+  codingStats: (params = {}) => get(`/api/learn/coding/stats${queryString(params)}`),
+  // Coding Submissions
+  createCodingSubmission: (courseSlug, lessonId, payload) => post(`/api/learn/courses/${courseSlug}/lessons/${lessonId}/submissions`, payload),
+  listCodingSubmissions: (courseSlug, lessonId) => get(`/api/learn/courses/${courseSlug}/lessons/${lessonId}/submissions`),
+  getCodingSubmission: (courseSlug, lessonId, submissionId) => get(`/api/learn/courses/${courseSlug}/lessons/${lessonId}/submissions/${submissionId}`),
 };
+
+export const createCodingSubmission = (courseSlug, lessonId, payload) =>
+  learnApi.createCodingSubmission(courseSlug, lessonId, payload);
+export const listCodingSubmissions = (courseSlug, lessonId) =>
+  learnApi.listCodingSubmissions(courseSlug, lessonId);
+export const getCodingSubmission = (courseSlug, lessonId, submissionId) =>
+  learnApi.getCodingSubmission(courseSlug, lessonId, submissionId);
 
 // ─── Roles ───────────────────────────────────────────────────────────────────
 export const roleApi = {

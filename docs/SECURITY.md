@@ -84,12 +84,15 @@ Premium is resolved server-side from ReaderMembership and access dates/status. P
   - Network Neutralization: Network globals (`fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`) are neutralized inside the worker scope before user code execution.
   - Strict 10-Second Timeout: Execution is bounded by an unyielding 10-second timer. If code hangs or loops infinitely, `worker.terminate()` immediately terminates the execution thread and respawns a clean worker.
   - Output Buffer Safety: Stdout and stderr are captured and truncated to a maximum of 64 KB.
-- **Progress Authority & Solution Security**:
+- **Progress Authority, Submissions Trust Model & Solution Security**:
   - Client-side validation runner is educational evidence, not anti-cheat.
   - Solutions (`solutionCode`), test suites (`tests`), and quiz answers (`correctOptionIndex`) are strictly stripped by public serializers (`serializeLesson`).
   - Quiz grading occurs strictly server-side (`POST /api/learn/courses/:courseId/lessons/:lessonId/quiz/evaluate`).
   - Progress updates (`POST /api/learn/courses/:courseId/lessons/:lessonId/progress`) enforce `exercisePassed: true` and `quizPassed: true` before advancing course progress.
   - Solution reveals (`POST /api/learn/courses/:courseId/lessons/:lessonId/solution/reveal`) record `solutionViewed = true` without granting `exercisePassed` or `completed`.
+  - **Authoritative Submission Trust Model**: `POST /api/learn/courses/:slug/lessons/:lessonId/submissions` records learner-authored submission history with a 64 KB code snapshot limit and rate-limiting (`progressLimiter`). Browser-reported status, test counts, runtime, and validation summaries never mutate `exercisePassed`, lesson completion, or learning events. Mastery remains isolated to the established progress path.
+  - **Ownership Isolation**: `GET /api/learn/courses/:slug/lessons/:lessonId/submissions/:submissionId` strictly enforces `userId === req.user.id`. Learners cannot read another user's submissions or code snapshots (403 Forbidden).
+  - **Full Preview Isolation**: Full preview sessions use client-side ephemeral `sessionStorage` (`coding_preview_${sessionId}`); no server execution or database persistence occurs for arbitrary playground/preview snippets.
 
 ## Life privacy
 

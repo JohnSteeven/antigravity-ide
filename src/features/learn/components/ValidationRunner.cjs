@@ -321,19 +321,22 @@ function validatePythonExercise(code, executionOutput = {}, rules = []) {
   return { passed: allPassed, checks };
 }
 
-function runExerciseValidation({ language, code, rules = [], executionOutput = {} }) {
+function runExerciseValidation({ language, code, rules = [], validationRules = [], executionOutput = {} }) {
+  const effectiveRules = (Array.isArray(rules) && rules.length > 0)
+    ? rules
+    : (Array.isArray(validationRules) ? validationRules : []);
   const lang = String(language || "").toLowerCase();
   if (lang === "html") {
-    return validateHtmlExercise(code, rules);
+    return validateHtmlExercise(code, effectiveRules);
   }
   if (lang === "css") {
-    return validateCssExercise(code, rules);
+    return validateCssExercise(code, effectiveRules);
   }
   if (lang === "javascript" || lang === "js") {
-    return validateJsExercise(code, executionOutput, rules);
+    return validateJsExercise(code, executionOutput, effectiveRules);
   }
   if (lang === "python" || lang === "py") {
-    return validatePythonExercise(code, executionOutput, rules);
+    return validatePythonExercise(code, executionOutput, effectiveRules);
   }
   return { passed: true, checks: [] };
 }

@@ -1,20 +1,40 @@
-const metadataBase = (source) => ({
-  id: String(source._id || source.id || ""),
-  title: source.title,
-  slug: source.slug,
-  description: source.description,
-  creator: source.creatorId?.displayName ? {
-    slug: source.creatorId.slug,
-    displayName: source.creatorId.displayName,
-    headline: source.creatorId.headline,
-    profileImage: source.creatorId.profileImage,
-  } : undefined,
-  topics: Array.isArray(source.topicIds) ? source.topicIds.map((topic) => topic?.name ? { name: topic.name, slug: topic.slug } : topic) : [],
-  language: source.language,
-  accessLevel: source.accessLevel || "free",
-  publicationStatus: source.publicationStatus,
-  publishedAt: source.publishedAt,
-});
+const CANONICAL_CODING_SLUGS = new Set([
+  "html-foundations",
+  "css-foundations",
+  "javascript-foundations",
+  "python-foundations",
+]);
+
+const metadataBase = (source) => {
+  const isCanonicalCoding = CANONICAL_CODING_SLUGS.has(source.slug) || source.isSystemOwned === true;
+  return {
+    id: String(source._id || source.id || ""),
+    title: source.title,
+    slug: source.slug,
+    description: source.description,
+    isSystemOwned: isCanonicalCoding,
+    creator: isCanonicalCoding
+      ? {
+          displayName: "MyJourney Coding",
+          isSystem: true,
+        }
+      : source.creatorId?.displayName
+      ? {
+          slug: source.creatorId.slug,
+          displayName: source.creatorId.displayName,
+          headline: source.creatorId.headline,
+          profileImage: source.creatorId.profileImage,
+        }
+      : undefined,
+    topics: Array.isArray(source.topicIds)
+      ? source.topicIds.map((topic) => (topic?.name ? { name: topic.name, slug: topic.slug } : topic))
+      : [],
+    language: source.language,
+    accessLevel: source.accessLevel || "free",
+    publicationStatus: source.publicationStatus,
+    publishedAt: source.publishedAt,
+  };
+};
 
 const serializeCourse = (source, { curriculum = [], enrollment = null } = {}) => ({
   ...metadataBase(source),
@@ -66,6 +86,7 @@ const serializeLesson = (source, { allowed = false } = {}) => ({
       expectedOutput: b.expectedOutput || "",
       hints: Array.isArray(b.hints) ? b.hints : [],
       validationRules: b.validationRules || null,
+      previewFixture: b.previewFixture || "",
       order: b.order || 0,
     })) : [],
     quizQuestions: Array.isArray(source.quizQuestions) ? source.quizQuestions.map((q) => ({
@@ -99,9 +120,20 @@ const serializePodcast = (source, { allowed = false } = {}) => ({
 const serializeResource = (source, { allowed = false } = {}) => ({
   ...metadataBase(source),
   resourceType: source.resourceType,
+  resourceCategory: source.resourceCategory || "general",
+  filename: source.filename || "",
   sizeBytes: source.sizeBytes || 0,
+  courseId: source.courseId ? String(source.courseId) : null,
+  moduleId: source.moduleId ? String(source.moduleId) : null,
+  lessonId: source.lessonId ? String(source.lessonId) : null,
+  isSystemOwned: Boolean(source.isSystemOwned),
+  sortOrder: source.sortOrder || 0,
   locked: !allowed,
-  ...(allowed ? { assetId: source.assetId || null, externalUrl: source.accessLevel === "free" ? source.externalUrl || "" : "" } : {}),
+  ...(allowed ? {
+    assetId: source.assetId || null,
+    externalUrl: source.externalUrl || "",
+    textContent: source.textContent || "",
+  } : {}),
 });
 
 module.exports = { metadataBase, serializeCourse, serializeLesson, serializeLessonMetadata, serializePodcast, serializeResource, serializeVideo };

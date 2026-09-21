@@ -6,6 +6,7 @@ import {
   RouterProvider,
   createBrowserRouter,
   useLocation,
+  useParams,
 } from "react-router";
 import { CmsProvider } from "./context/CmsContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -68,6 +69,15 @@ const LearnCatalog = lazy(() => import("./features/learn/LearnCatalog.jsx"));
 const CoursePage = lazy(() => import("./features/learn/CoursePage.jsx"));
 const LessonWorkspace = lazy(() => import("./features/learn/LessonWorkspace.jsx"));
 const FormatDetailPage = lazy(() => import("./features/learn/FormatDetailPage.jsx"));
+// MyJourney Coding — dedicated developer workspace surface
+const CodingHub = lazy(() => import("./features/coding/CodingHub.jsx"));
+const CodingTrackPage = lazy(() => import("./features/coding/CodingTrackPage.jsx"));
+const CodingLessonPage = lazy(() => import("./features/coding/CodingLessonPage.jsx"));
+const CodingPlayground = lazy(() => import("./features/coding/CodingPlayground.jsx"));
+const CodingProjects = lazy(() => import("./features/coding/CodingProjects.jsx"));
+const CodingPractice = lazy(() => import("./features/coding/CodingPractice.jsx"));
+const CodingResources = lazy(() => import("./features/coding/CodingResources.jsx"));
+const CodingFullPreviewPage = lazy(() => import("./features/coding/components/CodingFullPreviewPage.jsx"));
 // MyJourney Agent — full-screen experience
 const AgentPage = lazy(() => import("./features/agent/AgentPage.jsx"));
 
@@ -76,6 +86,11 @@ const withRouteFallback = (element, message) => (
     {element}
   </Suspense>
 );
+
+const CodingLessonRedirect = ({ track }) => {
+  const { lessonId } = useParams();
+  return <Navigate to={`/coding/${track}/lesson/${lessonId}`} replace />;
+};
 
 
 const HomePage = () => (
@@ -98,7 +113,9 @@ const AppShell = () => {
   const isPlayWithFriends = location.pathname.startsWith("/play-with-friends");
   const isLife = location.pathname.startsWith("/life");
   const isAgent = location.pathname.startsWith("/agent");
-  const isImmersive = isPlayLife || isPlayWithFriends || isAgent;
+  const isCodingLesson = location.pathname.startsWith("/coding/") && location.pathname.includes("/lesson/");
+  const isCodingPreview = location.pathname.startsWith("/coding/preview/");
+  const isImmersive = isPlayLife || isPlayWithFriends || isAgent || isCodingPreview;
 
   const authRoutes = [
     "/login",
@@ -140,8 +157,8 @@ const AppShell = () => {
       <div id="main-content" tabIndex="-1">
         <Outlet />
       </div>
-      {!isCms && !isAuthRoute && !isImmersive && !isLife && <Footer />}
-      {!isCms && !isAuthRoute && !isImmersive && !isLife && <AskMyJourneyWidget />}
+      {!isCms && !isAuthRoute && !isImmersive && !isLife && !isCodingLesson && <Footer />}
+      {!isCms && !isAuthRoute && !isImmersive && !isLife && !isCodingLesson && <AskMyJourneyWidget />}
     </div>
   );
 };
@@ -199,6 +216,14 @@ const appRouter = createBrowserRouter([
       {
         path: "category/:slug",
         element: withRouteFallback(<CategoryPage />, "Opening Category..."),
+      },
+      {
+        path: "category/coding",
+        element: <Navigate to="/coding" replace />,
+      },
+      {
+        path: "categories/coding",
+        element: <Navigate to="/coding" replace />,
       },
       {
         path: "category/incidents",
@@ -358,6 +383,38 @@ const appRouter = createBrowserRouter([
         element: <Suspense fallback={<LoadingScreen message="Finding Courses..." />}><LearnCatalog format="courses" /></Suspense>,
       },
       {
+        path: "learn/courses/html-foundations",
+        element: <Navigate to="/coding/html" replace />,
+      },
+      {
+        path: "learn/courses/css-foundations",
+        element: <Navigate to="/coding/css" replace />,
+      },
+      {
+        path: "learn/courses/javascript-foundations",
+        element: <Navigate to="/coding/javascript" replace />,
+      },
+      {
+        path: "learn/courses/python-foundations",
+        element: <Navigate to="/coding/python" replace />,
+      },
+      {
+        path: "learn/courses/html-foundations/lessons/:lessonId",
+        element: <CodingLessonRedirect track="html" />,
+      },
+      {
+        path: "learn/courses/css-foundations/lessons/:lessonId",
+        element: <CodingLessonRedirect track="css" />,
+      },
+      {
+        path: "learn/courses/javascript-foundations/lessons/:lessonId",
+        element: <CodingLessonRedirect track="javascript" />,
+      },
+      {
+        path: "learn/courses/python-foundations/lessons/:lessonId",
+        element: <CodingLessonRedirect track="python" />,
+      },
+      {
         path: "learn/courses/:slug",
         element: <Suspense fallback={<LoadingScreen message="Opening Course..." />}><CoursePage /></Suspense>,
       },
@@ -392,6 +449,38 @@ const appRouter = createBrowserRouter([
       {
         path: "learn/exams",
         element: <Suspense fallback={<LoadingScreen message="Opening exam catalog..." />}><LearnCatalog format="exams" /></Suspense>,
+      },
+      {
+        path: "coding",
+        element: <Suspense fallback={<LoadingScreen message="Opening Coding..." />}><CodingHub /></Suspense>,
+      },
+      {
+        path: "coding/playground",
+        element: <Suspense fallback={<LoadingScreen message="Opening Playground..." />}><CodingPlayground /></Suspense>,
+      },
+      {
+        path: "coding/projects",
+        element: <Suspense fallback={<LoadingScreen message="Opening Projects..." />}><CodingProjects /></Suspense>,
+      },
+      {
+        path: "coding/practice",
+        element: <Suspense fallback={<LoadingScreen message="Opening Practice..." />}><CodingPractice /></Suspense>,
+      },
+      {
+        path: "coding/resources",
+        element: <Suspense fallback={<LoadingScreen message="Opening Resources..." />}><CodingResources /></Suspense>,
+      },
+      {
+        path: "coding/preview/:sessionId",
+        element: <Suspense fallback={<LoadingScreen message="Opening Full Preview..." />}><CodingFullPreviewPage /></Suspense>,
+      },
+      {
+        path: "coding/:track",
+        element: <Suspense fallback={<LoadingScreen message="Opening Coding Track..." />}><CodingTrackPage /></Suspense>,
+      },
+      {
+        path: "coding/:track/lesson/:lessonId",
+        element: <Suspense fallback={<LoadingScreen message="Opening Coding Lesson..." />}><CodingLessonPage /></Suspense>,
       },
       {
         path: "profile",

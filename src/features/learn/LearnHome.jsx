@@ -13,11 +13,20 @@ const FORMAT_ROUTES = {
   exam: "/learn/exams",
 };
 
+const CANONICAL_CODING_DESTINATIONS = {
+  "html-foundations": "/coding/html",
+  "css-foundations": "/coding/css",
+  "javascript-foundations": "/coding/javascript",
+  "python-foundations": "/coding/python",
+};
+
 /* ── LearnCard ─────────────────────────────────────────────────────────── */
 const LearnCard = ({ item, format }) => {
   const image = item.coverImage || item.thumbnail || "";
   const destination =
-    format === "exam"
+    format === "course" && CANONICAL_CODING_DESTINATIONS[item.slug]
+      ? CANONICAL_CODING_DESTINATIONS[item.slug]
+      : format === "exam"
       ? FORMAT_ROUTES.exam
       : `${FORMAT_ROUTES[format]}/${item.slug}`;
   return (
@@ -171,7 +180,7 @@ export default function LearnHome() {
                       {entry.courseId.lessonCount || 0} lessons
                     </p>
                     <h3>
-                      <Link to={`/learn/courses/${entry.courseId.slug}`}>
+                      <Link to={CANONICAL_CODING_DESTINATIONS[entry.courseId.slug] || `/learn/courses/${entry.courseId.slug}`}>
                         {entry.courseId.title}
                       </Link>
                     </h3>

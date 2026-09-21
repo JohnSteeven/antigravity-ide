@@ -5,9 +5,11 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const request = require("supertest");
 const Course = require("../models/Course");
+const CourseModule = require("../models/CourseModule");
 const CourseLesson = require("../models/CourseLesson");
 const CreatorProfile = require("../models/CreatorProfile");
 const User = require("../models/User");
+const LearningResource = require("../models/LearningResource");
 const entitlementService = require("../services/entitlementService");
 const { ENTITLEMENTS } = require("../premium/catalog");
 const courseService = require("../learn/courseService");
@@ -54,6 +56,12 @@ describe("Course lesson preview ownership", () => {
       select() { return this; },
       lean: async () => matches(lesson, filter) ? { ...lesson } : null,
     }));
+    jest.spyOn(CourseModule, "find").mockReturnValue({
+      sort: () => ({ lean: async () => [] }),
+    });
+    jest.spyOn(CourseLesson, "find").mockReturnValue({
+      sort: () => ({ lean: async () => [] }),
+    });
     jest.spyOn(User, "findById").mockImplementation(async (id) => Object.values(ids).includes(id)
       ? { _id: id, status: "ACTIVE", role: "Reader", tokenVersion: 0, isDeleted: false }
       : null);
@@ -64,6 +72,9 @@ describe("Course lesson preview ownership", () => {
       return null;
     } }));
     jest.spyOn(entitlementService, "resolveForUser").mockResolvedValue({ plan: "free", entitlements: {} });
+    jest.spyOn(LearningResource, "find").mockReturnValue({
+      sort: () => ({ lean: async () => [] }),
+    });
 
     app = express();
     app.use(express.json(), cookieParser());

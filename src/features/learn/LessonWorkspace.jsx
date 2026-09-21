@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { learnApi } from "../../services/apiService";
 import { useAuth } from "../../hooks/useAuth";
 import ContentReportForm from "./ContentReportForm.jsx";
@@ -15,11 +15,24 @@ import {
 import { defaultPythonManager } from "./sandbox/pythonWorkerManager";
 import "./learn.css";
 
+const CANONICAL_CODING_TRACKS = {
+  "html-foundations": "html",
+  "css-foundations": "css",
+  "javascript-foundations": "javascript",
+  "python-foundations": "python",
+};
+
 const idempotencyKey = () =>
   globalThis.crypto?.randomUUID?.() || `lesson-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 export default function LessonWorkspace() {
   const { slug, lessonId } = useParams();
+
+  // Canonical coding lessons must redirect to dedicated /coding product surface
+  const codingTrack = CANONICAL_CODING_TRACKS[slug];
+  if (codingTrack) {
+    return <Navigate to={`/coding/${codingTrack}/lesson/${lessonId}`} replace />;
+  }
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 

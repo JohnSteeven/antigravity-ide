@@ -6,8 +6,10 @@ const CourseLesson = require("../models/CourseLesson");
 const CourseEnrollment = require("../models/CourseEnrollment");
 const LearningEvent = require("../models/LearningEvent");
 const Topic = require("../models/Topic");
+const LearningResource = require("../models/LearningResource");
+const CodingSubmission = require("../models/CodingSubmission");
 const { resolveLearnAccess } = require("./accessPolicy");
-const { serializeCourse, serializeLesson, serializeLessonMetadata } = require("./serializers");
+const { serializeCourse, serializeLesson, serializeLessonMetadata, serializeResource } = require("./serializers");
 const { escapeRegex, slugify, uniqueStrings } = require("../creators/utils");
 
 const errorWith = (message, status, code) => Object.assign(new Error(message), { status, code });
@@ -128,7 +130,12 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
   const course = await Course.findOne({ slug: courseSlug, ...courseScope, isDeleted: false }).lean();
   if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
   const owner = creatorId && String(course.creatorId) === String(creatorId);
-  const lesson = await CourseLesson.findOne({ _id: lessonId, courseId: course._id, isDeleted: false })
+
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid
+    ? { _id: lessonId, courseId: course._id, isDeleted: false }
+    : { stableKey: lessonId, courseId: course._id, isDeleted: false };
+  const lesson = await CourseLesson.findOne(lessonQuery)
     .select("+body +mediaAssetId +transcript +captions +resourceIds")
     .lean();
   if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
@@ -136,6 +143,26 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
     ? { allowed: true, reason: "preview" }
     : await resolveLearnAccess({ userId, accessLevel: course.accessLevel, owner, admin });
   if (!access.allowed) throw errorWith("MyJourney Premium is required for this lesson.", 403, "PREMIUM_REQUIRED");
+
+  // Load attached materials/resources
+  const attachedResources = await LearningResource.find({
+    $or: [
+      { lessonId: lesson._id },
+      { _id: { $in: lesson.resourceIds || [] } },
+      { courseId: course._id, lessonId: null, moduleId: null },
+      { moduleId: lesson.moduleId, lessonId: null },
+    ],
+    publicationStatus: "published",
+  }).sort({ sortOrder: 1, createdAt: 1 }).lean();
+
+  const serializedResources = await Promise.all(
+    attachedResources.map(async (r) => {
+      const isAllowed = r.accessLevel === "free"
+        ? true
+        : (await resolveLearnAccess({ userId, accessLevel: r.accessLevel, owner, admin })).allowed;
+      return serializeResource(r, { allowed: isAllowed });
+    })
+  );
 
   let progress = null;
   if (userId && !owner && !admin) {
@@ -156,7 +183,17 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
     }
   }
 
-  return { course: serializeCourse(course), lesson: serializeLesson(lesson, { allowed: true }), accessReason: access.reason, progress };
+  const curriculum = await curriculumForCourse(course._id);
+
+  return {
+    course: serializeCourse(course, { curriculum }),
+    lesson: {
+      ...serializeLesson(lesson, { allowed: true }),
+      resources: serializedResources,
+    },
+    accessReason: access.reason,
+    progress,
+  };
 };
 
 const createCourse = async (creator, input) => {
@@ -319,9 +356,11 @@ const enroll = async (userId, courseId) => {
 
 const recordExerciseAttempt = async ({ userId, courseId, courseSlug, lessonId, blockId, passed }) => {
   const courseQuery = courseId ? { _id: courseId } : { slug: courseSlug };
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid ? { _id: lessonId, isDeleted: false } : { stableKey: lessonId, isDeleted: false };
   const [course, lesson] = await Promise.all([
     Course.findOne({ ...courseQuery, publicationStatus: "published", isDeleted: false }).lean(),
-    CourseLesson.findOne({ _id: lessonId, isDeleted: false }).lean(),
+    CourseLesson.findOne(lessonQuery).lean(),
   ]);
   if (!course || !lesson) throw errorWith("Course Lesson not found.", 404, "LESSON_NOT_FOUND");
   await ensureCourseAccess(course, userId);
@@ -347,8 +386,19 @@ const recordExerciseAttempt = async ({ userId, courseId, courseSlug, lessonId, b
   }
   progress.exerciseAttempts = (progress.exerciseAttempts || 0) + 1;
   progress.lastActivityAt = new Date();
+  const wasAlreadyPassed = Boolean(progress.exercisePassed);
   if (passed === true) {
     progress.exercisePassed = true;
+    if (!wasAlreadyPassed) {
+      await LearningEvent.create({
+        userId,
+        courseId: course._id,
+        lessonId: lesson._id,
+        eventType: "exercise_passed",
+        idempotencyKey: `exercise_passed:${course._id}:${lesson._id}:${block.id}`,
+        entitlementPlan: "free",
+      }).catch(() => {});
+    }
   }
   enrollment.lastActivityAt = new Date();
   await enrollment.save();
@@ -367,7 +417,11 @@ const evaluateQuiz = async ({ courseSlug, courseId, lessonId, userId, answers })
   if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
   await ensureCourseAccess(course, userId);
 
-  const lesson = await CourseLesson.findOne({ _id: lessonId, courseId: course._id, isDeleted: false })
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid
+    ? { _id: lessonId, courseId: course._id, isDeleted: false }
+    : { stableKey: lessonId, courseId: course._id, isDeleted: false };
+  const lesson = await CourseLesson.findOne(lessonQuery)
     .select("+quizQuestions.correctOptionIndex +quizQuestions.explanation")
     .lean();
   if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
@@ -407,8 +461,19 @@ const evaluateQuiz = async ({ courseSlug, courseId, lessonId, userId, answers })
   }
   progress.quizScore = scorePercent;
   progress.lastActivityAt = new Date();
+  const wasQuizPassed = Boolean(progress.quizPassed);
   if (passed) {
     progress.quizPassed = true;
+    if (!wasQuizPassed) {
+      await LearningEvent.create({
+        userId,
+        courseId: course._id,
+        lessonId: lesson._id,
+        eventType: "quiz_passed",
+        idempotencyKey: `quiz_passed:${course._id}:${lesson._id}`,
+        entitlementPlan: "free",
+      }).catch(() => {});
+    }
   }
   enrollment.lastActivityAt = new Date();
   await enrollment.save();
@@ -422,7 +487,11 @@ const revealSolution = async ({ courseSlug, courseId, lessonId, userId, blockId 
   if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
   await ensureCourseAccess(course, userId);
 
-  const lesson = await CourseLesson.findOne({ _id: lessonId, courseId: course._id, isDeleted: false })
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid
+    ? { _id: lessonId, courseId: course._id, isDeleted: false }
+    : { stableKey: lessonId, courseId: course._id, isDeleted: false };
+  const lesson = await CourseLesson.findOne(lessonQuery)
     .select("+codingBlocks.solutionCode")
     .lean();
   if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
@@ -525,6 +594,427 @@ const continueLearning = async (userId, limit = 8) => CourseEnrollment.find({ us
   .limit(Math.min(20, Math.max(1, Number(limit) || 8)))
   .lean();
 
+const CANONICAL_CODING_SLUGS = [
+  "html-foundations",
+  "css-foundations",
+  "javascript-foundations",
+  "python-foundations",
+];
+
+const getAdminCodingCourses = async () => {
+  const courses = await Course.find({
+    $or: [
+      { slug: { $in: CANONICAL_CODING_SLUGS } },
+      { isSystemOwned: true },
+    ],
+    isDeleted: false,
+  }).sort({ createdAt: 1 }).lean();
+
+  const results = await Promise.all(
+    courses.map(async (course) => {
+      const curriculum = await curriculumForCourse(course._id, null);
+      return serializeCourse(course, { curriculum });
+    })
+  );
+  return results;
+};
+
+const updateAdminCodingCourse = async (courseId, input) => {
+  const isOid = mongoose.isValidObjectId(courseId);
+  const query = isOid ? { _id: courseId, isDeleted: false } : { slug: courseId, isDeleted: false };
+  const course = await Course.findOne(query);
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+
+  if (input.title !== undefined) course.title = String(input.title).trim();
+  if (input.subtitle !== undefined) course.subtitle = String(input.subtitle).trim();
+  if (input.description !== undefined) course.description = String(input.description).trim();
+  if (input.level !== undefined) course.level = input.level;
+  if (input.accessLevel !== undefined) {
+    course.accessLevel = input.accessLevel === "premium" ? "premium" : "free";
+    course.monetizationType = course.accessLevel === "premium" ? "PREMIUM_INCLUDED" : "FREE";
+  }
+  if (input.learningOutcomes !== undefined) course.learningOutcomes = uniqueStrings(input.learningOutcomes, 20);
+  if (input.prerequisites !== undefined) course.prerequisites = uniqueStrings(input.prerequisites, 20);
+  if (input.publicationStatus !== undefined && ["published", "draft", "archived"].includes(input.publicationStatus)) {
+    course.publicationStatus = input.publicationStatus;
+  }
+  if (input.estimatedDurationMinutes !== undefined) course.estimatedDurationMinutes = Number(input.estimatedDurationMinutes) || 0;
+
+  course.contentVersion += 1;
+  await course.save();
+
+  const curriculum = await curriculumForCourse(course._id, null);
+  return serializeCourse(course.toObject(), { curriculum });
+};
+
+const getAdminCodingLesson = async (lessonId) => {
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid ? { _id: lessonId, isDeleted: false } : { stableKey: lessonId, isDeleted: false };
+  const lesson = await CourseLesson.findOne(lessonQuery)
+    .select("+body +codingBlocks.solutionCode +codingBlocks.tests +quizQuestions.correctOptionIndex +quizQuestions.explanation +resourceIds")
+    .lean();
+  if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
+  return lesson;
+};
+
+const updateAdminCodingLesson = async (lessonId, input) => {
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid ? { _id: lessonId, isDeleted: false } : { stableKey: lessonId, isDeleted: false };
+  const lesson = await CourseLesson.findOne(lessonQuery)
+    .select("+body +codingBlocks.solutionCode +codingBlocks.tests +quizQuestions.correctOptionIndex +quizQuestions.explanation +resourceIds");
+  if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
+
+  if (input.title !== undefined) lesson.title = String(input.title).trim();
+  if (input.description !== undefined) lesson.description = String(input.description).trim();
+  if (input.body !== undefined) lesson.body = String(input.body);
+  if (input.lessonType !== undefined) lesson.lessonType = input.lessonType;
+  if (input.durationSeconds !== undefined) lesson.durationSeconds = Number(input.durationSeconds) || 0;
+  if (input.isPreview !== undefined) lesson.isPreview = Boolean(input.isPreview);
+  if (input.order !== undefined) lesson.order = Number(input.order) || 0;
+  if (input.completionMode !== undefined) lesson.completionMode = input.completionMode;
+  if (Array.isArray(input.resourceIds)) lesson.resourceIds = input.resourceIds;
+
+  if (Array.isArray(input.codingBlocks)) {
+    lesson.codingBlocks = input.codingBlocks.map((b, bIdx) => ({
+      id: String(b.id || crypto.randomUUID()),
+      blockType: b.blockType || "explanation",
+      title: String(b.title || "").trim(),
+      content: String(b.content || ""),
+      language: String(b.language || "html"),
+      starterCode: String(b.starterCode || ""),
+      instructions: String(b.instructions || ""),
+      expectedOutput: String(b.expectedOutput || ""),
+      hints: Array.isArray(b.hints) ? b.hints.map((h) => String(h).slice(0, 1000)) : [],
+      validationRules: b.validationRules || null,
+      solutionCode: String(b.solutionCode || ""),
+      tests: Array.isArray(b.tests) ? b.tests.map((t) => ({
+        description: String(t.description || ""),
+        testCode: String(t.testCode || ""),
+        hidden: Boolean(t.hidden),
+      })) : [],
+      order: Number(b.order ?? bIdx),
+    }));
+  }
+
+  if (Array.isArray(input.quizQuestions)) {
+    lesson.quizQuestions = input.quizQuestions.map((q, qIdx) => ({
+      id: String(q.id || crypto.randomUUID()),
+      question: String(q.question || "").trim(),
+      options: Array.isArray(q.options) ? q.options.map((o) => ({ id: String(o.id || crypto.randomUUID()), text: String(o.text || "").trim() })) : [],
+      correctOptionIndex: Number(q.correctOptionIndex ?? 0),
+      explanation: String(q.explanation || "").trim(),
+      order: Number(q.order ?? qIdx),
+    }));
+  }
+
+  lesson.contentVersion += 1;
+  await lesson.save();
+  return lesson.toObject();
+};
+
+const listAdminCodingMaterials = async (query = {}) => {
+  const filter = {};
+  if (query.courseId) filter.courseId = query.courseId;
+  if (query.lessonId) filter.lessonId = query.lessonId;
+  if (query.resourceType) filter.resourceType = query.resourceType;
+  if (query.resourceCategory) filter.resourceCategory = query.resourceCategory;
+
+  const materials = await LearningResource.find(filter)
+    .populate({ path: "courseId", select: "title slug" })
+    .populate({ path: "lessonId", select: "title stableKey order" })
+    .sort({ sortOrder: 1, createdAt: -1 })
+    .lean();
+
+  return materials;
+};
+
+const createAdminCodingMaterial = async (input) => {
+  if (!input.title) throw errorWith("Material title is required.", 422, "TITLE_REQUIRED");
+  if (!input.resourceType) throw errorWith("Material resourceType is required.", 422, "TYPE_REQUIRED");
+
+  const baseSlug = slugify(input.title) || "material";
+  const slug = `${baseSlug}-${Date.now().toString(36)}`;
+
+  const material = await LearningResource.create({
+    isSystemOwned: true,
+    title: String(input.title).trim(),
+    slug,
+    description: String(input.description || "").trim(),
+    resourceType: input.resourceType,
+    resourceCategory: input.resourceCategory || "general",
+    accessLevel: input.accessLevel === "premium" ? "premium" : "free",
+    externalUrl: String(input.externalUrl || "").trim(),
+    filename: String(input.filename || "").trim(),
+    textContent: String(input.textContent || ""),
+    sizeBytes: Number(input.sizeBytes || 0),
+    courseId: input.courseId || null,
+    moduleId: input.moduleId || null,
+    lessonId: input.lessonId || null,
+    publicationStatus: input.publicationStatus || "published",
+    sortOrder: Number(input.sortOrder || 0),
+    rightsConfirmedAt: new Date(),
+    publishedAt: input.publicationStatus === "published" ? new Date() : null,
+  });
+
+  return material;
+};
+
+const updateAdminCodingMaterial = async (id, input) => {
+  const material = await LearningResource.findById(id);
+  if (!material) throw errorWith("Material not found.", 404, "MATERIAL_NOT_FOUND");
+
+  if (input.title !== undefined) material.title = String(input.title).trim();
+  if (input.description !== undefined) material.description = String(input.description).trim();
+  if (input.resourceType !== undefined) material.resourceType = input.resourceType;
+  if (input.resourceCategory !== undefined) material.resourceCategory = input.resourceCategory;
+  if (input.accessLevel !== undefined) material.accessLevel = input.accessLevel === "premium" ? "premium" : "free";
+  if (input.externalUrl !== undefined) material.externalUrl = String(input.externalUrl).trim();
+  if (input.filename !== undefined) material.filename = String(input.filename).trim();
+  if (input.textContent !== undefined) material.textContent = String(input.textContent);
+  if (input.sizeBytes !== undefined) material.sizeBytes = Number(input.sizeBytes) || 0;
+  if (input.courseId !== undefined) material.courseId = input.courseId || null;
+  if (input.moduleId !== undefined) material.moduleId = input.moduleId || null;
+  if (input.lessonId !== undefined) material.lessonId = input.lessonId || null;
+  if (input.publicationStatus !== undefined) {
+    material.publicationStatus = input.publicationStatus;
+    if (input.publicationStatus === "published" && !material.publishedAt) material.publishedAt = new Date();
+  }
+  if (input.sortOrder !== undefined) material.sortOrder = Number(input.sortOrder) || 0;
+
+  await material.save();
+  return material;
+};
+
+const deleteAdminCodingMaterial = async (id) => {
+  const material = await LearningResource.findById(id);
+  if (!material) throw errorWith("Material not found.", 404, "MATERIAL_NOT_FOUND");
+  material.isDeleted = true;
+  await material.save();
+  return { deleted: true, id };
+};
+
+const listLearnerCodingResources = async (query = {}, userId = null) => {
+  const filter = { publicationStatus: "published" };
+
+  if (query.track) {
+    const course = await Course.findOne({
+      $or: [{ slug: query.track }, { slug: `${query.track}-foundations` }],
+      isDeleted: false,
+    }).select("_id").lean();
+    if (course) filter.courseId = course._id;
+  }
+
+  if (query.category && query.category !== "all") {
+    filter.resourceCategory = query.category;
+  }
+
+  if (query.type && query.type !== "all") {
+    filter.resourceType = query.type;
+  }
+
+  const materials = await LearningResource.find(filter)
+    .populate({ path: "courseId", select: "title slug accessLevel" })
+    .populate({ path: "lessonId", select: "title stableKey" })
+    .sort({ sortOrder: 1, createdAt: -1 })
+    .lean();
+
+  const accessCache = new Map();
+  const serialized = await Promise.all(
+    materials.map(async (item) => {
+      let isAllowed = item.accessLevel === "free";
+      if (!isAllowed) {
+        if (!userId) {
+          isAllowed = false;
+        } else {
+          if (!accessCache.has(userId)) {
+            const access = await resolveLearnAccess({ userId, accessLevel: "premium" });
+            accessCache.set(userId, access.allowed);
+          }
+          isAllowed = accessCache.get(userId);
+        }
+      }
+      return serializeResource(item, { allowed: isAllowed });
+    })
+  );
+
+  return serialized;
+};
+
+const slugToTrack = (slug) => {
+  const s = String(slug || "").toLowerCase();
+  if (s.includes("html")) return "html";
+  if (s.includes("css")) return "css";
+  if (s.includes("javascript") || s.includes("js")) return "javascript";
+  if (s.includes("python") || s.includes("py")) return "python";
+  return "html";
+};
+
+const createSubmission = async ({ courseSlug, lessonId, userId, payload }) => {
+  if (!userId) throw errorWith("Authentication required.", 401, "UNAUTHENTICATED");
+  if (!payload || typeof payload !== "object") throw errorWith("Invalid submission payload.", 400, "INVALID_PAYLOAD");
+
+  const {
+    blockId,
+    codeSnapshot,
+    status,
+    testsPassed = 0,
+    testsTotal = 0,
+    runtimeMs = 0,
+    validationSummary = [],
+  } = payload;
+
+  if (typeof codeSnapshot !== "string") {
+    throw errorWith("Code snapshot is required and must be a string.", 400, "INVALID_CODE");
+  }
+
+  const byteLength = Buffer.byteLength(codeSnapshot, "utf8");
+  if (byteLength > 65536) {
+    throw errorWith("Code snapshot exceeds the 64 KB limit.", 400, "CODE_EXCEEDS_64KB");
+  }
+
+  const validStatuses = ["accepted", "partially_passed", "failed", "runtime_error", "syntax_error", "timeout"];
+  if (!validStatuses.includes(status)) {
+    throw errorWith("Invalid submission status.", 400, "INVALID_STATUS");
+  }
+
+  const courseQuery = mongoose.isValidObjectId(courseSlug) ? { _id: courseSlug } : { slug: courseSlug };
+  const course = await Course.findOne({ ...courseQuery, publicationStatus: "published", isDeleted: false }).lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+
+  await ensureCourseAccess(course, userId);
+
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid
+    ? { _id: lessonId, courseId: course._id, isDeleted: false }
+    : { stableKey: lessonId, courseId: course._id, isDeleted: false };
+  const lesson = await CourseLesson.findOne(lessonQuery).lean();
+  if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
+
+  const block = (lesson.codingBlocks || []).find((b) => !blockId || String(b.id) === String(blockId));
+  if (!block) throw errorWith("Coding block not found.", 404, "CODING_BLOCK_NOT_FOUND");
+
+  const sanitizedPassed = Math.max(0, Math.floor(Number(testsPassed) || 0));
+  const sanitizedTotal = Math.max(0, Math.floor(Number(testsTotal) || 0));
+  if (sanitizedPassed > sanitizedTotal) {
+    throw errorWith("testsPassed cannot exceed testsTotal.", 400, "INVALID_TEST_COUNTS");
+  }
+
+  const sanitizedValidation = (Array.isArray(validationSummary) ? validationSummary : [])
+    .slice(0, 50)
+    .map((v) => ({
+      description: String(v.description || v.name || "Check").slice(0, 500),
+      passed: Boolean(v.passed),
+      message: String(v.message || "").slice(0, 1000),
+    }));
+
+  const trackKey = slugToTrack(course.slug);
+
+  const submission = await CodingSubmission.create({
+    userId,
+    courseId: course._id,
+    lessonId: lesson._id,
+    blockId: String(block.id || block._id || "block-1"),
+    track: trackKey,
+    language: block.language || "javascript",
+    codeSnapshot,
+    status,
+    testsPassed: sanitizedPassed,
+    testsTotal: sanitizedTotal,
+    runtimeMs: Math.max(0, Math.min(60000, Math.floor(Number(runtimeMs) || 0))),
+    validationSummary: sanitizedValidation,
+    submittedAt: new Date(),
+  });
+
+  return {
+    success: true,
+    submission: {
+      id: String(submission._id),
+      courseId: String(submission.courseId),
+      lessonId: String(submission.lessonId),
+      blockId: submission.blockId,
+      track: submission.track,
+      language: submission.language,
+      status: submission.status,
+      testsPassed: submission.testsPassed,
+      testsTotal: submission.testsTotal,
+      runtimeMs: submission.runtimeMs,
+      validationSummary: submission.validationSummary,
+      submittedAt: submission.submittedAt,
+      // Submission payloads are learner-authored history only. They never mutate mastery.
+      exercisePassed: false,
+    },
+  };
+};
+
+const listSubmissions = async ({ courseSlug, lessonId, userId }) => {
+  if (!userId) throw errorWith("Authentication required.", 401, "UNAUTHENTICATED");
+
+  const courseQuery = mongoose.isValidObjectId(courseSlug) ? { _id: courseSlug } : { slug: courseSlug };
+  const course = await Course.findOne({ ...courseQuery, isDeleted: false }).lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+
+  const isOid = mongoose.isValidObjectId(lessonId);
+  const lessonQuery = isOid
+    ? { _id: lessonId, courseId: course._id, isDeleted: false }
+    : { stableKey: lessonId, courseId: course._id, isDeleted: false };
+  const lesson = await CourseLesson.findOne(lessonQuery).lean();
+  if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
+
+  const submissions = await CodingSubmission.find({
+    userId,
+    lessonId: lesson._id,
+  })
+    .sort({ submittedAt: -1 })
+    .limit(50)
+    .lean();
+
+  return {
+    success: true,
+    submissions: submissions.map((s, index, arr) => ({
+      id: String(s._id),
+      submissionNumber: arr.length - index,
+      status: s.status,
+      testsPassed: s.testsPassed,
+      testsTotal: s.testsTotal,
+      language: s.language,
+      runtimeMs: s.runtimeMs,
+      submittedAt: s.submittedAt,
+    })),
+  };
+};
+
+const getSubmission = async ({ courseSlug, lessonId, submissionId, userId }) => {
+  if (!userId) throw errorWith("Authentication required.", 401, "UNAUTHENTICATED");
+  if (!mongoose.isValidObjectId(submissionId)) {
+    throw errorWith("Invalid submission ID.", 400, "INVALID_SUBMISSION_ID");
+  }
+
+  const submission = await CodingSubmission.findById(submissionId).lean();
+  if (!submission) throw errorWith("Submission not found.", 404, "SUBMISSION_NOT_FOUND");
+
+  // Strict ownership check: only the author may view their code snapshot
+  if (String(submission.userId) !== String(userId)) {
+    throw errorWith("You are not authorized to view this submission.", 403, "FORBIDDEN");
+  }
+
+  return {
+    success: true,
+    submission: {
+      id: String(submission._id),
+      blockId: submission.blockId,
+      track: submission.track,
+      language: submission.language,
+      codeSnapshot: submission.codeSnapshot,
+      status: submission.status,
+      testsPassed: submission.testsPassed,
+      testsTotal: submission.testsTotal,
+      runtimeMs: submission.runtimeMs,
+      validationSummary: submission.validationSummary,
+      submittedAt: submission.submittedAt,
+    },
+  };
+};
+
 module.exports = {
   continueLearning,
   createCourse,
@@ -541,4 +1031,16 @@ module.exports = {
   revealSolution,
   submitCourse,
   updateCourse,
+  getAdminCodingCourses,
+  updateAdminCodingCourse,
+  getAdminCodingLesson,
+  updateAdminCodingLesson,
+  listAdminCodingMaterials,
+  createAdminCodingMaterial,
+  updateAdminCodingMaterial,
+  deleteAdminCodingMaterial,
+  listLearnerCodingResources,
+  createSubmission,
+  listSubmissions,
+  getSubmission,
 };

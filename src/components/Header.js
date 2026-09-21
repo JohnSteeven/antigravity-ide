@@ -346,7 +346,7 @@ const Header = () => {
                           return (
                             <Link
                               key={cat.id || cat._id || cat.slug}
-                              to={`/category/${cat.slug}`}
+                              to={cat.slug === "coding" ? "/coding" : `/category/${cat.slug}`}
                               className="mega-menu-item"
                               onClick={() => setIsCategoriesOpen(false)}
                             >
@@ -700,7 +700,7 @@ const Header = () => {
                         {featuredCategories.map((cat) => (
                           <li key={cat.id || cat._id || cat.slug}>
                             <Link
-                              to={`/category/${cat.slug}`}
+                              to={cat.slug === "coding" ? "/coding" : `/category/${cat.slug}`}
                               onClick={() => setIsMobileOpen(false)}
                             >
                               {cat.name === "Incidents" ? "Experiences" : cat.name}
