@@ -56,9 +56,14 @@ describe("responsive and accessibility contracts", () => {
     expect(mobile).toContain("Sign In to MyJourney");
   });
 
-  test("authenticated navigation keeps Life private and account routes server-compatible", () => {
+  test("guest navigation exposes Life while account routes remain available", () => {
     const header = read("src", "components", "Header.js");
-    expect(header).toMatch(/\{isAuthenticated && \([\s\S]*?to="\/life\/today"/);
+    const desktop = header.slice(header.indexOf("Desktop Navigation"), header.indexOf("Right Header Actions"));
+    const mobile = header.slice(header.indexOf("Mobile Drawer & Backdrop"), header.indexOf("Mobile Categories Collapsible"));
+    expect(desktop).toContain('to="/life/today"');
+    expect(mobile).toContain('to="/life/today"');
+    expect(desktop).not.toContain("{isAuthenticated && (");
+    expect(mobile).not.toContain("{isAuthenticated && (");
     ["/profile/subscription", "/profile", "/profile/dashboard", "/edit-profile"].forEach(
       (route) => expect(header).toContain(`to="${route}"`)
     );

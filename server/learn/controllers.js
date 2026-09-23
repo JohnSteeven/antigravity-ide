@@ -361,5 +361,93 @@ exports.getSubmission = async (req, res, next) => {
   } catch (error) { return next(error); }
 };
 
+// ── CMS Admin Coding — new controllers ────────────────────────────────────────
+
+exports.createAdminCodingCourse = async (req, res, next) => {
+  try {
+    const data = await courseService.createAdminCodingCourse(req.body);
+    return res.status(201).json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.createAdminCodingModule = async (req, res, next) => {
+  try {
+    const data = await courseService.createAdminCodingModule(req.params.id, req.body);
+    return res.status(201).json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.updateAdminCodingModule = async (req, res, next) => {
+  try {
+    const data = await courseService.updateAdminCodingModule(req.params.id, req.params.moduleId, req.body);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.deleteAdminCodingModule = async (req, res, next) => {
+  try {
+    const data = await courseService.deleteAdminCodingModule(req.params.id, req.params.moduleId);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.reorderAdminCodingModules = async (req, res, next) => {
+  try {
+    const data = await courseService.reorderAdminCodingModules(req.params.id, req.body);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.createAdminCodingLesson = async (req, res, next) => {
+  try {
+    const data = await courseService.createAdminCodingLesson(req.params.id, req.params.moduleId, req.body);
+    return res.status(201).json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.deleteAdminCodingLesson = async (req, res, next) => {
+  try {
+    const data = await courseService.deleteAdminCodingLesson(req.params.lessonId);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.reorderAdminCodingLessons = async (req, res, next) => {
+  try {
+    const data = await courseService.reorderAdminCodingLessons(req.params.id, req.params.moduleId, req.body);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.publishAdminCodingCourse = async (req, res, next) => {
+  try {
+    const data = await courseService.publishAdminCodingCourse(req.params.id);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.archiveAdminCodingCourse = async (req, res, next) => {
+  try {
+    const data = await courseService.archiveAdminCodingCourse(req.params.id);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.bulkUpdateAdminCodingAccess = async (req, res, next) => {
+  try {
+    const { courseIds, accessLevel } = req.body;
+    const data = await courseService.bulkUpdateAdminCodingAccess(courseIds, accessLevel);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.bulkPublishAdminCodingLessons = async (req, res, next) => {
+  try {
+    const { lessonIds } = req.body;
+    const data = await courseService.bulkPublishAdminCodingLessons(lessonIds);
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
 // Referenced so static contract tests can verify format-specific models remain separate.
 exports.models = { Course, CreatorVideo, PodcastEpisode, LearningResource };

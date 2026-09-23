@@ -45,7 +45,7 @@ router.get("/exams", searchLimiter, controllers.listExams);
 router.get("/media/capability", controllers.mediaCapability);
 router.get("/media/:assetId/access", authenticate, controllers.assetAccess);
 
-// Admin Coding Management (Admin-only)
+// Admin Coding Management (Admin-only) — existing
 router.get("/admin/coding/courses", authenticate, requireAdmin, controllers.getAdminCodingCourses);
 router.patch("/admin/coding/courses/:id", authenticate, requireAdmin, controllers.updateAdminCodingCourse);
 router.get("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, controllers.getAdminCodingLesson);
@@ -54,5 +54,20 @@ router.get("/admin/coding/materials", authenticate, requireAdmin, controllers.li
 router.post("/admin/coding/materials", authenticate, requireAdmin, controllers.createAdminCodingMaterial);
 router.patch("/admin/coding/materials/:id", authenticate, requireAdmin, controllers.updateAdminCodingMaterial);
 router.delete("/admin/coding/materials/:id", authenticate, requireAdmin, controllers.deleteAdminCodingMaterial);
+
+// Admin Coding Management (Admin-only) — CMS new endpoints
+router.post("/admin/coding/courses", authenticate, requireAdmin, controllers.createAdminCodingCourse);
+router.post("/admin/coding/courses/:id/modules", authenticate, requireAdmin, controllers.createAdminCodingModule);
+router.patch("/admin/coding/courses/:id/modules/:moduleId", authenticate, requireAdmin, controllers.updateAdminCodingModule);
+router.delete("/admin/coding/courses/:id/modules/:moduleId", authenticate, requireAdmin, controllers.deleteAdminCodingModule);
+router.post("/admin/coding/courses/:id/modules/reorder", authenticate, requireAdmin, controllers.reorderAdminCodingModules);
+router.post("/admin/coding/courses/:id/modules/:moduleId/lessons", authenticate, requireAdmin, controllers.createAdminCodingLesson);
+router.post("/admin/coding/courses/:id/modules/:moduleId/lessons/reorder", authenticate, requireAdmin, controllers.reorderAdminCodingLessons);
+router.delete("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, controllers.deleteAdminCodingLesson);
+router.patch("/admin/coding/courses/:id/publish", authenticate, requireAdmin, controllers.publishAdminCodingCourse);
+router.patch("/admin/coding/courses/:id/archive", authenticate, requireAdmin, controllers.archiveAdminCodingCourse);
+router.post("/admin/coding/bulk/access", authenticate, requireAdmin, controllers.bulkUpdateAdminCodingAccess);
+router.post("/admin/coding/bulk/publish-lessons", authenticate, requireAdmin, controllers.bulkPublishAdminCodingLessons);
+
 
 module.exports = router;

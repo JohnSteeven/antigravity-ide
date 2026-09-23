@@ -31,6 +31,7 @@ const CourseSchema = new mongoose.Schema({
   reviewedAt: { type: Date, default: null },
   reviewMessage: { type: String, default: "", maxlength: 2000 },
   isFeatured: { type: Boolean, default: false, index: true },
+  isSystemOwned: { type: Boolean, default: false, index: true },
   isDeleted: { type: Boolean, default: false, index: true },
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });

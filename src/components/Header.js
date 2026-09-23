@@ -294,16 +294,14 @@ const Header = () => {
                 </NavLink>
               </li>
 
-              {isAuthenticated && (
-                <li>
-                  <NavLink
-                    to="/life/today"
-                    className={isLifeActive ? "active" : ""}
-                  >
-                    Life
-                  </NavLink>
-                </li>
-              )}
+              <li>
+                <NavLink
+                  to="/life/today"
+                  className={isLifeActive ? "active" : ""}
+                >
+                  Life
+                </NavLink>
+              </li>
 
               {/* Categories Dropdown */}
               <li className="nav-dropdown-wrapper" ref={categoriesDropdownRef}>
@@ -667,17 +665,15 @@ const Header = () => {
                     </NavLink>
                   </li>
 
-                  {isAuthenticated && (
-                    <li>
-                      <NavLink
-                        to="/life/today"
-                        className={isLifeActive ? "active" : ""}
-                        onClick={() => setIsMobileOpen(false)}
-                      >
-                        Life
-                      </NavLink>
-                    </li>
-                  )}
+                  <li>
+                    <NavLink
+                      to="/life/today"
+                      className={isLifeActive ? "active" : ""}
+                      onClick={() => setIsMobileOpen(false)}
+                    >
+                      Life
+                    </NavLink>
+                  </li>
 
                   {/* Mobile Categories Collapsible */}
                   <li className="mobile-cat-accordion">

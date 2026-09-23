@@ -684,8 +684,9 @@ const updateAdminCodingLesson = async (lessonId, input) => {
       starterCode: String(b.starterCode || ""),
       instructions: String(b.instructions || ""),
       expectedOutput: String(b.expectedOutput || ""),
+      previewFixture: String(b.previewFixture || ""),
       hints: Array.isArray(b.hints) ? b.hints.map((h) => String(h).slice(0, 1000)) : [],
-      validationRules: b.validationRules || null,
+      validationRules: b.validationRules ? sanitizeValidationRules(b.validationRules) : null,
       solutionCode: String(b.solutionCode || ""),
       tests: Array.isArray(b.tests) ? b.tests.map((t) => ({
         description: String(t.description || ""),
@@ -1015,7 +1016,505 @@ const getSubmission = async ({ courseSlug, lessonId, submissionId, userId }) => 
   };
 };
 
+
+// ─── CMS: system-author identity ────────────────────────────────────────────
+const SYSTEM_LEARNING_SLUG = "myjourney-learning";
+
+/**
+ * Resolves the system-owned CreatorProfile for new Coding CMS tracks.
+ * Uses the same slug as seedCodingCurriculum.js — idempotent, never creates duplicates.
+ */
+const resolveSystemCreator = async () => {
+  const CreatorProfile = require("../models/CreatorProfile");
+  const profile = await CreatorProfile.findOne({ slug: SYSTEM_LEARNING_SLUG }).select("_id").lean();
+  if (!profile) {
+    throw errorWith(
+      "System creator profile 'myjourney-learning' not found. Run the coding curriculum seeder first.",
+      500,
+      "SYSTEM_CREATOR_MISSING"
+    );
+  }
+  return profile._id;
+};
+
+// ─── CMS: VALID_VALIDATION_RULE_TYPES — server-side whitelist (Amendment #9) ─
+const VALID_VALIDATION_RULE_TYPES = new Set([
+  // HTML
+  "element_exists", "element_attribute", "text_content",
+  // CSS
+  "selector_property", "has_media_query",
+  // JS / Python
+  "output_contains", "stdout_contains",
+  "output_pattern", "stdout_pattern",
+  "code_contains", "syntax_contains",
+  "pattern",
+]);
+
+const VALID_VALIDATION_FIELDS = new Set([
+  "selector", "attribute", "value", "pattern",
+  "property", "expected", "description", "message",
+]);
+
+const sanitizeValidationRules = (rules) => {
+  if (!Array.isArray(rules)) return null;
+  return rules.slice(0, 50).map((r) => {
+    if (!r || typeof r !== "object") return null;
+    if (!VALID_VALIDATION_RULE_TYPES.has(r.type)) return null;
+    const safe = { type: r.type };
+    for (const key of VALID_VALIDATION_FIELDS) {
+      if (r[key] !== undefined) safe[key] = String(r[key]).slice(0, 2000);
+    }
+    return safe;
+  }).filter(Boolean);
+};
+
+// ─── CMS: RUNTIME VALIDATION (Amendment #3) ──────────────────────────────────
+const SUPPORTED_RUNTIMES = new Set(["html", "css", "javascript", "python"]);
+
+const assertRuntimeAvailable = (language) => {
+  if (language && !SUPPORTED_RUNTIMES.has(String(language).toLowerCase())) {
+    throw errorWith(
+      `Runtime '${language}' is not currently available for learner execution. Save as Draft only.`,
+      400,
+      "RUNTIME_NOT_AVAILABLE"
+    );
+  }
+};
+
+// ─── CMS: createAdminCodingCourse ─────────────────────────────────────────────
+/**
+ * Creates a new system-owned Coding track (Course).
+ * System ownership is enforced; no Creator Studio leak.
+ * Uses the existing "myjourney-learning" creator profile idempotently (Amendment #12).
+ * New tracks default to publicationStatus=draft (Amendment #18 — never auto-publish).
+ * Adding the field does not break the four canonical tracks (Amendment #11).
+ */
+const createAdminCodingCourse = async (input) => {
+  if (!input.title || !String(input.title).trim()) {
+    throw errorWith("Track title is required.", 422, "TITLE_REQUIRED");
+  }
+  if (!input.language || !String(input.language).trim()) {
+    throw errorWith("Track language is required (e.g. html, css, javascript, python).", 422, "LANGUAGE_REQUIRED");
+  }
+
+  const creatorId = await resolveSystemCreator();
+  const slug = await findAvailableSlug(String(input.title).trim());
+
+  const course = await Course.create({
+    creatorId,
+    title: String(input.title).trim(),
+    slug,
+    subtitle: String(input.subtitle || "").trim(),
+    description: String(input.description || input.title).trim(),
+    language: String(input.language).trim().toLowerCase(),
+    level: ["beginner", "intermediate", "advanced", "all_levels"].includes(input.level) ? input.level : "beginner",
+    accessLevel: input.accessLevel === "premium" ? "premium" : "free",
+    monetizationType: input.accessLevel === "premium" ? "PREMIUM_INCLUDED" : "FREE",
+    publicationStatus: "draft",
+    workflowStatus: "draft",
+    isSystemOwned: true,
+    rightsConfirmedAt: new Date(),
+    estimatedDurationMinutes: Number(input.estimatedDurationMinutes || 0) || 0,
+    learningOutcomes: Array.isArray(input.learningOutcomes) ? uniqueStrings(input.learningOutcomes, 20) : [],
+    prerequisites: Array.isArray(input.prerequisites) ? uniqueStrings(input.prerequisites, 20) : [],
+  });
+
+  return serializeCourse(course.toObject(), {});
+};
+
+// ─── CMS: createAdminCodingModule ─────────────────────────────────────────────
+const createAdminCodingModule = async (courseId, input) => {
+  const isOid = mongoose.isValidObjectId(courseId);
+  const courseQ = isOid ? { _id: courseId } : { slug: courseId };
+  const course = await Course.findOne({ ...courseQ, isDeleted: false }).lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden: course is not a system-owned Coding track.", 403, "NOT_SYSTEM_COURSE");
+  }
+  if (!input.title || !String(input.title).trim()) {
+    throw errorWith("Module title is required.", 422, "TITLE_REQUIRED");
+  }
+
+  // Place new module at end (highest existing order + 1)
+  const maxOrderDoc = await CourseModule.findOne({ courseId: course._id, isDeleted: false })
+    .sort({ order: -1 }).select("order").lean();
+  const newOrder = (maxOrderDoc ? maxOrderDoc.order : -1) + 1;
+
+  const stableKey = `module-${String(course.slug).replace(/[^a-z0-9]/g, "-")}-${Date.now().toString(36)}`;
+
+  const module = await CourseModule.create({
+    courseId: course._id,
+    creatorId: course.creatorId,
+    title: String(input.title).trim(),
+    description: String(input.description || "").trim().slice(0, 1200),
+    order: newOrder,
+    stableKey,
+  });
+
+  // Update moduleCount on course
+  const moduleCount = await CourseModule.countDocuments({ courseId: course._id, isDeleted: false });
+  await Course.updateOne({ _id: course._id }, { moduleCount, structuralVersion: course.structuralVersion + 1 });
+
+  return { id: String(module._id), stableKey: module.stableKey, title: module.title, description: module.description, order: module.order };
+};
+
+// ─── CMS: updateAdminCodingModule ─────────────────────────────────────────────
+const updateAdminCodingModule = async (courseId, moduleId, input) => {
+  const course = await Course.findOne({
+    ...(mongoose.isValidObjectId(courseId) ? { _id: courseId } : { slug: courseId }),
+    isDeleted: false,
+  }).select("_id isSystemOwned slug").lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden: course is not a system-owned Coding track.", 403, "NOT_SYSTEM_COURSE");
+  }
+
+  const mod = await CourseModule.findOne({ _id: moduleId, courseId: course._id, isDeleted: false });
+  if (!mod) throw errorWith("Module not found.", 404, "MODULE_NOT_FOUND");
+
+  if (input.title !== undefined) mod.title = String(input.title).trim();
+  if (input.description !== undefined) mod.description = String(input.description).trim().slice(0, 1200);
+  await mod.save();
+
+  return { id: String(mod._id), stableKey: mod.stableKey, title: mod.title, description: mod.description, order: mod.order };
+};
+
+// ─── CMS: deleteAdminCodingModule ─────────────────────────────────────────────
+const deleteAdminCodingModule = async (courseId, moduleId) => {
+  const course = await Course.findOne({
+    ...(mongoose.isValidObjectId(courseId) ? { _id: courseId } : { slug: courseId }),
+    isDeleted: false,
+  }).select("_id isSystemOwned slug structuralVersion").lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden: course is not a system-owned Coding track.", 403, "NOT_SYSTEM_COURSE");
+  }
+
+  const mod = await CourseModule.findOne({ _id: moduleId, courseId: course._id, isDeleted: false });
+  if (!mod) throw errorWith("Module not found.", 404, "MODULE_NOT_FOUND");
+
+  // Soft-delete module (Amendment #2)
+  mod.isDeleted = true;
+  await mod.save();
+
+  // Soft-delete lessons within this module (preserve enrollments/analytics per Amendment #2)
+  await CourseLesson.updateMany({ moduleId: mod._id, isDeleted: false }, { isDeleted: true });
+
+  const moduleCount = await CourseModule.countDocuments({ courseId: course._id, isDeleted: false });
+  const lessonCount = await CourseLesson.countDocuments({ courseId: course._id, isDeleted: false });
+  await Course.updateOne({ _id: course._id }, { moduleCount, lessonCount, structuralVersion: course.structuralVersion + 1 });
+
+  return { deleted: true, moduleId };
+};
+
+// ─── CMS: reorderAdminCodingModules ──────────────────────────────────────────
+/**
+ * Accepts: { orderedIds: [moduleId, moduleId, ...] }
+ * Re-assigns order 0,1,2,… to the given IDs in sequence.
+ */
+const reorderAdminCodingModules = async (courseId, input) => {
+  const course = await Course.findOne({
+    ...(mongoose.isValidObjectId(courseId) ? { _id: courseId } : { slug: courseId }),
+    isDeleted: false,
+  }).select("_id isSystemOwned slug").lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden.", 403, "NOT_SYSTEM_COURSE");
+  }
+  if (!Array.isArray(input.orderedIds) || input.orderedIds.length === 0) {
+    throw errorWith("orderedIds array is required.", 422, "ORDERED_IDS_REQUIRED");
+  }
+
+  const existingModules = await CourseModule.find({ courseId: course._id, isDeleted: false }).select("_id").lean();
+  const existingIds = new Set(existingModules.map((m) => String(m._id)));
+
+  for (const id of input.orderedIds) {
+    if (!existingIds.has(String(id))) {
+      throw errorWith(`Module ${id} does not belong to this course.`, 422, "INVALID_MODULE_ID");
+    }
+  }
+
+  await Promise.all(
+    input.orderedIds.map((id, idx) =>
+      CourseModule.updateOne({ _id: id, courseId: course._id }, { order: idx })
+    )
+  );
+
+  return { reordered: true };
+};
+
+// ─── CMS: createAdminCodingLesson ─────────────────────────────────────────────
+const createAdminCodingLesson = async (courseId, moduleId, input) => {
+  const course = await Course.findOne({
+    ...(mongoose.isValidObjectId(courseId) ? { _id: courseId } : { slug: courseId }),
+    isDeleted: false,
+  }).select("_id isSystemOwned slug creatorId structuralVersion lessonCount").lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden: course is not a system-owned Coding track.", 403, "NOT_SYSTEM_COURSE");
+  }
+
+  const mod = await CourseModule.findOne({ _id: moduleId, courseId: course._id, isDeleted: false }).lean();
+  if (!mod) throw errorWith("Module not found.", 404, "MODULE_NOT_FOUND");
+
+  if (!input.title || !String(input.title).trim()) {
+    throw errorWith("Lesson title is required.", 422, "TITLE_REQUIRED");
+  }
+
+  // Check runtime if lesson is coding type (Amendment #3) — only on publish, but warn on create
+  const lessonType = input.lessonType || "coding";
+
+  const maxOrderDoc = await CourseLesson.findOne({ moduleId: mod._id, isDeleted: false })
+    .sort({ order: -1 }).select("order").lean();
+  const newOrder = (maxOrderDoc ? maxOrderDoc.order : -1) + 1;
+
+  const stableKey = `lesson-${String(course.slug).replace(/[^a-z0-9]/g, "-")}-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
+
+  const lesson = await CourseLesson.create({
+    courseId: course._id,
+    moduleId: mod._id,
+    creatorId: course.creatorId,
+    title: String(input.title).trim(),
+    description: String(input.description || "").trim(),
+    lessonType,
+    order: newOrder,
+    stableKey,
+    isPreview: Boolean(input.isPreview || false),
+    publicationStatus: "draft",
+    workflowStatus: "draft",
+    body: String(input.body || ""),
+    codingBlocks: [],
+    quizQuestions: [],
+  });
+
+  const lessonCount = await CourseLesson.countDocuments({ courseId: course._id, isDeleted: false });
+  await Course.updateOne({ _id: course._id }, { lessonCount, structuralVersion: course.structuralVersion + 1 });
+
+  return { id: String(lesson._id), stableKey: lesson.stableKey, title: lesson.title, lessonType: lesson.lessonType, order: lesson.order };
+};
+
+// ─── CMS: deleteAdminCodingLesson ─────────────────────────────────────────────
+const deleteAdminCodingLesson = async (lessonId) => {
+  const lesson = await CourseLesson.findOne({ _id: lessonId, isDeleted: false })
+    .select("+body").lean();
+  if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
+
+  const course = await Course.findOne({ _id: lesson.courseId, isDeleted: false })
+    .select("_id isSystemOwned slug lessonCount structuralVersion").lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden: lesson is not part of a system-owned Coding track.", 403, "NOT_SYSTEM_COURSE");
+  }
+
+  // Soft-delete; preserve enrollments, LearningEvents, CodingSubmissions (Amendment #2)
+  await CourseLesson.updateOne({ _id: lesson._id }, { isDeleted: true });
+
+  const lessonCount = await CourseLesson.countDocuments({ courseId: course._id, isDeleted: false });
+  await Course.updateOne({ _id: course._id }, { lessonCount, structuralVersion: course.structuralVersion + 1 });
+
+  return { deleted: true, lessonId };
+};
+
+// ─── CMS: reorderAdminCodingLessons ──────────────────────────────────────────
+const reorderAdminCodingLessons = async (courseId, moduleId, input) => {
+  const course = await Course.findOne({
+    ...(mongoose.isValidObjectId(courseId) ? { _id: courseId } : { slug: courseId }),
+    isDeleted: false,
+  }).select("_id isSystemOwned slug").lean();
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden.", 403, "NOT_SYSTEM_COURSE");
+  }
+
+  const mod = await CourseModule.findOne({ _id: moduleId, courseId: course._id, isDeleted: false }).lean();
+  if (!mod) throw errorWith("Module not found.", 404, "MODULE_NOT_FOUND");
+
+  if (!Array.isArray(input.orderedIds) || input.orderedIds.length === 0) {
+    throw errorWith("orderedIds array is required.", 422, "ORDERED_IDS_REQUIRED");
+  }
+
+  const existingLessons = await CourseLesson.find({ moduleId: mod._id, isDeleted: false }).select("_id").lean();
+  const existingIds = new Set(existingLessons.map((l) => String(l._id)));
+
+  for (const id of input.orderedIds) {
+    if (!existingIds.has(String(id))) {
+      throw errorWith(`Lesson ${id} does not belong to this module.`, 422, "INVALID_LESSON_ID");
+    }
+  }
+
+  await Promise.all(
+    input.orderedIds.map((id, idx) =>
+      CourseLesson.updateOne({ _id: id, moduleId: mod._id }, { order: idx })
+    )
+  );
+
+  return { reordered: true };
+};
+
+// ─── CMS: publishAdminCodingCourse ────────────────────────────────────────────
+/**
+ * Server-side runtime validation (Amendment #3): if course has runnable lessons
+ * with unsupported runtimes, reject with RUNTIME_NOT_AVAILABLE.
+ * Admin can still save as Draft even for unsupported runtimes.
+ */
+const publishAdminCodingCourse = async (courseId) => {
+  const isOid = mongoose.isValidObjectId(courseId);
+  const course = await Course.findOne({
+    ...(isOid ? { _id: courseId } : { slug: courseId }),
+    isDeleted: false,
+  });
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden.", 403, "NOT_SYSTEM_COURSE");
+  }
+
+  // Validate all coding lesson runtimes before publish
+  const runnableLessons = await CourseLesson.find({
+    courseId: course._id,
+    lessonType: "coding",
+    isDeleted: false,
+  }).select("codingBlocks title").lean();
+
+  for (const lesson of runnableLessons) {
+    for (const block of lesson.codingBlocks || []) {
+      if (!SUPPORTED_RUNTIMES.has(String(block.language || "").toLowerCase())) {
+        throw errorWith(
+          `Lesson '${lesson.title}' uses runtime '${block.language}' which is not available. Use Save Draft instead.`,
+          400,
+          "RUNTIME_NOT_AVAILABLE"
+        );
+      }
+    }
+  }
+
+  course.publicationStatus = "published";
+  course.workflowStatus = "approved";
+  if (!course.publishedAt) course.publishedAt = new Date();
+  course.contentVersion += 1;
+  await course.save();
+
+  const curriculum = await curriculumForCourse(course._id);
+  return serializeCourse(course.toObject(), { curriculum });
+};
+
+// ─── CMS: archiveAdminCodingCourse ────────────────────────────────────────────
+/**
+ * Soft-archive: sets publicationStatus='archived'.
+ * Record remains visible to Admin (Amendment #2). No enrollments/analytics deleted.
+ */
+const archiveAdminCodingCourse = async (courseId) => {
+  const isOid = mongoose.isValidObjectId(courseId);
+  const course = await Course.findOne({
+    ...(isOid ? { _id: courseId } : { slug: courseId }),
+    isDeleted: false,
+  });
+  if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  if (!course.isSystemOwned && !CANONICAL_CODING_SLUGS.includes(course.slug)) {
+    throw errorWith("Forbidden.", 403, "NOT_SYSTEM_COURSE");
+  }
+
+  course.publicationStatus = "archived";
+  course.contentVersion += 1;
+  await course.save();
+
+  return { archived: true, id: String(course._id), publicationStatus: course.publicationStatus };
+};
+
+// ─── CMS: bulkUpdateAdminCodingAccess ────────────────────────────────────────
+/**
+ * Validates every ID belongs to system/canonical Coding content (Amendment #16).
+ * Does NOT accept arbitrary Course IDs from creator-owned content (Amendment #17).
+ */
+const bulkUpdateAdminCodingAccess = async (courseIds, accessLevel) => {
+  if (!Array.isArray(courseIds) || courseIds.length === 0) {
+    throw errorWith("courseIds array is required.", 422, "COURSE_IDS_REQUIRED");
+  }
+  if (!["free", "premium"].includes(accessLevel)) {
+    throw errorWith("accessLevel must be 'free' or 'premium'.", 422, "INVALID_ACCESS_LEVEL");
+  }
+
+  // Validate all IDs belong to system/canonical coding content (Amendment #16 + #17)
+  const courses = await Course.find({
+    _id: { $in: courseIds },
+    isDeleted: false,
+    $or: [{ isSystemOwned: true }, { slug: { $in: CANONICAL_CODING_SLUGS } }],
+  }).select("_id").lean();
+
+  if (courses.length !== courseIds.length) {
+    throw errorWith(
+      "One or more course IDs are not system-owned Coding tracks. Bulk access update rejected.",
+      422,
+      "NOT_ALL_SYSTEM_COURSES"
+    );
+  }
+
+  const monetizationType = accessLevel === "premium" ? "PREMIUM_INCLUDED" : "FREE";
+  await Course.updateMany(
+    { _id: { $in: courseIds } },
+    { accessLevel, monetizationType }
+  );
+
+  return { updated: courses.length, accessLevel };
+};
+
+// ─── CMS: bulkPublishAdminCodingLessons ──────────────────────────────────────
+const bulkPublishAdminCodingLessons = async (lessonIds) => {
+  if (!Array.isArray(lessonIds) || lessonIds.length === 0) {
+    throw errorWith("lessonIds array is required.", 422, "LESSON_IDS_REQUIRED");
+  }
+
+  // Validate all lessons belong to system/canonical coding courses (Amendment #16)
+  const lessons = await CourseLesson.find({ _id: { $in: lessonIds }, isDeleted: false })
+    .select("courseId").lean();
+
+  if (lessons.length !== lessonIds.length) {
+    throw errorWith("One or more lesson IDs not found.", 422, "LESSON_NOT_FOUND");
+  }
+
+  const courseIds = [...new Set(lessons.map((l) => String(l.courseId)))];
+  const ownerCount = await Course.countDocuments({
+    _id: { $in: courseIds },
+    isDeleted: false,
+    $or: [{ isSystemOwned: true }, { slug: { $in: CANONICAL_CODING_SLUGS } }],
+  });
+
+  if (ownerCount !== courseIds.length) {
+    throw errorWith(
+      "One or more lessons belong to non-system courses. Bulk publish rejected.",
+      422,
+      "NOT_ALL_SYSTEM_LESSONS"
+    );
+  }
+
+  // Validate runtimes before bulk publish (Amendment #3)
+  const codingLessons = await CourseLesson.find({
+    _id: { $in: lessonIds },
+    lessonType: "coding",
+    isDeleted: false,
+  }).select("codingBlocks title").lean();
+
+  for (const lesson of codingLessons) {
+    for (const block of lesson.codingBlocks || []) {
+      if (!SUPPORTED_RUNTIMES.has(String(block.language || "").toLowerCase())) {
+        throw errorWith(
+          `Lesson '${lesson.title}' uses runtime '${block.language}' which is not supported. Remove it from the bulk selection.`,
+          400,
+          "RUNTIME_NOT_AVAILABLE"
+        );
+      }
+    }
+  }
+
+  await CourseLesson.updateMany(
+    { _id: { $in: lessonIds } },
+    { publicationStatus: "published", workflowStatus: "approved" }
+  );
+
+  return { published: lessons.length };
+};
+
 module.exports = {
+
   continueLearning,
   createCourse,
   curriculumForCourse,
@@ -1043,4 +1542,18 @@ module.exports = {
   createSubmission,
   listSubmissions,
   getSubmission,
+  // CMS - Track/Module/Lesson management
+  createAdminCodingCourse,
+  createAdminCodingModule,
+  updateAdminCodingModule,
+  deleteAdminCodingModule,
+  reorderAdminCodingModules,
+  createAdminCodingLesson,
+  deleteAdminCodingLesson,
+  reorderAdminCodingLessons,
+  publishAdminCodingCourse,
+  archiveAdminCodingCourse,
+  bulkUpdateAdminCodingAccess,
+  bulkPublishAdminCodingLessons,
+  sanitizeValidationRules,
 };

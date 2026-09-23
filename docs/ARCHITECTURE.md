@@ -248,6 +248,20 @@ Execution is partitioned by technology stack:
   - **PYTHON Mode**: In-browser client-side Python execution powered by Pyodide web worker (`defaultPythonManager`) with stdout/stderr capture and 10s timeout budget.
 - **Clean SubNav**: Eliminated native horizontal scrollbars on `CodingSubNav` across all viewports.
 
+#### 8. Coding CMS Authoring Platform & Administrative Architecture
+- **Admin-Controlled Curriculum Management**: Dedicated CMS workspace at `/cms/coding` (mounted via `CodingManagementModule.jsx` within `AdminDashboard.js`) providing complete administrative control over tracks, modules, lessons, exercises, starter code, hints, expected output, solutions, validation criteria, quizzes, projects, and learning materials without editing source code.
+- **Canonical API Namespace**: All administrative endpoints use the established `/api/learn/admin/coding/*` namespace:
+  - Tracks: `GET /courses`, `POST /courses`, `PATCH /courses/:courseId`, `PATCH /courses/:courseId/publish`, `PATCH /courses/:courseId/archive`, `POST /bulk-access`
+  - Modules: `POST /courses/:courseId/modules`, `PATCH /courses/:courseId/modules/:moduleId`, `DELETE /courses/:courseId/modules/:moduleId`, `POST /courses/:courseId/modules/reorder`
+  - Lessons: `GET /lessons/:lessonId`, `POST /courses/:courseId/modules/:moduleId/lessons`, `PATCH /lessons/:lessonId`, `DELETE /lessons/:lessonId`, `POST /courses/:courseId/modules/:moduleId/lessons/reorder`, `POST /bulk-publish-lessons`
+  - Materials: `GET /materials`, `POST /materials`, `PATCH /materials/:materialId`, `DELETE /materials/:materialId`
+- **System Ownership & Creator Decoupling**: Admin-created tracks automatically enforce `isSystemOwned: true` and are attributed to a resolved system-owned creator profile (`resolveSystemCreator`), ensuring they remain completely detached from individual creator accounts and Creator Studio.
+- **Hierarchical Reordering & Soft Deletes**: Module and lesson ordering is strictly monotonic (`orderedIds`). Deletions use soft-delete semantics (`deletedAt: new Date()`) on both modules and child lessons, preserving learner progress and submission history.
+- **Server-Authoritative Validation Rule Sanitizer**: `sanitizeValidationRules` strictly whitelists supported rule types (`element_exists`, `element_attribute`, `text_content`, `selector_property`, `has_media_query`, `output_contains`, `stdout_contains`, `output_pattern`, `stdout_pattern`, `code_contains`, `syntax_contains`, `pattern`) and strips untrusted fields before persistence.
+- **Execution Runtime Availability Guard**: `assertRuntimeAvailable` validates that any runnable Coding lesson being published requires an active execution runtime (`html`, `css`, `javascript`, `python`). Lessons for unsupported runtimes can be saved as drafts for future curriculum planning but are prevented from being published to learners.
+- **Solution & Test Privacy**: Coding block `solutionCode`, test suites, and quiz `correctOptionIndex` are stripped from learner endpoints (`select: false`), but fully exposed and editable within `/cms/coding` for authorized Admins.
+- **Granular Learning Materials Storage Boundary**: Materials are attached to tracks or modules via external URLs or inlined Markdown/text notes (`LearningResource`). Direct binary file uploads (PDF, ZIP, multipart) to object storage (Cloudflare R2 / S3) are deferred to Phase 18, with an explicit advisory displayed in the CMS.
+
 ## Media abstraction
 
 ProtectedMediaAsset records metadata and ownership. `server/learn/mediaProviderService.js` is an explicit provider boundary. The repository currently supports metadata/catalog workflows but not direct uploads, adaptive streaming, malware scanning, or signed delivery. Calls requiring real delivery return an unavailable error.

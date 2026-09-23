@@ -569,6 +569,19 @@ export const learnApi = {
   adminCodingCreateMaterial: (payload) => post("/api/learn/admin/coding/materials", payload),
   adminCodingUpdateMaterial: (id, payload) => patch(`/api/learn/admin/coding/materials/${id}`, payload),
   adminCodingDeleteMaterial: (id) => del(`/api/learn/admin/coding/materials/${id}`),
+  // CMS — Track/Module/Lesson management
+  adminCodingCreateCourse: (payload) => post("/api/learn/admin/coding/courses", payload),
+  adminCodingCreateModule: (courseId, payload) => post(`/api/learn/admin/coding/courses/${courseId}/modules`, payload),
+  adminCodingUpdateModule: (courseId, moduleId, payload) => patch(`/api/learn/admin/coding/courses/${courseId}/modules/${moduleId}`, payload),
+  adminCodingDeleteModule: (courseId, moduleId) => del(`/api/learn/admin/coding/courses/${courseId}/modules/${moduleId}`),
+  adminCodingReorderModules: (courseId, payload) => post(`/api/learn/admin/coding/courses/${courseId}/modules/reorder`, payload),
+  adminCodingCreateLesson: (courseId, moduleId, payload) => post(`/api/learn/admin/coding/courses/${courseId}/modules/${moduleId}/lessons`, payload),
+  adminCodingDeleteLesson: (lessonId) => del(`/api/learn/admin/coding/lessons/${lessonId}`),
+  adminCodingReorderLessons: (courseId, moduleId, payload) => post(`/api/learn/admin/coding/courses/${courseId}/modules/${moduleId}/lessons/reorder`, payload),
+  adminCodingPublishCourse: (courseId) => patch(`/api/learn/admin/coding/courses/${courseId}/publish`, {}),
+  adminCodingArchiveCourse: (courseId) => patch(`/api/learn/admin/coding/courses/${courseId}/archive`, {}),
+  adminCodingBulkAccess: (payload) => post("/api/learn/admin/coding/bulk/access", payload),
+  adminCodingBulkPublishLessons: (payload) => post("/api/learn/admin/coding/bulk/publish-lessons", payload),
   // Learner Coding Resources
   // Learner Coding Resources & Stats
   codingResources: (params = {}) => get(`/api/learn/coding/resources${queryString(params)}`),
