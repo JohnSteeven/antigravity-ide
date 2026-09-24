@@ -12,6 +12,8 @@ const LessonProgressSchema = new mongoose.Schema({
   exerciseAttempts: { type: Number, default: 0, min: 0 },
   quizPassed: { type: Boolean, default: false },
   quizScore: { type: Number, default: 0, min: 0 },
+  bestQuizScore: { type: Number, default: 0, min: 0 },
+  quizAttempts: { type: Number, default: 0, min: 0 },
   solutionViewed: { type: Boolean, default: false },
 }, { _id: false });
 

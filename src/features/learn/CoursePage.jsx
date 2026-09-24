@@ -3,7 +3,9 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from "react-route
 import { learnApi } from "../../services/apiService";
 import { useAuth } from "../../hooks/useAuth";
 import ContentReportForm from "./ContentReportForm.jsx";
+import { FiBookOpen, FiClock, FiGlobe, FiLayers } from "react-icons/fi";
 import "./learn.css";
+import "./learnReading.css";
 
 const CANONICAL_CODING_TRACKS = {
   "html-foundations": "html",
@@ -55,16 +57,19 @@ export default function CoursePage() {
     return set;
   }, [course]);
 
-  const totalLessons = course?.lessonCount || 0;
+  const totalLessons = course?.enrollment?.totalEligibleLessons ?? (course?.lessonCount || 0);
   const completedCount = course?.enrollment?.completedLessonCount || 0;
-  const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+  const progressPercent = typeof course?.enrollment?.progressPercent === "number"
+    ? course.enrollment.progressPercent
+    : (totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0);
 
   const begin = async () => {
     if (!isAuthenticated) { navigate("/login", { state: { from: location.pathname } }); return; }
     setState((current) => ({ ...current, busy: true, error: "" }));
     try {
       if (!course.enrollment) await learnApi.enroll(course.id);
-      if (firstLesson) navigate(`/learn/courses/${course.slug}/lessons/${firstLesson.id}`);
+      const resumeId = course.enrollment?.nextLessonId || firstLesson?.id;
+      if (resumeId) navigate(`/learn/courses/${course.slug}/lessons/${resumeId}`);
       else setState((current) => ({ ...current, busy: false, error: "This Course does not have a published Lesson yet." }));
     } catch (error) { setState((current) => ({ ...current, busy: false, error: error.message })); }
   };
@@ -107,12 +112,6 @@ export default function CoursePage() {
               Curriculum by <strong>{course.creator.displayName}</strong>
             </p>
           ) : null}
-          <div className="learn-meta">
-            <span>{course.level?.replaceAll("_", " ")}</span>
-            <span>{course.lessonCount || 0} Lessons</span>
-            <span>{course.estimatedDurationMinutes || 0} min</span>
-            <span>{course.language}</span>
-          </div>
 
           {/* Course Progress Bar for Enrolled Learners */}
           {course.enrollment && (
@@ -121,9 +120,7 @@ export default function CoursePage() {
                 <span>{completedCount} of {totalLessons} lessons completed</span>
                 <span>{progressPercent}%</span>
               </div>
-              <div className="learn-progress-track">
-                <div className="learn-progress-fill" style={{ width: `${progressPercent}%` }} />
-              </div>
+              <progress className="learn-course-progress" value={progressPercent} max="100" aria-label="Course completion" />
             </div>
           )}
 
@@ -138,9 +135,19 @@ export default function CoursePage() {
           </button>
           {state.error && <p className="learn-notice" role="alert">{state.error}</p>}
         </div>
-        {!isCanonicalCoding && course.coverImage && (
-          <img src={course.coverImage} alt={course.coverImageAlt || ""} />
-        )}
+        <aside className="learn-course-snapshot" aria-label="Course at a glance">
+          {!isCanonicalCoding && course.coverImage ? (
+            <img src={course.coverImage} alt={course.coverImageAlt || ""} />
+          ) : (
+            <div className="learn-course-art" aria-hidden="true"><FiBookOpen /><span>Make room<br />for something new.</span><small>MYJOURNEY / LEARN</small></div>
+          )}
+          <dl>
+            <div><dt><FiLayers aria-hidden="true" /> Level</dt><dd>{course.level?.replaceAll("_", " ") || "All levels"}</dd></div>
+            <div><dt><FiBookOpen aria-hidden="true" /> Lessons</dt><dd>{course.lessonCount || 0}</dd></div>
+            {!!course.estimatedDurationMinutes && <div><dt><FiClock aria-hidden="true" /> Duration</dt><dd>{course.estimatedDurationMinutes} minutes</dd></div>}
+            {course.language && <div><dt><FiGlobe aria-hidden="true" /> Language</dt><dd>{course.language}</dd></div>}
+          </dl>
+        </aside>
       </header>
 
       <div className="learn-course__body">
@@ -171,7 +178,7 @@ export default function CoursePage() {
           <div className="learn-section-heading">
             <div>
               <p className="learn-kicker">Course structure</p>
-              <h2 id="curriculum-title">Interactive Curriculum</h2>
+              <h2 id="curriculum-title">Your learning path</h2>
             </div>
           </div>
 

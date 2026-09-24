@@ -55,6 +55,155 @@ const curriculumForCourse = async (courseId) => {
   return modules.map((module) => ({ id: String(module._id), stableKey: module.stableKey, title: module.title, description: module.description, order: module.order, lessons: byModule.get(String(module._id)) || [] }));
 };
 
+// ── Phase 7 Learn Mastery Canonical Helpers ─────────────────────────────────
+
+const getEligibleCourseLessons = async (courseId) => {
+  if (!courseId || !mongoose.isValidObjectId(courseId)) return [];
+  try {
+    const activeModules = await CourseModule.find({ courseId, isDeleted: false }).sort({ order: 1 }).lean();
+    const activeModuleIds = activeModules.map((m) => m._id);
+    const lessons = await CourseLesson.find({
+      courseId,
+      moduleId: { $in: activeModuleIds },
+      isDeleted: false,
+    }).sort({ moduleId: 1, order: 1 }).lean();
+
+    const moduleOrderMap = new Map(activeModules.map((m, idx) => [String(m._id), idx]));
+    lessons.sort((a, b) => {
+      const modA = moduleOrderMap.get(String(a.moduleId)) ?? 0;
+      const modB = moduleOrderMap.get(String(b.moduleId)) ?? 0;
+      if (modA !== modB) return modA - modB;
+      return (a.order || 0) - (b.order || 0);
+    });
+    return lessons;
+  } catch {
+    return [];
+  }
+};
+
+const deriveLessonState = (progress, lesson = null) => {
+  const started = Boolean(progress?.startedAt);
+  const completed = Boolean(progress?.completedAt);
+  const exercisePassed = Boolean(progress?.exercisePassed);
+  const exerciseAttempts = Number(progress?.exerciseAttempts || 0);
+  const quizPassed = Boolean(progress?.quizPassed);
+  const quizScore = Number(progress?.quizScore || 0);
+  const bestQuizScore = Number(progress?.bestQuizScore ?? progress?.quizScore ?? 0);
+  const quizAttempts = Number(progress?.quizAttempts ?? (quizScore > 0 ? 1 : 0));
+  const solutionViewed = Boolean(progress?.solutionViewed);
+  const positionSeconds = Number(progress?.positionSeconds || 0);
+
+  let state = "not_started";
+  if (completed) {
+    state = "completed";
+  } else if (started || exerciseAttempts > 0 || quizAttempts > 0 || positionSeconds > 0) {
+    state = "in_progress";
+  }
+
+  return {
+    started,
+    completed,
+    state,
+    exercisePassed,
+    exerciseAttempts,
+    quizPassed,
+    quizScore,
+    bestQuizScore,
+    quizAttempts,
+    solutionViewed,
+    positionSeconds,
+  };
+};
+
+const calculateEnrollmentProgress = (enrollment, eligibleLessons = []) => {
+  const totalEligible = eligibleLessons.length;
+  if (!enrollment) {
+    return {
+      completedLessonCount: 0,
+      totalEligibleLessons: totalEligible,
+      progressPercent: 0,
+      isCompleted: false,
+      completedAt: null,
+    };
+  }
+
+  const completedStableKeys = new Set(
+    (enrollment.lessonProgress || [])
+      .filter((lp) => Boolean(lp.completedAt))
+      .map((lp) => lp.lessonStableKey)
+  );
+
+  const completedEligibleCount = eligibleLessons.filter((l) =>
+    completedStableKeys.has(l.stableKey)
+  ).length;
+
+  const isHistoricallyCompleted = enrollment.status === "completed" && Boolean(enrollment.completedAt);
+
+  let progressPercent = 0;
+  if (isHistoricallyCompleted) {
+    progressPercent = 100;
+  } else if (totalEligible > 0) {
+    progressPercent = Math.min(100, Math.round((completedEligibleCount / totalEligible) * 100));
+  }
+
+  return {
+    completedLessonCount: completedEligibleCount,
+    totalEligibleLessons: totalEligible,
+    progressPercent,
+    isCompleted: isHistoricallyCompleted || (totalEligible > 0 && completedEligibleCount >= totalEligible),
+    completedAt: enrollment.completedAt || null,
+  };
+};
+
+const resolveNextLesson = (enrollment, eligibleLessons = []) => {
+  if (!eligibleLessons || eligibleLessons.length === 0) return null;
+
+  const completedSet = new Set(
+    (enrollment?.lessonProgress || [])
+      .filter((p) => Boolean(p.completedAt))
+      .map((p) => p.lessonStableKey)
+  );
+
+  const incompleteLessons = eligibleLessons.filter((l) => !completedSet.has(l.stableKey));
+  if (incompleteLessons.length === 0) return null;
+
+  const currentId = enrollment?.currentLessonId ? String(enrollment.currentLessonId) : null;
+  if (currentId) {
+    const currentLesson = eligibleLessons.find((l) => String(l._id) === currentId || l.stableKey === currentId);
+    if (currentLesson) {
+      if (!completedSet.has(currentLesson.stableKey)) {
+        return currentLesson;
+      }
+      const currentIdx = eligibleLessons.indexOf(currentLesson);
+      const nextAfter = eligibleLessons.slice(currentIdx + 1).find((l) => !completedSet.has(l.stableKey));
+      if (nextAfter) return nextAfter;
+    }
+  }
+
+  return incompleteLessons[0] || null;
+};
+
+const reconcileCourseCompletion = async (enrollment, eligibleLessons, userId, entitlementPlan) => {
+  if (!enrollment) return;
+  const isFirstCompletion = enrollment.status !== "completed";
+  enrollment.status = "completed";
+  if (!enrollment.completedAt) {
+    enrollment.completedAt = new Date();
+  }
+  if (isFirstCompletion) {
+    await LearningEvent.create({
+      userId,
+      courseId: enrollment.courseId,
+      eventType: "course_completed",
+      idempotencyKey: `course_completed:${enrollment.courseId}:${userId}`,
+      entitlementPlan: entitlementPlan || "free",
+    }).catch((err) => {
+      if (err.code !== 11000) throw err;
+    });
+  }
+};
+
+
 const listCourses = async (query = {}) => {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1);
   const limit = Math.min(48, Math.max(1, Number.parseInt(query.limit, 10) || 18));
@@ -116,11 +265,31 @@ const listCourses = async (query = {}) => {
 const getCourseDetail = async (slug, userId = null) => {
   const course = await courseQuery().where({ slug }).lean();
   if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
-  const [curriculum, enrollment] = await Promise.all([
+  const [curriculum, enrollment, eligibleLessons] = await Promise.all([
     curriculumForCourse(course._id),
     userId ? CourseEnrollment.findOne({ userId, courseId: course._id }).select("status currentLessonId completedLessonCount lastActivityAt lessonProgress completedAt").lean() : null,
+    getEligibleCourseLessons(course._id),
   ]);
-  return serializeCourse(course, { curriculum, enrollment });
+  const progressMeta = calculateEnrollmentProgress(enrollment, eligibleLessons);
+  const nextLesson = resolveNextLesson(enrollment, eligibleLessons);
+
+  const enrichedEnrollment = enrollment ? {
+    ...enrollment,
+    completedLessonCount: progressMeta.completedLessonCount,
+    totalEligibleLessons: progressMeta.totalEligibleLessons,
+    progressPercent: progressMeta.progressPercent,
+    isCompleted: progressMeta.isCompleted,
+    nextLessonId: nextLesson ? String(nextLesson._id) : null,
+    lessonProgress: (enrollment.lessonProgress || []).map((lp) => {
+      const lessonObj = eligibleLessons.find((el) => el.stableKey === lp.lessonStableKey);
+      return {
+        ...lp,
+        ...deriveLessonState(lp, lessonObj),
+      };
+    }),
+  } : null;
+
+  return serializeCourse(course, { curriculum, enrollment: enrichedEnrollment });
 };
 
 const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null, admin = false }) => {
@@ -170,13 +339,7 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
       const enrollment = await CourseEnrollment.findOne({ userId, courseId: course._id }).select("lessonProgress").lean();
       const lp = enrollment?.lessonProgress?.find((item) => item.lessonStableKey === lesson.stableKey);
       if (lp) {
-        progress = {
-          exercisePassed: Boolean(lp.exercisePassed),
-          quizPassed: Boolean(lp.quizPassed),
-          solutionViewed: Boolean(lp.solutionViewed),
-          completed: Boolean(lp.completedAt),
-          exerciseAttempts: lp.exerciseAttempts || 0,
-        };
+        progress = deriveLessonState(lp, lesson);
       }
     } catch {
       progress = null;
@@ -460,6 +623,8 @@ const evaluateQuiz = async ({ courseSlug, courseId, lessonId, userId, answers })
     progress = enrollment.lessonProgress[enrollment.lessonProgress.length - 1];
   }
   progress.quizScore = scorePercent;
+  progress.bestQuizScore = Math.max(progress.bestQuizScore || 0, scorePercent);
+  progress.quizAttempts = (progress.quizAttempts || 0) + 1;
   progress.lastActivityAt = new Date();
   const wasQuizPassed = Boolean(progress.quizPassed);
   if (passed) {
@@ -478,7 +643,16 @@ const evaluateQuiz = async ({ courseSlug, courseId, lessonId, userId, answers })
   enrollment.lastActivityAt = new Date();
   await enrollment.save();
 
-  return { success: true, passed, score: scorePercent, correctCount, totalQuestions: total, results };
+  return {
+    success: true,
+    passed,
+    score: scorePercent,
+    bestScore: progress.bestQuizScore,
+    attempts: progress.quizAttempts,
+    correctCount,
+    totalQuestions: total,
+    results,
+  };
 };
 
 const revealSolution = async ({ courseSlug, courseId, lessonId, userId, blockId }) => {
@@ -568,11 +742,32 @@ const recordProgress = async ({ userId, courseId, lessonId, positionSeconds = 0,
 
   enrollment.currentLessonId = lesson._id;
   enrollment.lastActivityAt = new Date();
-  enrollment.completedLessonCount = enrollment.lessonProgress.filter((item) => item.completedAt).length;
-  if (course.lessonCount > 0 && enrollment.completedLessonCount >= course.lessonCount) {
-    enrollment.status = "completed";
-    enrollment.completedAt = enrollment.completedAt || new Date();
+
+  const eligibleLessons = await getEligibleCourseLessons(course._id);
+  if (eligibleLessons && eligibleLessons.length > 0) {
+    const progressCalc = calculateEnrollmentProgress(enrollment, eligibleLessons);
+    enrollment.completedLessonCount = progressCalc.completedLessonCount;
+
+    if (progressCalc.isCompleted) {
+      await reconcileCourseCompletion(
+        enrollment,
+        eligibleLessons,
+        userId,
+        access.resolution?.plan || (course.accessLevel === "premium" ? "premium" : "free")
+      );
+    }
+  } else {
+    enrollment.completedLessonCount = (enrollment.lessonProgress || []).filter((item) => item.completedAt).length;
+    if (course.lessonCount > 0 && enrollment.completedLessonCount >= course.lessonCount) {
+      await reconcileCourseCompletion(
+        enrollment,
+        eligibleLessons,
+        userId,
+        access.resolution?.plan || (course.accessLevel === "premium" ? "premium" : "free")
+      );
+    }
   }
+
   await enrollment.save();
   const eventType = completed ? "lesson_completed" : wasNewProgress ? "lesson_started" : "lesson_resumed";
   await LearningEvent.create({
@@ -587,12 +782,38 @@ const recordProgress = async ({ userId, courseId, lessonId, positionSeconds = 0,
   return enrollment;
 };
 
-const continueLearning = async (userId, limit = 8) => CourseEnrollment.find({ userId, status: { $in: ["active", "completed"] } })
-  .select("courseId status currentLessonId completedLessonCount lastActivityAt completedAt")
-  .populate({ path: "courseId", select: "title slug coverImage lessonCount accessLevel creatorId", populate: { path: "creatorId", select: "displayName slug" } })
-  .sort({ lastActivityAt: -1 })
-  .limit(Math.min(20, Math.max(1, Number(limit) || 8)))
-  .lean();
+const continueLearning = async (userId, limit = 8) => {
+  const enrollments = await CourseEnrollment.find({ userId, status: { $in: ["active", "completed"] } })
+    .select("courseId status currentLessonId completedLessonCount lastActivityAt completedAt lessonProgress")
+    .populate({ path: "courseId", select: "title slug coverImage lessonCount accessLevel creatorId publicationStatus isDeleted", populate: { path: "creatorId", select: "displayName slug" } })
+    .sort({ lastActivityAt: -1 })
+    .limit(Math.min(20, Math.max(1, Number(limit) || 8)))
+    .lean();
+
+  const activeEnrollments = enrollments.filter((e) => e.courseId && e.courseId.publicationStatus === "published" && !e.courseId.isDeleted);
+
+  const results = await Promise.all(activeEnrollments.map(async (enrollment) => {
+    const eligibleLessons = await getEligibleCourseLessons(enrollment.courseId._id);
+    const progressMeta = calculateEnrollmentProgress(enrollment, eligibleLessons);
+    const nextLesson = resolveNextLesson(enrollment, eligibleLessons);
+
+    return {
+      courseId: enrollment.courseId,
+      status: enrollment.status,
+      currentLessonId: enrollment.currentLessonId,
+      nextLessonId: nextLesson ? String(nextLesson._id) : null,
+      nextLessonTitle: nextLesson ? nextLesson.title : null,
+      completedLessonCount: progressMeta.completedLessonCount,
+      totalEligibleLessons: progressMeta.totalEligibleLessons,
+      progressPercent: progressMeta.progressPercent,
+      isCompleted: progressMeta.isCompleted,
+      lastActivityAt: enrollment.lastActivityAt,
+      completedAt: enrollment.completedAt,
+    };
+  }));
+
+  return results;
+};
 
 const CANONICAL_CODING_SLUGS = [
   "html-foundations",
@@ -1556,4 +1777,10 @@ module.exports = {
   bulkUpdateAdminCodingAccess,
   bulkPublishAdminCodingLessons,
   sanitizeValidationRules,
+  // Phase 7 Canonical Mastery Helpers
+  getEligibleCourseLessons,
+  deriveLessonState,
+  calculateEnrollmentProgress,
+  resolveNextLesson,
+  reconcileCourseCompletion,
 };

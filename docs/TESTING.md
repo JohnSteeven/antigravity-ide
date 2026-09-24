@@ -27,6 +27,8 @@ npm run test:multiplayer
 
 ### Focused Learn and Interactive Coding Curriculum checks
 
+For Coding lesson UI review, open a CSS lesson at desktop and phone widths. Use the lesson tab arrows to reach Hints and Quiz, switch away and back to confirm quiz selections remain, submit answers through an enrolled account, and check the per-question result icon and the Quiz passed indicator. Confirm Preview, Console, and Tests remain in the output panel and that the CSS first lesson shows its concept introduction when its saved body is empty. `e2e/coding-lesson-navigation.spec.js` automates the phone and desktop layout checks with a simulated quiz grading response; the focused Learn Jest suites cover the real server grading and progress gates.
+
 ```bash
 npm run test:learn
 ```
@@ -37,6 +39,7 @@ This suite executes:
 - `server/tests/learn/codingProgressAndValidation.test.js`: Server-authoritative progress gating (`exercisePassed`, `quizPassed`), enrollment tracking, quiz grading isolation on the server, solution reveal without granting completion, and serialization stripping of solutions, tests, and quiz answers.
 - `server/tests/learn/codingSubmissions.test.js`: Server-authoritative submissions model and endpoints, authentication requirement, payload validation (64 KB code snapshot limit, status enum, testsPassed <= testsTotal), proof that browser-reported submission results cannot mutate mastery, submission history retrieval, and cross-user ownership isolation.
 - `server/tests/learn/pythonWorkerAbstraction.test.js`: Pyodide Web Worker isolation, pinned Pyodide version v0.26.4, worker message handling, network API neutralization, timeout enforcement (10s), and stdout/stderr buffer management.
+- `server/tests/learn/masteryProgression.test.js`: 18 focused tests covering Phase 7 learn mastery, dynamic eligible lesson denominator, factual state derivation (`deriveLessonState`), historical 100% completion invariant, quiz retries with sticky passing and `bestScore` tracking, anti-forgery progress gating, and idempotent course completion events.
 - `server/tests/learnDomain.test.js`: Course, module, lesson, and enrollment domain rules.
 - `server/tests/learnLessonPreviewSecurity.test.js`: Preview vs gated lesson authorization and locked serializer privacy.
 
@@ -179,6 +182,14 @@ With local MongoDB and `npm start` running, verify:
 - temporary smoke records are removed.
 
 ## Manual browser QA
+
+### Public and Life presentation smoke
+
+After `npm run build`, run the Mongo-backed API and a build preview (`PREVIEW_PORT=1240`, `PREVIEW_API_TARGET=http://127.0.0.1:5000`, `node server/scripts/serveQaBuild.js`), then run `node server/scripts/uiPresentationSmoke.js`. Set `UI_REVIEW_URL` to use another local preview URL.
+
+The script uses real headless Chromium and the published demonstration content for public pages and non-coding readers. It checks desktop/mobile overflow, mobile article disclosure, Learn topic-drawer navigation and focus restoration, and the public English preview lesson. It intercepts browser requests for private Life presentation states to exercise all eight sections, dark cards, dialogs, and the Premium introduction. These fixtures do not grant access or change database records; this is not an authorization, persistence, or load test. Screenshots are saved under ignored `.tmp/ui-presentation/`. The existing privacy/API tests remain required separately.
+
+### Broader manual coverage
 
 API, source-contract, and SPA-shell tests cannot prove visual layout, click behavior, console cleanliness, focus management, or navigation state. A real browser pass should cover:
 
