@@ -141,7 +141,7 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
   if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
   const access = lesson.isPreview
     ? { allowed: true, reason: "preview" }
-    : await resolveLearnAccess({ userId, accessLevel: course.accessLevel, owner, admin });
+    : await resolveLearnAccess({ userId, accessLevel: course.accessLevel, owner, admin, monetizationType: course.monetizationType });
   if (!access.allowed) throw errorWith("MyJourney Premium is required for this lesson.", 403, "PREMIUM_REQUIRED");
 
   // Load attached materials/resources
@@ -333,7 +333,7 @@ const submitCourse = async (creatorId, courseId) => {
 };
 
 const ensureCourseAccess = async (course, userId) => {
-  const access = await resolveLearnAccess({ userId, accessLevel: course.accessLevel });
+  const access = await resolveLearnAccess({ userId, accessLevel: course.accessLevel, monetizationType: course.monetizationType });
   if (!access.allowed) throw errorWith("MyJourney Premium is required for this Course.", 403, "PREMIUM_REQUIRED");
   return access;
 };

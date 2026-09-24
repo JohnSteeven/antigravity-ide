@@ -59,19 +59,28 @@ export default function SubscriptionDashboard() {
 
         {premiumActive ? (
           <>
-            <p className="premium-account__state">{cancelPending ? "Renewal canceled" : "Active"}</p>
-            <dl>
-              <div><dt>Current membership</dt><dd>{labelForDuration(accountAccess.billingPeriodMonths)}</dd></div>
-              <div><dt>Started</dt><dd>{formatDate(accountAccess.startedAt)}</dd></div>
-              <div><dt>Access until</dt><dd>{formatDate(accountAccess.currentPeriodEnd)}</dd></div>
-              <div><dt>Billing</dt><dd>{prepaid ? "Prepaid — no automatic renewal" : "Automatic renewal status unavailable"}</dd></div>
-            </dl>
-            {prepaid && <Link className="premium-primary-action" to="/premium">Renew Premium</Link>}
-            {cancelPending ? (
-              <p>Your Premium access remains active until the date above. Your private MyJourney Life history is not deleted.</p>
-            ) : accountAccess.cancellationAvailable && !prepaid ? (
-              <button type="button" className="premium-secondary-action" onClick={() => setConfirming(true)}>Cancel renewal</button>
-            ) : null}
+            {accountAccess?.entitlementSource === "qa_override" ? (
+              <>
+                <p className="premium-account__state">QA Premium Override</p>
+                <p>Platform-wide Premium access is granted for development and QA testing. No paid subscription or billing charges exist.</p>
+              </>
+            ) : (
+              <>
+                <p className="premium-account__state">{cancelPending ? "Renewal canceled" : "Active"}</p>
+                <dl>
+                  <div><dt>Current membership</dt><dd>{labelForDuration(accountAccess.billingPeriodMonths)}</dd></div>
+                  <div><dt>Started</dt><dd>{formatDate(accountAccess.startedAt)}</dd></div>
+                  <div><dt>Access until</dt><dd>{formatDate(accountAccess.currentPeriodEnd)}</dd></div>
+                  <div><dt>Billing</dt><dd>{prepaid ? "Prepaid — no automatic renewal" : "Automatic renewal status unavailable"}</dd></div>
+                </dl>
+                {prepaid && <Link className="premium-primary-action" to="/premium">Renew Premium</Link>}
+                {cancelPending ? (
+                  <p>Your Premium access remains active until the date above. Your private MyJourney Life history is not deleted.</p>
+                ) : accountAccess.cancellationAvailable && !prepaid ? (
+                  <button type="button" className="premium-secondary-action" onClick={() => setConfirming(true)}>Cancel renewal</button>
+                ) : null}
+              </>
+            )}
           </>
         ) : (
           <>

@@ -1,6 +1,7 @@
 const subscriptionService = require("./subscriptionService");
 const { ENTITLEMENTS, PLANS, PREMIUM_ENTITLEMENTS } = require("../premium/catalog");
 const { currentPaidWindow } = require("../premium/entitlementWindows");
+const mongoose = require("mongoose");
 
 const emptyEntitlements = () => Object.values(ENTITLEMENTS).reduce((result, key) => ({ ...result, [key]: false }), {});
 
@@ -41,6 +42,43 @@ const resolveFromSubscription = (subscription, now = new Date()) => {
 
 const resolveForUser = async (userId, now = new Date()) => {
   if (!userId) return resolveFromSubscription(null, now);
+
+  // QA / dev override: short-circuit for accounts with qaPremiumOverride=true
+  // This is server-authoritative only — the flag is never sent to the client.
+  try {
+    const User = mongoose.models?.User;
+    if (User) {
+      const userDoc = await User.findById(userId).select("qaPremiumOverride").lean();
+      if (userDoc?.qaPremiumOverride === true) {
+        const entitlements = emptyEntitlements();
+        PREMIUM_ENTITLEMENTS.forEach((key) => { entitlements[key] = true; });
+        return {
+          active: true,
+          plan: PLANS.PREMIUM,
+          planName: "MyJourney Premium (QA Override)",
+          productCode: "qa_override",
+          subscriptionStatus: "qa_override",
+          billingPeriodMonths: null,
+          startedAt: null,
+          currentPeriodStart: null,
+          currentPeriodEnd: null,
+          nextAccessStart: null,
+          billingMode: null,
+          autoRenew: null,
+          cancellationAvailable: false,
+          cancelAtPeriodEnd: false,
+          canceledAt: null,
+          entitlementSource: "qa_override",
+          paymentIssue: null,
+          accessReason: "qa_override",
+          entitlements,
+        };
+      }
+    }
+  } catch {
+    // Fall through to normal subscription resolution on any error
+  }
+
   return resolveFromSubscription(await subscriptionService.getSubscriptionForUser(userId), now);
 };
 

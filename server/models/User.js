@@ -32,6 +32,8 @@ const UserSchema = new mongoose.Schema(
     tokenVersion: { type: Number, default: 0 },
     isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
+    // ── QA / Dev Override ────────────────────────────────────────────────────
+    qaPremiumOverride: { type: Boolean, default: false },
     // ── Two-Factor Authentication ─────────────────────────────────────────────
     twoFactor: {
       enabled: { type: Boolean, default: false },
@@ -101,6 +103,7 @@ UserSchema.methods.toSafeJSON = function toSafeJSON() {
   delete user.passwordHash;
   delete user.failedLoginAttempts;
   delete user.lockUntil;
+  delete user.qaPremiumOverride; // never expose to client
   return user;
 };
 
