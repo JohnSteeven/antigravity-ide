@@ -14,25 +14,173 @@ const Notification = require("../models/Notification");
 
 const notificationError = (message, code) => Object.assign(new Error(message), { code });
 
+const PRODUCT_NOTIFICATION_TYPES = new Set([
+  "achievement_unlocked",
+  "course_completed",
+  "streak_milestone",
+  "creator_engagement_milestone",
+  "premium_lifecycle",
+  "account_lifecycle",
+]);
+const RELATED_ENTITY_TYPES = new Set(["achievement", "course", "creator", "membership", "account", "article"]);
+
+const requireRecipient = (userId) => {
+  if (!mongoose.isObjectIdOrHexString(userId)) {
+    throw notificationError("An account recipient is required.", "NOTIFICATION_RECIPIENT_INVALID");
+  }
+};
+
+const cleanContent = (title, message) => {
+  if (typeof title !== "string" || !title.trim() || title.length > 200
+    || typeof message !== "string" || !message.trim() || message.length > 4000) {
+    throw notificationError("Notification title or message is invalid.", "NOTIFICATION_CONTENT_INVALID");
+  }
+  return { title: title.trim(), message: message.trim() };
+};
+
+const cleanActionUrl = (actionUrl) => {
+  if (actionUrl === undefined || actionUrl === null || actionUrl === "") return null;
+  if (typeof actionUrl !== "string" || actionUrl.length > 500
+    || !actionUrl.startsWith("/") || actionUrl.startsWith("//") || actionUrl.includes("\\")) {
+    throw notificationError("Notification action URL must be an internal path.", "NOTIFICATION_ACTION_INVALID");
+  }
+  return actionUrl;
+};
+
+const serialize = (item) => {
+  if (!item) return null;
+  const value = typeof item.toObject === "function" ? item.toObject() : item;
+  return {
+    id: String(value._id || value.id),
+    type: value.type || null,
+    title: value.title,
+    message: value.message,
+    actionUrl: value.actionUrl || null,
+    status: value.status,
+    read: value.status === "read",
+    readAt: value.readAt || null,
+    createdAt: value.createdAt,
+    relatedEntity: value.relatedEntityType
+      ? {
+        type: value.relatedEntityType,
+        id: value.relatedEntityId ? String(value.relatedEntityId) : null,
+        key: value.relatedEntityKey || null,
+      }
+      : null,
+  };
+};
+
 class NotificationService {
   // Callers supply a server-resolved owner. Their domain service authorizes the
   // underlying operation and resolves recipients before requesting delivery.
   static async sendInApp({ userId, title, message, type } = {}) {
-    if (!mongoose.isObjectIdOrHexString(userId)) {
-      throw notificationError("An account recipient is required.", "NOTIFICATION_RECIPIENT_INVALID");
-    }
-    if (typeof title !== "string" || !title.trim() || title.length > 200
-      || typeof message !== "string" || !message.trim() || message.length > 4000) {
-      throw notificationError("Notification title or message is invalid.", "NOTIFICATION_CONTENT_INVALID");
-    }
+    requireRecipient(userId);
+    const content = cleanContent(title, message);
     return Notification.create({
       user: userId,
-      title: title.trim(),
-      message: message.trim(),
+      ...content,
       status: "unread",
       source: "site",
       ...(type ? { type } : {}),
     });
+  }
+
+  static async createProductNotification({
+    userId,
+    type,
+    title,
+    message,
+    actionUrl,
+    relatedEntityType,
+    relatedEntityId,
+    relatedEntityKey,
+    dedupeKey,
+    session,
+  } = {}) {
+    requireRecipient(userId);
+    if (!PRODUCT_NOTIFICATION_TYPES.has(type)) {
+      throw notificationError("Unsupported product notification type.", "NOTIFICATION_TYPE_INVALID");
+    }
+    const content = cleanContent(title, message);
+    const internalActionUrl = cleanActionUrl(actionUrl);
+    if (relatedEntityType && !RELATED_ENTITY_TYPES.has(relatedEntityType)) {
+      throw notificationError("Unsupported notification entity type.", "NOTIFICATION_ENTITY_INVALID");
+    }
+    if (relatedEntityId && !mongoose.isObjectIdOrHexString(relatedEntityId)) {
+      throw notificationError("Notification entity ID is invalid.", "NOTIFICATION_ENTITY_INVALID");
+    }
+    const idempotencyKey = String(dedupeKey || "").trim();
+    if (!idempotencyKey || idempotencyKey.length > 180) {
+      throw notificationError("A bounded notification deduplication key is required.", "NOTIFICATION_DEDUPE_INVALID");
+    }
+
+    const update = {
+      $setOnInsert: {
+        user: userId,
+        type,
+        ...content,
+        status: "unread",
+        source: "site",
+        actionUrl: internalActionUrl,
+        relatedEntityType: relatedEntityType || null,
+        relatedEntityId: relatedEntityId || null,
+        relatedEntityKey: relatedEntityKey ? String(relatedEntityKey).trim().slice(0, 160) : null,
+        dedupeKey: idempotencyKey,
+      },
+    };
+    return Notification.findOneAndUpdate(
+      { user: userId, dedupeKey: idempotencyKey },
+      update,
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true, ...(session ? { session } : {}) }
+    );
+  }
+
+  static async listForUser({ userId, limit = 20, before } = {}) {
+    requireRecipient(userId);
+    const parsedLimit = Math.min(50, Math.max(1, Number.parseInt(limit, 10) || 20));
+    const filter = { user: userId };
+    if (before) {
+      const beforeDate = new Date(before);
+      if (Number.isNaN(beforeDate.getTime())) {
+        throw notificationError("Notification cursor is invalid.", "NOTIFICATION_CURSOR_INVALID");
+      }
+      filter.createdAt = { $lt: beforeDate };
+    }
+    const [items, unreadCount] = await Promise.all([
+      Notification.find(filter).sort({ createdAt: -1, _id: -1 }).limit(parsedLimit).lean(),
+      Notification.countDocuments({ user: userId, status: "unread" }),
+    ]);
+    return { items: items.map(serialize), unreadCount, hasMore: items.length === parsedLimit };
+  }
+
+  static async unreadCountForUser(userId) {
+    requireRecipient(userId);
+    return Notification.countDocuments({ user: userId, status: "unread" });
+  }
+
+  static async markOneRead({ userId, notificationId, now = new Date() } = {}) {
+    requireRecipient(userId);
+    if (!mongoose.isObjectIdOrHexString(notificationId)) {
+      throw Object.assign(notificationError("Notification not found.", "NOTIFICATION_NOT_FOUND"), { status: 404 });
+    }
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, user: userId },
+      { $set: { status: "read", readAt: now } },
+      { new: true, runValidators: true }
+    ).lean();
+    if (!notification) {
+      throw Object.assign(notificationError("Notification not found.", "NOTIFICATION_NOT_FOUND"), { status: 404 });
+    }
+    return serialize(notification);
+  }
+
+  static async markAllRead({ userId, now = new Date() } = {}) {
+    requireRecipient(userId);
+    const result = await Notification.updateMany(
+      { user: userId, status: "unread" },
+      { $set: { status: "read", readAt: now } }
+    );
+    return { modifiedCount: result.modifiedCount || 0, unreadCount: 0 };
   }
 
   /**
@@ -55,3 +203,4 @@ class NotificationService {
 }
 
 module.exports = NotificationService;
+module.exports.PRODUCT_NOTIFICATION_TYPES = PRODUCT_NOTIFICATION_TYPES;

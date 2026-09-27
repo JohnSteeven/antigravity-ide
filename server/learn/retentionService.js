@@ -4,6 +4,7 @@ const CourseEnrollment = require("../models/CourseEnrollment");
 const LearningEvent = require("../models/LearningEvent");
 const LearnerRetention = require("../models/LearnerRetention");
 const User = require("../models/User");
+const NotificationService = require("../notifications/NotificationService");
 
 // ── Timezone & Calendar Date Helpers ──────────────────────────────────────────
 
@@ -297,6 +298,38 @@ const evaluateAchievements = ({ totals, streaks, existingAchievements = [] }) =>
   return results;
 };
 
+const notifyNewAchievements = async ({ userId, existingAchievementKeys = new Set(), achievements = [] } = {}) => {
+  const newlyUnlocked = achievements.filter(
+    (achievement) => achievement.unlocked && !existingAchievementKeys.has(achievement.key)
+  );
+
+  await Promise.all(newlyUnlocked.map(async (achievement) => {
+    const type = achievement.key.startsWith("streak_")
+      ? "streak_milestone"
+      : achievement.key === "first_course"
+        ? "course_completed"
+        : "achievement_unlocked";
+    try {
+      await NotificationService.createProductNotification({
+        userId,
+        type,
+        title: achievement.title,
+        message: achievement.description,
+        actionUrl: "/learn",
+        relatedEntityType: "achievement",
+        relatedEntityKey: achievement.key,
+        dedupeKey: `learning:achievement:${achievement.key}`,
+      });
+    } catch (error) {
+      console.warn("[retention] Learning milestone notification could not be persisted.", {
+        errorType: error?.name || "Error",
+      });
+    }
+  }));
+
+  return newlyUnlocked.length;
+};
+
 // ── Unified Retention Engine ────────────────────────────────────────────────
 
 const getLearnerRetention = async ({ userId, clientTimezone, baseDate = new Date() } = {}) => {
@@ -417,6 +450,9 @@ const getLearnerRetention = async ({ userId, clientTimezone, baseDate = new Date
     coursesCompleted: uniqueCompletedCourses.size,
   };
 
+  const existingAchievementKeys = new Set(
+    (retentionDoc?.achievements || []).map((achievement) => achievement.key).filter(Boolean)
+  );
   const evaluatedAchievements = evaluateAchievements({
     totals,
     streaks,
@@ -454,6 +490,7 @@ const getLearnerRetention = async ({ userId, clientTimezone, baseDate = new Date
   }
 
   await retentionDoc.save().catch(() => {});
+  await notifyNewAchievements({ userId, existingAchievementKeys, achievements: evaluatedAchievements });
 
   return {
     streaks: {
@@ -476,6 +513,7 @@ module.exports = {
   computeDailyProgress,
   computeWeeklyProgress,
   evaluateAchievements,
+  notifyNewAchievements,
   getLearnerRetention,
   QUALIFYING_EVENT_TYPES,
   INITIAL_ACHIEVEMENTS,

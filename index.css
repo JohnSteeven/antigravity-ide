@@ -22686,6 +22686,196 @@ body.theme-dark .dropdown-divider {
   justify-self: end !important;
 }
 
+.header-notifications {
+  position: relative;
+  display: inline-flex;
+}
+
+.notification-bell-button {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ink, #292524);
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.notification-bell-button:hover,
+.notification-bell-button.active {
+  background: rgba(143, 107, 72, 0.1);
+  border-color: rgba(143, 107, 72, 0.35);
+  color: var(--gold-dark, #8f6b48);
+}
+
+.notification-bell-button:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+body.theme-dark .notification-bell-button {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  color: #f5f5f4;
+}
+
+.notification-count {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--paper, #fbfaf7);
+  border-radius: 999px;
+  background: #b42318;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(390px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 96px));
+  overflow: hidden;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.1));
+  border-radius: 16px;
+  background: var(--surface, #fffdf9);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.18);
+  color: var(--ink, #292524);
+  z-index: 4;
+}
+
+.notification-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+}
+
+.notification-panel__eyebrow {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted, #6b7280);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notification-panel h2 {
+  margin: 0;
+  font: 700 1.12rem/1.2 Georgia, "Times New Roman", serif;
+}
+
+.notification-mark-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--gold-dark, #8f6b48);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.notification-mark-all:hover {
+  background: rgba(143, 107, 72, 0.09);
+}
+
+.notification-panel__state {
+  margin: 0;
+  padding: 30px 18px;
+  color: var(--muted, #6b7280);
+  text-align: center;
+  white-space: normal;
+}
+
+.notification-list {
+  max-height: min(520px, calc(100vh - 170px));
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.notification-list li button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 9px;
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-list li.is-unread button {
+  background: rgba(66, 108, 103, 0.09);
+}
+
+.notification-list li button:hover {
+  background: rgba(143, 107, 72, 0.1);
+}
+
+.notification-item__icon {
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal, #426c67);
+}
+
+.notification-item__icon > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal, #426c67);
+}
+
+.notification-item__content {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  white-space: normal;
+}
+
+.notification-item__content strong {
+  color: var(--ink, #292524);
+  font-size: 0.82rem;
+}
+
+.notification-item__content > span {
+  color: var(--muted, #6b7280);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.notification-item__content time {
+  color: var(--muted, #6b7280);
+  font-size: 0.67rem;
+}
+
 .header-action-btn {
   display: inline-flex !important;
   align-items: center !important;

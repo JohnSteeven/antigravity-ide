@@ -442,7 +442,10 @@ export const userApi = {
   resetPassword: (id, password) => post(`/api/users/${id}/reset-password`, { password }),
   getMe: () => get("/api/users/me"),
   updateProfile: (payload) => put("/api/users/me", payload),
+  notifications: (params = {}) => get(`/api/users/notifications${queryString(params)}`),
+  unreadNotificationCount: () => get("/api/users/notifications/unread-count"),
   markNotificationAsRead: (id) => patch(`/api/users/notifications/${id}`, {}),
+  markAllNotificationsAsRead: () => patch("/api/users/notifications/read-all", {}),
 };
 
 // ─── Reader profile, library, and Article progress ─────────────────────────

@@ -19,6 +19,7 @@ import { useCms } from "../context/CmsContext";
 import { useAuth } from "../hooks/useAuth";
 import { categoryApi } from "../services/apiService";
 import useDialogFocus from "../hooks/useDialogFocus";
+import NotificationBell from "./NotificationBell.jsx";
 
 const Header = () => {
   const { data } = useCms();
@@ -409,6 +410,8 @@ const Header = () => {
 
           {/* Right Header Actions: Account & Mobile Navigation */}
           <div className="header-actions">
+            {isAuthenticated && <NotificationBell userId={user?.id || user?._id} />}
+
             {/* Account Menu / Sign In */}
             {isAuthenticated ? (
               <div className="nav-dropdown-wrapper" ref={accountDropdownRef}>

@@ -52,6 +52,14 @@ Phase 8 establishes a server-authoritative retention layer across all learning e
 - **Derived Server-Side Cache**: `retentionService.js` computes retention metrics on-the-fly from immutable `LearningEvent` records (`lesson_completed`, `quiz_passed`, `exercise_passed`, `course_completed`) and `CourseEnrollment` documents. `LearnerRetention` acts purely as a derived server-side cache updated during retention evaluation; cache persistence failures are logged and never compromise or corrupt authoritative `LearningEvent`/`CourseEnrollment` ground truth.
 - **Migration & Index Status**: No manual database migration is required. `LearnerRetention` indexes on `userId` automatically on first access. Existing `CourseEnrollment` and `LearningEvent` records are fully preserved without historical disruption.
 
+### Phase 9 Notification Foundation Data Model & Migration Status
+
+Phase 9 extends the existing shared `Notification` collection; it does not create a parallel notification store:
+- **Product fields**: `type` now includes learning, creator, Premium, and account lifecycle classes; `actionUrl` stores only validated same-origin application paths; `relatedEntityType`, `relatedEntityId`, and `relatedEntityKey` describe optional context; `dedupeKey` provides server-owned idempotency.
+- **Read state**: Existing `status` (`unread`/`read`), `readAt`, and timestamp fields remain canonical and backward compatible with prior site and Life notifications.
+- **Indexes**: `(user, dedupeKey)` is unique only when `dedupeKey` is a string, so legacy records without a key remain valid. `(user, status, createdAt)` supports recipient-scoped unread counts and newest-first lists.
+- **Migration status**: No data rewrite is required. Mongoose creates the additive indexes during controlled deployment/index synchronization; production operators must verify index creation before relying on concurrent milestone deduplication.
+
 
 ## Commands
 

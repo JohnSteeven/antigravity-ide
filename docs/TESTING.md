@@ -43,6 +43,8 @@ This suite executes:
 - `server/tests/learn/pythonWorkerAbstraction.test.js`: Pyodide Web Worker isolation, pinned Pyodide version v0.26.4, worker message handling, network API neutralization, timeout enforcement (10s), and stdout/stderr buffer management.
 - `server/tests/learn/masteryProgression.test.js`: 18 focused tests covering Phase 7 learn mastery, dynamic eligible lesson denominator, factual state derivation (`deriveLessonState`), historical 100% completion invariant, quiz retries with sticky passing and `bestScore` tracking, anti-forgery progress gating, and idempotent course completion events.
 - `server/tests/learn/retentionAndStreaks.test.js`: 15 focused tests covering Phase 8 retention foundation, qualifying vs non-qualifying streak activity, same-day idempotency, consecutive calendar day progression, missed day reset, longest streak preservation, deterministic achievement unlocking, daily and weekly progress metrics, completed course exclusion from Continue Learning, and anti-forgery guarantees.
+- `server/tests/notifications.test.js`: Phase 9 authenticated notification APIs, recipient isolation, unread count, one/all read mutations, recipient-scoped milestone idempotency, page-view rejection, safe internal action paths, and unified Learn/Coding achievement notification integration.
+- `server/tests/notificationService.test.js`: Legacy in-app delivery compatibility and honest unavailable-channel behavior.
 - `server/tests/learnDomain.test.js`: Course, module, lesson, and enrollment domain rules.
 - `server/tests/learnLessonPreviewSecurity.test.js`: Preview vs gated lesson authorization and locked serializer privacy.
 

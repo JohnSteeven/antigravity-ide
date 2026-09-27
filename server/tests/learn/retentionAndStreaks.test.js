@@ -9,6 +9,7 @@ const CourseEnrollment = require("../../models/CourseEnrollment");
 const LearningEvent = require("../../models/LearningEvent");
 const LearnerRetention = require("../../models/LearnerRetention");
 const User = require("../../models/User");
+const NotificationService = require("../../notifications/NotificationService");
 
 describe("Phase 8: Learn Retention Foundation & Streaks Suite", () => {
   const testUserId = new mongoose.Types.ObjectId().toString();
@@ -212,6 +213,7 @@ describe("Phase 8: Learn Retention Foundation & Streaks Suite", () => {
 
       jest.spyOn(LearnerRetention, "findOne").mockResolvedValue(null);
       jest.spyOn(LearnerRetention.prototype, "save").mockResolvedValue(true);
+      jest.spyOn(NotificationService, "createProductNotification").mockResolvedValue({});
 
       const testDate = new Date("2026-09-27T10:00:00.000Z");
       jest.spyOn(LearningEvent, "find").mockReturnValue({

@@ -1,10 +1,10 @@
 const userService = require("../services/userService");
-const Notification = require("../models/Notification");
 const Article = require("../models/Article");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
 const ReaderProfile = require("../models/ReaderProfile");
 const { identityChangeService } = require("../services/identityChangeService");
+const NotificationService = require("../notifications/NotificationService");
 
 const safeUser = (user) => {
   const nextUser = user.toSafeJSON ? user.toSafeJSON() : user;
@@ -275,16 +275,42 @@ class UserController {
 
   async markNotificationAsRead(req, res, next) {
     try {
-      const { id } = req.params;
-      const notification = await Notification.findOneAndUpdate(
-        { _id: id, user: req.user._id },
-        { $set: { status: "read", readAt: new Date() } },
-        { new: true }
-      );
-      if (!notification) {
-        return res.status(404).json({ message: "Notification not found." });
-      }
-      res.json({ success: true, notification });
+      const notification = await NotificationService.markOneRead({
+        userId: req.user._id,
+        notificationId: req.params.id,
+      });
+      res.json({ success: true, data: { notification } });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async listNotifications(req, res, next) {
+    try {
+      const data = await NotificationService.listForUser({
+        userId: req.user._id,
+        limit: req.query.limit,
+        before: req.query.before,
+      });
+      res.set("Cache-Control", "private, no-store").json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getUnreadNotificationCount(req, res, next) {
+    try {
+      const unreadCount = await NotificationService.unreadCountForUser(req.user._id);
+      res.set("Cache-Control", "private, no-store").json({ success: true, data: { unreadCount } });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async markAllNotificationsAsRead(req, res, next) {
+    try {
+      const data = await NotificationService.markAllRead({ userId: req.user._id });
+      res.json({ success: true, data });
     } catch (err) {
       next(err);
     }

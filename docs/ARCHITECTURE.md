@@ -284,6 +284,13 @@ Execution is partitioned by technology stack:
 - **Continue Learning Improvements**: `courseService.js` filters out completed courses (`isCompleted !== true`), resolving the server-authoritative `nextLessonId`, `nextLessonTitle`, `nextLessonType`, `progressPercent`, and deep-link `resumeUrl` (`/coding/:track/lesson/:lessonId` or `/learn/courses/:slug/lessons/:lessonId`).
 - **Anti-Forgery Guarantees**: Frontend requests cannot submit streaks, achievements, or daily/weekly progress totals. Endpoints `GET /api/learn/retention` and `GET /api/learn/home` derive state solely from authenticated server data.
 
+#### 10. Phase 9 Internal Notification Foundation
+- **Shared Persistence Domain**: Product notifications extend the established `Notification` model used by site and Life features. Each record is recipient-owned (`user`), typed, timestamped, read/unread, and may carry a safe same-origin action path plus a related entity type/ID/key. A recipient-scoped partial unique index on `(user, dedupeKey)` makes milestone delivery idempotent without affecting legacy notifications.
+- **Server-Authored Product Events**: `NotificationService.createProductNotification` accepts only allowlisted product types and requires a bounded deduplication key. No API accepts client-authored notification bodies, recipients, financial state, or arbitrary URLs. Raw page views are not a supported product-notification type.
+- **Learner Milestone Bridge**: The unified Phase 8 retention engine compares persisted achievement keys with newly qualified achievements. First lesson/quiz/exercise milestones, first course completion, and 3/7-day streaks create at most one notification per learner and achievement. Notification persistence failure never rewrites learning evidence or grants progress.
+- **Recipient-Scoped APIs**: Authenticated routes list the current user's notifications, return unread count, mark one owned notification read, and mark all owned unread notifications read. Responses omit the stored recipient identifier and use `private, no-store` on reads.
+- **Minimal Client Surface**: The existing public header adds an authenticated notification bell, unread badge, compact list panel, same-origin action navigation, and one/all read controls without changing global navigation structure. The client polls only unread count while visible; external push and email delivery remain unavailable in this phase.
+
 ## Media abstraction
 
 ProtectedMediaAsset records metadata and ownership. `server/learn/mediaProviderService.js` is an explicit provider boundary. The repository currently supports metadata/catalog workflows but not direct uploads, adaptive streaming, malware scanning, or signed delivery. Calls requiring real delivery return an unavailable error.

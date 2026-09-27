@@ -43,6 +43,10 @@ CORS allows the configured `CLIENT_URL` with credentials. Production should use 
 - The Reader client binds response application to the current authenticated identity, clears library data on identity loss/change, and rejects late mutation results from a prior account. Reading-progress cleanup also rechecks current auth enablement before sending.
 - Global Admin media state is neither fetched nor restored for anonymous/Reader sessions and is cleared when Admin authority is lost. Anonymous Agent capability discovery does not fetch private conversation history.
 
+## Notification isolation
+
+Internal notification APIs require authentication and derive the recipient exclusively from `req.user`. List, unread count, mark-one-read, and mark-all-read operations always include that recipient in the database filter; serialized responses omit the recipient ID. Product notifications are created only by server domain services through an allowlisted type contract with recipient-scoped deduplication. There is no client-authored notification endpoint, raw page views are rejected as notification types, and action destinations must be same-origin paths beginning with a single `/`. External push/email delivery is not claimed by Phase 9.
+
 ## Premium enforcement
 
 Premium is resolved server-side from ReaderMembership and access dates/status. Phase 13 purchase-attributed periods require `start <= now < end`; a future window, refund gap, expired end, or empty ledger cannot grant access. Legacy rows without a ledger retain explicit trial/grace/paid-window rules. Database lookup failures fail closed, and User/client Premium flags are never entitlement inputs.

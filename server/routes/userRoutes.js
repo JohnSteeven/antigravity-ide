@@ -52,6 +52,9 @@ router.delete(
   validate,
   userController.cancelIdentityChange
 );
+router.get("/notifications", authenticate, userController.listNotifications);
+router.get("/notifications/unread-count", authenticate, userController.getUnreadNotificationCount);
+router.patch("/notifications/read-all", authenticate, userController.markAllNotificationsAsRead);
 router.patch("/notifications/:id", authenticate, userController.markNotificationAsRead);
 
 // Admin User management routes (requires dynamic checkPermission RBAC middleware)
