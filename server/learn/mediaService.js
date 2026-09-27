@@ -4,9 +4,11 @@ const LearningResource = require("../models/LearningResource");
 const PodcastEpisode = require("../models/PodcastEpisode");
 const PodcastSeries = require("../models/PodcastSeries");
 const ProtectedMediaAsset = require("../models/ProtectedMediaAsset");
+const Course = require("../models/Course");
 const Topic = require("../models/Topic");
 const mongoose = require("mongoose");
 const { resolveLearnAccess } = require("./accessPolicy");
+const resourceStorage = require("./resourceStorageService");
 const MediaProvider = require("./mediaProviderService");
 const { serializePodcast, serializeResource, serializeVideo } = require("./serializers");
 const { MEDIA_LIMITS } = require("./constants");
@@ -39,7 +41,7 @@ const paginate = (query) => ({
 
 const listPublished = async (Model, query, serializer, extraFilter = {}) => {
   const { page, limit } = paginate(query);
-  const filter = { publicationStatus: "published", ...extraFilter };
+  const filter = { publicationStatus: "published", isDeleted: { $ne: true }, ...extraFilter };
   if (query.creator) {
     const creatorRaw = String(query.creator).trim();
     if (mongoose.isValidObjectId(creatorRaw)) {
@@ -201,7 +203,15 @@ const createPodcastEpisode = async (creator, input) => {
 
 const createResource = async (creator, input) => {
   if (input.confirmContentRights !== true) throw errorWith("Confirm that you hold the rights to this Resource.", 422, "CONTENT_RIGHTS_REQUIRED");
-  if (input.assetId) await assertOwnedAsset(creator._id, input.assetId, ["document", "resource", "image"]);
+  let course = null;
+  if (input.courseId) {
+    course = await Course.findOne({ _id: input.courseId, creatorId: creator._id, isDeleted: false }).lean();
+    if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
+  }
+  if (input.assetId) {
+    const asset = await assertOwnedAsset(creator._id, input.assetId, ["document", "resource", "image"]);
+    if (asset.provider !== "unconfigured" && (asset.deliveryStatus !== "ready" || String(asset.courseId) !== String(course?._id))) throw errorWith("Stored asset is not ready for this Course.", 422, "ASSET_NOT_READY");
+  }
   return LearningResource.create({
     creatorId: creator._id,
     title: String(input.title || "").trim(),
@@ -214,7 +224,7 @@ const createResource = async (creator, input) => {
     externalUrl: String(input.externalUrl || ""),
     sizeBytes: Number(input.sizeBytes || 0),
     accessLevel: input.accessLevel === "premium" ? "premium" : "free",
-    courseId: input.courseId || null,
+    courseId: course?._id || null,
     lessonId: input.lessonId || null,
     rightsConfirmedAt: new Date(),
   });
@@ -224,6 +234,13 @@ const issueAssetAccess = async ({ assetId, userId, purpose = "playback", admin =
   const asset = await ProtectedMediaAsset.findById(assetId).select("+providerAssetId +storageKey").lean();
   if (!asset || asset.status === "removed") throw errorWith("Media asset not found.", 404, "MEDIA_ASSET_NOT_FOUND");
   const creator = userId ? await CreatorProfile.findOne({ userId }).select("_id").lean() : null;
+  if (asset.storageKey) {
+    const resource = await LearningResource.findOne({ assetId: asset._id, isDeleted: { $ne: true } }).select("+assetId").lean();
+    if (!resource) throw errorWith("Resource not found.", 404, "RESOURCE_NOT_FOUND");
+    await resourceStorage.authorizeResource({ resource, userId, creatorId: creator?._id, admin });
+    if (purpose !== "download") throw errorWith("Stored resources must be downloaded.", 400, "INVALID_MEDIA_PURPOSE");
+    return { downloadPath: `/api/learn/resources/${encodeURIComponent(resource.slug)}/download` };
+  }
   const access = await resolveLearnAccess({ userId, accessLevel: asset.accessLevel, owner: String(creator?._id || "") === String(asset.creatorId), admin });
   if (!access.allowed) throw errorWith("MyJourney Premium is required for this media.", 403, "PREMIUM_REQUIRED");
   if (asset.scanStatus !== "clean" || asset.deliveryStatus !== "ready") throw errorWith("This media is not ready for secure delivery.", 503, "MEDIA_NOT_READY");
@@ -236,11 +253,16 @@ module.exports = {
   createResource,
   createVideo,
   getPodcast: (slug, userId) => getPublished(PodcastEpisode, slug, serializePodcast, userId, { creatorId: { $ne: null } }),
-  getResource: (slug, userId) => getPublished(LearningResource, slug, serializeResource, userId),
+  getResource: async (slug, userId) => {
+    const resource = await LearningResource.findOne({ slug, publicationStatus: "published", isDeleted: { $ne: true } }).select("+assetId +externalUrl").lean();
+    if (!resource) throw errorWith("Learning content not found.", 404, "LEARN_CONTENT_NOT_FOUND");
+    try { await resourceStorage.authorizeResource({ resource, userId }); return serializeResource(resource, { allowed: true }); }
+    catch (error) { if (![403, 404].includes(error.status)) throw error; return serializeResource(resource, { allowed: false }); }
+  },
   getVideo: (slug, userId) => getPublished(CreatorVideo, slug, serializeVideo, userId),
   issueAssetAccess,
   listPodcasts: (query) => listPublished(PodcastEpisode, query, serializePodcast, { creatorId: { $ne: null } }),
-  listResources: (query) => listPublished(LearningResource, query, serializeResource),
+  listResources: (query) => listPublished(LearningResource, query, (item) => serializeResource(item, { allowed: false })),
   listVideos: (query) => listPublished(CreatorVideo, query, serializeVideo),
   registerAssetMetadata,
 };

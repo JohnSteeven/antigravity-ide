@@ -117,11 +117,11 @@ Premium is resolved server-side from ReaderMembership and access dates/status. P
 
 ## Protected media and resources
 
-ProtectedMediaAsset stores metadata/ownership, not a claim of secure streaming. The default provider reports upload, scanning, adaptive streaming, and signed delivery unavailable. Do not expose external URLs as a substitute for protected Premium delivery.
+ProtectedMediaAsset stores metadata/ownership. Private Course resources use `storageService` with server-generated keys, backend-mediated uploads, MIME/extension/magic-byte checks, a 50 MB limit, and private local/R2 storage. Download is an authenticated, no-store, `nosniff` attachment proxy that rechecks the published resource, Course ownership/monetization, Premium or exact-Course purchase, asset readiness, and provider metadata. Creator deletion refuses active references. R2 credentials stay server-side. This is not a malware scanner or protected video streaming service; those capabilities remain unavailable until separately implemented and validated.
 
 General CMS uploads are public assets under `/uploads` and accept only allowlisted MIME/extension pairs with magic-byte checks; executable formats such as HTML, SVG, and JavaScript are rejected. ProtectedMediaAsset delivery never falls back to this public mount.
 
-Public editorial and media assets may remain publicly readable under `/uploads`. Private or user-sensitive assets (e.g. Life data, user exports, payment credentials, private learner progress, auth secrets) must never depend on or be stored in this public `/uploads` directory. Dedicated signed storage and CDN routing (e.g. Cloudflare R2 / signed URLs) remains scheduled for Phase 18.
+Public editorial and media assets may remain publicly readable under `/uploads`. Private or user-sensitive assets (e.g. Life data, user exports, payment credentials, private learner progress, auth secrets) must never depend on or be stored in this public `/uploads` directory. The Phase 18 private adapter currently serves Course resources only; it does not migrate unrelated assets or create a general private-data upload surface.
 
 ## Rich content and CMS theme safety
 

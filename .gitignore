@@ -48,6 +48,7 @@ reset_admin.js
 
 # User uploads — never commit real upload content
 uploads/
+private-objects/
 
 # IDE brain data
 brain/

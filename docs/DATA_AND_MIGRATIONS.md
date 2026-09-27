@@ -6,6 +6,8 @@ MyJourney uses MongoDB through Mongoose. Auth, CMS/content, Premium, Life, Creat
 
 Multiplayer runtime persistence never falls back to in-memory state after a disconnect. In-memory room repositories are limited to isolated tests/load harnesses. This prevents ephemeral room creation and split-brain state when Mongo is unavailable.
 
+Phase 18 extends `ProtectedMediaAsset` with private object provider/key/bucket, Course association, checksum, upload idempotency key, and deletion timestamp. The `(creatorId, uploadIdempotencyKey)` partial unique index prevents duplicate keyed uploads. `LearningResource.isDeleted` makes Coding material soft deletion persistent. Existing URL/text resources require no backfill or migration; review new indexes before production activation. Unlinked private objects are not automatically removed on resource deletion, preserving shared references until explicit owner-authorized cleanup.
+
 Never print or commit a full Mongo URI. Confirm the connected host and database name separately before destructive local operations.
 
 ## Migration mechanism

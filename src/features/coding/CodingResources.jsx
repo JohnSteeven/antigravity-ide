@@ -204,6 +204,10 @@ export default function CodingResources() {
                     <span style={{ fontSize: "0.8rem", color: "var(--cd-premium-text)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       <FiLock /> MyJourney Premium Required
                     </span>
+                  ) : res.assetId ? (
+                    <a href={learnApi.resourceDownloadUrl(res.slug)} className="cd-btn cd-btn--secondary cd-btn--full" style={{ fontSize: "0.8rem" }}>
+                      Download <FiDownload />
+                    </a>
                   ) : res.externalUrl ? (
                     <a
                       href={res.externalUrl}
@@ -228,4 +232,3 @@ export default function CodingResources() {
     </div>
   );
 }
-

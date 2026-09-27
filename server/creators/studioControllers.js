@@ -1,6 +1,7 @@
 const courseService = require("../learn/courseService");
 const mediaService = require("../learn/mediaService");
 const MediaProvider = require("../learn/mediaProviderService");
+const resourceStorage = require("../learn/resourceStorageService");
 const directoryService = require("./directoryService");
 const studioService = require("./studioService");
 const engagementService = require("./engagementService");
@@ -91,6 +92,16 @@ exports.createVideo = async (req, res, next) => { try { return res.status(201).j
 exports.createPodcastSeries = async (req, res, next) => { try { return res.status(201).json({ success: true, data: await mediaService.createPodcastSeries(req.creator, req.body) }); } catch (error) { return next(error); } };
 exports.createPodcastEpisode = async (req, res, next) => { try { return res.status(201).json({ success: true, data: await mediaService.createPodcastEpisode(req.creator, req.body) }); } catch (error) { return next(error); } };
 exports.createResource = async (req, res, next) => { try { return res.status(201).json({ success: true, data: await mediaService.createResource(req.creator, req.body) }); } catch (error) { return next(error); } };
+exports.uploadCourseResource = async (req, res, next) => {
+  try {
+    const asset = await resourceStorage.uploadResource({ creatorId: req.creator._id, userId: userId(req), courseId: req.params.id, file: req.file, idempotencyKey: req.get("Idempotency-Key") || "" });
+    return res.status(201).json({ success: true, data: { id: asset.id, originalName: asset.originalName, mimeType: asset.mimeType, sizeBytes: asset.sizeBytes, deliveryStatus: asset.deliveryStatus } });
+  } catch (error) { return next(error); }
+};
+exports.deleteCourseResourceAsset = async (req, res, next) => {
+  try { return res.json({ success: true, data: await resourceStorage.deleteUnlinkedAsset({ assetId: req.params.assetId, creatorId: req.creator._id }) }); }
+  catch (error) { return next(error); }
+};
 
 exports.analytics = async (req, res, next) => { try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await engagementService.creatorAnalytics(req.creator._id, req.query) }); } catch (error) { return next(error); } };
 exports.learningEngagement = async (req, res, next) => { try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await learningEngagementService.reportLearningEngagement({ creatorId: req.creator._id, courseId: req.query.courseId || null, periodStart: req.query.periodStart, periodEnd: req.query.periodEnd }) }); } catch (error) { return next(error); } };

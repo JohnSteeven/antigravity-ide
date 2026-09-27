@@ -31,6 +31,9 @@ const ALLOWED_MIME_EXT_MAP = {
   'application/pdf': ['.pdf'],
   'application/msword': ['.doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+  'application/zip': ['.zip'],
   'text/plain': ['.txt'],
 };
 
@@ -89,6 +92,9 @@ function checkMagicBytes(buffer, ext) {
     case '.doc':
       return hex8.startsWith('d0cf11e0');
     case '.docx':
+    case '.xlsx':
+    case '.pptx':
+    case '.zip':
       return hex4 === '504b0304'; // PK zip header
     case '.txt': {
       // Validate text content is valid UTF-8 and contains no HTML/script tags
@@ -171,4 +177,5 @@ module.exports = {
   validateFileBuffer,
   sanitizeFilename,
   checkMagicBytes,
+  ALLOWED_MIME_EXT_MAP,
 };

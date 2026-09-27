@@ -3,6 +3,7 @@ const rateLimit = require("express-rate-limit");
 const controllers = require("../creators/studioControllers");
 const { authenticate } = require("../middleware/auth");
 const { requireActiveCreator } = require("../creators/middleware");
+const resourceStorage = require("../learn/resourceStorageService");
 
 const router = express.Router();
 const submissionLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 40, standardHeaders: true, legacyHeaders: false });
@@ -26,6 +27,8 @@ router.post("/courses", controllers.createCourse);
 router.patch("/courses/:id", controllers.updateCourse);
 router.put("/courses/:id/curriculum", controllers.replaceCurriculum);
 router.post("/courses/:id/submit", submissionLimiter, controllers.submitCourse);
+router.post("/courses/:id/resources/upload", mediaLimiter, resourceStorage.acceptFile, controllers.uploadCourseResource);
+router.delete("/media/assets/:assetId", controllers.deleteCourseResourceAsset);
 router.get("/courses/:slug/lessons/:lessonId/preview", controllers.previewLesson);
 router.get("/media/capability", controllers.mediaCapability);
 router.post("/media/upload-session", mediaLimiter, controllers.createUploadSession);

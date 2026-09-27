@@ -14,15 +14,16 @@ const API_BASE =
 const REQUEST_TIMEOUT_MS = 8000;
 
 const fetchWithTimeout = async (url, options = {}) => {
+  const { timeoutMs = REQUEST_TIMEOUT_MS, ...fetchOptions } = options;
   if (typeof AbortController === "undefined") {
-    return fetch(url, options);
+    return fetch(url, fetchOptions);
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    return await fetch(url, { ...options, signal: options.signal || controller.signal });
+    return await fetch(url, { ...fetchOptions, signal: fetchOptions.signal || controller.signal });
   } finally {
     clearTimeout(timer);
   }
@@ -148,7 +149,7 @@ const request = async (path, options = {}) => {
 
 const get = (path) => request(path);
 const post = (path, body) => request(path, { method: "POST", body: JSON.stringify(body) });
-const postFormData = (path, formData) => request(path, { method: "POST", body: formData });
+const postFormData = (path, formData) => request(path, { method: "POST", body: formData, timeoutMs: 120000 });
 const put = (path, body) => request(path, { method: "PUT", body: JSON.stringify(body) });
 const patch = (path, body) => request(path, { method: "PATCH", body: JSON.stringify(body) });
 const del = (path) => request(path, { method: "DELETE" });
@@ -582,6 +583,8 @@ export const learnApi = {
   adminCodingUpdateLesson: (lessonId, payload) => patch(`/api/learn/admin/coding/lessons/${lessonId}`, payload),
   adminCodingMaterials: (params = {}) => get(`/api/learn/admin/coding/materials${queryString(params)}`),
   adminCodingCreateMaterial: (payload) => post("/api/learn/admin/coding/materials", payload),
+  adminCodingUploadMaterial: (id, formData) => postFormData(`/api/learn/admin/coding/materials/${id}/file`, formData),
+  resourceDownloadUrl: (slug) => `${API_BASE}/api/learn/resources/${encodeURIComponent(slug)}/download`,
   adminCodingUpdateMaterial: (id, payload) => patch(`/api/learn/admin/coding/materials/${id}`, payload),
   adminCodingDeleteMaterial: (id) => del(`/api/learn/admin/coding/materials/${id}`),
   // CMS — Track/Module/Lesson management

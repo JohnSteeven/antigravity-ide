@@ -3,6 +3,7 @@ const rateLimit = require("express-rate-limit");
 const controllers = require("../learn/controllers");
 const { authenticate, optionalAuthenticate } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
+const resourceStorage = require("../learn/resourceStorageService");
 
 const router = express.Router();
 const searchLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false });
@@ -39,6 +40,7 @@ router.get("/podcasts", searchLimiter, controllers.listPodcasts);
 router.get("/podcasts/:slug", optionalAuthenticate, controllers.getPodcast);
 router.get("/resources", searchLimiter, controllers.listResources);
 router.get("/resources/:slug", optionalAuthenticate, controllers.getResource);
+router.get("/resources/:slug/download", authenticate, controllers.downloadResource);
 router.get("/coding/resources", optionalAuthenticate, searchLimiter, controllers.listLearnerCodingResources);
 router.get("/coding/stats", optionalAuthenticate, searchLimiter, controllers.getCodingStats);
 router.get("/retention", authenticate, searchLimiter, controllers.getRetention);
@@ -53,6 +55,7 @@ router.get("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, contro
 router.patch("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, controllers.updateAdminCodingLesson);
 router.get("/admin/coding/materials", authenticate, requireAdmin, controllers.listAdminCodingMaterials);
 router.post("/admin/coding/materials", authenticate, requireAdmin, controllers.createAdminCodingMaterial);
+router.post("/admin/coding/materials/:id/file", authenticate, requireAdmin, resourceStorage.acceptFile, controllers.uploadAdminCodingMaterial);
 router.patch("/admin/coding/materials/:id", authenticate, requireAdmin, controllers.updateAdminCodingMaterial);
 router.delete("/admin/coding/materials/:id", authenticate, requireAdmin, controllers.deleteAdminCodingMaterial);
 

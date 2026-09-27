@@ -5,7 +5,6 @@ import {
   FiTrash2,
   FiEdit,
   FiExternalLink,
-  FiAlertTriangle,
   FiCheck,
   FiX,
   FiLock,
@@ -250,18 +249,25 @@ export default function CodingMaterialsTab({ materials = [], courses = [], onRef
     }
   };
 
+  const handleFileUpload = async (item, file) => {
+    if (!file) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await learnApi.adminCodingUploadMaterial(item._id || item.id, formData);
+      setMessage("Private file attached successfully.");
+      onRefresh?.();
+    } catch (err) {
+      setError(err.message || "File upload failed.");
+    } finally { setBusy(false); }
+  };
+
   return (
     <div style={S.container}>
-      {/* Notice about Amendment #4: No fake file upload */}
-      <div style={S.warningCard}>
-        <FiAlertTriangle style={{ fontSize: "1.2rem", flexShrink: 0, marginTop: "0.1rem" }} />
-        <div>
-          <strong>Storage Architecture Notice (Phase 18 Deferred):</strong>
-          <div style={{ marginTop: "0.2rem" }}>
-            Binary file uploads (multipart PDF, ZIP, code bundles) to Cloudflare R2 / S3 storage are scheduled for Phase 18. Currently, materials are attached using <strong>External Documentation Links</strong> or <strong>Inlined Text / Markdown Notes</strong>.
-          </div>
-        </div>
-      </div>
+      <p style={{ color: "#94a3b8", margin: 0 }}>Save a track material first, then attach a private PDF, document, image, or ZIP file (up to 50 MB). Downloads are checked against the Course access policy.</p>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
@@ -534,6 +540,12 @@ export default function CodingMaterialsTab({ materials = [], courses = [], onRef
               </div>
 
               <div style={{ display: "flex", gap: "0.4rem" }}>
+                {item.courseId && (
+                  <label style={{ ...S.btnSecondary, opacity: busy ? 0.5 : 1 }}>
+                    {item.filename ? "Replace file" : "Attach file"}
+                    <input type="file" accept=".pdf,.doc,.docx,.xlsx,.pptx,.zip,.txt,.jpg,.jpeg,.png,.webp" disabled={busy} onChange={(event) => { handleFileUpload(item, event.target.files?.[0]); event.target.value = ""; }} style={{ display: "none" }} />
+                  </label>
+                )}
                 <button
                   type="button"
                   onClick={() => setEditingMaterial(item)}

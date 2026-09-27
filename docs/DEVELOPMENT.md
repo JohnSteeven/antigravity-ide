@@ -158,6 +158,8 @@ Development OTP responses include a dev code and can log provider-unavailable de
 
 ### Optional platforms/providers
 
+Private Course resources use `OBJECT_STORAGE_PROVIDER=local` by default outside production, writing under ignored `private-objects/` (override with `OBJECT_STORAGE_LOCAL_DIR`). Production defaults to unavailable until `OBJECT_STORAGE_PROVIDER=r2` and `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` are set. Keep the bucket private. Creator uploads use `POST /api/creator-studio/courses/:id/resources/upload`; Admin Coding material files use `POST /api/learn/admin/coding/materials/:id/file`. Both accept multipart field `file` up to 50 MB. Download uses authenticated `GET /api/learn/resources/:slug/download`. No production R2 transfer has been validated without credentials.
+
 - `LIFE_AI_ENABLED`
 - `SECRET_VAULT_ENABLED`, `SECRET_VAULT_KEY`
 - `NEWS_PROVIDER`, `NEWS_API_KEY`, `GNEWS_API_KEY`, `GUARDIAN_API_KEY`, `MEDIASTACK_API_KEY`

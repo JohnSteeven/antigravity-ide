@@ -17,6 +17,8 @@ Tests that create database fixtures must use unmistakable test identities and cl
 
 ## Focused suites
 
+Phase 18 private storage checks: `npx jest --runInBand server/tests/learn/resourceStorage.test.js server/tests/learn/storageAdapter.test.js server/tests/learn/resourceEntitlement.test.js server/tests/learn/codingAdminAndMaterials.test.js server/tests/learnLessonPreviewSecurity.test.js`. These use mocked provider/DB boundaries plus a temporary local filesystem adapter; they do not validate a live R2 bucket.
+
 ```bash
 npm run test:life
 npm run test:premium

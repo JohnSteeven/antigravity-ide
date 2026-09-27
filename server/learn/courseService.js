@@ -982,7 +982,7 @@ const updateAdminCodingLesson = async (lessonId, input) => {
 };
 
 const listAdminCodingMaterials = async (query = {}) => {
-  const filter = {};
+  const filter = { isDeleted: { $ne: true } };
   if (query.courseId) filter.courseId = query.courseId;
   if (query.lessonId) filter.lessonId = query.lessonId;
   if (query.resourceType) filter.resourceType = query.resourceType;
@@ -1004,6 +1004,7 @@ const createAdminCodingMaterial = async (input) => {
   const baseSlug = slugify(input.title) || "material";
   const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
+  const initialPublicationStatus = input.externalUrl || input.textContent ? (input.publicationStatus || "published") : "draft";
   const material = await LearningResource.create({
     isSystemOwned: true,
     title: String(input.title).trim(),
@@ -1019,10 +1020,10 @@ const createAdminCodingMaterial = async (input) => {
     courseId: input.courseId || null,
     moduleId: input.moduleId || null,
     lessonId: input.lessonId || null,
-    publicationStatus: input.publicationStatus || "published",
+    publicationStatus: initialPublicationStatus,
     sortOrder: Number(input.sortOrder || 0),
     rightsConfirmedAt: new Date(),
-    publishedAt: input.publicationStatus === "published" ? new Date() : null,
+    publishedAt: initialPublicationStatus === "published" ? new Date() : null,
   });
 
   return material;
@@ -1063,7 +1064,7 @@ const deleteAdminCodingMaterial = async (id) => {
 };
 
 const listLearnerCodingResources = async (query = {}, userId = null) => {
-  const filter = { publicationStatus: "published" };
+  const filter = { publicationStatus: "published", isDeleted: { $ne: true } };
 
   if (query.track) {
     const course = await Course.findOne({
@@ -1082,7 +1083,7 @@ const listLearnerCodingResources = async (query = {}, userId = null) => {
   }
 
   const materials = await LearningResource.find(filter)
-    .populate({ path: "courseId", select: "title slug accessLevel" })
+    .populate({ path: "courseId", select: "title slug accessLevel monetizationType publicationStatus isDeleted" })
     .populate({ path: "lessonId", select: "title stableKey" })
     .sort({ sortOrder: 1, createdAt: -1 })
     .lean();
@@ -1090,16 +1091,18 @@ const listLearnerCodingResources = async (query = {}, userId = null) => {
   const accessCache = new Map();
   const serialized = await Promise.all(
     materials.map(async (item) => {
-      let isAllowed = item.accessLevel === "free";
+      let isAllowed = item.accessLevel === "free" && !["STANDALONE_PAID", "PREMIUM_INCLUDED"].includes(item.courseId?.monetizationType) && item.courseId?.accessLevel !== "premium";
+      if (item.courseId && (item.courseId.publicationStatus !== "published" || item.courseId.isDeleted)) return serializeResource(item, { allowed: false });
       if (!isAllowed) {
         if (!userId) {
           isAllowed = false;
         } else {
-          if (!accessCache.has(userId)) {
-            const access = await resolveLearnAccess({ userId, accessLevel: "premium" });
-            accessCache.set(userId, access.allowed);
+          const cacheKey = `${userId}:${item.courseId?._id || ""}:${item.courseId?.monetizationType || ""}:${item.accessLevel}`;
+          if (!accessCache.has(cacheKey)) {
+            const access = await resolveLearnAccess({ userId, courseId: item.courseId?._id, monetizationType: item.courseId?.monetizationType, accessLevel: item.accessLevel === "premium" || item.courseId?.accessLevel === "premium" || item.courseId?.monetizationType === "PREMIUM_INCLUDED" ? "premium" : "free" });
+            accessCache.set(cacheKey, access.allowed);
           }
-          isAllowed = accessCache.get(userId);
+          isAllowed = accessCache.get(cacheKey);
         }
       }
       return serializeResource(item, { allowed: isAllowed });

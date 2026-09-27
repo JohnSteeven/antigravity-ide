@@ -61,11 +61,12 @@ const LearningResourceSchema = new mongoose.Schema({
   rightsConfirmedAt: { type: Date, required: true },
   sortOrder: { type: Number, default: 0 },
   publishedAt: { type: Date, default: null },
+  isDeleted: { type: Boolean, default: false, index: true },
 }, { timestamps: true });
 
 LearningResourceSchema.pre("validate", function validatePremiumExternal(next) {
   if (this.accessLevel === "premium" && this.externalUrl) return next(new Error("Premium resources require protected media delivery."));
-  if (!this.assetId && !this.externalUrl && !this.textContent) return next(new Error("A resource asset, external URL, or text body is required."));
+  if (!this.assetId && !this.externalUrl && !this.textContent && !(this.isSystemOwned && this.courseId && this.publicationStatus === "draft")) return next(new Error("A resource asset, external URL, or text body is required."));
   return next();
 });
 LearningResourceSchema.index({ publicationStatus: 1, accessLevel: 1, publishedAt: -1 });

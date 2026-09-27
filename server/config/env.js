@@ -70,6 +70,14 @@ const env = {
   changePasswordRateLimit: Number(process.env.CHANGE_PASSWORD_RATE_LIMIT || 5),
   changePasswordWindowMs: Number(process.env.CHANGE_PASSWORD_WINDOW_MS || 15 * 60 * 1000),
   requestLogSalt: process.env.REQUEST_LOG_SALT || "development-request-log-salt-change-me",
+  storage: {
+    provider: process.env.OBJECT_STORAGE_PROVIDER || (process.env.NODE_ENV === "production" ? "unconfigured" : "local"),
+    localDirectory: process.env.OBJECT_STORAGE_LOCAL_DIR || "",
+    r2AccountId: process.env.R2_ACCOUNT_ID || "",
+    r2Bucket: process.env.R2_BUCKET || "",
+    r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+    r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+  },
   passwordMinLength: Number(process.env.PASSWORD_MIN_LENGTH || 8),
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,

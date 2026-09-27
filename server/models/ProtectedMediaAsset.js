@@ -5,9 +5,14 @@ const ProtectedMediaAssetSchema = new mongoose.Schema({
   creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "CreatorProfile", required: true, index: true },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   mediaKind: { type: String, enum: Object.keys(MEDIA_LIMITS), required: true, index: true },
-  provider: { type: String, enum: ["unconfigured", "local_development", "external"], default: "unconfigured" },
+  provider: { type: String, enum: ["unconfigured", "local_development", "r2", "external", "mux"], default: "unconfigured" },
   providerAssetId: { type: String, default: "", select: false },
   storageKey: { type: String, default: "", select: false },
+  bucket: { type: String, default: "", select: false },
+  courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", default: null, index: true },
+  checksum: { type: String, default: "", select: false },
+  uploadIdempotencyKey: { type: String, default: "", select: false },
+  deletedAt: { type: Date, default: null },
   publicPreviewUrl: { type: String, default: "" },
   originalName: { type: String, required: true, maxlength: 180 },
   mimeType: { type: String, required: true, maxlength: 120 },
@@ -24,5 +29,6 @@ ProtectedMediaAssetSchema.path("sizeBytes").validate(function withinConfiguredLi
   return value <= MEDIA_LIMITS[this.mediaKind];
 }, "Asset exceeds the configured limit for its media type.");
 ProtectedMediaAssetSchema.index({ creatorId: 1, status: 1, createdAt: -1 });
+ProtectedMediaAssetSchema.index({ creatorId: 1, uploadIdempotencyKey: 1 }, { unique: true, partialFilterExpression: { uploadIdempotencyKey: { $gt: "" } } });
 
 module.exports = mongoose.model("ProtectedMediaAsset", ProtectedMediaAssetSchema);

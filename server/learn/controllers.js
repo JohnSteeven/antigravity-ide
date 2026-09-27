@@ -186,6 +186,24 @@ exports.listPodcasts = async (req, res, next) => { try { return res.json({ succe
 exports.getPodcast = async (req, res, next) => { try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await mediaService.getPodcast(req.params.slug, userId(req)) }); } catch (error) { return next(error); } };
 exports.listResources = async (req, res, next) => { try { return res.json({ success: true, ...(await mediaService.listResources(req.query)) }); } catch (error) { return next(error); } };
 exports.getResource = async (req, res, next) => { try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await mediaService.getResource(req.params.slug, userId(req)) }); } catch (error) { return next(error); } };
+exports.downloadResource = async (req, res, next) => {
+  try {
+    const { asset, stream } = await require("./resourceStorageService").getDownload({ slug: req.params.slug, userId: userId(req) });
+    const safeName = asset.originalName.replace(/["\\\r\n]/g, "_");
+    res.set({ "Cache-Control": "private, no-store", "Content-Type": "application/octet-stream", "Content-Disposition": `attachment; filename="${safeName}"`, "X-Content-Type-Options": "nosniff" });
+    stream.on("error", next).pipe(res);
+  } catch (error) { return next(error); }
+};
+exports.uploadAdminCodingMaterial = async (req, res, next) => {
+  try {
+    const resourceStorage = require("./resourceStorageService");
+    const LearningResource = require("../models/LearningResource");
+    const material = await LearningResource.findOne({ _id: req.params.id, isSystemOwned: true }).select("courseId").lean();
+    if (!material?.courseId) return res.status(404).json({ message: "Coding material not found." });
+    const asset = await resourceStorage.uploadResource({ userId: userId(req), courseId: material.courseId, file: req.file, admin: true, resourceId: material._id, idempotencyKey: req.get("Idempotency-Key") || "" });
+    return res.status(201).json({ success: true, data: { id: asset.id, originalName: asset.originalName, mimeType: asset.mimeType, sizeBytes: asset.sizeBytes, deliveryStatus: asset.deliveryStatus } });
+  } catch (error) { return next(error); }
+};
 
 exports.mediaCapability = async (req, res) => res.json({ success: true, data: MediaProvider.capability() });
 exports.assetAccess = async (req, res, next) => {
