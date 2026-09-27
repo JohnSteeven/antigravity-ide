@@ -1,5 +1,8 @@
 jest.mock("mongoose", () => ({ startSession: jest.fn() }));
 jest.mock("../services/premiumLifecycleService", () => ({ revokeFullyRefundedPayment: jest.fn() }));
+jest.mock("../services/coursePurchaseService", () => ({ revokeFullyRefundedCoursePurchase: jest.fn() }));
+jest.mock("../models/Course", () => ({ findOne: jest.fn() }));
+jest.mock("../models/CoursePurchase", () => ({ exists: jest.fn() }));
 jest.mock("../models/Payment", () => ({
   findOneAndUpdate: jest.fn(),
   findOne: jest.fn(),
@@ -21,11 +24,14 @@ jest.mock("../models/Invoice", () => ({ findOneAndUpdate: jest.fn(), updateOne: 
 
 const mongoose = require("mongoose");
 const BillingEvent = require("../models/BillingEvent");
+const Course = require("../models/Course");
+const CoursePurchase = require("../models/CoursePurchase");
 const Invoice = require("../models/Invoice");
 const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
 const {
   claimBillingEvent,
+  createCoursePaymentAttempt,
   createPaymentAttempt,
   ensureInvoiceForCapturedPayment,
   failRefund,
@@ -65,6 +71,25 @@ describe("billing domain service", () => {
       user: { _id: "user-1", countryCode: "+91" }, idempotencyKey: "checkout:conflict",
       clientSelection: { productCode: "PREMIUM_12_MONTH" },
     })).rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
+  });
+
+  test("creates Course payment terms only from the published Course price", async () => {
+    Course.findOne.mockReturnValue({
+      select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: "course-a", title: "Course A", priceMinor: 129900, currency: "INR" }) }),
+    });
+    CoursePurchase.exists.mockResolvedValue(false);
+    Payment.findOneAndUpdate.mockResolvedValue({
+      purchaseType: "course", productCode: "COURSE_PURCHASE", courseId: "course-a", market: "INDIA",
+      amountMinor: 129900, currency: "INR",
+    });
+    const result = await createCoursePaymentAttempt({
+      user: { _id: "buyer-a" }, courseId: "course-a", idempotencyKey: "course:checkout:one",
+      amountMinor: 1, currency: "USD",
+    });
+    expect(result.amountMinor).toBe(129900);
+    expect(Payment.findOneAndUpdate.mock.calls[0][1].$setOnInsert).toMatchObject({
+      userId: "buyer-a", courseId: "course-a", amountMinor: 129900, currency: "INR", purchaseType: "course",
+    });
   });
 
   test("prevents payment state rollback and accepts an idempotent repeat", async () => {

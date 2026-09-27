@@ -539,6 +539,11 @@ export const learnApi = {
   course: (slug) => get(`/api/learn/courses/${slug}`),
   lesson: (slug, lessonId) => get(`/api/learn/courses/${slug}/lessons/${lessonId}`),
   enroll: (courseId) => post(`/api/learn/courses/${courseId}/enroll`, {}),
+  purchaseCourse: (courseId, idempotencyKey) => request(`/api/billing/courses/${courseId}/checkout`, {
+    method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: JSON.stringify({}),
+  }),
+  verifyCoursePayment: (payload) => post("/api/billing/checkout/verify", payload),
+  purchases: () => get("/api/billing/course-purchases"),
   progress: (courseId, payload) => patch(`/api/learn/courses/${courseId}/progress`, payload),
   exerciseAttempt: (courseId, lessonId, payload) => post(`/api/learn/courses/${courseId}/lessons/${lessonId}/exercise-attempt`, payload),
   evaluateQuiz: (slug, lessonId, payload) => post(`/api/learn/courses/${slug}/lessons/${lessonId}/quiz/evaluate`, payload),

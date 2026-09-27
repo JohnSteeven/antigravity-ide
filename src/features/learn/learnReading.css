@@ -6,6 +6,8 @@
 .learn-course .learn-course__subtitle { font-size: 1.04rem; line-height: 1.75; }
 .learn-course__author { font-size: .85rem; margin: 22px 0; color: var(--learn-muted); }
 .learn-course__author strong { color: var(--learn-ink); }
+.learn-course__price { margin: 18px 0 10px; color: var(--learn-muted); }
+.learn-course__price strong { color: var(--learn-ink); font-size: 1.15rem; }
 .learn-course-snapshot { overflow: hidden; background: var(--learn-surface); border: 1px solid var(--learn-line); border-radius: 18px; }
 .learn-course-snapshot > img { display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover; }
 .learn-course-art { position: relative; display: grid; gap: 18px; overflow: hidden; padding: 28px; background: #214d43; color: #f1f4dd; }

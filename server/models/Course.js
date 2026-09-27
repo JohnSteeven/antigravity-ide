@@ -13,6 +13,16 @@ const CourseSchema = new mongoose.Schema({
   level: { type: String, enum: COURSE_LEVELS, default: "all_levels", index: true },
   accessLevel: { type: String, enum: ACCESS_LEVELS, default: "free", index: true },
   monetizationType: { type: String, enum: COURSE_MONETIZATION_TYPES, default: "FREE", index: true },
+  priceMinor: {
+    type: Number,
+    default: null,
+    min: 1,
+    validate: {
+      validator: (value) => value === null || value === undefined || Number.isSafeInteger(value),
+      message: "Course price must be a safe integer in minor currency units.",
+    },
+  },
+  currency: { type: String, enum: ["INR", "USD"], default: null, uppercase: true, trim: true },
   coverImage: { type: String, default: "" },
   coverImageAlt: { type: String, default: "", maxlength: 240 },
   estimatedDurationMinutes: { type: Number, default: 0, min: 0, max: 100000 },
@@ -35,6 +45,13 @@ const CourseSchema = new mongoose.Schema({
   isDeleted: { type: Boolean, default: false, index: true },
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
+
+CourseSchema.pre("validate", function validateStandalonePrice(next) {
+  if (this.monetizationType === "STANDALONE_PAID" && (!Number.isSafeInteger(this.priceMinor) || this.priceMinor <= 0 || !this.currency)) {
+    return next(new Error("Standalone paid Courses require an authoritative positive price and currency."));
+  }
+  return next();
+});
 
 CourseSchema.index({ publicationStatus: 1, accessLevel: 1, publishedAt: -1 });
 CourseSchema.index({ publicationStatus: 1, monetizationType: 1, publishedAt: -1 });

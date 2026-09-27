@@ -1,3 +1,5 @@
+const { Money } = require("../billing/money");
+
 const CANONICAL_CODING_SLUGS = new Set([
   "html-foundations",
   "css-foundations",
@@ -36,10 +38,17 @@ const metadataBase = (source) => {
   };
 };
 
-const serializeCourse = (source, { curriculum = [], enrollment = null } = {}) => ({
+const serializeCourse = (source, { curriculum = [], enrollment = null, purchase = null } = {}) => ({
   ...metadataBase(source),
   subtitle: source.subtitle,
   monetizationType: source.monetizationType || (source.accessLevel === "premium" ? "PREMIUM_INCLUDED" : "FREE"),
+  price: source.monetizationType === "STANDALONE_PAID" && Number.isSafeInteger(source.priceMinor) && source.currency ? {
+    amountMinor: source.priceMinor,
+    currency: source.currency,
+    formatted: new Money(source.priceMinor, source.currency).format(),
+  } : null,
+  purchase,
+  owned: Boolean(purchase?.owned),
   coverImage: source.coverImage,
   coverImageAlt: source.coverImageAlt,
   level: source.level,
@@ -50,7 +59,7 @@ const serializeCourse = (source, { curriculum = [], enrollment = null } = {}) =>
   lessonCount: source.lessonCount || curriculum.reduce((count, module) => count + (module.lessons?.length || 0), 0),
   curriculum,
   enrollment,
-  premiumRequired: source.accessLevel === "premium",
+  premiumRequired: source.monetizationType !== "STANDALONE_PAID" && source.accessLevel === "premium",
 });
 
 const serializeLessonMetadata = (source) => ({

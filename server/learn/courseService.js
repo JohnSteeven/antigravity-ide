@@ -8,12 +8,17 @@ const LearningEvent = require("../models/LearningEvent");
 const Topic = require("../models/Topic");
 const LearningResource = require("../models/LearningResource");
 const CodingSubmission = require("../models/CodingSubmission");
+const { getPurchaseState } = require("../services/coursePurchaseService");
 const { resolveLearnAccess } = require("./accessPolicy");
 const { serializeCourse, serializeLesson, serializeLessonMetadata, serializeResource } = require("./serializers");
 const { escapeRegex, slugify, uniqueStrings } = require("../creators/utils");
 
 const errorWith = (message, status, code) => Object.assign(new Error(message), { status, code });
 const userIdString = (value) => String(value?._id || value?.id || value || "");
+const courseMonetization = (input, fallbackAccess = "free") => {
+  if (["FREE", "PREMIUM_INCLUDED", "STANDALONE_PAID"].includes(input?.monetizationType)) return input.monetizationType;
+  return (input?.accessLevel || fallbackAccess) === "premium" ? "PREMIUM_INCLUDED" : "FREE";
+};
 
 const findAvailableSlug = async (title, excludeId = null) => {
   const base = slugify(title) || "course";
@@ -265,10 +270,11 @@ const listCourses = async (query = {}) => {
 const getCourseDetail = async (slug, userId = null) => {
   const course = await courseQuery().where({ slug }).lean();
   if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
-  const [curriculum, enrollment, eligibleLessons] = await Promise.all([
+  const [curriculum, enrollment, eligibleLessons, purchase] = await Promise.all([
     curriculumForCourse(course._id),
     userId ? CourseEnrollment.findOne({ userId, courseId: course._id }).select("status currentLessonId completedLessonCount lastActivityAt lessonProgress completedAt").lean() : null,
     getEligibleCourseLessons(course._id),
+    course.monetizationType === "STANDALONE_PAID" ? getPurchaseState(userId, course._id) : null,
   ]);
   const progressMeta = calculateEnrollmentProgress(enrollment, eligibleLessons);
   const nextLesson = resolveNextLesson(enrollment, eligibleLessons);
@@ -289,7 +295,7 @@ const getCourseDetail = async (slug, userId = null) => {
     }),
   } : null;
 
-  return serializeCourse(course, { curriculum, enrollment: enrichedEnrollment });
+  return serializeCourse(course, { curriculum, enrollment: enrichedEnrollment, purchase });
 };
 
 const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null, admin = false }) => {
@@ -310,8 +316,11 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
   if (!lesson) throw errorWith("Lesson not found.", 404, "LESSON_NOT_FOUND");
   const access = lesson.isPreview
     ? { allowed: true, reason: "preview" }
-    : await resolveLearnAccess({ userId, accessLevel: course.accessLevel, owner, admin, monetizationType: course.monetizationType });
-  if (!access.allowed) throw errorWith("MyJourney Premium is required for this lesson.", 403, "PREMIUM_REQUIRED");
+    : await resolveLearnAccess({ userId, courseId: course._id, accessLevel: course.accessLevel, owner, admin, monetizationType: course.monetizationType });
+  if (!access.allowed) {
+    const standalone = access.reason === "standalone_purchase_required";
+    throw errorWith(standalone ? "Purchase this Course to open this Lesson." : "MyJourney Premium is required for this lesson.", 403, standalone ? "COURSE_PURCHASE_REQUIRED" : "PREMIUM_REQUIRED");
+  }
 
   // Load attached materials/resources
   const attachedResources = await LearningResource.find({
@@ -361,6 +370,7 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
 
 const createCourse = async (creator, input) => {
   if (input.confirmContentRights !== true) throw errorWith("Confirm that you hold the rights to this Course.", 422, "CONTENT_RIGHTS_REQUIRED");
+  const monetizationType = courseMonetization(input);
   return Course.create({
     creatorId: creator._id,
     title: String(input.title || "").trim(),
@@ -370,7 +380,10 @@ const createCourse = async (creator, input) => {
     topicIds: Array.isArray(input.topicIds) ? input.topicIds.slice(0, 12) : [],
     language: String(input.language || "English").trim(),
     level: input.level || "all_levels",
-    accessLevel: input.accessLevel === "premium" ? "premium" : "free",
+    accessLevel: monetizationType === "PREMIUM_INCLUDED" ? "premium" : "free",
+    monetizationType,
+    priceMinor: monetizationType === "STANDALONE_PAID" ? Number(input.priceMinor) : null,
+    currency: monetizationType === "STANDALONE_PAID" ? String(input.currency || "").toUpperCase() : null,
     coverImage: String(input.coverImage || "").trim(),
     coverImageAlt: String(input.coverImageAlt || "").trim(),
     estimatedDurationMinutes: Number(input.estimatedDurationMinutes || 0),
@@ -389,7 +402,17 @@ const updateCourse = async (creatorId, courseId, input) => {
   if (input.topicIds !== undefined) course.topicIds = Array.isArray(input.topicIds) ? input.topicIds.slice(0, 12) : [];
   if (input.learningOutcomes !== undefined) course.learningOutcomes = uniqueStrings(input.learningOutcomes, 20);
   if (input.prerequisites !== undefined) course.prerequisites = uniqueStrings(input.prerequisites, 20);
-  if (input.accessLevel !== undefined) course.accessLevel = input.accessLevel === "premium" ? "premium" : "free";
+  if (input.accessLevel !== undefined || input.monetizationType !== undefined) {
+    course.monetizationType = courseMonetization(input, course.accessLevel);
+    course.accessLevel = course.monetizationType === "PREMIUM_INCLUDED" ? "premium" : "free";
+  }
+  if (course.monetizationType === "STANDALONE_PAID") {
+    if (input.priceMinor !== undefined) course.priceMinor = Number(input.priceMinor);
+    if (input.currency !== undefined) course.currency = String(input.currency).toUpperCase();
+  } else {
+    course.priceMinor = null;
+    course.currency = null;
+  }
   if (input.title !== undefined || input.subtitle !== undefined || input.description !== undefined) course.contentVersion += 1;
   await course.save();
   return course;
@@ -496,8 +519,11 @@ const submitCourse = async (creatorId, courseId) => {
 };
 
 const ensureCourseAccess = async (course, userId) => {
-  const access = await resolveLearnAccess({ userId, accessLevel: course.accessLevel, monetizationType: course.monetizationType });
-  if (!access.allowed) throw errorWith("MyJourney Premium is required for this Course.", 403, "PREMIUM_REQUIRED");
+  const access = await resolveLearnAccess({ userId, courseId: course._id, accessLevel: course.accessLevel, monetizationType: course.monetizationType });
+  if (!access.allowed) {
+    const standalone = access.reason === "standalone_purchase_required";
+    throw errorWith(standalone ? "Purchase this Course to continue." : "MyJourney Premium is required for this Course.", 403, standalone ? "COURSE_PURCHASE_REQUIRED" : "PREMIUM_REQUIRED");
+  }
   return access;
 };
 

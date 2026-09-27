@@ -8,8 +8,9 @@ jest.mock("../middleware/auth", () => ({
 }));
 jest.mock("../models/Payment", () => ({ findOne: jest.fn() }));
 jest.mock("../services/premiumLifecycleService", () => ({ activateCapturedPayment: jest.fn(), noteFailedPayment: jest.fn() }));
+jest.mock("../services/coursePurchaseService", () => ({ activateCapturedCoursePurchase: jest.fn(), listPurchasesForBuyer: jest.fn() }));
 jest.mock("../services/billingDomainService", () => ({
-  claimBillingEvent: jest.fn(), completeBillingEvent: jest.fn(), createPaymentAttempt: jest.fn(),
+  claimBillingEvent: jest.fn(), completeBillingEvent: jest.fn(), createCoursePaymentAttempt: jest.fn(), createPaymentAttempt: jest.fn(),
   ensureInvoiceForCapturedPayment: jest.fn(),
   failBillingEvent: jest.fn(), failRefund: jest.fn(), markRefundPending: jest.fn(), requestRefund: jest.fn(),
   settleRefund: jest.fn(), transitionPayment: jest.fn(),
@@ -36,6 +37,8 @@ describe("billing API authorization", () => {
   test.each([
     ["post", "/api/billing/checkout/orders"],
     ["post", "/api/billing/checkout/verify"],
+    ["post", "/api/billing/courses/course-a/checkout"],
+    ["get", "/api/billing/course-purchases"],
     ["get", "/api/billing/payments/payment-1"],
     ["post", "/api/billing/payments/payment-1/refunds"],
   ])("%s %s requires authentication", async (method, path) => {
@@ -48,6 +51,14 @@ describe("billing API authorization", () => {
     const response = await request(app).get("/api/billing/payments/payment-owned-by-someone-else").set("x-test-user", "authenticated-user");
     expect(response.status).toBe(404);
     expect(Payment.findOne).toHaveBeenCalledWith({ _id: "payment-owned-by-someone-else", userId: "authenticated-user" });
+  });
+
+  test("Course purchase history derives its buyer scope from authentication", async () => {
+    const coursePurchases = require("../services/coursePurchaseService");
+    coursePurchases.listPurchasesForBuyer.mockResolvedValue([]);
+    const response = await request(app).get("/api/billing/course-purchases").set("x-test-user", "buyer-a");
+    expect(response.status).toBe(200);
+    expect(coursePurchases.listPurchasesForBuyer).toHaveBeenCalledWith("buyer-a");
   });
 
   test("checkout forwards only product selection and server-owned user identity", async () => {
@@ -67,6 +78,25 @@ describe("billing API authorization", () => {
       productCode: "PREMIUM_12_MONTH",
       idempotencyKey: "checkout-auth-one",
       metadata: { requestId: undefined },
+    });
+  });
+
+  test("Course checkout forwards only authenticated buyer, Course identity, and idempotency", async () => {
+    jest.spyOn(billingController.razorpay, "createCheckoutSession").mockResolvedValue({
+      internalPaymentId: "course-payment-1", orderId: "order_course_1", courseId: "course-a",
+      amountMinor: 99900, currency: "INR", testMode: true,
+    });
+    const response = await request(app)
+      .post("/api/billing/courses/course-a/checkout")
+      .set("x-test-user", "buyer-a")
+      .set("Idempotency-Key", "course-checkout-one")
+      .send({ amountMinor: 1, currency: "USD", courseId: "course-b", buyerId: "victim" });
+    expect(response.status).toBe(201);
+    expect(billingController.razorpay.createCheckoutSession).toHaveBeenCalledWith({
+      user: expect.objectContaining({ _id: "buyer-a" }),
+      courseId: "course-a",
+      idempotencyKey: "course-checkout-one",
+      metadata: { requestId: undefined, checkoutType: "course" },
     });
   });
 

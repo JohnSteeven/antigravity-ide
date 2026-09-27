@@ -9,6 +9,8 @@ const router = express.Router();
 router.get("/capability", billingController.getCapability);
 router.post("/checkout/orders", authenticate, billingController.createCheckoutOrder);
 router.post("/checkout/verify", authenticate, billingController.verifyCheckoutPayment);
+router.post("/courses/:courseId/checkout", authenticate, billingController.createCourseCheckoutOrder);
+router.get("/course-purchases", authenticate, billingController.listMyCoursePurchases);
 router.get("/payments/:paymentId", authenticate, billingController.getMyPayment);
 router.post("/payments/:paymentId/refunds", authenticate, billingController.createRefund);
 router.get("/admin/reconcile/payments/:paymentId", authenticate, requireAdmin, billingController.reconcilePayment);

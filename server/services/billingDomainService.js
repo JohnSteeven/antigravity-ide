@@ -1,12 +1,14 @@
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const BillingEvent = require("../models/BillingEvent");
+const Course = require("../models/Course");
+const CoursePurchase = require("../models/CoursePurchase");
 const Invoice = require("../models/Invoice");
 const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
 const { Money } = require("../billing/money");
 const { PAYMENT_TRANSITIONS, canTransition } = require("../billing/constants");
-const { resolveCheckoutSelection } = require("../billing/priceCatalog");
+const { MARKETS, PRODUCT_CODES, resolveCheckoutSelection } = require("../billing/priceCatalog");
 const { sanitizeBillingMetadata } = require("../billing/safeMetadata");
 
 const billingError = (message, code, status = 409) => Object.assign(new Error(message), { code, status });
@@ -114,6 +116,58 @@ const createPaymentAttempt = async ({ user, clientSelection, idempotencyKey, pro
   }
   if (!payment) throw billingError("Payment attempt could not be created safely.", "PAYMENT_CREATE_CONFLICT");
   assertPaymentIdempotencyMatch(payment, price);
+  return payment;
+};
+
+const createCoursePaymentAttempt = async ({ user, courseId, idempotencyKey, provider = "razorpay", metadata = {} }) => {
+  const userId = user?._id || user?.id;
+  if (!userId) throw billingError("Authentication is required.", "AUTHENTICATION_REQUIRED", 401);
+  const key = validateIdempotencyKey(idempotencyKey);
+  const course = await Course.findOne({ _id: courseId, publicationStatus: "published", monetizationType: "STANDALONE_PAID", isDeleted: false })
+    .select("title priceMinor currency")
+    .lean();
+  if (!course) throw billingError("Standalone paid Course was not found.", "COURSE_NOT_FOUND", 404);
+  if (!Number.isSafeInteger(course.priceMinor) || course.priceMinor <= 0 || !["INR", "USD"].includes(course.currency)) {
+    throw billingError("This Course is not configured for checkout.", "COURSE_PRICE_NOT_CONFIGURED", 503);
+  }
+  if (await CoursePurchase.exists({ buyerId: userId, courseId: course._id, paymentStatus: "captured", entitlementState: "active" })) {
+    throw billingError("You already own this Course.", "COURSE_ALREADY_OWNED");
+  }
+  const terms = {
+    purchaseType: "course",
+    productCode: PRODUCT_CODES.COURSE_PURCHASE,
+    courseId: course._id,
+    market: course.currency === "INR" ? MARKETS.INDIA : MARKETS.INTERNATIONAL,
+    amountMinor: course.priceMinor,
+    currency: course.currency,
+  };
+  let payment;
+  try {
+    payment = await Payment.findOneAndUpdate(
+      { userId, idempotencyKey: key },
+      {
+        $setOnInsert: {
+          userId,
+          idempotencyKey: key,
+          paymentReference: `pay_${crypto.randomUUID()}`,
+          ...terms,
+          provider,
+          status: "created",
+          metadata: sanitizeBillingMetadata(metadata),
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true }
+    );
+  } catch (error) {
+    if (!isDuplicateKey(error)) throw error;
+    payment = await Payment.findOne({ userId, idempotencyKey: key });
+  }
+  if (!payment) throw billingError("Course payment attempt could not be created safely.", "PAYMENT_CREATE_CONFLICT");
+  if (payment.purchaseType !== terms.purchaseType || payment.productCode !== terms.productCode
+    || !sameId(payment.courseId, terms.courseId) || payment.market !== terms.market
+    || payment.amountMinor !== terms.amountMinor || payment.currency !== terms.currency) {
+    throw billingError("The idempotency key was already used for different payment terms.", "IDEMPOTENCY_CONFLICT");
+  }
   return payment;
 };
 
@@ -248,7 +302,11 @@ const settleRefund = async ({ refundId, providerRefundId, providerEventId, proce
         throw billingError("Refund reservation is inconsistent.", "REFUND_RESERVATION_CONFLICT");
       }
       if (paymentStatus === "refunded") {
-        await require("./premiumLifecycleService").revokeFullyRefundedPayment({ payment, processedAt, session });
+        if (payment.purchaseType === "course") {
+          await require("./coursePurchaseService").revokeFullyRefundedCoursePurchase({ payment, processedAt, session });
+        } else {
+          await require("./premiumLifecycleService").revokeFullyRefundedPayment({ payment, processedAt, session });
+        }
       }
       await ensureInvoiceForCapturedPayment({
         ...(typeof payment.toObject === "function" ? payment.toObject() : payment),
@@ -419,6 +477,7 @@ module.exports = {
   assertPaymentIdempotencyMatch,
   claimBillingEvent,
   completeBillingEvent,
+  createCoursePaymentAttempt,
   createPaymentAttempt,
   ensureInvoiceForCapturedPayment,
   failRefund,

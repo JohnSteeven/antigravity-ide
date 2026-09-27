@@ -1,6 +1,6 @@
 # Billing architecture
 
-This document is the durable source of truth for MyJourney billing work. It covers the billing foundation introduced in V1 Phases 10–12 and the Phase 13 prepaid Premium lifecycle. Standalone Course purchases, Creator revenue sharing, payouts, and background-worker infrastructure remain outside this scope.
+This document is the durable source of truth for MyJourney billing work. It covers the billing foundation introduced in V1 Phases 10–12, the Phase 13 prepaid Premium lifecycle, and Phase 14 standalone Course purchases. Creator revenue sharing, payouts, and background-worker infrastructure remain outside this scope.
 
 ## Domain boundaries
 
@@ -129,6 +129,8 @@ Authenticated users can request a refund only against their own captured Payment
 | `GET /api/billing/capability` | Public, no secrets | Honest test-provider availability. |
 | `POST /api/billing/checkout/orders` | Authenticated + CSRF + idempotency | Create/reuse a server-priced order. |
 | `POST /api/billing/checkout/verify` | Authenticated + CSRF | Verify checkout HMAC and provider state. |
+| `POST /api/billing/courses/:courseId/checkout` | Authenticated + CSRF + idempotency | Create/reuse an Order from the Course's server-owned price. |
+| `GET /api/billing/course-purchases` | Authenticated owner only | Allowlisted private Course ownership history. |
 | `GET /api/billing/payments/:paymentId` | Authenticated owner only | Safe private Payment view. |
 | `POST /api/billing/payments/:paymentId/refunds` | Authenticated owner + CSRF + idempotency | Full/partial refund foundation. |
 | `GET /api/billing/admin/reconcile/payments/:paymentId` | Admin only | Read-only internal/provider comparison. |
@@ -199,4 +201,12 @@ Optional membership period/success/issue fields and optional Payment attribution
 
 Real Razorpay test-account checkout/API connectivity, captured/paid verification, dashboard webhook delivery/retries/rotation, failed-attempt recovery, full/partial refund delivery and reconciliation still require staging evidence. Recurring provider cancellation is unavailable rather than simulated. No real-money transaction or live-mode validation occurred. Local real-Mongo/stub-provider checks are structural evidence; browser checkout/account QA remains required. See [Razorpay webhook delivery semantics](https://razorpay.com/docs/webhooks/faqs/) and [refund API scope](https://razorpay.com/docs/api/refunds/).
 
-Standalone Course purchases and Creator economics/payouts are not implemented. Statutory invoice/tax fields, billing-record retention/anonymization, GST treatment, and commercial/legal text still require CA/legal/privacy review before production activation.
+## Phase 14: standalone Course purchases
+
+`Course.monetizationType` keeps Free, Premium-included, and standalone policies separate. A standalone Course must store a positive safe-integer `priceMinor` and explicit INR/USD currency. Checkout accepts only the Course identity and authenticated buyer; it ignores browser financial fields and creates a `purchaseType=course` Payment whose immutable Course, amount, currency, market, and provider terms came from the published Course.
+
+The existing Razorpay Order claim, callback signature, provider Payment/Order fetch, raw webhook signature, durable BillingEvent replay claim, Payment transitions, Invoice snapshot, and Refund pipeline are reused. A fully captured course-targeted Payment invokes `coursePurchaseService`, not `premiumLifecycleService`. One unique `CoursePurchase` per buyer/Course records the captured Payment and entitlement. Repeated callback/webhook fulfillment for that Payment reuses the record; a failed or partially captured Payment creates none. Learn authorization looks up that exact active purchase without consulting Premium, so Premium and QA override cannot grant standalone access.
+
+A processed full refund marks only the matching CoursePurchase refunded/revoked and dates the Payment revocation. Partial, pending, and failed refunds preserve ownership. Purchase-history API output is authenticated/buyer-scoped and omits provider order/payment references. Provider live mode remains rejected, and no production Razorpay success is claimed: real test-account checkout, webhook/refund delivery, and browser QA remain required.
+
+Creator economics/payouts are not implemented by Phase 14. Statutory invoice/tax fields, billing-record retention/anonymization, GST treatment, and commercial/legal text still require CA/legal/privacy review before production activation.

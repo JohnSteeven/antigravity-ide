@@ -6,9 +6,11 @@ jest.mock("../models/Payment", () => ({
 }));
 jest.mock("../models/Refund", () => ({ findOne: jest.fn() }));
 jest.mock("../services/premiumLifecycleService", () => ({ activateCapturedPayment: jest.fn(), noteFailedPayment: jest.fn() }));
+jest.mock("../services/coursePurchaseService", () => ({ activateCapturedCoursePurchase: jest.fn() }));
 jest.mock("../services/billingDomainService", () => ({
   claimBillingEvent: jest.fn(),
   completeBillingEvent: jest.fn(),
+  createCoursePaymentAttempt: jest.fn(),
   createPaymentAttempt: jest.fn(),
   ensureInvoiceForCapturedPayment: jest.fn(),
   failBillingEvent: jest.fn(),
@@ -22,6 +24,7 @@ const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
 const domain = require("../services/billingDomainService");
 const lifecycle = require("../services/premiumLifecycleService");
+const courseLifecycle = require("../services/coursePurchaseService");
 const { hmacHex } = require("../billing/providers/razorpay/signatures");
 const { RazorpayBillingService } = require("../services/razorpayBillingService");
 
@@ -113,6 +116,23 @@ describe("Razorpay billing orchestration", () => {
     expect(result).not.toHaveProperty("keySecret");
   });
 
+  test("creates a standalone Course order without accepting client financial terms", async () => {
+    const internal = payment({ purchaseType: "course", productCode: "COURSE_PURCHASE", courseId: "course-a", amountMinor: 99900 });
+    domain.createCoursePaymentAttempt.mockResolvedValue(internal);
+    Payment.findOneAndUpdate
+      .mockReturnValueOnce(selected({ ...internal, orderCreation: { state: "creating" } }))
+      .mockResolvedValueOnce(payment({ ...internal, providerOrderId: "order_test123", status: "pending", orderCreation: { state: "created" } }));
+    client.createOrder.mockResolvedValue(providerOrder({ amount: 99900, amount_paid: 0, status: "created" }));
+
+    const result = await service.createCheckoutSession({
+      user: { _id: internal.userId }, courseId: "course-a", idempotencyKey: "course-order-one",
+      amountMinor: 1, currency: "USD",
+    });
+    expect(domain.createCoursePaymentAttempt).toHaveBeenCalledWith(expect.objectContaining({ courseId: "course-a" }));
+    expect(client.createOrder).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 99900, currency: "INR" }));
+    expect(result).toMatchObject({ courseId: "course-a", amountMinor: 99900, currency: "INR" });
+  });
+
   test("marks a timed-out order creation uncertain and does not manufacture checkout", async () => {
     const internal = payment();
     domain.createPaymentAttempt.mockResolvedValue(internal);
@@ -169,6 +189,23 @@ describe("Razorpay billing orchestration", () => {
       updates: { capturedAmountMinor: 39900, processorFeeMinor: 763, processorFeeTaxMinor: 137 },
     }));
     expect(lifecycle.activateCapturedPayment).toHaveBeenCalledTimes(1);
+  });
+
+  test("verified standalone capture activates Course ownership, never Premium", async () => {
+    const internal = payment({ purchaseType: "course", productCode: "COURSE_PURCHASE", courseId: "course-a", providerOrderId: "order_test123", status: "pending", amountMinor: 99900 });
+    const captured = payment({ ...internal, providerPaymentId: "pay_test123", status: "captured", capturedAmountMinor: 99900 });
+    Payment.findOne.mockResolvedValue(internal);
+    client.fetchPayment.mockResolvedValue(providerPayment({ amount: 99900 }));
+    client.fetchOrder.mockResolvedValue(providerOrder({ amount: 99900, amount_paid: 99900 }));
+    domain.transitionPayment.mockResolvedValue(captured);
+    courseLifecycle.activateCapturedCoursePurchase.mockResolvedValue(captured);
+    const signature = hmacHex("order_test123|pay_test123", environment.RAZORPAY_KEY_SECRET);
+    await service.verifyCheckoutPayment({
+      userId: internal.userId, internalPaymentId: internal._id, razorpayOrderId: "order_test123",
+      razorpayPaymentId: "pay_test123", razorpaySignature: signature,
+    });
+    expect(courseLifecycle.activateCapturedCoursePurchase).toHaveBeenCalledWith(internal._id);
+    expect(lifecycle.activateCapturedPayment).not.toHaveBeenCalled();
   });
 
   test("invalid callback signature performs no provider lookup or state mutation", async () => {

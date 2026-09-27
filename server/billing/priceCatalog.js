@@ -2,6 +2,7 @@ const { Money, normalizeCurrency } = require("./money");
 
 const MARKETS = Object.freeze({ INDIA: "INDIA", INTERNATIONAL: "INTERNATIONAL" });
 const PRODUCT_CODES = Object.freeze({
+  COURSE_PURCHASE: "COURSE_PURCHASE",
   PREMIUM_MONTHLY: "PREMIUM_MONTHLY",
   PREMIUM_3_MONTH: "PREMIUM_3_MONTH",
   PREMIUM_6_MONTH: "PREMIUM_6_MONTH",

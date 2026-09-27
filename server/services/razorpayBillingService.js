@@ -2,12 +2,14 @@ const crypto = require("crypto");
 const Payment = require("../models/Payment");
 const Refund = require("../models/Refund");
 const { activateCapturedPayment, noteFailedPayment } = require("./premiumLifecycleService");
+const { activateCapturedCoursePurchase } = require("./coursePurchaseService");
 const { RazorpayClient } = require("../billing/providers/razorpay/client");
 const { assertRazorpayApiConfigured, assertRazorpayWebhookConfigured, readRazorpayConfig } = require("../billing/providers/razorpay/config");
 const { verifyPaymentSignature, verifyWebhookSignature } = require("../billing/providers/razorpay/signatures");
 const {
   claimBillingEvent,
   completeBillingEvent,
+  createCoursePaymentAttempt,
   createPaymentAttempt,
   failBillingEvent,
   failRefund,
@@ -27,10 +29,11 @@ const checkoutData = (payment, config) => ({
   internalPaymentId: String(payment._id),
   orderId: payment.providerOrderId,
   productCode: payment.productCode,
+  courseId: payment.courseId ? String(payment.courseId) : null,
   market: payment.market,
   amountMinor: payment.amountMinor,
   currency: payment.currency,
-  name: "MyJourney Premium",
+  name: payment.purchaseType === "course" ? "MyJourney Course" : "MyJourney Premium",
 });
 
 const safeRefundData = (refund) => ({
@@ -61,15 +64,17 @@ class RazorpayBillingService {
     };
   }
 
-  async createCheckoutSession({ user, productCode, idempotencyKey, metadata = {} }) {
+  async createCheckoutSession({ user, productCode, courseId, idempotencyKey, metadata = {} }) {
     const config = assertRazorpayApiConfigured(this.config);
-    const payment = await createPaymentAttempt({
-      user,
-      clientSelection: { productCode },
-      idempotencyKey,
-      provider: "razorpay",
-      metadata,
-    });
+    const payment = courseId
+      ? await createCoursePaymentAttempt({ user, courseId, idempotencyKey, provider: "razorpay", metadata })
+      : await createPaymentAttempt({
+        user,
+        clientSelection: { productCode },
+        idempotencyKey,
+        provider: "razorpay",
+        metadata,
+      });
     if (payment.providerOrderId) return checkoutData(payment, config);
 
     const claimToken = crypto.randomUUID();
@@ -209,7 +214,9 @@ class RazorpayBillingService {
         processorFeeTaxMinor: tax,
       },
     });
-    const activated = await activateCapturedPayment(captured._id);
+    const activated = captured.purchaseType === "course"
+      ? await activateCapturedCoursePurchase(captured._id)
+      : await activateCapturedPayment(captured._id);
     return activated;
   }
 
@@ -243,7 +250,8 @@ class RazorpayBillingService {
         } : {},
       });
       if (nextStatus === "captured") {
-        await activateCapturedPayment(transitioned._id);
+        if (transitioned.purchaseType === "course") await activateCapturedCoursePurchase(transitioned._id);
+        else await activateCapturedPayment(transitioned._id);
       }
       if (nextStatus === "failed") await noteFailedPayment(transitioned._id);
       return { processingStatus: "processed", payment: transitioned, previousStatus: payment.status, newStatus: transitioned.status };

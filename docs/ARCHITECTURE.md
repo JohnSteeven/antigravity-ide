@@ -167,6 +167,8 @@ Billing provider -> Subscription Service -> Entitlement Service -> Protected fea
 
 Duration affects billing time only. It never changes the feature set. `server/billing` owns immutable integer-minor-unit money and fixed INR/USD catalog rules. Payment, Invoice, Refund, and BillingEvent surround the existing Subscription aggregate with database idempotency and auditable state. Verified Razorpay capture invokes `premiumLifecycleService` to atomically attribute the Payment, extend ReaderMembership, associate the Invoice, and write a BillingEvent. Renewals stack after remaining paid time; expired purchases begin at verification. Full refunds remove only their attributed window, preserving other purchases and denying access in any resulting gap. Cancellation preserves paid dates; failed attempts never change paid access or create grace. The adapter still refuses live keys and unsupported recurring subscription operations. See `docs/BILLING_ARCHITECTURE.md`.
 
+Phase 14 extends the same Payment/Invoice/Refund/BillingEvent and Razorpay verification pipeline for `STANDALONE_PAID` Courses. Course price and currency are stored on the Course and copied into an immutable course-targeted Payment at checkout; browser amounts are ignored. A verified full capture creates one unique `CoursePurchase` aggregate for `(buyerId, courseId)`. Learn access checks query only its active captured entitlement for that exact Course. Premium, including the QA Premium override, never satisfies standalone access. Creator ownership/Admin review are explicit preview authorities. A processed full refund revokes only the purchase tied to that Payment; partial, pending, or failed refunds do not.
+
 ## Creator domain
 
 CreatorApplication is the private application/review workflow. CreatorProfile is the public/owner profile and Creator Studio capability. Topic is taxonomy. Article/Story/Course/Video/Podcast/Resource are content types; they are not Creator types or Topics.
@@ -178,14 +180,14 @@ Creator analytics aggregates and earnings/ledger models exist. Real revenue attr
 ## Learn, Courses, and lessons
 
 ```text
-Creator -> Content -> Free/Premium -> Entitlement -> Learner
+Creator -> Content -> Free/Premium/Standalone -> Entitlement -> Learner
 ```
 
 Learn combines Topics and public catalog/search with Course, CourseModule, CourseLesson, CourseEnrollment, LearningEvent, CreatorVideo, PodcastSeries/Episode, LearningResource, and ExamDefinition.
 
 Discovery pages (`/learn`, `/learn/courses`, `/learn/courses?topic=...`) share `LearnDiscoveryLayout`, providing a persistent left discovery rail on desktop and an accessible mobile drawer on viewport widths $\le$1023px. Topic filtering uses canonical topic slugs in query parameters, resolved server-side against the `Topic` collection to filter courses and media assets by `topicIds`.
 
-Course detail exposes curriculum metadata in a focused container (`/learn/courses/:slug`). Preview lessons are public; non-preview Premium lessons require `premium_learn`. Enrollment and progress are private to the learner and power Continue Learning. Locked serializers remove lesson bodies, transcripts, asset identifiers, and resource URLs.
+Course detail exposes curriculum metadata in a focused container (`/learn/courses/:slug`). Preview lessons are public; non-preview Premium lessons require `premium_learn`, while standalone lessons require an active purchase for the exact Course. Enrollment and progress are private to the learner and power Continue Learning. Locked serializers remove lesson bodies, transcripts, asset identifiers, and resource URLs.
 
 ### Interactive Coding Curriculum Architecture (Phase 6)
 

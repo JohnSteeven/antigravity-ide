@@ -45,6 +45,7 @@ This suite executes:
 - `server/tests/learn/retentionAndStreaks.test.js`: 15 focused tests covering Phase 8 retention foundation, qualifying vs non-qualifying streak activity, same-day idempotency, consecutive calendar day progression, missed day reset, longest streak preservation, deterministic achievement unlocking, daily and weekly progress metrics, completed course exclusion from Continue Learning, and anti-forgery guarantees.
 - `server/tests/notifications.test.js`: Phase 9 authenticated notification APIs, recipient isolation, unread count, one/all read mutations, recipient-scoped milestone idempotency, page-view rejection, safe internal action paths, and unified Learn/Coding achievement notification integration.
 - `server/tests/notificationService.test.js`: Legacy in-app delivery compatibility and honest unavailable-channel behavior.
+- `server/tests/standaloneCourseCommerce.test.js`, `server/tests/coursePurchaseLifecycle.test.js`, and `server/tests/courseCommerceModels.test.js`: Phase 14 Free/Premium/standalone policy separation, QA override exclusion, exact-Course ownership, failed-payment denial, callback/webhook replay idempotency, server-owned pricing, full-refund revocation, buyer-scoped history, financial model validation, and uniqueness boundaries.
 - `server/tests/learnDomain.test.js`: Course, module, lesson, and enrollment domain rules.
 - `server/tests/learnLessonPreviewSecurity.test.js`: Preview vs gated lesson authorization and locked serializer privacy.
 
@@ -55,6 +56,14 @@ npx jest --runInBand server/tests/billingMoneyAndCatalog.test.js server/tests/bi
 ```
 
 These use mocked provider HTTP. They cover exact INR/USD terms, integer/currency invariants, indexes, transitions, transaction-shaped refund reservation, callback and raw-body webhook signatures, duplicate/concurrent replay, out-of-order events, ownership/Admin boundaries, provider failures, refunds, and reconciliation without making a real payment or network request.
+
+Focused Phase 14 commerce checks:
+
+```bash
+npx jest --runInBand server/tests/standaloneCourseCommerce.test.js server/tests/coursePurchaseLifecycle.test.js server/tests/courseCommerceModels.test.js server/tests/billingDomainService.test.js server/tests/razorpayBillingService.test.js server/tests/billingAuthorization.test.js server/tests/billingDomainModels.test.js
+```
+
+The provider lifecycle is simulated. Real Razorpay test-account checkout, webhook delivery, refund delivery, and browser checkout QA remain external validation requirements.
 
 Focused Phase 13 lifecycle checks:
 

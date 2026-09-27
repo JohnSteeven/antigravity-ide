@@ -11,7 +11,7 @@ const Shelf = ({ name, items }) => {
   return (
     <section className="creator-shelf" aria-labelledby={`creator-${name}`}>
       <div className="creator-section-heading"><h2 id={`creator-${name}`}>{name[0].toUpperCase() + name.slice(1)}</h2></div>
-      <div className="creator-shelf__rail">{items.map((item) => <article key={item.id || item._id || item.slug}><p className="creator-kicker">{item.accessLevel === "premium" ? "Premium" : "Free"}</p><h3><Link to={`/${routeFor(item)}/${item.slug}`}>{item.title}</Link></h3><p>{item.subtitle || item.description}</p></article>)}</div>
+      <div className="creator-shelf__rail">{items.map((item) => <article key={item.id || item._id || item.slug}><p className="creator-kicker">{item.monetizationType === "STANDALONE_PAID" ? (item.price?.formatted || "Standalone purchase") : item.accessLevel === "premium" ? "Premium" : "Free"}</p><h3><Link to={`/${routeFor(item)}/${item.slug}`}>{item.title}</Link></h3><p>{item.subtitle || item.description}</p></article>)}</div>
     </section>
   );
 };

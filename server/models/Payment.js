@@ -7,7 +7,9 @@ const { currencyField, minorUnitField } = require("../billing/modelFields");
 const PaymentSchema = new mongoose.Schema({
   paymentReference: { type: String, required: true, immutable: true, default: () => `pay_${crypto.randomUUID()}` },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
+  purchaseType: { type: String, enum: ["premium", "course"], required: true, default: "premium", immutable: true, index: true },
   productCode: { type: String, enum: Object.values(PRODUCT_CODES), required: true, immutable: true },
+  courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", default: null, immutable: true },
   market: { type: String, enum: Object.values(MARKETS), required: true, immutable: true },
   amountMinor: minorUnitField({ required: true, immutable: true }),
   currency: currencyField({ immutable: true }),
@@ -45,7 +47,10 @@ const PaymentSchema = new mongoose.Schema({
 }, { timestamps: true, minimize: true });
 
 PaymentSchema.pre("validate", function validateAmounts(next) {
-  if (this.entitlementAppliedAt && (!this.entitlementStart || !this.entitlementEnd
+  if (this.purchaseType === "course" && (!this.courseId || this.productCode !== PRODUCT_CODES.COURSE_PURCHASE)) {
+    return next(new Error("Course payments require an immutable Course target."));
+  }
+  if (this.entitlementAppliedAt && this.purchaseType === "premium" && (!this.entitlementStart || !this.entitlementEnd
     || this.entitlementEnd <= this.entitlementStart || !this.subscriptionId)) {
     return next(new Error("Applied Premium payment requires membership and a valid attributed window."));
   }
@@ -66,5 +71,6 @@ PaymentSchema.index(
   { unique: true, partialFilterExpression: { providerPaymentId: { $type: "string" } }, name: "payment_provider_payment_unique" }
 );
 PaymentSchema.index({ userId: 1, createdAt: -1 }, { name: "payment_user_created" });
+PaymentSchema.index({ userId: 1, courseId: 1, createdAt: -1 }, { name: "payment_user_course_created" });
 
 module.exports = mongoose.model("Payment", PaymentSchema);

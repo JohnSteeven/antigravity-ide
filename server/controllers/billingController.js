@@ -1,4 +1,5 @@
 const Payment = require("../models/Payment");
+const { listPurchasesForBuyer } = require("../services/coursePurchaseService");
 const { logBillingOperation } = require("../billing/billingLogger");
 const { requestRefund } = require("../services/billingDomainService");
 const { RazorpayBillingService } = require("../services/razorpayBillingService");
@@ -8,7 +9,9 @@ const asUserId = (req) => req.user?._id || req.user?.id;
 
 const serializePayment = (payment) => ({
   id: String(payment._id),
+  purchaseType: payment.purchaseType || "premium",
   productCode: payment.productCode,
+  courseId: payment.courseId ? String(payment.courseId) : null,
   market: payment.market,
   amountMinor: payment.amountMinor,
   currency: payment.currency,
@@ -37,6 +40,29 @@ exports.createCheckoutOrder = async (req, res, next) => {
     logBillingOperation({ requestId: req.id, operation: "checkout_order_create", result: "failed", errorCode: error.code });
     return next(error);
   }
+};
+
+exports.createCourseCheckoutOrder = async (req, res, next) => {
+  try {
+    const data = await razorpay.createCheckoutSession({
+      user: req.user,
+      courseId: req.params.courseId,
+      idempotencyKey: req.get("Idempotency-Key"),
+      metadata: { requestId: req.id, checkoutType: "course" },
+    });
+    logBillingOperation({ requestId: req.id, operation: "course_checkout_order_create", result: "success", paymentId: data.internalPaymentId, providerOrderId: data.orderId });
+    return res.status(201).set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) {
+    logBillingOperation({ requestId: req.id, operation: "course_checkout_order_create", result: "failed", errorCode: error.code });
+    return next(error);
+  }
+};
+
+exports.listMyCoursePurchases = async (req, res, next) => {
+  try {
+    const data = await listPurchasesForBuyer(asUserId(req));
+    return res.set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) { return next(error); }
 };
 
 exports.verifyCheckoutPayment = async (req, res, next) => {

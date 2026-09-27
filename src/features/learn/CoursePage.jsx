@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { learnApi } from "../../services/apiService";
 import { useAuth } from "../../hooks/useAuth";
+import { openRazorpayCheckout } from "../../services/razorpayCheckout";
 import ContentReportForm from "./ContentReportForm.jsx";
 import { FiBookOpen, FiClock, FiGlobe, FiLayers } from "react-icons/fi";
 import "./learn.css";
@@ -74,6 +75,21 @@ export default function CoursePage() {
     } catch (error) { setState((current) => ({ ...current, busy: false, error: error.message })); }
   };
 
+  const buyCourse = async () => {
+    if (!isAuthenticated) { navigate("/login", { state: { from: location.pathname } }); return; }
+    setState((current) => ({ ...current, busy: true, error: "" }));
+    try {
+      const idempotencyKey = `course:${course.id}:${globalThis.crypto?.randomUUID?.() || Date.now()}`;
+      const checkout = await learnApi.purchaseCourse(course.id, idempotencyKey);
+      await openRazorpayCheckout(checkout.data, learnApi.verifyCoursePayment);
+      const refreshed = await learnApi.course(slug);
+      setCourse(refreshed.data);
+      setState({ loading: false, busy: false, error: "" });
+    } catch (error) {
+      setState((current) => ({ ...current, busy: false, error: error.message }));
+    }
+  };
+
   if (state.loading) return <main className="learn-page"><p className="learn-state" role="status">Opening Course…</p></main>;
   if (!course) return <main className="learn-page"><div className="learn-state" role="alert"><h1>Course unavailable</h1><p>{state.error}</p><Link to="/learn">Back to Learn</Link></div></main>;
 
@@ -87,6 +103,7 @@ export default function CoursePage() {
   const isCanonicalCoding =
     course.isSystemOwned ||
     ["html-foundations", "css-foundations", "javascript-foundations", "python-foundations"].includes(course.slug);
+  const requiresStandalonePurchase = course.monetizationType === "STANDALONE_PAID" && !course.owned;
 
   return (
     <main className="learn-page learn-course">
@@ -124,9 +141,14 @@ export default function CoursePage() {
             </div>
           )}
 
-          <button className="learn-primary-action" type="button" onClick={begin} disabled={state.busy}>
+          {course.monetizationType === "STANDALONE_PAID" && course.price && (
+            <p className="learn-course__price"><strong>{course.price.formatted}</strong>{course.owned ? " · Owned" : " · One-time purchase"}</p>
+          )}
+          <button className="learn-primary-action" type="button" onClick={requiresStandalonePurchase ? buyCourse : begin} disabled={state.busy}>
             {state.busy
               ? "Opening…"
+              : requiresStandalonePurchase
+              ? `Buy Course${course.price?.formatted ? ` · ${course.price.formatted}` : ""}`
               : course.enrollment?.status === "completed"
               ? "Review Course"
               : course.enrollment

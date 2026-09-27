@@ -60,6 +60,14 @@ Phase 9 extends the existing shared `Notification` collection; it does not creat
 - **Indexes**: `(user, dedupeKey)` is unique only when `dedupeKey` is a string, so legacy records without a key remain valid. `(user, status, createdAt)` supports recipient-scoped unread counts and newest-first lists.
 - **Migration status**: No data rewrite is required. Mongoose creates the additive indexes during controlled deployment/index synchronization; production operators must verify index creation before relying on concurrent milestone deduplication.
 
+### Phase 14 Standalone Course Commerce Data Model & Migration Status
+
+- **`Course` additions**: `priceMinor` and `currency` hold the current server-authoritative price for `STANDALONE_PAID` Courses. Validation requires a positive safe integer and supported currency (`INR`/`USD`); Free and Premium-included Courses remain compatible.
+- **`Payment` additions**: `purchaseType` distinguishes account Premium from Course collection, and immutable `courseId` targets the exact Course. Existing provider, amount, currency, status, refund, and entitlement audit fields remain the financial authority.
+- **`CoursePurchase`**: one entitlement aggregate per `(buyerId, courseId)`, linked uniquely to a verified captured Payment. It records immutable purchase terms/provider references plus mutable payment/entitlement state for full-refund revocation. Provider references are not returned by the learner purchase-history serializer.
+- **Indexes**: unique buyer/Course and Payment identities prevent duplicate entitlement creation; buyer/history and Payment user/Course indexes support scoped reads and audit lookup.
+- **Migration status**: fields are additive and existing Free/Premium Courses and Premium Payments use defaults. No eager document rewrite is required. Deployment must create and verify the new unique indexes before enabling Course checkout. Existing malformed standalone drafts without a valid price must be corrected before save/publication.
+
 
 ## Commands
 
