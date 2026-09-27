@@ -5,6 +5,8 @@ import CodingExperience from "./coding/CodingExperience";
 import TravelExperience from "./travel/TravelExperience";
 import IncidentsExperience from "./incidents/IncidentsExperience";
 import LessonsExperience from "./lessons/LessonsExperience";
+import "./shared/articleReader.css";
+import { decodeHtmlEntities } from "../utils/helpers";
 
 const EXPERIENCE_MAP = {
   // Experience / Incidents category mappings
@@ -47,7 +49,10 @@ const ExperienceResolver = (props) => {
   
   const ExperienceComponent = EXPERIENCE_MAP[cleanSlug] || DefaultExperience;
 
-  return <ExperienceComponent {...props} />;
+  const headings = ExperienceComponent === CodingExperience
+    ? props.headings
+    : (props.headings || []).map((heading) => ({ ...heading, text: decodeHtmlEntities(heading.text) }));
+  return <ExperienceComponent {...props} headings={headings} />;
 };
 
 export default ExperienceResolver;

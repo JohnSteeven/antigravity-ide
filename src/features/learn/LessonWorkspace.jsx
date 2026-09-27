@@ -14,6 +14,7 @@ import {
 } from "./sandbox/htmlSandboxHarness";
 import { defaultPythonManager } from "./sandbox/pythonWorkerManager";
 import "./learn.css";
+import "./learnReading.css";
 
 const CANONICAL_CODING_TRACKS = {
   "html-foundations": "html",
@@ -388,17 +389,33 @@ export default function LessonWorkspace() {
   const hintsList = primaryBlock?.hints || [];
 
   if (!isCodingLesson) {
+    const outline = data.course.curriculum || [];
     return (
       <main className="learn-page learn-lesson">
         <nav className="learn-breadcrumbs" aria-label="Breadcrumb"><Link to="/learn">Learn</Link><span>/</span><Link to={`/learn/courses/${slug}`}>{data.course.title}</Link></nav>
+        <div className="learn-reading-layout">
+        <aside className="learn-reading-outline">
+          <p className="learn-kicker">Your learning path</p>
+          <Link className="learn-reading-course" to={`/learn/courses/${slug}`}>{data.course.title}</Link>
+          <details open><summary>Course contents</summary>
+            <nav aria-label="Course lessons">{outline.map((module) => <section key={module.id || module.stableKey || module.title}>
+              <h2>{module.title}</h2><ol>{module.lessons?.map((lesson) => <li key={lesson.id}>
+                <Link to={`/learn/courses/${slug}/lessons/${lesson.id}`} aria-current={String(lesson.id) === String(data.lesson.id) ? "page" : undefined}>{lesson.title}</Link>
+              </li>)}</ol>
+            </section>)}</nav>
+          </details>
+        </aside>
         <article className="learn-lesson__reader">
           <header><p className="learn-kicker">{data.lesson.lessonType} Lesson</p><h1>{data.lesson.title}</h1>{data.lesson.description && <p>{data.lesson.description}</p>}</header>
-          {data.lesson.mediaAssetId && <section className="learn-media-boundary"><h2>Lesson media</h2><p>Secure playback becomes available when a production media provider is configured. Access remains protected server-side.</p></section>}
+          {data.lesson.mediaAssetId && <section className="learn-media-boundary"><h2>Lesson media</h2><p>Playback is currently unavailable. You can continue with the lesson text and transcript below.</p></section>}
           <div className="learn-prose">{bodyParagraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 18)}`}>{paragraph}</p>)}</div>
           {data.lesson.transcript && <details className="learn-transcript"><summary>Transcript</summary><div className="learn-prose"><p>{data.lesson.transcript}</p></div></details>}
-          <footer><button className="learn-primary-action" type="button" onClick={handleComplete} disabled={state.busy || state.completed}>{state.completed ? "Lesson complete" : state.busy ? "Saving…" : "Mark Lesson complete"}</button>{state.error && <p className="learn-notice" role="alert">{state.error}</p>}</footer>
+          {hasQuizzes && <QuizSection courseSlug={slug} lessonId={data.lesson.id} questions={data.lesson.quizQuestions} initialPassed={quizPassed} onQuizPassed={() => setQuizPassed(true)} />}
+          <footer><button className="learn-primary-action" type="button" onClick={handleComplete} disabled={state.busy || state.completed || (hasQuizzes && !quizPassed)}>{state.completed ? "Lesson complete" : state.busy ? "Saving…" : "Mark Lesson complete"}</button>{hasQuizzes && !quizPassed && <p className="learn-reading-hint">Complete the knowledge check to finish this lesson.</p>}{state.error && <p className="learn-notice" role="alert">{state.error}</p>}</footer>
           <ContentReportForm targetType="lesson" targetId={data.lesson.id} />
+          {nextLesson && <Link className="learn-reading-next" to={`/learn/courses/${slug}/lessons/${nextLesson.id}`}><span>Next lesson</span><strong>{nextLesson.title} &rarr;</strong></Link>}
         </article>
+        </div>
       </main>
     );
   }

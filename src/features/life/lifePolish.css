@@ -1,0 +1,87 @@
+/* The private Life workspace and its portalled dialogs share these surfaces. */
+.life-app, .life-dialog {
+  --life-ink: #243e34;
+  --life-muted: #607168;
+  --life-bg: #f5f6f0;
+  --life-paper: #fffefa;
+  --life-line: #dfe5da;
+  --life-soft: #edf1e7;
+  --life-accent: #2e7057;
+  --life-accent-dark: #225640;
+  --life-warm: #956342;
+  --life-danger: #a33f44;
+  --life-action-ink: #ffffff;
+  --life-shadow: 0 6px 24px #293d2a05;
+}
+body.theme-dark .life-app, body.theme-dark .life-dialog {
+  --life-ink: #e9efe6;
+  --life-muted: #b0c0b5;
+  --life-bg: #17221c;
+  --life-paper: #202f26;
+  --life-line: #3a4c3f;
+  --life-soft: #2a3d30;
+  --life-accent: #98cbb0;
+  --life-accent-dark: #b5dfc4;
+  --life-warm: #dab494;
+  --life-danger: #b94850;
+  --life-action-ink: #172b20;
+  --life-shadow: none;
+  color-scheme: dark;
+}
+.life-app .life-shell { max-width: 1720px; margin-inline: auto; grid-template-columns: 234px minmax(0, 1fr); }
+.life-app :is(p, a, button, label, input, select, textarea, small, span, dt, dd, kbd), .life-dialog :is(p, button, label, input, select, textarea, small, span) { font-family: Inter, system-ui, sans-serif !important; }
+.life-app .life-card { background: var(--life-paper) !important; border-color: var(--life-line) !important; color: var(--life-ink) !important; box-shadow: var(--life-shadow) !important; }
+.life-app .life-sidebar { background: var(--life-paper); top: 80px; height: calc(100dvh - 80px); padding: 32px 18px 22px; }
+.life-app .life-mark > svg { width: 38px; height: 38px; padding: 9px; background: var(--life-soft); color: var(--life-accent); border-radius: 12px; }
+.life-app .life-side-nav a { color: var(--life-muted); min-height: 46px; padding-inline: 14px; font-size: .84rem; }
+.life-app .life-side-nav a.is-active { color: var(--life-accent-dark); background: var(--life-soft); box-shadow: inset 3px 0 var(--life-accent); }
+.life-app .life-sidebar-private { margin-top: auto; background: var(--life-bg); border: 0; }
+.life-app .life-page { padding-inline: clamp(22px, 3.2vw, 52px); }
+.life-app .life-page-header { align-items: center; padding-bottom: 26px; margin-bottom: 28px; border-bottom: 1px solid var(--life-line); }
+.life-app .life-page-header h1 { font-size: clamp(2rem, 3.1vw, 2.9rem); line-height: 1.15; }
+.life-app .life-page-header p { font-size: .9rem; line-height: 1.75; }
+.life-app .life-today-header { background: var(--life-soft); border: 1px solid var(--life-line); border-radius: 22px; padding: 26px 28px 0; margin-bottom: 28px; }
+.life-app .life-today-header .life-page-header { border: 0; margin-bottom: 0; }
+.life-app .life-daily-line { background: var(--life-paper); border: 1px solid var(--life-line); border-radius: 16px; box-shadow: var(--life-shadow); }
+.life-app .life-daily-line > div { border-color: var(--life-line); }
+.life-app :is(.life-card, .life-quiet-module, .life-timeline, .life-definition-row, .life-routine-row, .life-goal-row, .life-stat-grid article) { border-radius: 16px; background: var(--life-paper); border-color: var(--life-line); box-shadow: var(--life-shadow); }
+.life-app .life-today .life-timeline { padding: 24px; border: 1px solid var(--life-line); }
+.life-app .life-today-empty { background: var(--life-soft); box-shadow: none; border-color: var(--life-line); padding: 24px; }
+.life-app .life-today-empty__icon { background: var(--life-paper); border-color: var(--life-line); }
+.life-app .life-item-actions { opacity: 1; }
+.life-app .life-today-item { border-bottom-color: var(--life-line); }
+.life-app .life-today-item:hover { background: var(--life-soft); }
+.life-app .life-stat-grid strong { font: 500 1.75rem/1.25 Georgia, serif; }
+.life-app .life-definition-copy h3, .life-app .life-goal-copy h2 { font-size: 1rem; line-height: 1.45; overflow-wrap: anywhere; }
+.life-app :is(.life-primary-button, .life-sidebar-add), .life-dialog .life-primary-button { background: var(--life-accent); color: var(--life-action-ink); border-color: var(--life-accent); min-height: 44px; border-radius: 10px; }
+.life-app :is(.life-secondary-button, .life-definition-actions button, .life-goal-controls button, .life-date-controls, .life-date-controls button), .life-dialog .life-secondary-button { background: var(--life-paper); color: var(--life-ink); border-color: var(--life-line); }
+.life-app :is(input:not([type=checkbox]):not([type=radio]), select, textarea), .life-dialog :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { color: var(--life-ink); background: var(--life-paper); border-color: var(--life-line); border-radius: 10px; }
+.life-app :is(input, textarea)::placeholder, .life-dialog :is(input, textarea)::placeholder { color: var(--life-muted); opacity: .8; }
+.life-app :is(.life-form label, .life-inline-date, .life-desktop-tools button), .life-dialog .life-form label { color: var(--life-muted); }
+.life-app :is(.life-empty, .life-advanced, .life-safety-note, .life-language-boundary, .life-safety-inline), .life-dialog :is(.life-advanced, .life-safety-inline, .life-routine-run label) { color: var(--life-muted); background: var(--life-soft); border-color: var(--life-line); }
+.life-app :is(.life-weekdays button, .life-option-grid button, .life-segmented button.is-active), .life-dialog :is(.life-weekdays button, .life-option-grid button) { background: var(--life-paper); color: var(--life-ink); }
+.life-app :is(.life-weekdays button.is-active, .life-option-grid button.is-selected), .life-dialog :is(.life-weekdays button.is-active, .life-option-grid button.is-selected) { background: var(--life-soft); border-color: var(--life-accent); color: var(--life-accent-dark); }
+.life-dialog { color: var(--life-ink); background: var(--life-paper); border: 1px solid var(--life-line); border-radius: 20px; font-family: Inter, system-ui, sans-serif; }
+.life-dialog h2 { font: 500 1.8rem/1.2 Georgia, serif; }
+.life-dialog p { color: var(--life-muted); }
+.life-app :focus-visible, .life-dialog :focus-visible { outline: 2px solid var(--life-accent); outline-offset: 3px; }
+.life-app .life-desktop-tools .life-primary-button { color: var(--life-action-ink); }
+.life-app .life-today-header .life-date-controls__today[aria-current="date"] { background: var(--life-soft); color: var(--life-accent-dark); }
+.life-app .life-mobile-nav, .life-app .life-mobile-bar { background: var(--life-paper); border-color: var(--life-line); }
+.life-app .life-mobile-nav a, .life-app .life-mobile-bar button { color: var(--life-muted); }
+.life-app .life-mobile-nav a.is-active { background: var(--life-soft); color: var(--life-accent-dark); }
+@media (max-width: 1100px) { .life-app .life-today-layout { grid-template-columns: minmax(0, 1fr); } .life-app .life-today-aside { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 960px) { .life-app .life-shell { grid-template-columns: minmax(0, 1fr); } .life-app .life-mobile-bar { top: 74px; } .life-app .life-page { padding: 26px 22px 110px; } }
+@media (max-width: 600px) {
+  .life-app .life-page { padding-inline: 16px; }
+  .life-app .life-page-header { align-items: flex-start; gap: 18px; }
+  .life-app .life-today-header { padding: 22px 18px 0; border-radius: 16px; }
+  .life-app .life-today .life-timeline { padding: 18px; }
+  .life-app .life-today-aside { grid-template-columns: 1fr; }
+  .life-app .life-today-empty { padding: 18px; grid-template-columns: minmax(0, 1fr); }
+  .life-app .life-item-actions button { min-height: 40px; }
+  .life-app .life-today .life-daily-line { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 0; overflow: visible; margin-inline: 0; padding: 16px 0; border-radius: 16px; }
+  .life-app .life-today .life-daily-line > div { min-width: 0; min-height: 0; padding-inline: 16px; }
+  .life-app .life-daily-line > div:nth-child(even) { border: 0; }
+  .life-app .life-daily-line > div:last-child { grid-column: 1/-1; border-top: 1px solid var(--life-line); padding-top: 12px; }
+}

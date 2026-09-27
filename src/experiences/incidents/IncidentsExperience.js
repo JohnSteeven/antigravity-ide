@@ -4,6 +4,7 @@ import IncidentsLeftSidebar from "./IncidentsLeftSidebar";
 import IncidentsRightSidebar from "./IncidentsRightSidebar";
 import IncidentsBottomSection from "./IncidentsBottomSection";
 import ArticleProseRenderer from "../shared/widgets/ArticleProseRenderer";
+import ArticleReadingTools from "../shared/ArticleReadingTools";
 import {
   FiAlertCircle,
   FiRepeat,
@@ -130,12 +131,12 @@ const IncidentsExperience = (props) => {
       <div className="experience-container-inner">
         <div className="incidents-article-layout experience-layout-grid">
           {/* Left Sidebar */}
-          <IncidentsLeftSidebar
+          <ArticleReadingTools><IncidentsLeftSidebar
             article={article}
             headings={headings}
             activeHeading={activeHeading}
             scrollProgress={scrollProgress}
-          />
+          /></ArticleReadingTools>
 
           {/* Main Center Editorial Content */}
           <article className="incidents-center-content experience-center-prose">

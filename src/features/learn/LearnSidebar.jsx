@@ -1,6 +1,14 @@
 import React, { useId } from "react";
 import { Link, useSearchParams } from "react-router";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX, FiArrowRight, FiBookOpen, FiCode, FiBriefcase, FiMessageCircle, FiTrendingUp, FiPenTool, FiCompass, FiGrid } from "react-icons/fi";
+
+const TOPIC_ICONS = {
+  coding: FiCode, business: FiBriefcase, career: FiBriefcase,
+  communication: FiMessageCircle, english: FiMessageCircle,
+  "data-analytics": FiTrendingUp, "finance-systems": FiTrendingUp,
+  design: FiPenTool, "creative-practice": FiPenTool,
+  entrepreneurship: FiCompass, education: FiBookOpen,
+};
 
 /**
  * LearnSidebar
@@ -33,6 +41,7 @@ export default function LearnSidebar({ topics = [], search, onSearch, activeTopi
       <div className="learn-sidebar-header">
         <p className="learn-sidebar-kicker">Explore</p>
         <h2 className="learn-sidebar-heading">Topics</h2>
+        <p className="learn-sidebar-description">Follow your curiosity.</p>
       </div>
 
       {/* Search */}
@@ -67,11 +76,16 @@ export default function LearnSidebar({ topics = [], search, onSearch, activeTopi
 
       {/* Topic list */}
       <nav className="learn-sidebar-nav" aria-label="Topic navigation">
+        <Link to="/learn/courses" className={`learn-sidebar-topic learn-sidebar-all${!activeTopic ? " is-active" : ""}`} aria-current={!activeTopic ? "page" : undefined}>
+          <FiGrid aria-hidden="true" /><span>All courses</span><FiArrowRight className="learn-sidebar-all-arrow" aria-hidden="true" />
+        </Link>
+        <p className="learn-sidebar-list-label">Browse by topic <span>{filtered.length}</span></p>
         {filtered.length > 0 ? (
           <ul className="learn-sidebar-list" role="list">
             {filtered.map((topic) => {
               const topicSlug = topic.slug || (topic.name ? topic.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : String(topic._id));
               const isActive = activeTopic === topicSlug || activeTopic === topic.slug || activeTopic === String(topic._id);
+              const Icon = TOPIC_ICONS[topicSlug] || FiBookOpen;
               return (
                 <li key={topic._id || topicSlug}>
                   <Link
@@ -79,8 +93,8 @@ export default function LearnSidebar({ topics = [], search, onSearch, activeTopi
                     className={`learn-sidebar-topic${isActive ? " is-active" : ""}`}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <span className="learn-sidebar-topic-dot" aria-hidden="true" />
-                    {topic.name}
+                    <Icon aria-hidden="true" />
+                    <span>{topic.name}</span>
                   </Link>
                 </li>
               );
@@ -96,7 +110,7 @@ export default function LearnSidebar({ topics = [], search, onSearch, activeTopi
       {/* Footer link */}
       <div className="learn-sidebar-footer">
         <Link to="/learn/courses" className="learn-sidebar-browse-all">
-          Browse all Courses
+          Browse all Courses <FiArrowRight aria-hidden="true" />
         </Link>
       </div>
     </aside>

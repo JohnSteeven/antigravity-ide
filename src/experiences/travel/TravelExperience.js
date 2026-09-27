@@ -4,6 +4,7 @@ import TravelLeftSidebar from "./TravelLeftSidebar";
 import TravelRightSidebar from "./TravelRightSidebar";
 import TravelBottomSection from "./TravelBottomSection";
 import ArticleProseRenderer from "../shared/widgets/ArticleProseRenderer";
+import ArticleReadingTools from "../shared/ArticleReadingTools";
 
 const TravelExperience = (props) => {
   const {
@@ -50,12 +51,12 @@ const TravelExperience = (props) => {
 
       <div className="travel-article-layout">
         {/* Layer 2: Left Itinerary Timeline Sidebar */}
-        <TravelLeftSidebar
+        <ArticleReadingTools><TravelLeftSidebar
           article={article}
           headings={headings}
           activeHeading={activeHeading}
           scrollProgress={scrollProgress}
-        />
+        /></ArticleReadingTools>
 
         {/* Layer 3: Main Editorial Travel Prose */}
         <article className="travel-center-content">

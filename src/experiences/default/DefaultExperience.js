@@ -12,6 +12,7 @@ import CommentsSection from "../shared/widgets/CommentsSection";
 import AuthorCard from "../shared/widgets/AuthorCard";
 import ShareButtons from "../shared/widgets/ShareButtons";
 import NewsletterPanel from "../shared/widgets/NewsletterPanel";
+import ArticleReadingTools from "../shared/ArticleReadingTools";
 
 const DefaultExperience = ({
   article,
@@ -95,7 +96,7 @@ const DefaultExperience = ({
 
       <div className="premium-article-layout">
         {/* Left Sidebar - Table of Contents */}
-        <aside className="premium-left-sidebar">
+        <ArticleReadingTools><aside className="premium-left-sidebar">
           <div className="sticky-sidebar-box">
             {headings.length > 0 && (
               <>
@@ -116,7 +117,7 @@ const DefaultExperience = ({
 
             <ReadingProgress scrollProgress={scrollProgress} article={article} />
           </div>
-        </aside>
+        </aside></ArticleReadingTools>
 
         {/* Center Column - Article Body */}
         <article className="premium-center-content">

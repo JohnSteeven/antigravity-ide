@@ -23,12 +23,11 @@ const IncidentsHero = ({
   const heroQuote = article.quote || article.heroQuote;
 
   // Experience metadata highlights
-  const coreLesson = article.coreLesson || article.theme || "Resilience & Personal Growth";
-  const turningPoint = article.turningPoint || article.subcategory || "Career Pivot & Life Event";
-  const keyInsight = article.keyInsight || heroQuote || (article.takeaways && article.takeaways[0]) || "Growth begins outside your comfort zone";
-  const readingTime = article.readingTime || "15 min read";
-  const mood = article.mood || "Reflective & Hopeful";
-  const theme = article.theme || "Personal Growth & Resilience";
+  const coreLesson = article.coreLesson || article.theme;
+  const turningPoint = article.turningPoint || article.subcategory;
+  const keyInsight = article.keyInsight || (article.takeaways && article.takeaways[0]);
+  const mood = article.mood;
+  const theme = article.theme;
 
   return (
     <header
@@ -49,12 +48,12 @@ const IncidentsHero = ({
           <span className="experience-category-pill">
             <FiCompass /> {categoryName}
           </span>
-          <span className="experience-mood-pill">
+          {mood && <span className="experience-mood-pill">
             <FiHeart /> {mood}
-          </span>
-          <span className="experience-theme-pill">
+          </span>}
+          {theme && <span className="experience-theme-pill">
             <FiBookOpen /> {theme}
-          </span>
+          </span>}
         </div>
 
         {/* Title */}
@@ -77,18 +76,15 @@ const IncidentsHero = ({
 
         {/* Story Snapshot Details (Experience-Relevant Metadata) */}
         <div className="hero-category-highlights experience-snapshot-strip">
-          <span className="highlight-chip">
+          {coreLesson && <span className="highlight-chip">
             <FiTarget style={{ color: "#f43f5e" }} /> <strong>Core Lesson:</strong> {coreLesson}
-          </span>
-          <span className="highlight-chip">
+          </span>}
+          {turningPoint && <span className="highlight-chip">
             <FiZap style={{ color: "#f59e0b" }} /> <strong>Turning Point:</strong> {turningPoint}
-          </span>
-          <span className="highlight-chip">
+          </span>}
+          {keyInsight && <span className="highlight-chip">
             <FiMessageSquare style={{ color: "#3b82f6" }} /> <strong>Key Insight:</strong> {keyInsight}
-          </span>
-          <span className="highlight-chip">
-            <FiBookOpen style={{ color: "#8b5cf6" }} /> <strong>Read Time:</strong> {readingTime}
-          </span>
+          </span>}
         </div>
 
         {/* Author Card */}

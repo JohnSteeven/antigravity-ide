@@ -14,6 +14,7 @@ import { ReaderProvider } from "./context/ReaderContext";
 import { FeatureProvider } from "./context/FeatureContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Header from "./components/Header";
+import "./styles/publicPolish.css";
 import Hero from "./components/Hero";
 import StoriesSection from "./components/StoriesSection";
 import ExploreCategories from "./components/categories";
@@ -94,7 +95,7 @@ const CodingLessonRedirect = ({ track }) => {
 
 
 const HomePage = () => (
-  <main>
+  <main className="home-page">
     <Hero />
     <StoriesSection />
     <ExploreCategories />

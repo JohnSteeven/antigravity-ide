@@ -14,10 +14,10 @@ const TravelHero = ({
   handleSaveToggle,
   handleCopyLink,
 }) => {
-  const location = article.location || "Kyoto, Japan 🇯🇵";
-  const season = article.season || "Autumn / Spring 🍂";
-  const duration = article.duration || "7 Days Trip";
-  const budget = article.budget || "$120 / Day";
+  const location = article.location;
+  const season = article.season;
+  const duration = article.duration;
+  const budget = article.budget;
   const subtitle = article.subtitle || article.description;
   const heroQuote = article.heroQuote && article.heroQuote !== subtitle ? article.heroQuote : null;
 
@@ -55,10 +55,10 @@ const TravelHero = ({
 
         {/* Travel Highlights Strip */}
         <div className="hero-category-highlights">
-          <span className="highlight-chip"><FiMapPin style={{ color: '#f59e0b' }} /> <strong>Destination:</strong> {location}</span>
-          <span className="highlight-chip"><FiCompass style={{ color: '#38bdf8' }} /> <strong>Season:</strong> {season}</span>
-          <span className="highlight-chip"><FiClock style={{ color: '#4ade80' }} /> <strong>Length:</strong> {duration}</span>
-          <span className="highlight-chip"><FiDollarSign style={{ color: '#f43f5e' }} /> <strong>Budget:</strong> {budget}</span>
+          {location && <span className="highlight-chip"><FiMapPin /> {location}</span>}
+          {season && <span className="highlight-chip"><FiCompass /> {season}</span>}
+          {duration && <span className="highlight-chip"><FiClock /> {duration}</span>}
+          {budget && <span className="highlight-chip"><FiDollarSign /> {budget}</span>}
         </div>
 
         <AuthorHeroCard article={article} />

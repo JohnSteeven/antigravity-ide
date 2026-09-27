@@ -1,0 +1,36 @@
+/* Shared public presentation. No Coding, Studio, or CMS selectors. */
+.main-public-header .nav-links, .main-public-header .header-actions { font-family: Inter, system-ui, sans-serif !important; }
+.home-page .hero { min-height: 0; padding-block: clamp(44px, 5vw, 76px); }
+.home-page .hero-title { font-size: clamp(2.6rem, 5.3vw, 4.6rem) !important; line-height: 1.08 !important; letter-spacing: -.045em; }
+.home-page .hero-description { font-size: 1rem; line-height: 1.8; max-width: 540px; }
+.home-page :is(.primary-btn, .secondary-btn, .featured-btn) { border-radius: 10px; font-family: Inter, system-ui, sans-serif; min-height: 44px; }
+.home-page .stories-section-premium { background: #d9dbcd; }
+.home-page .stories-card-description { font-family: Inter, system-ui, sans-serif; font-size: .95rem; line-height: 1.85; }
+.home-page :is(.featured, .articles-body, .explore-categories) { padding-block: clamp(36px, 5vw, 64px); }
+.home-page :is(.featured-heading, .section-heading-row h2) { font: 500 clamp(1.9rem, 3vw, 2.65rem)/1.2 Georgia, serif; letter-spacing: -.025em; }
+.articles-page .articles-hero { padding-block: 38px 28px; }
+.articles-page .articles-hero h1 { font: 500 clamp(2.25rem, 4vw, 3.4rem)/1.15 Georgia, serif; letter-spacing: -.035em; }
+.articles-page .listing-subtitle { font: 400 .98rem/1.75 Inter, system-ui, sans-serif; }
+.articles-page .articles-toolbar { border-radius: 14px; padding: 16px; gap: 12px; }
+:is(.articles-page, .home-page) .article-card { border-radius: 16px !important; box-shadow: 0 4px 20px #28382b05 !important; overflow: hidden; }
+:is(.articles-page, .home-page) .article-card:hover { box-shadow: 0 12px 32px #28382b0e !important; }
+:is(.articles-page, .home-page) .article-card :is(h2, h3) { font-family: Georgia, serif; font-weight: 600; line-height: 1.3; }
+.category-detail-page:not([data-category="coding"]) .category-detail-hero-content { max-width: 1120px; padding-block: clamp(36px, 5vw, 70px); }
+.category-detail-page:not([data-category="coding"]) .category-detail-hero-content h1 { font-size: clamp(2.4rem, 4.5vw, 4rem) !important; line-height: 1.12 !important; }
+.category-detail-page:not([data-category="coding"]) :is(.category-toolbar, .category-side-panel) { border-radius: 14px; }
+.creator-directory .creator-hero h1, .creator-profile .creator-profile__header h1 { font-size: clamp(2.2rem, 4vw, 3.5rem); line-height: 1.12; }
+.creator-directory .creator-card { border-radius: 18px; box-shadow: 0 5px 24px #243a2905; }
+.contact-page .contact-title { font-size: clamp(2.8rem, 5vw, 4.5rem); line-height: 1.1; }
+.contact-page .contact-card, .auth-page .auth-card { border-radius: 20px; }
+.contact-page .contact-description { font-size: 1rem; line-height: 1.8; }
+.auth-page .login-hero-headline { font-size: clamp(2.2rem, 4vw, 3.5rem); line-height: 1.15; }
+.auth-page .auth-form :is(input, button) { min-height: 46px; }
+@media (max-width: 600px) {
+  .home-page .hero { padding-top: 34px; }
+  .home-page .hero-title { font-size: clamp(2.4rem, 9vw, 3.2rem) !important; }
+  .home-page .hero-buttons { gap: 10px; }
+  .articles-page .articles-toolbar { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-page *, .articles-page *, .article-detail-theme--standard *, .life-app *, .life-dialog *, .learn-course *, .learn-lesson * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

@@ -23486,6 +23486,16 @@ body.theme-dark .mobile-logout-btn {
   }
 }
 
+@media (max-width: 360px) {
+  .main-public-header .header-inner .logo .header-logo-text {
+    font-size: 1.3rem !important;
+  }
+
+  .main-public-header .header-actions {
+    gap: 6px !important;
+  }
+}
+
 /* Late account-trigger declarations clear the shared focus shadow; restore the
    same keyboard-visible focus contract used by the rest of the application. */
 .header-action-btn.account-trigger-btn:focus-visible {

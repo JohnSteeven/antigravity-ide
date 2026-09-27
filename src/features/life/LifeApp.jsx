@@ -20,6 +20,7 @@ import MoneyPage from "./pages/MoneyPage";
 import SettingsPage from "./pages/SettingsPage";
 import TodayPage from "./pages/TodayPage";
 import "./life.css";
+import "./lifePolish.css";
 
 const navigation = [
   { to: "/life/today", label: "Today", icon: FiCalendar },

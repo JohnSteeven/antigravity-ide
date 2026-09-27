@@ -29,6 +29,8 @@ npm run test:multiplayer
 
 For Coding lesson UI review, open a CSS lesson at desktop and phone widths. Use the lesson tab arrows to reach Hints and Quiz, switch away and back to confirm quiz selections remain, submit answers through an enrolled account, and check the per-question result icon and the Quiz passed indicator. Confirm Preview, Console, and Tests remain in the output panel and that the CSS first lesson shows its concept introduction when its saved body is empty. `e2e/coding-lesson-navigation.spec.js` automates the phone and desktop layout checks with a simulated quiz grading response; the focused Learn Jest suites cover the real server grading and progress gates.
 
+For Playground layout review, open `/coding/playground` at desktop width and confirm the editor and output share one row with a vertical keyboard-accessible divider. Resize the window below 900px and confirm the panes stack without horizontal document overflow. Verify both panel maximize controls still restore the split layout.
+
 ```bash
 npm run test:learn
 ```

@@ -25,6 +25,7 @@ const StoriesSection = () => {
         src={intro.image || DEFAULT_STORY_IMAGE}
         alt="Fountain pen resting on a handwritten journal"
         loading="lazy"
+        onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
       />
       <div className="stories-background-overlay" aria-hidden="true" />
 

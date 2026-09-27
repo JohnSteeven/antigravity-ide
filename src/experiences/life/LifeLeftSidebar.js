@@ -3,7 +3,6 @@ import {
   FiBookOpen,
   FiClock,
   FiBookmark,
-  FiZap,
   FiEdit2,
   FiSave,
   FiTrash2,
@@ -118,32 +117,23 @@ const LifeLeftSidebar = ({
           </div>
         )}
 
-        {/* Reading Streak */}
-        <div className="life-streak-panel">
-          <div className="streak-icon"><FiZap /></div>
-          <div>
-            <h5>Reading Streak</h5>
-            <p>3 Days Active • Daily Mindful Reader</p>
-          </div>
-        </div>
-
         {/* Interactive Functional Personal Notes & Highlights */}
         <div className={`life-notes-panel ${isNotesExpanded ? "expanded" : "collapsed"}`}>
           {!isNotesExpanded ? (
-            <div
+            <button
+              type="button"
               className="notes-trigger-bar"
               onClick={() => setIsNotesExpanded(true)}
-              role="button"
-              tabIndex={0}
+              aria-expanded="false"
             >
-              <div className="notes-trigger-left">
+              <span className="notes-trigger-left">
                 <FiEdit2 className="notes-icon" />
                 <span>Personal Notes & Highlights</span>
-              </div>
+              </span>
               {savedNotes.length > 0 && (
                 <span className="notes-count-badge">{savedNotes.length}</span>
               )}
-            </div>
+            </button>
           ) : (
             <div className="notes-editor-box">
               <div className="notes-header">

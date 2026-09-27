@@ -30,7 +30,7 @@ const LifeHero = ({
       <div className="life-hero-content">
         <Breadcrumbs
           items={[
-            { label: article.category || "Life", to: "/category/life" },
+            { label: article.category || "Life", to: `/category/${article.categorySlug || String(article.category || "life").toLowerCase()}` },
             { label: article.title || "Story" },
           ]}
         />
@@ -47,9 +47,9 @@ const LifeHero = ({
 
         {/* Category Highlights Strip (Fills Space Below Quote) */}
         <div className="hero-category-highlights">
-          <span className="highlight-chip"><FiTarget style={{ color: '#f59e0b' }} /> <strong>Key Theme:</strong> {article.theme || "Intentional Living"}</span>
-          <span className="highlight-chip"><FiCompass style={{ color: '#38bdf8' }} /> <strong>Mindset:</strong> {article.mindset || "Clarity & Purpose"}</span>
-          <span className="highlight-chip"><FiBookmark style={{ color: '#4ade80' }} /> <strong>Edition:</strong> {article.edition || "Editorial Choice"}</span>
+          {article.theme && <span className="highlight-chip"><FiTarget /> {article.theme}</span>}
+          {article.mindset && <span className="highlight-chip"><FiCompass /> {article.mindset}</span>}
+          {article.edition && <span className="highlight-chip"><FiBookmark /> {article.edition}</span>}
         </div>
 
         <AuthorHeroCard article={article} />
@@ -59,7 +59,7 @@ const LifeHero = ({
           <div className="hero-bottom-tags">
             {(article.tags && article.tags.length > 0
               ? article.tags
-              : ["#intentional-living", "#clarity", "#mindfulness"]
+              : []
             ).map((tag, idx) => (
               <span key={idx} className="hero-tag-pill">
                 {tag.startsWith("#") ? tag : `#${tag}`}

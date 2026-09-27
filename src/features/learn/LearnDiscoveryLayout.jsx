@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 import { FiCompass } from "react-icons/fi";
 import { learnApi } from "../../services/apiService";
 import LearnSidebar from "./LearnSidebar";
@@ -31,9 +31,12 @@ export default function LearnDiscoveryLayout({ children }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const activeTopicId = searchParams.get("topic") || "";
 
   const mobileExploreRef = useRef(null);
+
+  useEffect(() => { setDrawerOpen(false); }, [location.pathname, location.search]);
 
   // Fetch topics once — lightweight endpoint, no auth required
   useEffect(() => {

@@ -8,20 +8,15 @@ const TravelLeftSidebar = ({
   activeHeading = "",
   scrollProgress = 0,
 }) => {
-  const itinerary = article.itinerary || [
-    "Day 1: Arrival & Exploring Historic Streets",
-    "Day 2: Morning Temples & Bamboo Forest Walk",
-    "Day 3: Culinary Market Tour & Evening Tea",
-    "Day 4: Mountain Scenic Railway Expedition",
-  ];
+  const itinerary = article.itinerary || [];
 
-  const location = article.location || "Kyoto, Japan";
+  const location = article.location;
 
   return (
     <aside className="travel-left-sidebar">
       <div className="travel-sticky-box">
         {/* Day-by-Day Itinerary Timeline */}
-        <div className="travel-sidebar-panel">
+        {itinerary.length > 0 && <div className="travel-sidebar-panel">
           <h3>
             <FiCalendar className="icon" /> Expedition Itinerary
           </h3>
@@ -33,7 +28,7 @@ const TravelLeftSidebar = ({
               </div>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* Article Sections TOC */}
         {headings.length > 0 && (
@@ -57,7 +52,7 @@ const TravelLeftSidebar = ({
         )}
 
         {/* Location Quick Facts */}
-        <div className="travel-sidebar-panel">
+        {location && <div className="travel-sidebar-panel">
           <h3>
             <FiGlobe className="icon" /> Location Quick Facts
           </h3>
@@ -66,20 +61,8 @@ const TravelLeftSidebar = ({
               <span className="fact-label">Region:</span>
               <span className="fact-val">{location}</span>
             </div>
-            <div className="fact-item">
-              <span className="fact-label">Currency:</span>
-              <span className="fact-val">Japanese Yen (JPY ¥)</span>
-            </div>
-            <div className="fact-item">
-              <span className="fact-label">Language:</span>
-              <span className="fact-val">Japanese</span>
-            </div>
-            <div className="fact-item">
-              <span className="fact-label">Time Zone:</span>
-              <span className="fact-val">GMT+9 (JST)</span>
-            </div>
           </div>
-        </div>
+        </div>}
 
         {/* Essential Travel Tips */}
         {article.tips && (

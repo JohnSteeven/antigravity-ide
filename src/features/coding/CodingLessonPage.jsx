@@ -45,6 +45,12 @@ const idempotencyKey = () =>
   globalThis.crypto?.randomUUID?.() ||
   `lesson-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+const CSS_FIRST_LESSON_INTRO = [
+  "CSS (Cascading Style Sheets) controls how a web page looks. HTML gives the page its structure; CSS sets its colors, typography, spacing, and layout.",
+  "A CSS rule starts with a selector, followed by declarations inside braces. In h1 { color: navy; }, h1 selects the heading, color is the property, and navy is its value.",
+  "Change the heading in the editor, run your code, and compare the preview with the expected result. Then check your work and answer the lesson quiz.",
+];
+
 export default function CodingLessonPage() {
   const { track, lessonId } = useParams();
   const navigate = useNavigate();
@@ -55,11 +61,11 @@ export default function CodingLessonPage() {
   const trackMeta = CANONICAL_TRACKS.find((t) => t.key === trackKey) || CANONICAL_TRACKS[0];
 
   const [data, setData] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 992);
   const [state, setState] = useState({ loading: true, busy: false, error: "", completed: false });
 
   // Center learning panel tabs
-  const [centerTab, setCenterTab] = useState("concept"); // "concept" | "example" | "challenge" | "expected" | "hints"
+  const [centerTab, setCenterTab] = useState("concept"); // "concept" | "example" | "challenge" | "expected" | "quiz" | "hints"
 
   // Code editor state
   const [code, setCode] = useState("");
@@ -67,7 +73,7 @@ export default function CodingLessonPage() {
   const [isDraftSaving, setIsDraftSaving] = useState(false);
 
   // Right output panel state
-  const [activeOutputTab, setActiveOutputTab] = useState("preview"); // "preview" | "console" | "tests" | "quiz"
+  const [activeOutputTab, setActiveOutputTab] = useState("preview"); // "preview" | "console" | "tests"
   const [previewDevice, setPreviewDevice] = useState("desktop"); // "desktop" | "tablet" | "mobile"
   const [consoleLogs, setConsoleLogs] = useState([]);
   const [validationResult, setValidationResult] = useState(null);
@@ -117,6 +123,8 @@ export default function CodingLessonPage() {
 
   // Sandbox iframe & nonce
   const iframeRef = useRef(null);
+  const lessonTabsRef = useRef(null);
+  const lessonContentRef = useRef(null);
   const resizableWorkspaceRef = useRef(null);
   const ideWorkspaceRef = useRef(null);
   const channelNonceRef = useRef(generateChannelNonce());
@@ -140,6 +148,8 @@ export default function CodingLessonPage() {
     setSolutionCode("");
     setCurrentHintIndex(0);
     setCopySuccess(false);
+    setCenterTab("concept");
+    setMobileTab("concept");
 
     learnApi
       .lesson(courseSlug, lessonId)
@@ -195,6 +205,22 @@ export default function CodingLessonPage() {
   const language = useMemo(() => primaryBlock?.language?.toLowerCase() || "html", [primaryBlock]);
   const hasQuizzes = useMemo(() => (data?.lesson?.quizQuestions?.length || 0) > 0, [data]);
   const hints = useMemo(() => primaryBlock?.hints || [], [primaryBlock]);
+  const conceptParagraphs = data?.lesson?.body?.trim()
+    ? data.lesson.body.split(/\n{2,}/)
+    : data?.lesson?.stableKey === "css-foundations-l-1"
+      ? CSS_FIRST_LESSON_INTRO
+      : [primaryBlock?.content || data?.lesson?.description || "Read the challenge instructions to begin."];
+
+  const scrollLessonTabs = (direction) => {
+    lessonTabsRef.current?.scrollBy({ left: direction * 180, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    lessonTabsRef.current
+      ?.querySelector('[aria-selected="true"]')
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    if (lessonContentRef.current) lessonContentRef.current.scrollTop = 0;
+  }, [centerTab, data]);
 
   // All lessons in the course curriculum for sidebar and next/prev navigation
   const allLessons = useMemo(() => {
@@ -346,13 +372,13 @@ export default function CodingLessonPage() {
   }, []);
 
   // Execute / Run Code
-  const handleRun = () => {
+  const handleRun = ({ revealOutput = true } = {}) => {
     setIsExecuting(true);
     setConsoleLogs([]);
 
     if (language === "python") {
       setActiveOutputTab("console");
-      setMobileTab("output");
+      if (revealOutput) setMobileTab("output");
       defaultPythonManager.run(code);
       return;
     }
@@ -375,13 +401,13 @@ export default function CodingLessonPage() {
     } else {
       setActiveOutputTab("preview");
     }
-    setMobileTab("output");
+    if (revealOutput) setMobileTab("output");
   };
 
   // Run on initial load for HTML/CSS preview
   useEffect(() => {
     if (!state.loading && (language === "html" || language === "css") && code) {
-      handleRun();
+      handleRun({ revealOutput: false });
     }
   }, [state.loading, language]);
 
@@ -856,7 +882,17 @@ export default function CodingLessonPage() {
           </div>
 
           {/* Sub-tabs for content */}
-          <div className="cd-zone-center__tabs" role="tablist">
+          <div className="cd-zone-center__tab-navigation">
+            <button
+              type="button"
+              className="cd-zone-center__tab-scroll"
+              onClick={() => scrollLessonTabs(-1)}
+              aria-label="Scroll lesson tabs left"
+              title="Scroll lesson tabs left"
+            >
+              <FiArrowLeft aria-hidden="true" />
+            </button>
+          <div className="cd-zone-center__tabs" role="tablist" aria-label="Lesson sections" ref={lessonTabsRef}>
             <button
               type="button"
               className={`cd-zone-center__tab-btn ${centerTab === "concept" ? "is-active" : ""}`}
@@ -895,6 +931,17 @@ export default function CodingLessonPage() {
                 Expected Output
               </button>
             )}
+            {hasQuizzes && (
+              <button
+                type="button"
+                className={`cd-zone-center__tab-btn ${centerTab === "quiz" ? "is-active" : ""}`}
+                onClick={() => setCenterTab("quiz")}
+                role="tab"
+                aria-selected={centerTab === "quiz"}
+              >
+                Quiz {quizPassed && <FiCheckCircle className="cd-zone-center__tab-check" aria-label="passed" />}
+              </button>
+            )}
             {hints.length > 0 && (
               <button
                 type="button"
@@ -907,18 +954,22 @@ export default function CodingLessonPage() {
               </button>
             )}
           </div>
+            <button
+              type="button"
+              className="cd-zone-center__tab-scroll"
+              onClick={() => scrollLessonTabs(1)}
+              aria-label="Scroll lesson tabs right"
+              title="Scroll lesson tabs right"
+            >
+              <FiArrowRight aria-hidden="true" />
+            </button>
+          </div>
 
           {/* Tab Content */}
-          <div className="cd-zone-center__content">
+          <div className="cd-zone-center__content" ref={lessonContentRef}>
             {centerTab === "concept" && (
               <div>
-                {data.lesson.body ? (
-                  data.lesson.body.split(/\n{2,}/).map((para, pIdx) => (
-                    <p key={pIdx}>{para}</p>
-                  ))
-                ) : (
-                  <p>Welcome to this hands-on lesson. Read the challenge instructions to begin.</p>
-                )}
+                {conceptParagraphs.map((para, pIdx) => <p key={pIdx}>{para}</p>)}
 
                 <div className="cd-zone-center__callout">
                   <span className="cd-zone-center__callout-icon" aria-hidden="true">💡</span>
@@ -1004,6 +1055,18 @@ export default function CodingLessonPage() {
                 >
                   <FiHelpCircle /> Open Hint Guide ({hints.length} available)
                 </button>
+              </div>
+            )}
+            {hasQuizzes && (
+              <div className="cd-lesson-quiz" hidden={centerTab !== "quiz"}>
+                <QuizSection
+                  key={data.lesson.id}
+                  questions={data.lesson.quizQuestions}
+                  courseSlug={courseSlug}
+                  lessonId={data.lesson.id}
+                  initialPassed={quizPassed}
+                  onQuizPassed={() => setQuizPassed(true)}
+                />
               </div>
             )}
           </div>
@@ -1283,19 +1346,6 @@ export default function CodingLessonPage() {
                   Tests {exercisePassed && <span className="badge-success">✓</span>}
                 </button>
 
-                {hasQuizzes && (
-                  <button
-                    type="button"
-                    className={`cd-output-tab-btn ${
-                      activeOutputTab === "quiz" ? "is-active" : ""
-                    }`}
-                    onClick={() => setActiveOutputTab("quiz")}
-                    role="tab"
-                    aria-selected={activeOutputTab === "quiz"}
-                  >
-                    Quiz {quizPassed && <span className="badge-success">✓</span>}
-                  </button>
-                )}
               </div>
 
               <div className="cd-output-tabs__controls">
@@ -1522,16 +1572,6 @@ export default function CodingLessonPage() {
                 </div>
               )}
 
-              {activeOutputTab === "quiz" && hasQuizzes && (
-                <div style={{ flex: 1, overflowY: "auto", padding: "1rem" }}>
-                  <QuizSection
-                    questions={data.lesson.quizQuestions}
-                    courseSlug={courseSlug}
-                    lessonId={data.lesson.id}
-                    onQuizPassed={() => setQuizPassed(true)}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </main>

@@ -138,19 +138,28 @@ export default function CodingPlayground() {
   const [pythonStatus, setPythonStatus] = useState("READY");
 
   // Layout & maximize state
-  const [editorHeightPercent, setEditorHeightPercent] = useState(() => {
+  const [editorWidthPercent, setEditorWidthPercent] = useState(() => {
     try {
-      const saved = localStorage.getItem("coding_playground_split_h");
-      if (saved) return Math.min(80, Math.max(20, parseFloat(saved)));
+      const saved = localStorage.getItem("coding_playground_split_v");
+      if (saved) return Math.min(70, Math.max(30, parseFloat(saved)));
     } catch {}
-    return 52;
+    return 50;
   });
+  const [isStackedLayout, setIsStackedLayout] = useState(() => window.innerWidth <= 900);
   const [maximizedPanel, setMaximizedPanel] = useState(null); // null | "editor" | "output"
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const iframeRef = useRef(null);
   const playgroundWorkspaceRef = useRef(null);
   const channelNonceRef = useRef(generateChannelNonce());
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 900px)");
+    const updateLayout = (event) => setIsStackedLayout(event.matches);
+    setIsStackedLayout(mediaQuery.matches);
+    mediaQuery.addEventListener?.("change", updateLayout);
+    return () => mediaQuery.removeEventListener?.("change", updateLayout);
+  }, []);
 
   // Listen to sandbox postMessages for Web Console
   useEffect(() => {
@@ -345,12 +354,12 @@ export default function CodingPlayground() {
     setResetConfirmOpen(false);
   };
 
-  // Resize handler
-  const handleResizeHorizontal = (nextPercent) => {
-    const next = Math.min(80, Math.max(20, Number(nextPercent.toFixed(1))));
-    setEditorHeightPercent(next);
+  // Resize the editor/output split. The same percentage becomes height on compact screens.
+  const handleResizeWorkspace = (nextPercent) => {
+    const next = Math.min(70, Math.max(30, Number(nextPercent.toFixed(1))));
+    setEditorWidthPercent(next);
     try {
-      localStorage.setItem("coding_playground_split_h", String(next));
+      localStorage.setItem("coding_playground_split_v", String(next));
     } catch {}
   };
 
@@ -425,63 +434,43 @@ export default function CodingPlayground() {
       <CodingSubNav />
 
       {/* Playground Top Action Bar */}
-      <header
-        style={{
-          background: "var(--cd-surface)",
-          borderBottom: "1px solid var(--cd-border)",
-          padding: "0.5rem 1.25rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "0.75rem",
-          zIndex: 20,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+      <header className="cd-playground-toolbar">
+        <div className="cd-playground-toolbar__identity">
+          <div className="cd-playground-toolbar__title">
             <span style={{ fontSize: "1.1rem" }}>⚡</span>
-            <h1 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0, color: "#f8fafc" }}>
+            <h1>
               Code Playground
             </h1>
           </div>
 
           {/* Mode Switcher */}
-          <div
-            style={{
-              display: "flex",
-              background: "#060911",
-              borderRadius: "6px",
-              padding: "2px",
-              border: "1px solid #1e293b",
-            }}
-          >
+          <div className="cd-playground-mode-switch" role="group" aria-label="Playground language mode">
             <button
               type="button"
               onClick={() => handleSwitchMode("web")}
-              className={`cd-btn cd-btn--xs ${mode === "web" ? "cd-btn--primary" : "cd-btn--ghost"}`}
-              style={{ padding: "0.25rem 0.65rem", fontSize: "0.75rem", borderRadius: "4px" }}
+              className={`cd-playground-mode-button ${mode === "web" ? "is-active" : ""}`}
+              aria-pressed={mode === "web"}
             >
               Web (HTML / CSS / JS)
             </button>
             <button
               type="button"
               onClick={() => handleSwitchMode("python")}
-              className={`cd-btn cd-btn--xs ${mode === "python" ? "cd-btn--primary" : "cd-btn--ghost"}`}
-              style={{ padding: "0.25rem 0.65rem", fontSize: "0.75rem", borderRadius: "4px" }}
+              className={`cd-playground-mode-button ${mode === "python" ? "is-active" : ""}`}
+              aria-pressed={mode === "python"}
             >
               Python (Pyodide)
             </button>
           </div>
 
           {mode === "python" && (
-            <span style={{ fontSize: "0.75rem", color: "var(--cd-text-muted)" }}>
+            <span className="cd-playground-toolbar__runtime">
               Pyodide: <strong>{pythonStatus}</strong>
             </span>
           )}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+        <div className="cd-playground-toolbar__actions">
           <button
             type="button"
             className="cd-btn cd-btn--secondary"
@@ -508,25 +497,15 @@ export default function CodingPlayground() {
       {/* Main Split Body */}
       <main
         ref={playgroundWorkspaceRef}
+        className={`cd-playground-workspace ${maximizedPanel ? `is-${maximizedPanel}-maximized` : ""}`}
         style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          minHeight: 0,
+          "--cd-playground-editor-size": `${editorWidthPercent}%`,
         }}
       >
-        {/* Top Half: Code Editor Pane */}
+        {/* Left: Code Editor Pane */}
         <div
-          className="cd-editor-pane"
-          style={{
-            display: maximizedPanel === "output" ? "none" : "flex",
-            flexDirection: "column",
-            height: maximizedPanel === "editor" ? "100%" : `${editorHeightPercent}%`,
-            flex: maximizedPanel === "editor" ? "1 1 100%" : `0 0 ${editorHeightPercent}%`,
-            minHeight: 0,
-            background: "#080c14",
-          }}
+          className="cd-editor-pane cd-playground-pane cd-playground-pane--editor"
+          aria-label="Code editor"
         >
           {/* File Tabs Bar (Web Mode) / Main.py Bar (Python Mode) */}
           <div
@@ -608,39 +587,29 @@ export default function CodingPlayground() {
           </div>
         </div>
 
-        {/* Resizable Horizontal Splitter */}
+        {/* Resizable divider: vertical on desktop, horizontal on compact screens */}
         {maximizedPanel === null && (
           <WorkspaceSplitter
-            orientation="horizontal"
-            currentPercent={editorHeightPercent}
-            minPercent={20}
-            maxPercent={80}
-            onResize={handleResizeHorizontal}
+            orientation={isStackedLayout ? "horizontal" : "vertical"}
+            currentPercent={editorWidthPercent}
+            minPercent={30}
+            maxPercent={70}
+            onResize={handleResizeWorkspace}
             containerRef={playgroundWorkspaceRef}
             onReset={() => {
-              setEditorHeightPercent(52);
+              setEditorWidthPercent(50);
               try {
-                localStorage.setItem("coding_playground_split_h", "52");
+                localStorage.setItem("coding_playground_split_v", "50");
               } catch {}
             }}
-            title="Drag to resize editor and output panes (Double-click to reset layout)"
+            title={`Drag to resize ${isStackedLayout ? "top and bottom" : "code and output"} panes (Double-click to reset layout)`}
           />
         )}
 
-        {/* Bottom Half: Output Pane */}
+        {/* Right: Output Pane */}
         <div
-          className="cd-output-pane"
-          style={{
-            display: maximizedPanel === "editor" ? "none" : "flex",
-            flexDirection: "column",
-            height:
-              maximizedPanel === "output"
-                ? "100%"
-                : `calc(100% - ${editorHeightPercent}% - 8px)`,
-            flex: maximizedPanel === "output" ? "1 1 100%" : 1,
-            minHeight: 0,
-            background: "#080c14",
-          }}
+          className="cd-output-pane cd-playground-pane cd-playground-pane--output"
+          aria-label="Code output"
         >
           {/* Output Header with Tabs, Controls & Full Preview */}
           <div className="cd-output-tabs" role="tablist">

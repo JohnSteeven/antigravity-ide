@@ -12,13 +12,8 @@ const TravelRightSidebar = ({
   handleNewsletterSubmit,
   newsletterMsg,
 }) => {
-  const weather = article.weather || "18°C – 24°C • Crisp & Clear ☀️";
-  const gearList = article.gearList || [
-    "Comfortable Walking Shoes",
-    "Transit Rail Pass / Card",
-    "Compact Rain Shell Jacket",
-    "Universal Power Adapter & Bank",
-  ];
+  const weather = article.weather;
+  const gearList = article.gearList || [];
 
   return (
     <aside className="travel-right-sidebar">
@@ -27,20 +22,18 @@ const TravelRightSidebar = ({
         <AuthorCard article={article} />
 
         {/* Weather & Climate Specs */}
-        <div className="travel-sidebar-panel weather-box">
+        {(weather || article.bestTime) && <div className="travel-sidebar-panel weather-box">
           <h3>
             <FiSun className="icon" /> Climate & Weather
           </h3>
           <div className="weather-badge-display">
             <span className="weather-val">{weather}</span>
           </div>
-          <p className="weather-note">
-            Best time to visit: <strong>{article.bestTime || "Autumn (Oct–Nov)"}</strong>
-          </p>
-        </div>
+          {article.bestTime && <p className="weather-note">Best time to visit: <strong>{article.bestTime}</strong></p>}
+        </div>}
 
         {/* Packing & Gear List */}
-        <div className="travel-sidebar-panel gear-box">
+        {gearList.length > 0 && <div className="travel-sidebar-panel gear-box">
           <h3>
             <FiBriefcase className="icon" /> Recommended Packing List
           </h3>
@@ -52,7 +45,7 @@ const TravelRightSidebar = ({
               </div>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* Newsletter Subscription */}
         <NewsletterPanel

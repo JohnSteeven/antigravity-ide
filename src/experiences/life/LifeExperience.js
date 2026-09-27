@@ -4,6 +4,7 @@ import LifeLeftSidebar from "./LifeLeftSidebar";
 import LifeRightSidebar from "./LifeRightSidebar";
 import LifeBottomSection from "./LifeBottomSection";
 import ArticleProseRenderer from "../shared/widgets/ArticleProseRenderer";
+import ArticleReadingTools from "../shared/ArticleReadingTools";
 
 const LifeExperience = (props) => {
   const {
@@ -53,12 +54,12 @@ const LifeExperience = (props) => {
 
       <div className="life-article-layout">
         {/* Layer 2: Left Sidebar (Chapters, TOC, Streak, Progress) */}
-        <LifeLeftSidebar
+        <ArticleReadingTools><LifeLeftSidebar
           article={article}
           headings={headings}
           activeHeading={activeHeading}
           scrollProgress={scrollProgress}
-        />
+        /></ArticleReadingTools>
 
         {/* Layer 3: Main Content (Prose body renderer) */}
         <article className="life-center-content">
