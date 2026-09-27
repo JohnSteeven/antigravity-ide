@@ -14,24 +14,36 @@ const MediaProvider = require("./mediaProviderService");
 const engagementService = require("../creators/engagementService");
 const directoryService = require("../creators/directoryService");
 const streakService = require("./streakService");
+const retentionService = require("./retentionService");
 const { escapeRegex, slugify } = require("../creators/utils");
 
 const userId = (req) => req.user?._id || req.user?.id || null;
 
 exports.home = async (req, res, next) => {
   try {
-    const [topics, courses, videos, podcasts, resources, exams, continueItems] = await Promise.all([
+    const uid = userId(req);
+    const [topics, courses, videos, podcasts, resources, exams, continueItems, retention] = await Promise.all([
       Topic.find({ status: "active" }).sort({ sortOrder: 1, name: 1 }).limit(18).lean(),
       courseService.listCourses({ limit: 8 }),
       mediaService.listVideos({ limit: 6 }),
       mediaService.listPodcasts({ limit: 6 }),
       mediaService.listResources({ limit: 6 }),
       ExamDefinition.find({ status: "published" }).select("title slug description examCategory subjectLabels accessLevel").sort({ publishedAt: -1 }).limit(6).lean(),
-      req.user ? courseService.continueLearning(userId(req), 8) : [],
+      uid ? courseService.continueLearning(uid, 8) : [],
+      uid ? retentionService.getLearnerRetention({ userId: uid, clientTimezone: req.query.timezone }) : null,
     ]);
     return res.set("Cache-Control", req.user ? "private, no-store" : "public, max-age=60").json({
       success: true,
-      data: { topics, courses: courses.courses, videos: videos.items, podcasts: podcasts.items, resources: resources.items, exams, continueLearning: continueItems },
+      data: {
+        topics,
+        courses: courses.courses,
+        videos: videos.items,
+        podcasts: podcasts.items,
+        resources: resources.items,
+        exams,
+        continueLearning: continueItems,
+        retention,
+      },
     });
   } catch (error) { return next(error); }
 };
@@ -323,6 +335,16 @@ exports.getCodingStats = async (req, res, next) => {
       clientTimezone: req.query.timezone,
     });
     return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.getRetention = async (req, res, next) => {
+  try {
+    const data = await retentionService.getLearnerRetention({
+      userId: userId(req),
+      clientTimezone: req.query.timezone,
+    });
+    return res.set("Cache-Control", "private, no-store").json({ success: true, data });
   } catch (error) { return next(error); }
 };
 

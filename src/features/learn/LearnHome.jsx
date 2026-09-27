@@ -185,8 +185,8 @@ export default function LearnHome() {
         </div>
       </header>
 
-      {/* Continue Learning (private, authenticated only) */}
-      {hasContinueLearning && (
+      {/* Continue Learning & Retention (private, authenticated only) */}
+      {(hasContinueLearning || Boolean(data?.retention)) && (
         <section
           className="learn-continue"
           aria-labelledby="continue-learning-heading"
@@ -198,28 +198,95 @@ export default function LearnHome() {
             </div>
             <span className="learn-section-note">One step closer, every lesson.</span>
           </div>
-          <div className="learn-continue__rail">
-            {data.continueLearning.filter((entry) => entry.courseId).map((entry) => {
-              const course = entry.courseId;
-              const total = entry.totalEligibleLessons ?? course.lessonCount ?? 0;
-              const completed = entry.completedLessonCount || 0;
-              const percent = Math.max(0, Math.min(100, entry.progressPercent ?? (total > 0 ? Math.round(completed / total * 100) : 0)));
-              const isCompleted = entry.isCompleted ?? entry.status === "completed";
-              const cover = CODING_COVERS[course.slug];
-              return (
-                <article key={entry._id || course._id || course.slug} className="learn-resume-card">
-                  <div className="learn-resume-card__top">
-                    <span className={`learn-resume-card__icon learn-art--${cover?.tone || "sage"}`} aria-hidden="true">{cover?.mark || <FiBookOpen />}</span>
-                    <div><p>{isCompleted ? "Course completed" : "Pick up where you left off"}</p><h3><Link to={CANONICAL_CODING_DESTINATIONS[course.slug] || `/learn/courses/${course.slug}`}>{course.title}</Link></h3></div>
-                    <span className="learn-resume-card__arrow" aria-hidden="true">{isCompleted ? <FiCheck /> : <FiArrowRight />}</span>
+
+          {data?.retention && (
+            <div className="learn-retention-strip" role="region" aria-label="Learning momentum and daily progress">
+              <div className="learn-retention-stat">
+                <span className="learn-retention-icon" aria-hidden="true">🔥</span>
+                <span className="learn-retention-val">{data.retention.streaks?.currentStreak || 0}</span>
+                <span className="learn-retention-label">Day Streak</span>
+              </div>
+              <div className="learn-retention-stat">
+                <span className="learn-retention-icon" aria-hidden="true">🎯</span>
+                <span className="learn-retention-val">
+                  {data.retention.weekly?.activeDaysThisWeek || 0} / {data.retention.weekly?.targetDaysThisWeek || 5}
+                </span>
+                <span className="learn-retention-label">Weekly Active Days</span>
+              </div>
+              <div className="learn-retention-stat">
+                <span className="learn-retention-icon" aria-hidden="true">📖</span>
+                <span className="learn-retention-val">{data.retention.daily?.lessonsCompletedToday || 0}</span>
+                <span className="learn-retention-label">Completed Today</span>
+              </div>
+              {Array.isArray(data.retention.achievements) &&
+                data.retention.achievements.filter((a) => a.unlocked).length > 0 && (
+                  <div className="learn-retention-stat" title="Total unlocked learning achievements">
+                    <span className="learn-retention-icon" aria-hidden="true">🏆</span>
+                    <span className="learn-retention-val">
+                      {data.retention.achievements.filter((a) => a.unlocked).length}
+                    </span>
+                    <span className="learn-retention-label">Achievements</span>
                   </div>
-                  <div className="learn-resume-card__progress-label"><span>{completed} of {total} lessons</span><span>{percent}%</span></div>
-                  <progress max="100" value={percent} aria-label={`${course.title} progress`}>{percent}%</progress>
-                  <div className="learn-resume-card__bottom"><span>{isCompleted ? "Ready to revisit anytime" : "Keep your momentum going"}</span><span>{isCompleted ? "Review Course" : "Resume Course"} <FiPlay aria-hidden="true" /></span></div>
-                </article>
-              );
-            })}
-          </div>
+                )}
+            </div>
+          )}
+
+          {hasContinueLearning && (
+            <div className="learn-continue__rail">
+              {data.continueLearning
+                .filter((entry) => entry.courseId && !entry.isCompleted && entry.status !== "completed")
+                .map((entry) => {
+                  const course = entry.courseId;
+                  const total = entry.totalEligibleLessons ?? course.lessonCount ?? 0;
+                  const completed = entry.completedLessonCount || 0;
+                  const percent = Math.max(
+                    0,
+                    Math.min(100, entry.progressPercent ?? (total > 0 ? Math.round((completed / total) * 100) : 0))
+                  );
+                  const cover = CODING_COVERS[course.slug];
+                  const resumeDestination =
+                    entry.resumeUrl ||
+                    CANONICAL_CODING_DESTINATIONS[course.slug] ||
+                    `/learn/courses/${course.slug}`;
+                  const upNextCopy = entry.nextLessonTitle
+                    ? `Up next: ${entry.nextLessonTitle}`
+                    : "Pick up where you left off";
+
+                  return (
+                    <article key={entry._id || course._id || course.slug} className="learn-resume-card">
+                      <div className="learn-resume-card__top">
+                        <span
+                          className={`learn-resume-card__icon learn-art--${cover?.tone || "sage"}`}
+                          aria-hidden="true"
+                        >
+                          {cover?.mark || <FiBookOpen />}
+                        </span>
+                        <div>
+                          <p>{upNextCopy}</p>
+                          <h3>
+                            <Link to={resumeDestination}>{course.title}</Link>
+                          </h3>
+                        </div>
+                        <span className="learn-resume-card__arrow" aria-hidden="true">
+                          <FiArrowRight />
+                        </span>
+                      </div>
+                      <div className="learn-resume-card__progress-label">
+                        <span>{completed} of {total} lessons</span>
+                        <span>{percent}%</span>
+                      </div>
+                      <progress max="100" value={percent} aria-label={`${course.title} progress`}>
+                        {percent}%
+                      </progress>
+                      <div className="learn-resume-card__bottom">
+                        <span>Keep your momentum going</span>
+                        <span>Resume Course <FiPlay aria-hidden="true" /></span>
+                      </div>
+                    </article>
+                  );
+                })}
+            </div>
+          )}
         </section>
       )}
 

@@ -41,6 +41,7 @@ router.get("/resources", searchLimiter, controllers.listResources);
 router.get("/resources/:slug", optionalAuthenticate, controllers.getResource);
 router.get("/coding/resources", optionalAuthenticate, searchLimiter, controllers.listLearnerCodingResources);
 router.get("/coding/stats", optionalAuthenticate, searchLimiter, controllers.getCodingStats);
+router.get("/retention", authenticate, searchLimiter, controllers.getRetention);
 router.get("/exams", searchLimiter, controllers.listExams);
 router.get("/media/capability", controllers.mediaCapability);
 router.get("/media/:assetId/access", authenticate, controllers.assetAccess);

@@ -782,12 +782,28 @@ const recordProgress = async ({ userId, courseId, lessonId, positionSeconds = 0,
   return enrollment;
 };
 
+const CANONICAL_CODING_MAP = {
+  "html-foundations": "html",
+  "css-foundations": "css",
+  "javascript-foundations": "javascript",
+  "python-foundations": "python",
+};
+
+const resolveResumeUrl = (courseSlug, lessonId) => {
+  const track = CANONICAL_CODING_MAP[courseSlug];
+  if (track) {
+    return lessonId ? `/coding/${track}/lesson/${lessonId}` : `/coding/${track}`;
+  }
+  return lessonId ? `/learn/courses/${courseSlug}/lessons/${lessonId}` : `/learn/courses/${courseSlug}`;
+};
+
 const continueLearning = async (userId, limit = 8) => {
-  const enrollments = await CourseEnrollment.find({ userId, status: { $in: ["active", "completed"] } })
+  const parsedLimit = Math.min(20, Math.max(1, Number(limit) || 8));
+  const enrollments = await CourseEnrollment.find({ userId, status: "active" })
     .select("courseId status currentLessonId completedLessonCount lastActivityAt completedAt lessonProgress")
     .populate({ path: "courseId", select: "title slug coverImage lessonCount accessLevel creatorId publicationStatus isDeleted", populate: { path: "creatorId", select: "displayName slug" } })
     .sort({ lastActivityAt: -1 })
-    .limit(Math.min(20, Math.max(1, Number(limit) || 8)))
+    .limit(30)
     .lean();
 
   const activeEnrollments = enrollments.filter((e) => e.courseId && e.courseId.publicationStatus === "published" && !e.courseId.isDeleted);
@@ -796,6 +812,8 @@ const continueLearning = async (userId, limit = 8) => {
     const eligibleLessons = await getEligibleCourseLessons(enrollment.courseId._id);
     const progressMeta = calculateEnrollmentProgress(enrollment, eligibleLessons);
     const nextLesson = resolveNextLesson(enrollment, eligibleLessons);
+    const targetLessonId = nextLesson ? String(nextLesson._id) : (enrollment.currentLessonId ? String(enrollment.currentLessonId) : null);
+    const resumeUrl = resolveResumeUrl(enrollment.courseId.slug, targetLessonId);
 
     return {
       courseId: enrollment.courseId,
@@ -803,6 +821,8 @@ const continueLearning = async (userId, limit = 8) => {
       currentLessonId: enrollment.currentLessonId,
       nextLessonId: nextLesson ? String(nextLesson._id) : null,
       nextLessonTitle: nextLesson ? nextLesson.title : null,
+      nextLessonType: nextLesson ? nextLesson.lessonType : null,
+      resumeUrl,
       completedLessonCount: progressMeta.completedLessonCount,
       totalEligibleLessons: progressMeta.totalEligibleLessons,
       progressPercent: progressMeta.progressPercent,
@@ -812,7 +832,8 @@ const continueLearning = async (userId, limit = 8) => {
     };
   }));
 
-  return results;
+  const activeResumeItems = results.filter((item) => !item.isCompleted && item.status !== "completed");
+  return activeResumeItems.slice(0, parsedLimit);
 };
 
 const CANONICAL_CODING_SLUGS = [

@@ -586,6 +586,7 @@ export const learnApi = {
   // Learner Coding Resources & Stats
   codingResources: (params = {}) => get(`/api/learn/coding/resources${queryString(params)}`),
   codingStats: (params = {}) => get(`/api/learn/coding/stats${queryString(params)}`),
+  retention: (params = {}) => get(`/api/learn/retention${queryString(params)}`),
   // Coding Submissions
   createCodingSubmission: (courseSlug, lessonId, payload) => post(`/api/learn/courses/${courseSlug}/lessons/${lessonId}/submissions`, payload),
   listCodingSubmissions: (courseSlug, lessonId) => get(`/api/learn/courses/${courseSlug}/lessons/${lessonId}/submissions`),

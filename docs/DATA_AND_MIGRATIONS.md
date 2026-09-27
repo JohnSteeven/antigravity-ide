@@ -45,6 +45,13 @@ Phase 6 introduces coding lessons, exercises, quizzes, and progress gating into 
 - **Migration & Index Status**: No database migration or new collection is required. Embedded subdocuments and field extensions are natively supported by Mongoose defaults on existing collections with existing indexes (`(userId, courseId)`). `npm run migrate:validate` validates cleanly with zero missing indexes.
 - **Canonical Seeder**: `server/scripts/seedCodingCurriculum.js` (`npm run seed:coding-curriculum`) provides idempotent seeding of all 4 canonical coding tracks (HTML Foundations, CSS Foundations, JavaScript Foundations, and Python Foundations), 55 lessons, and the system author `MyJourney Learning` (`myjourney-learning`).
 
+### Phase 8 Learn Retention Foundation Data Model & Migration Status
+
+Phase 8 establishes a server-authoritative retention layer across all learning experiences (normal Learn and Coding):
+- **`LearnerRetention`**: Dedicated collection (`server/models/LearnerRetention.js`) persisting calculated learner retention state: `userId` (unique index), `currentStreak` (number), `longestStreak` (number), `lastActiveDate` (string `YYYY-MM-DD`), `achievements` (array of unlocked achievements with `key`, `title`, `description`, `icon`, `unlockedAt`), and `lastCalculatedAt` (date).
+- **Derived Server-Side Cache**: `retentionService.js` computes retention metrics on-the-fly from immutable `LearningEvent` records (`lesson_completed`, `quiz_passed`, `exercise_passed`, `course_completed`) and `CourseEnrollment` documents. `LearnerRetention` acts purely as a derived server-side cache updated during retention evaluation; cache persistence failures are logged and never compromise or corrupt authoritative `LearningEvent`/`CourseEnrollment` ground truth.
+- **Migration & Index Status**: No manual database migration is required. `LearnerRetention` indexes on `userId` automatically on first access. Existing `CourseEnrollment` and `LearningEvent` records are fully preserved without historical disruption.
+
 
 ## Commands
 

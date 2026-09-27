@@ -265,6 +265,25 @@ Execution is partitioned by technology stack:
 - **Solution & Test Privacy**: Coding block `solutionCode`, test suites, and quiz `correctOptionIndex` are stripped from learner endpoints (`select: false`), but fully exposed and editable within `/cms/coding` for authorized Admins.
 - **Granular Learning Materials Storage Boundary**: Materials are attached to tracks or modules via external URLs or inlined Markdown/text notes (`LearningResource`). Direct binary file uploads (PDF, ZIP, multipart) to object storage (Cloudflare R2 / S3) are deferred to Phase 18, with an explicit advisory displayed in the CMS.
 
+#### 9. Phase 8 Retention Foundation: Meaningful Streaks, Progress Metrics, Achievements, & Continue Learning
+- **Server-Authoritative Retention Model (`LearnerRetention`)**: `server/models/LearnerRetention.js` provides a derived server-side retention cache (`userId`, `currentStreak`, `longestStreak`, `lastActiveDate`, `achievements`, `lastCalculatedAt`) indexed by `userId`. Ground truth is strictly derived from immutable `LearningEvent` and `CourseEnrollment` records; cache persistence failures are logged without blocking or corrupting authoritative data.
+- **Meaningful Learning Activity Definition**: Streaks and daily progress strictly count qualifying events (`lesson_completed`, `quiz_passed`, `exercise_passed`, `course_completed`). Non-learning events (logins, page views, refreshes, opening a course without completing a task) are excluded by design and cannot increment streaks.
+- **Calendar-Day Logic & Timezone Safety**: `retentionService.js` evaluates learner progress using the learner's specified IANA timezone (with a safe fallback to UTC). Qualifying events occurring on the same calendar day maintain the streak without duplicate increments. An event on the consecutive calendar day increments the streak. A missed day resets `currentStreak` to 0, while `longestStreak` is monotonically preserved.
+- **Daily & Weekly Progress Tracking**:
+  - Daily metrics: `lessonsCompletedToday`, `quizzesPassedToday`, `exercisesPassedToday`, `activitiesToday`.
+  - Weekly metrics: Monday–Sunday sliding window, `activeDaysThisWeek` measured against a target of 5 days, `lessonsCompletedThisWeek`, `coursesProgressedThisWeek`, and an array of 7 day statuses (`YYYY-MM-DD`, `dayName`, `active`).
+- **Initial Achievement Engine**: Deterministic, idempotent, server-awarded achievements evaluated from immutable historical records (`LearningEvent` and `CourseEnrollment`):
+  - `first_lesson`: Awarded upon completing first lesson.
+  - `first_quiz`: Awarded upon passing first quiz.
+  - `first_exercise`: Awarded upon passing first coding exercise.
+  - `first_course`: Awarded upon completing first course.
+  - `streak_3`: Awarded upon achieving a 3-day learning streak.
+  - `streak_7`: Awarded upon achieving a 7-day learning streak.
+  - Awarded achievements record `unlockedAt` timestamps and cannot be unlocked twice or overwritten. Badges marketplace, points, XP, levels, and social leaderboards are strictly omitted.
+- **Unified Learn & Coding Bridge**: `streakService.js` delegates to `retentionService.js`, harmonizing Coding workspace streaks with platform-wide Learn retention.
+- **Continue Learning Improvements**: `courseService.js` filters out completed courses (`isCompleted !== true`), resolving the server-authoritative `nextLessonId`, `nextLessonTitle`, `nextLessonType`, `progressPercent`, and deep-link `resumeUrl` (`/coding/:track/lesson/:lessonId` or `/learn/courses/:slug/lessons/:lessonId`).
+- **Anti-Forgery Guarantees**: Frontend requests cannot submit streaks, achievements, or daily/weekly progress totals. Endpoints `GET /api/learn/retention` and `GET /api/learn/home` derive state solely from authenticated server data.
+
 ## Media abstraction
 
 ProtectedMediaAsset records metadata and ownership. `server/learn/mediaProviderService.js` is an explicit provider boundary. The repository currently supports metadata/catalog workflows but not direct uploads, adaptive streaming, malware scanning, or signed delivery. Calls requiring real delivery return an unavailable error.
