@@ -502,6 +502,9 @@ export const creatorApi = {
   reviewApplication: (id, payload) => patch(`/api/creators/admin/applications/${id}/status`, payload),
   adminContent: (params = {}) => get(`/api/creators/admin/content${queryString(params)}`),
   adminLearningEngagement: (params = {}) => get(`/api/creators/admin/learning-engagement${queryString(params)}`),
+  adminPoolCalculations: (params = {}) => get(`/api/creators/admin/pool-calculations${queryString(params)}`),
+  calculateCreatorPool: (payload) => post("/api/creators/admin/pool-calculations", payload),
+  finalizeCreatorPool: (id) => post(`/api/creators/admin/pool-calculations/${id}/finalize`, {}),
   reviewContent: (contentType, contentId, payload) => patch(`/api/creators/admin/content/${contentType}/${contentId}/status`, payload),
 };
 

@@ -47,6 +47,7 @@ This suite executes:
 - `server/tests/notificationService.test.js`: Legacy in-app delivery compatibility and honest unavailable-channel behavior.
 - `server/tests/standaloneCourseCommerce.test.js`, `server/tests/coursePurchaseLifecycle.test.js`, and `server/tests/courseCommerceModels.test.js`: Phase 14 Free/Premium/standalone policy separation, QA override exclusion, exact-Course ownership, failed-payment denial, callback/webhook replay idempotency, server-owned pricing, full-refund revocation, buyer-scoped history, financial model validation, and uniqueness boundaries.
 - `server/tests/creatorLearningEngagement.test.js`: Phase 15 trusted Course/Creator period aggregation, semantic event and learner deduplication, creator self-activity and system-Course exclusion, multiple-Creator ownership mapping, repeat meaningful days, enrollment/completion fallback, period boundaries, read-only APIs, and Creator/Admin authorization contracts.
+- `server/tests/creatorPoolCalculation.test.js` and `server/tests/creatorPoolModels.test.js`: Phase 16 zero-revenue/zero-engagement cases, Premium revenue classification, refund/chargeback/failed exclusion, centralized policy validation, integer minor-unit/basis-point arithmetic, single/multiple Creator allocation, deterministic rounding and hashing, exact reconciliation, period/currency isolation, idempotent snapshot reuse/finalization, Admin-only APIs, and the no-payout boundary.
 - `server/tests/learnDomain.test.js`: Course, module, lesson, and enrollment domain rules.
 - `server/tests/learnLessonPreviewSecurity.test.js`: Preview vs gated lesson authorization and locked serializer privacy.
 
@@ -73,6 +74,14 @@ npx jest --runInBand server/tests/creatorLearningEngagement.test.js server/tests
 ```
 
 These reports consume trusted persisted evidence only; they calculate no revenue, pool allocation, earnings, or payout state.
+
+Focused Phase 16 pool checks:
+
+```bash
+npx jest --runInBand server/tests/creatorPoolCalculation.test.js server/tests/creatorPoolModels.test.js server/tests/creatorLearningEngagement.test.js server/tests/creatorEngagement.test.js server/tests/creatorSecurity.test.js server/tests/billingDomainModels.test.js
+```
+
+Tests use stored-record fixtures and no payment or payout provider. Policy activation and financial/legal review remain production prerequisites.
 
 Focused Phase 13 lifecycle checks:
 

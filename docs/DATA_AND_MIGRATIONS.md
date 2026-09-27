@@ -77,6 +77,13 @@ Phase 15 creates no client-writable totals or parallel event collection. Canonic
 - `learning_event_course_period_type` on `(courseId, occurredAt, eventType)` and `course_enrollment_course_started` on `(courseId, startedAt)` support bounded period calculations.
 - No data rewrite is required. Controlled deployment must create/verify the additive indexes before using reports at production scale.
 
+### Phase 16 Creator Pool Calculation Data & Migration Status
+
+- **`CreatorEconomyPolicy` additions**: optional integer `creatorPoolBasisPoints`, explicit `revenueBasis`, and integer `learningWeights` centralize configuration. An inactive or incomplete policy fails closed; no pool rate is inferred from the client.
+- **`CreatorPoolCalculation`**: immutable calculation inputs/results for one start-inclusive/end-exclusive period, currency, and policy version. It stores gross captures, refunds, chargebacks, failed/uncaptured exclusions, eligible revenue, pool and reconciliation totals, weighted Creator/Course contributions, allocations, policy snapshot, and SHA-256 input hash. Only status/finalization audit fields can advance from `calculated` to `finalized`; there is no paid state.
+- **Indexes**: `(periodStart, periodEnd, currency, policyVersion)` is unique, so retries reuse one snapshot. `(status, periodEnd, currency)` supports Admin review and Phase 17 finalized-allocation reads.
+- **Migration status**: additive schema/index changes require no legacy data rewrite. Production index creation must be verified before pool calculation is enabled. Existing dormant economy period/ledger rows are not rewritten or treated as Phase 16 outputs.
+
 
 ## Commands
 

@@ -5,6 +5,7 @@ const applicationService = require("./applicationService");
 const directoryService = require("./directoryService");
 const studioService = require("./studioService");
 const learningEngagementService = require("./learningEngagementService");
+const creatorPoolService = require("./creatorPoolService");
 
 const userId = (req) => req.user?._id || req.user?.id;
 const sendError = (error, next) => error.status ? next(error) : next(error);
@@ -128,6 +129,32 @@ exports.getLearningEngagement = async (req, res, next) => {
       periodStart: req.query.periodStart,
       periodEnd: req.query.periodEnd,
     });
+    return res.set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.calculateCreatorPool = async (req, res, next) => {
+  try {
+    const data = await creatorPoolService.calculateCreatorPool({
+      periodStart: req.body?.periodStart,
+      periodEnd: req.body?.periodEnd,
+      currency: req.body?.currency,
+      actorUserId: userId(req),
+    });
+    return res.status(201).set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.finalizeCreatorPool = async (req, res, next) => {
+  try {
+    const data = await creatorPoolService.finalizeCreatorPool({ calculationId: req.params.id, actorUserId: userId(req) });
+    return res.set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.listCreatorPools = async (req, res, next) => {
+  try {
+    const data = await creatorPoolService.listCreatorPools(req.query);
     return res.set("Cache-Control", "private, no-store").json({ success: true, data });
   } catch (error) { return next(error); }
 };

@@ -24,6 +24,9 @@ router.patch("/admin/applications/:id/status", authenticate, requireAdmin, revie
 router.get("/admin/content", authenticate, requireAdmin, controllers.listContentReview);
 router.patch("/admin/content/:contentType/:contentId/status", authenticate, requireAdmin, controllers.reviewContent);
 router.get("/admin/learning-engagement", authenticate, requireAdmin, controllers.getLearningEngagement);
+router.get("/admin/pool-calculations", authenticate, requireAdmin, controllers.listCreatorPools);
+router.post("/admin/pool-calculations", authenticate, requireAdmin, controllers.calculateCreatorPool);
+router.post("/admin/pool-calculations/:id/finalize", authenticate, requireAdmin, controllers.finalizeCreatorPool);
 
 router.get("/", searchLimiter, controllers.listCreators);
 router.post("/:slug/follow", authenticate, followLimiter, controllers.followCreator);
