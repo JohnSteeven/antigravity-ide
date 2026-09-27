@@ -374,8 +374,9 @@ describe("Dark Mode surface-authority contract", () => {
     expect(creatorStudio).toContain('className="creator-studio__status"');
     expect(creatorStudio).toContain('className="creator-content-list"');
     expect(creatorStudio).toContain('className="creator-analytics-list"');
-    expect(creatorStudio).toContain("Creator Earnings Program — not yet activated");
-    expect(creatorStudio).toContain("No payout, currency amount, KYC, or bank connection is currently active");
+    expect(creatorStudio).toContain("Authoritative ledger");
+    expect(creatorStudio).toContain("Payouts not configured");
+    expect(creatorStudio).toContain("There is no bank transfer or payout provider in this phase");
     expect(creatorStudio).not.toMatch(/creator-(?:sidebar|table|modal|dialog|pagination|dropdown|toast)/);
   });
 

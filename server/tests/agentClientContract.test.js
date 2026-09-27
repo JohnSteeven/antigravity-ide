@@ -20,7 +20,7 @@ describe("MyJourney Agent — Client Contract & Voice Integration", () => {
 
     test("AppShell includes /agent in immersive check to avoid duplicate widgets/headers", () => {
       const appCode = read("src", "App.js");
-      expect(appCode).toContain('location.pathname.startsWith("/agent")');
+      expect(appCode).toMatch(/(?:location\.pathname|pathname)\.startsWith\("\/agent"\)/);
     });
 
     test("AskMyJourneyWidget is rendered in normal layout", () => {

@@ -8,8 +8,10 @@ const User = require("../../models/User");
 const Course = require("../../models/Course");
 const CourseModule = require("../../models/CourseModule");
 const CourseLesson = require("../../models/CourseLesson");
+const LearnerRetention = require("../../models/LearnerRetention");
 const LearningResource = require("../../models/LearningResource");
 const entitlementService = require("../../services/entitlementService");
+const NotificationService = require("../../notifications/NotificationService");
 const serializers = require("../../learn/serializers");
 
 describe("Phase 6 Restructure: Coding Admin CMS, System Ownership & Learning Materials", () => {
@@ -367,7 +369,7 @@ describe("Phase 6 Restructure: Coding Admin CMS, System Ownership & Learning Mat
       expect(res.body.success).toBe(true);
       expect(res.body.data.currentStreak).toBe(0);
       expect(res.body.data.bestStreak).toBe(0);
-      expect(res.body.data.weeklyGoal).toEqual({ current: 0, target: 5 });
+      expect(res.body.data.weeklyGoal).toEqual({ current: 0, target: 5, daysCompleted: 0, targetDays: 5 });
       expect(res.body.data.exercisesPassed).toBe(0);
       expect(res.body.data.lessonsCompleted).toBe(0);
       expect(res.body.data.projectsCompleted).toBe(0);
@@ -411,11 +413,14 @@ describe("Phase 6 Restructure: Coding Admin CMS, System Ownership & Learning Mat
         ],
       };
 
-      jest.spyOn(CourseEnrollment, "find").mockReturnValue({
-        populate: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue([mockEnrollment]),
-        }),
-      });
+      jest.spyOn(LearnerRetention, "findOne").mockResolvedValue(null);
+      jest.spyOn(LearnerRetention.prototype, "save").mockResolvedValue(true);
+      jest.spyOn(NotificationService, "createProductNotification").mockResolvedValue({});
+
+      jest.spyOn(CourseEnrollment, "find").mockImplementation(() => ({
+        select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([mockEnrollment]) }),
+        populate: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([mockEnrollment]) }),
+      }));
 
       jest.spyOn(CourseLesson, "find").mockReturnValue({
         select: jest.fn().mockReturnValue({
@@ -427,10 +432,12 @@ describe("Phase 6 Restructure: Coding Admin CMS, System Ownership & Learning Mat
 
       jest.spyOn(LearningEvent, "find").mockReturnValue({
         select: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue([
-            { eventType: "exercise_passed", occurredAt: yesterday, lessonId: "l-html-1" },
-            { eventType: "exercise_passed", occurredAt: today, lessonId: "l-html-2" },
-          ]),
+          sort: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue([
+              { eventType: "exercise_passed", occurredAt: yesterday, lessonId: "l-html-1" },
+              { eventType: "exercise_passed", occurredAt: today, lessonId: "l-html-2" },
+            ]),
+          }),
         }),
       });
 
