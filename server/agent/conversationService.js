@@ -105,6 +105,7 @@ const archiveConversation = async (conversationId, userId) => {
     throw new AgentError(errorCodes.CONVERSATION_NOT_FOUND, "Conversation not found.", 404);
   }
   conversation.status = CONVERSATION_STATUSES.ARCHIVED;
+  conversation.expiresAt = new Date(Date.now() + agentConfig.retention.archivedConversationDays * 86400000);
   await conversation.save();
   return conversation;
 };
@@ -150,7 +151,7 @@ const saveUserMessage = async (conversationId, userId, { content, inputMode = "t
 /**
  * Save an assistant message, linking it to the conversation and tool executions.
  */
-const saveAssistantMessage = async (conversationId, userId, { content, toolExecutionIds = [] }) => {
+const saveAssistantMessage = async (conversationId, userId, { content, toolExecutionIds = [], usage = {} }) => {
   const trimmed = String(content || "").slice(0, agentConfig.limits.assistantChars);
   const message = await AgentMessage.create({
     conversationId,
@@ -159,6 +160,10 @@ const saveAssistantMessage = async (conversationId, userId, { content, toolExecu
     content: trimmed,
     inputMode: "system",
     toolExecutionIds,
+    usage: {
+      inputTokens: Number.isSafeInteger(usage.inputTokens) && usage.inputTokens >= 0 ? usage.inputTokens : 0,
+      outputTokens: Number.isSafeInteger(usage.outputTokens) && usage.outputTokens >= 0 ? usage.outputTokens : 0,
+    },
   });
 
   // Update conversation metadata
@@ -166,7 +171,7 @@ const saveAssistantMessage = async (conversationId, userId, { content, toolExecu
     { _id: conversationId },
     {
       $inc: { messageCount: 2 }, // user + assistant
-      $set: { lastMessageAt: new Date() },
+      $set: { lastMessageAt: new Date(), expiresAt: new Date(Date.now() + agentConfig.retention.conversationDays * 86400000) },
     }
   );
 
@@ -178,9 +183,10 @@ const saveAssistantMessage = async (conversationId, userId, { content, toolExecu
  * but returned to caller in chronological order).
  */
 const getMessages = async (conversationId, userId, { cursor = null, limit = null } = {}) => {
+  if (!userId) throw new AgentError(errorCodes.AUTH_REQUIRED, "Sign in to view Agent messages.", 401);
   const pageSize = Math.min(limit || agentConfig.limits.messagesPage, agentConfig.limits.messagesPage);
 
-  const query = { conversationId, isDeleted: { $ne: true } };
+  const query = { conversationId, userId, isDeleted: { $ne: true } };
   if (cursor) {
     try {
       const decoded = Buffer.from(cursor, "base64").toString("utf-8");
@@ -221,9 +227,11 @@ const getMessages = async (conversationId, userId, { cursor = null, limit = null
  * Returns user/assistant/tool messages only, in chronological order.
  * Never exceeds contextMessages limit or contextChars limit from config.
  */
-const getBoundedContext = async (conversationId) => {
+const getBoundedContext = async (conversationId, userId) => {
+  if (!userId) throw new AgentError(errorCodes.AUTH_REQUIRED, "Sign in to use Agent context.", 401);
   const rawMessages = await AgentMessage.find({
     conversationId,
+    userId,
     role: { $in: ["user", "assistant"] },
     isDeleted: { $ne: true },
   })
@@ -232,18 +240,18 @@ const getBoundedContext = async (conversationId) => {
     .select("role content createdAt")
     .lean();
 
-  // Reverse to chronological, then trim to char budget
-  const messages = rawMessages.reverse();
+  // Keep the newest messages when the character budget is reached.
   let totalChars = 0;
   const result = [];
-  for (const msg of messages) {
-    const contentLen = (msg.content || "").length;
+  for (const msg of rawMessages) {
+    const content = String(msg.content || "").slice(0, 2000);
+    const contentLen = content.length;
     if (totalChars + contentLen > agentConfig.limits.contextChars) break;
     totalChars += contentLen;
-    result.push({ role: msg.role, content: String(msg.content || "").slice(0, 2000) });
+    result.push({ role: msg.role, content });
   }
 
-  return result;
+  return result.reverse();
 };
 
 /**

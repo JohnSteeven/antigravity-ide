@@ -58,8 +58,8 @@ export default function AgentPage() {
 
       {!isAuthenticated && (
         <div className="agent-page__auth-note" role="status">
-          <strong>Note:</strong> Sign in to ask about your private Life activities,
-          habits, goals, and learning progress.{" "}
+          <strong>Note:</strong> Sign in to use Journey AI and access your own Life
+          activities, habits, goals, and learning progress.{" "}
           <Link to="/login">Sign In →</Link>
         </div>
       )}

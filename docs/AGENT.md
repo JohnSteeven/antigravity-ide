@@ -7,7 +7,7 @@ The MyJourney Agent is the unified, secure, server-authoritative assistant platf
 1. **One Unified Assistant**: Both the floating `AskMyJourneyWidget` and the full-screen `/agent` page route through the canonical Agent backend at `/api/agent/v1/*`. There is only one conversation and tool execution architecture.
 2. **Server-Authoritative Security & Privacy**: Identity is always derived from authenticated session context. The AI model has no direct database access; all data interactions pass through registered, permission-checked tools.
 3. **Private User Scoping**: MyJourney Life data, course progress, and personal accounts are strictly scoped to the authenticated user. User A cannot read or affect User B's data through the Agent.
-4. **Deterministic Zero-Cost Fallback**: In development or environments without paid model APIs, `MockAgentProvider` parses user intent and exercises the real tool/permission pipeline, generating deterministic responses from actual user data.
+4. **Provider Choice**: Mock is the development default, Local targets an explicitly configured model endpoint, and `AGENT_PROVIDER=openai` opts in to the server-only Responses API adapter. Production without a configured provider fails closed; there is no fabricated cloud response.
 5. **No Persistent Microphone Listening**: Voice interactions use an explicit press-to-talk state machine. Audio is transcribed client-side using browser APIs; no raw audio is uploaded or stored.
 
 ---
@@ -88,16 +88,23 @@ All tools are registered in `server/agent/tools/definitions.js` with Zod input/o
 | `learn.getEnrollments` | Learn | READ | Yes | None | User's active course enrollments and progress. |
 | `learn.getProgress` | Learn | READ | Yes | None | Detailed lesson progress per enrolled course. |
 | `learn.getNextLesson` | Learn | READ | Yes | None | Next uncompleted lesson for continue learning. |
+| `learn.getLessonExcerpt` | Learn | READ | Yes | Canonical Course access | Bounded excerpt after normal Free/Premium/exact-purchase lesson policy. |
 | `content.searchArticles` | Content | READ | No | None | Published article search. |
 | `content.searchStories` | Content | READ | No | None | Published story search. |
 | `creators.search` | Creators | READ | No | None | Public active creator directory search. |
 | `knowledge.search` | Knowledge | READ | No | None | RAG search over published articles and knowledge chunks. |
+| `creator.getMyContent` | Create | READ | Yes | Active owned Creator profile | At most eight owned content titles/workflow states; no draft bodies. |
+| `play.listGames` | Play | READ | Yes via route | None | Public game titles and player counts; no room/player state. |
+
+The cloud adapter advertises only `READ` tools. Model-selected names and JSON inputs are independently checked against the registry, Zod schemas, server authorization, tool output caps, and per-turn tool limits. Existing low-risk writes stay behind their feature flag; confirmation-required and sensitive actions cannot execute through the model. Article/Story search returns published metadata; RAG text is limited to non-premium published content. Tool output is passed as lower-trust function-result data, not as system instructions.
 
 ---
 
 ## Confirmation Token Architecture
 
 For actions requiring user confirmation (`CONFIRM_REQUIRED`), the Agent implements a cryptographic token system:
+
+The token primitive exists, but no confirmation execution endpoint is enabled; model-requested confirmation-required actions are denied until a product-reviewed flow is implemented.
 
 1. **Token Issuance**: `confirmationService.issueToken` generates a cryptographically random UUID (`crypto.randomUUID()`).
 2. **Hash-Only Persistence**: Only the SHA-256 hash (`tokenHash`) is persisted in `agentconfirmationtokens`. The raw token is returned to the client once.
@@ -114,6 +121,8 @@ For actions requiring user confirmation (`CONFIRM_REQUIRED`), the Agent implemen
 - **Audit Redaction**: `AgentToolExecution.outputSummary` stores only minimal operational summaries (e.g. `"3 item(s) returned"`, `"habit completed"`). It **never** stores raw journal bodies, financial entries, health details, full RAG documents, or raw model prompts.
 - **Circuit Breaker**: `AgentProviderRegistry` tracks provider failures with a configurable threshold (`circuitFailureThreshold`) and recovery window (`circuitResetMs`).
 - **Scale Boundary**: Agent request rate/concurrency guards and metrics are process-local Maps. They are bounded and correct for one API process, but require distributed rate/concurrency leases and centralized metrics before horizontal scale.
+- **Cloud Costs & Cancellation**: Responses calls are bounded by configured input/output/tool budgets, per-request timeout, and client-disconnect abort; the adapter requests `store: false`. Provider-reported token counts are retained on assistant messages. No stream endpoint exists in the current UI, so Stop cancels the active request instead of partially rendering tokens.
+- **Retention**: New conversations/messages carry TTL deadlines (default 30 days; archived conversations 14 days), and tool audits default to 90 days. Migration 015 adds production TTL indexes and backfills legacy records with a fresh bounded window. Mongo TTL cleanup is asynchronous; operators must explicitly apply the migration.
 
 ---
 

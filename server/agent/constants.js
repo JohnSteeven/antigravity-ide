@@ -3,6 +3,7 @@
 const PROVIDER_KEYS = Object.freeze({
   MOCK: "mock",
   LOCAL: "local",
+  OPENAI: "openai",
   CMS: "cms",
   FUTURE_CLOUD: "future_cloud",
 });

@@ -21,6 +21,7 @@ const { AgentError, errorCodes } = require("../errors");
 const { logger, metrics } = require("../observability");
 const { MockAgentProvider } = require("./MockAgentProvider");
 const { LocalAgentProvider } = require("./LocalAgentProvider");
+const { OpenAIAgentProvider } = require("./OpenAIAgentProvider");
 
 const nodeEnv = process.env.NODE_ENV || "development";
 
@@ -70,9 +71,11 @@ class AgentProviderRegistry {
 
     const mock = new MockAgentProvider();
     const local = new LocalAgentProvider();
+    const openai = new OpenAIAgentProvider();
 
     this._providers.set(PROVIDER_KEYS.MOCK, mock);
     this._providers.set(PROVIDER_KEYS.LOCAL, local);
+    this._providers.set(PROVIDER_KEYS.OPENAI, openai);
 
     for (const key of this._providers.keys()) {
       this._circuit.set(
@@ -141,7 +144,7 @@ class AgentProviderRegistry {
       return { ...result, provider: providerKey, model: provider.model };
     } catch (error) {
       const latencyMs = Date.now() - start;
-      const isProviderError = error?.code === errorCodes.PROVIDER_UNAVAILABLE || error?.code === errorCodes.TIMEOUT;
+      const isProviderError = error?.code === errorCodes.PROVIDER_UNAVAILABLE || error?.code === errorCodes.TIMEOUT || error?.code === errorCodes.PROVIDER_RESPONSE_INVALID;
       if (isProviderError) {
         circuit.recordFailure();
         metrics.increment("provider_failures", { provider: providerKey });

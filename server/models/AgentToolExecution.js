@@ -1,6 +1,7 @@
 "use strict";
 
 const mongoose = require("mongoose");
+const agentConfig = require("../agent/config");
 
 /**
  * AgentToolExecution — audit record for every tool the Agent runs.
@@ -74,6 +75,10 @@ const agentToolExecutionSchema = new mongoose.Schema(
       enum: ["metadata", "write"],
       default: "metadata",
     },
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + agentConfig.retention.toolAuditDays * 86400000),
+    },
   },
   {
     timestamps: true,
@@ -92,6 +97,7 @@ agentToolExecutionSchema.index(
   { userId: 1, createdAt: -1 },
   { name: "agent_tool_user_time" }
 );
+agentToolExecutionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "agent_tool_retention_ttl" });
 
 const AgentToolExecution = mongoose.model("AgentToolExecution", agentToolExecutionSchema);
 

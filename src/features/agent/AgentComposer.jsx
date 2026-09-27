@@ -2,9 +2,13 @@ import React, { useRef, useState, useEffect } from "react";
 import { FiSend, FiXCircle } from "react-icons/fi";
 import { useAgent } from "./AgentContext";
 import VoiceControls from "./voice/VoiceControls";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function AgentComposer({ autoFocus = false }) {
-  const { sendMessage, sending, cancelMessage } = useAgent();
+  const { sendMessage, sending, cancelMessage, capabilities } = useAgent();
+  const { isAuthenticated } = useAuth();
+  const unavailable = capabilities?.provider?.ready === false || capabilities?.agentEnabled === false;
+  const disabled = sending || !isAuthenticated || unavailable;
   const [draft, setDraft] = useState("");
   const textareaRef = useRef(null);
 
@@ -20,7 +24,7 @@ export default function AgentComposer({ autoFocus = false }) {
   const submit = async (event) => {
     event?.preventDefault();
     const message = draft.trim();
-    if (!message || sending) return;
+    if (!message || disabled) return;
     setDraft("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "42px";
@@ -34,7 +38,7 @@ export default function AgentComposer({ autoFocus = false }) {
 
   return (
     <div className="agent-composer">
-      <VoiceControls sendMessage={sendMessage} disabled={sending} />
+      <VoiceControls sendMessage={sendMessage} disabled={disabled} />
       <form onSubmit={submit} className="agent-composer__form">
         <label className="agent-sr-only" htmlFor="agent-message-input">
           Message MyJourney
@@ -51,11 +55,11 @@ export default function AgentComposer({ autoFocus = false }) {
               submit();
             }
           }}
-          placeholder="Ask MyJourney anything…"
+          placeholder={!isAuthenticated ? "Sign in to ask MyJourney" : unavailable ? "Journey AI is unavailable right now" : "Ask MyJourney anything…"}
           rows="1"
           maxLength="4000"
           autoFocus={autoFocus}
-          disabled={sending}
+          disabled={disabled}
         />
         {sending ? (
           <button
@@ -71,7 +75,7 @@ export default function AgentComposer({ autoFocus = false }) {
           <button
             type="submit"
             className="agent-composer__send"
-            disabled={!draft.trim()}
+            disabled={!draft.trim() || disabled}
             aria-label="Send message"
             title="Send"
           >

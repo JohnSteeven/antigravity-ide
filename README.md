@@ -19,7 +19,7 @@ The repository is a single npm application: Parcel serves the React client and E
 | CMS/Admin | Implemented under `/cms/*`, backed by server-side Admin authorization. |
 | Launch/SEO evidence | Admin launch audits fail closed and never seed sample results; SEO health is derived from published records and public metadata excludes drafts/private/deleted content. |
 | Games/multiplayer | Play Life and Play With Friends are implemented; local realtime can run without Redis, while scaled production requires Redis. |
-| MyJourney Agent | Implemented unified assistant platform (`/agent` and floating companion) with server-authoritative tool registry, voice press-to-talk, cryptographic single-use confirmation tokens, and deterministic zero-cost Mock provider. |
+| MyJourney Agent | Unified assistant (`/agent` and floating companion) with owner-scoped tools, voice press-to-talk, deterministic Mock/local providers, and an opt-in server-only OpenAI Responses provider. Live provider and browser validation remain required. |
 
 See [Features](docs/FEATURES.md) for the engineering status inventory and [Agent Reference](docs/AGENT.md) for full Agent specifications.
 

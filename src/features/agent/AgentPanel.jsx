@@ -11,6 +11,7 @@ import {
 } from "react-icons/fi";
 import AgentComposer from "./AgentComposer";
 import { useAgent } from "./AgentContext";
+import { useAuth } from "../../hooks/useAuth";
 import "./agent.css";
 
 const idOf = (item, index) =>
@@ -148,7 +149,7 @@ function ToolExecutions({ executions }) {
   );
 }
 
-function Message({ message }) {
+function Message({ message, onRetry, retryDisabled }) {
   const assistant = message.role === "assistant";
   const content = String(message.content || "");
   const isPremiumNotice =
@@ -174,8 +175,11 @@ function Message({ message }) {
 
       {isPremiumNotice && <EntitlementNotice content={content} />}
 
-      {message.status === "failed" && (
-        <span className="agent-message__failed">Message was not delivered.</span>
+      {["failed", "cancelled"].includes(message.status) && (
+        <span className="agent-message__failed">
+          {message.status === "cancelled" ? "Response stopped." : "Response did not complete."}{" "}
+          <button type="button" onClick={() => onRetry(message)} disabled={retryDisabled}>Retry</button>
+        </span>
       )}
 
       {toolExecutions.length > 0 && (
@@ -200,7 +204,11 @@ export default function AgentPanel({
     messageCursor,
     loadEarlierMessages,
     sendMessage,
+    retryMessage,
+    capabilities,
   } = useAgent();
+  const { isAuthenticated } = useAuth();
+  const unavailable = capabilities?.provider?.ready === false || capabilities?.agentEnabled === false;
 
   const handleSuggestionClick = (query) => {
     sendMessage(query, { source: "typed" }).catch(() => {});
@@ -282,7 +290,7 @@ export default function AgentPanel({
                   type="button"
                   className="agent-panel__chip"
                   onClick={() => handleSuggestionClick(query)}
-                  disabled={sending}
+                  disabled={sending || !isAuthenticated || unavailable}
                 >
                   {query}
                 </button>
@@ -292,7 +300,7 @@ export default function AgentPanel({
         )}
 
         {messages.map((message, index) => (
-          <Message key={idOf(message, index)} message={message} />
+          <Message key={idOf(message, index)} message={message} onRetry={retryMessage} retryDisabled={sending || !isAuthenticated || unavailable} />
         ))}
 
         {(sending || loading) && (
@@ -307,6 +315,10 @@ export default function AgentPanel({
         <div className="agent-panel__error" role="alert">
           {error}
         </div>
+      )}
+
+      {unavailable && (
+        <div className="agent-panel__error" role="status">Journey AI is unavailable right now. Please try again later.</div>
       )}
 
       <AgentComposer autoFocus={variant === "widget"} />

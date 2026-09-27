@@ -1,5 +1,6 @@
 const { z } = require("zod");
 const { AgentError, errorCodes } = require("../errors");
+const config = require("../config");
 
 const DEFAULT_TOOL_TIMEOUT_MS = 5000;
 
@@ -91,6 +92,9 @@ class ToolRegistry {
     const validated = tool.outputSchema.safeParse(output);
     if (!validated.success) {
       throw new AgentError(errorCodes.TOOL_INVALID_OUTPUT, "The Agent tool returned an invalid result.", 502, { tool: key });
+    }
+    if (Buffer.byteLength(JSON.stringify(validated.data ?? null), "utf8") > config.limits.toolOutputChars) {
+      throw new AgentError(errorCodes.CONTEXT_LIMIT, "The Agent tool returned too much context.", 413, { tool: key });
     }
     return { tool, input: parsed.data, output: validated.data };
   }

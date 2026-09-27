@@ -197,9 +197,9 @@ Permanent deletion removes auth, ReaderProfile/ReadingProgress/ReadingCollection
 
 ### Agent data lifecycle
 
-- **AgentConversation & AgentMessage**: Soft-deleted via `isDeleted: true` when a user requests account deletion, and excluded by default via pre-find query hooks. Purged during permanent account deletion.
+- **AgentConversation & AgentMessage**: Soft-deleted via `isDeleted: true` when a user requests account deletion, and excluded by default via pre-find query hooks. Purged during permanent account deletion. New records also carry `expiresAt` (default 30 days; archived conversations 14 days). Migration `015-agent-retention` backfills existing records with a fresh bounded window and creates Mongo TTL indexes; apply it explicitly after review. Mongo TTL cleanup is asynchronous.
 - **AgentConfirmationToken**: Automatically expired and removed by MongoDB TTL background index on `expiresAt` (`expireAfterSeconds: 0`).
-- **AgentToolExecution**: Persisted for audit and compliance with redacted operational summaries only; retained up to `AGENT_TOOL_AUDIT_RETENTION_DAYS` (default: 90 days).
+- **AgentToolExecution**: Persisted with count-only operational summaries and `expiresAt`; Mongo TTL retains it for `AGENT_TOOL_AUDIT_RETENTION_DAYS` (default: 90 days). Assistant messages store provider-reported input/output token counts; prompts and provider keys are not usage metadata.
 
 ## Fixture and test hygiene
 

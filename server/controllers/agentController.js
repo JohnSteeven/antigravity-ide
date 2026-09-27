@@ -38,13 +38,14 @@ const serializeConversation = (conv) => {
 exports.capabilities = async (req, res, next) => {
   try {
     const tools = registry.describe();
-    const providers = providerRegistry.describe();
     const health = await providerRegistry.getHealth();
+    const activeProvider = agentConfig.provider || "none";
 
     return res.json({
       agentEnabled: agentConfig.enabled,
       provider: {
-        active: agentConfig.provider || "mock",
+        active: activeProvider,
+        ready: Boolean(health.providers[activeProvider]?.available),
         available: health.providers,
         circuits: health.circuits,
       },
@@ -145,6 +146,9 @@ exports.sendMessage = async (req, res, next) => {
   } catch (concurrencyError) {
     return next(concurrencyError);
   }
+  const controller = new AbortController();
+  const onDisconnect = () => { if (!res.writableEnded) controller.abort(); };
+  res.on("close", onDisconnect);
 
   try {
     const {
@@ -183,6 +187,7 @@ exports.sendMessage = async (req, res, next) => {
       clientRequestId: clientRequestId ? String(clientRequestId).slice(0, 128) : null,
       pageContext: safePageContext,
       requestId,
+      signal: controller.signal,
     });
 
     return res.json({
@@ -202,6 +207,7 @@ exports.sendMessage = async (req, res, next) => {
     const agentError = error instanceof AgentError ? error : AgentError.from(error);
     return next(agentError);
   } finally {
+    res.off("close", onDisconnect);
     releaseSlot?.();
   }
 };

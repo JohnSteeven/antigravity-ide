@@ -18,24 +18,12 @@ const hashInput = (input) =>
   crypto.createHash("sha256").update(JSON.stringify(input ?? {})).digest("hex").slice(0, 16);
 
 const safeOutputSummary = (toolKey, output) => {
-  // Never persist raw personal data. Produce minimal operational summaries only.
+  // Public titles/excerpts can also contain private or adversarial text.
   if (!output) return "no output";
-  const PRIVATE_TOOL_PREFIXES = ["life.", "account.", "learn.get"];
-  if (PRIVATE_TOOL_PREFIXES.some((prefix) => toolKey.startsWith(prefix))) {
-    const count = Array.isArray(output)
-      ? output.length
-      : Array.isArray(output?.items)
-      ? output.items.length
-      : Array.isArray(output?.activities)
-      ? output.activities.length
-      : typeof output === "object" && output !== null
-      ? Object.keys(output).length
-      : 1;
-    return `${count} item(s) returned`;
-  }
-  // Public tools: safe to store a short summary
-  const serialized = JSON.stringify(output);
-  return serialized.length > 200 ? `${serialized.slice(0, 200)}…` : serialized;
+  const count = Array.isArray(output) ? output.length
+    : Array.isArray(output?.items) ? output.items.length
+      : Array.isArray(output?.activities) ? output.activities.length : 1;
+  return `${count} item(s) returned`;
 };
 
 /**
@@ -163,9 +151,13 @@ const runAgentTurn = async ({
   clientRequestId = null,
   pageContext = null,
   requestId = null,
+  signal = null,
 }) => {
   const userHash = hashIdentifier(userId);
   const start = Date.now();
+  if (userMessageContent.length > agentConfig.limits.contextChars) {
+    throw new AgentError(errorCodes.CONTEXT_LIMIT, "Message exceeds the Agent context budget.", 413);
+  }
 
   // ── 1. Feature flag ─────────────────────────────────────────────────────────
   const agentEnabled = await featureFlags.isEnabled("agent_enabled", { user });
@@ -189,7 +181,7 @@ const runAgentTurn = async ({
   const savedUserId = String(userMessage.userId || userId);
 
   // ── 4. Load bounded conversation context ────────────────────────────────────
-  const contextMessages = await conversationService.getBoundedContext(conversationId);
+  const contextMessages = await conversationService.getBoundedContext(conversationId, userId);
 
   // ── 5. Build tool execution context ─────────────────────────────────────────
   const toolContext = {
@@ -210,11 +202,14 @@ const runAgentTurn = async ({
   // ── 6. Run provider turn ────────────────────────────────────────────────────
   let providerResult;
   try {
+    if (signal?.aborted) throw new AgentError(errorCodes.CANCELLED, "Request cancelled.", 499);
     providerResult = await providerRegistry.runTurn({
       userMessage: userMessageContent,
       contextMessages,
       toolContext,
+      signal,
       executeTool: async (toolKey, toolInput, ctx) => {
+        if (signal?.aborted) throw new AgentError(errorCodes.CANCELLED, "Request cancelled.", 499);
         if (toolCallCount >= MAX_TOOL_CALLS_PER_TURN) {
           throw new AgentError(
             errorCodes.INTERNAL,
@@ -253,11 +248,13 @@ const runAgentTurn = async ({
   if (!assistantContent) {
     throw new AgentError(errorCodes.PROVIDER_RESPONSE_INVALID, "MyJourney returned an empty response.", 502);
   }
+  if (signal?.aborted) throw new AgentError(errorCodes.CANCELLED, "Request cancelled.", 499);
 
   // ── 8. Save assistant message ───────────────────────────────────────────────
   const assistantMessage = await conversationService.saveAssistantMessage(conversationId, userId, {
     content: assistantContent,
     toolExecutionIds,
+    usage: { inputTokens: providerResult.inputTokens, outputTokens: providerResult.outputTokens },
   });
 
   const latencyMs = Date.now() - start;
@@ -270,6 +267,8 @@ const runAgentTurn = async ({
     model: providerResult.model,
     latencyMs,
     toolCallCount,
+    inputTokens: providerResult.inputTokens,
+    outputTokens: providerResult.outputTokens,
   });
 
   return {

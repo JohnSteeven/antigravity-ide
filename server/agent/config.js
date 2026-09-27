@@ -34,6 +34,10 @@ const agentConfig = Object.freeze({
     model: String(process.env.AGENT_LOCAL_MODEL || "local-model").trim(),
     apiKey: String(process.env.AGENT_LOCAL_API_KEY || "").trim(),
   }),
+  openai: Object.freeze({
+    apiKey: String(process.env.OPENAI_API_KEY || "").trim(),
+    model: String(process.env.AGENT_OPENAI_MODEL || "gpt-4.1-mini").trim(),
+  }),
   limits: Object.freeze({
     messageChars: integerFromEnv("AGENT_MESSAGE_MAX_CHARS", 4000, { min: 256, max: 20000 }),
     assistantChars: integerFromEnv("AGENT_ASSISTANT_MAX_CHARS", 16000, { min: 512, max: 50000 }),

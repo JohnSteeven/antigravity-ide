@@ -1,6 +1,7 @@
 "use strict";
 
 const mongoose = require("mongoose");
+const agentConfig = require("../agent/config");
 
 const agentConversationSchema = new mongoose.Schema(
   {
@@ -42,6 +43,10 @@ const agentConversationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + agentConfig.retention.conversationDays * 86400000),
+    },
   },
   {
     timestamps: true,
@@ -54,6 +59,7 @@ agentConversationSchema.index(
   { userId: 1, status: 1, lastMessageAt: -1 },
   { name: "agent_conv_user_status_time" }
 );
+agentConversationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "agent_conv_retention_ttl" });
 
 // Ensure isDeleted conversations are excluded from normal queries
 agentConversationSchema.pre(/^find/, function () {

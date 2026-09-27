@@ -409,7 +409,7 @@ describe("MyJourney Agent — Domain & Orchestration Suite", () => {
         lean: jest.fn().mockResolvedValue(fakeMessages.slice(-12)), // limit 12
       });
 
-      const context = await conversationService.getBoundedContext("conv-1");
+      const context = await conversationService.getBoundedContext("conv-1", "user-1");
       expect(context.length).toBeLessThanOrEqual(12);
       const totalChars = context.reduce((sum, m) => sum + m.content.length, 0);
       expect(totalChars).toBeLessThanOrEqual(24000);

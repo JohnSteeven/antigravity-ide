@@ -143,7 +143,9 @@ Development OTP responses include a dev code and can log provider-unavailable de
 ### MyJourney Agent & AI
 
 - `AGENT_ENABLED`: Enable or disable the entire Agent subsystem (default: `true`).
-- `AGENT_PROVIDER`: Active AI provider (`mock` for deterministic development, `local` for local model server, default: `mock` in development, `""` in production).
+- `AGENT_PROVIDER`: Active AI provider (`mock` for deterministic development, `local` for local model server, `openai` for Responses API; default: `mock` in development, unset/unavailable in production).
+- `OPENAI_API_KEY`: Server-only key required for `AGENT_PROVIDER=openai`; never use a `PARCEL_` prefix or put it in browser code.
+- `AGENT_OPENAI_MODEL`: OpenAI model ID for Journey AI (default: `gpt-4.1-mini`).
 - `AGENT_LOCAL_ENDPOINT`: Base URL for OpenAI-compatible local model endpoint (e.g. `http://localhost:11434/v1`).
 - `AGENT_LOCAL_HEALTH_ENDPOINT`: Health check URL for the local model endpoint (e.g. `http://localhost:11434/api/tags`).
 - `AGENT_LOCAL_MODEL`: Local model identifier (e.g. `llama3`, `mistral`, default: `local-model`).
@@ -155,6 +157,8 @@ Development OTP responses include a dev code and can log provider-unavailable de
 - `AGENT_ASSISTANT_MAX_CHARS`: Hard cap on assistant message length (default: `16000` chars).
 - `AGENT_RATE_LIMIT_MAX`: Max requests per rate window per user (default: `120` dev / `30` prod).
 - `AGENT_CONCURRENCY_PER_USER`: Max concurrent requests per user (default: `2`).
+- `AGENT_CONTEXT_MAX_CHARS`, `AGENT_TOOL_OUTPUT_MAX_CHARS`, `AGENT_TOOL_CALLS_PER_TURN`, `AGENT_TOOL_ITERATIONS`: Server-side context and action budgets; cloud provider tool access is read-only.
+- `AGENT_CONVERSATION_RETENTION_DAYS`, `AGENT_ARCHIVED_RETENTION_DAYS`, `AGENT_TOOL_AUDIT_RETENTION_DAYS`: TTL deadlines for new Agent records. Apply migration 015 explicitly to backfill existing records and create production TTL indexes. No migration is run automatically.
 
 ### Optional platforms/providers
 

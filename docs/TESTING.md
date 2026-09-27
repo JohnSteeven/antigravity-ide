@@ -21,6 +21,8 @@ Phase 18 private storage checks: `npx jest --runInBand server/tests/learn/resour
 
 Phase 19 protected video checks: `npx jest --runInBand server/tests/learn/videoService.test.js server/tests/learn/muxProvider.test.js server/tests/learn/muxWebhookSignature.test.js server/tests/learnDomain.test.js server/tests/learnLessonPreviewSecurity.test.js`. These exercise Course ownership, lifecycle, provider call contracts, and real SDK raw-webhook signature rejection with mocked provider HTTP; they do not validate a live Mux account or browser playback.
 
+Phase 20 Journey AI checks: `npx jest --runInBand server/tests/agentOpenAIProvider.test.js server/tests/agentPillarSafety.test.js server/tests/agentRetentionMigration.test.js server/tests/agentDisconnect.test.js server/tests/agentDomain.test.js server/tests/agentExecutionSafety.test.js server/tests/agentLocalProvider.test.js server/tests/agentClientContract.test.js`. These cover mocked Responses traffic, provider failures/cancellation, read-tool isolation, entitlement delegation, TTL migration, disconnect cleanup, conversation ownership, and the shared client contract. They do not validate a live OpenAI account or browser Stop/retry interaction.
+
 ```bash
 npm run test:life
 npm run test:premium

@@ -4,6 +4,7 @@ const errorCodes = Object.freeze({
   PROVIDER_UNAVAILABLE: "AGENT_PROVIDER_UNAVAILABLE",
   PROVIDER_RESPONSE_INVALID: "AGENT_PROVIDER_RESPONSE_INVALID",
   TIMEOUT: "AGENT_TIMEOUT",
+  CANCELLED: "AGENT_CANCELLED",
   // Distinct from TIMEOUT (provider-level). TOOL_TIMEOUT is raised when a single
   // registered tool exceeds its per-tool timeout budget.
   TOOL_TIMEOUT: "AGENT_TOOL_TIMEOUT",
@@ -30,6 +31,7 @@ const defaultStatus = Object.freeze({
   [errorCodes.PROVIDER_UNAVAILABLE]: 503,
   [errorCodes.PROVIDER_RESPONSE_INVALID]: 502,
   [errorCodes.TIMEOUT]: 504,
+  [errorCodes.CANCELLED]: 499,
   [errorCodes.TOOL_TIMEOUT]: 504,
   [errorCodes.TOOL_INVALID_OUTPUT]: 502,
   [errorCodes.RATE_LIMITED]: 429,

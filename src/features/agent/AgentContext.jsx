@@ -205,7 +205,7 @@ export function AgentProvider({ children }) {
   }, [loading, messageCursor]);
 
   const sendMessage = useCallback(
-    async (rawMessage, { source = "typed", pageContext: overrideContext } = {}) => {
+    async (rawMessage, { source = "typed", pageContext: overrideContext, clientRequestId: retryRequestId } = {}) => {
       const message = String(rawMessage || "").trim();
       if (!message) throw new Error("Enter a message for MyJourney.");
       if (sending) throw new Error("MyJourney is already processing a message.");
@@ -227,7 +227,7 @@ export function AgentProvider({ children }) {
           setMessages([]);
         }
 
-        const clientRequestId = makeRequestId();
+        const clientRequestId = retryRequestId || makeRequestId();
         const optimisticMessage = {
           id: clientRequestId,
           clientRequestId,
@@ -303,12 +303,13 @@ export function AgentProvider({ children }) {
         if (result.conversation) rememberConversation(result.conversation);
         return result;
       } catch (sendError) {
+        const cancelled = Boolean(requestControllerRef.current?.signal.aborted);
         setMessages((current) =>
           current.map((item) =>
-            item.status === "sending" ? { ...item, status: "failed" } : item
+            item.status === "sending" ? { ...item, status: cancelled ? "cancelled" : "failed" } : item
           )
         );
-        setError(sendError.message);
+        setError(cancelled ? "Request stopped. You can retry this message." : sendError.message);
         throw sendError;
       } finally {
         requestControllerRef.current = null;
@@ -321,6 +322,12 @@ export function AgentProvider({ children }) {
   const cancelMessage = useCallback(() => {
     requestControllerRef.current?.abort();
   }, []);
+
+  const retryMessage = useCallback(async (message) => {
+    if (!message?.content || sending) return;
+    setMessages((current) => current.filter((item) => messageIdOf(item) !== messageIdOf(message)));
+    return sendMessage(message.content, { source: message.inputMode || "typed", clientRequestId: message.clientRequestId });
+  }, [sendMessage, sending]);
 
   const archiveConversation = useCallback(async (conversationId) => {
     if (!conversationId || sending) return false;
@@ -364,6 +371,7 @@ export function AgentProvider({ children }) {
       loadEarlierMessages,
       sendMessage,
       cancelMessage,
+      retryMessage,
       archiveConversation,
       clearError: () => setError(""),
     }),
@@ -371,6 +379,7 @@ export function AgentProvider({ children }) {
       activeConversationId,
       archiveConversation,
       cancelMessage,
+      retryMessage,
       capabilities,
       conversationCursor,
       conversations,

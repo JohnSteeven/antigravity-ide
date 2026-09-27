@@ -1,6 +1,7 @@
 "use strict";
 
 const mongoose = require("mongoose");
+const agentConfig = require("../agent/config");
 
 const agentMessageSchema = new mongoose.Schema(
   {
@@ -45,10 +46,18 @@ const agentMessageSchema = new mongoose.Schema(
         ref: "AgentToolExecution",
       },
     ],
+    usage: {
+      inputTokens: { type: Number, default: 0, min: 0 },
+      outputTokens: { type: Number, default: 0, min: 0 },
+    },
     // Soft-delete inherits from conversation deletion; messages are purged
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + agentConfig.retention.conversationDays * 86400000),
     },
   },
   {
@@ -62,6 +71,7 @@ agentMessageSchema.index(
   { conversationId: 1, createdAt: 1 },
   { name: "agent_msg_conv_time" }
 );
+agentMessageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "agent_msg_retention_ttl" });
 
 // Idempotency check: prevent duplicate messages from retried requests
 agentMessageSchema.index(

@@ -4,11 +4,14 @@ const Article = require("../../models/Article");
 const Course = require("../../models/Course");
 const CourseEnrollment = require("../../models/CourseEnrollment");
 const CourseLesson = require("../../models/CourseLesson");
+const CreatorProfile = require("../../models/CreatorProfile");
 const LifeEvent = require("../../life/models/LifeEvent");
 const User = require("../../models/User");
 const directoryService = require("../../creators/directoryService");
 const { escapeRegex } = require("../../creators/utils");
 const courseService = require("../../learn/courseService");
+const creatorStudioService = require("../../creators/studioService");
+const { listGames } = require("../../multiplayer/games/registry");
 const eventService = require("../../life/services/eventService");
 const habitService = require("../../life/services/habitService");
 const lifeDataService = require("../../life/services/lifeDataService");
@@ -17,6 +20,7 @@ const entitlementService = require("../../services/entitlementService");
 const KnowledgeSearchService = require("../../services/knowledgeSearchService");
 const { ENTITLEMENTS } = require("../../premium/catalog");
 const { PERMISSIONS } = require("./permissionService");
+const { AgentError, errorCodes } = require("../errors");
 
 const idString = (value) => String(value?._id || value?.id || value || "");
 const compact = (value, max = 500) => String(value || "").trim().slice(0, max);
@@ -174,6 +178,22 @@ const definitions = [
     },
   },
   {
+    key: "learn.getLessonExcerpt", description: "Return a short excerpt from an authorized course lesson. Premium and standalone purchases are checked by Learn.",
+    authRequired: true,
+    inputSchema: z.object({ courseSlug: z.string().trim().min(1).max(120), lessonId: z.string().trim().min(1).max(120) }).strict(), outputSchema: output,
+    async execute(input, context) {
+      let result;
+      try {
+        result = await courseService.getLesson({ ...input, userId: context.userId });
+      } catch (error) {
+        if (error?.status === 403) throw new AgentError(errorCodes.ENTITLEMENT_REQUIRED, "This lesson requires its normal course access.", 403);
+        throw error;
+      }
+      return { course: { title: compact(result.course.title, 180), slug: result.course.slug },
+        lesson: { title: compact(result.lesson.title, 180), excerpt: compact(result.lesson.body || result.lesson.transcript, 2000) } };
+    },
+  },
+  {
     key: "content.searchArticles", description: "Search published Article metadata without protected bodies.",
     inputSchema: z.object({ query: z.string().trim().min(2).max(100), limit: z.number().int().min(1).max(12).optional() }).strict(), outputSchema: output,
     execute: (input) => contentSearch("article", input.query, input.limit || 8),
@@ -195,6 +215,31 @@ const definitions = [
     key: "creators.getProfile", description: "Return one active Creator's public profile and public shelves.",
     inputSchema: z.object({ slug: z.string().trim().min(1).max(120) }).strict(), outputSchema: output,
     execute: (input, context) => directoryService.getPublicProfile(input.slug, context.userId || null),
+  },
+  {
+    key: "creator.getMyContent", description: "List a few of the authenticated active Creator's own content titles and workflow states.",
+    authRequired: true,
+    inputSchema: z.object({ contentType: z.enum(["article", "story", "course"]).optional() }).strict(), outputSchema: output,
+    async execute(input, context) {
+      const creator = await CreatorProfile.findOne({ userId: context.userId, status: "active" }).select("_id").lean();
+      if (!creator) throw new AgentError(errorCodes.PERMISSION_DENIED, "An active Creator profile is required.", 403);
+      const contentType = input.contentType || "article";
+      const result = await creatorStudioService.listContent(creator._id, { contentType, limit: 8 });
+      return { contentType, items: result.items.slice(0, 8).map((item) => ({
+        id: idString(item), title: compact(item.title, 180),
+        workflowStatus: item.creatorWorkflowStatus || item.workflowStatus || "draft",
+      })) };
+    },
+  },
+  {
+    key: "play.listGames", description: "List public MyJourney Play games and basic participation rules; never expose rooms or players.",
+    inputSchema: strictEmpty, outputSchema: output,
+    execute() {
+      return listGames().slice(0, 12).map((game) => ({
+        key: compact(game.key, 80), title: compact(game.title, 120),
+        minPlayers: game.minPlayers, maxPlayers: game.maxPlayers,
+      }));
+    },
   },
   {
     key: "knowledge.search", description: "Search the existing entitlement-safe MyJourney RAG index.",
