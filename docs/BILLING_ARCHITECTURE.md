@@ -1,6 +1,6 @@
 # Billing architecture
 
-This document is the durable source of truth for MyJourney billing work. It covers the billing foundation introduced in V1 Phases 10–12, the Phase 13 prepaid Premium lifecycle, and Phase 14 standalone Course purchases. Creator revenue sharing, payouts, and background-worker infrastructure remain outside this scope.
+This document is the durable source of truth for MyJourney billing work. It covers the billing foundation introduced in V1 Phases 10–12, the Phase 13 prepaid Premium lifecycle, and Phase 14 standalone Course purchases. Phase 16–17 Creator pool and earnings accounting consume these records but do not change customer billing. Creator payouts and background-worker infrastructure remain outside this scope.
 
 ## Domain boundaries
 
@@ -69,7 +69,7 @@ Migration `012-production-billing-domain` creates only the new named indexes and
 
 ### Adjusted Net Revenue data boundary
 
-The stored component foundation supports calculation of customer payment less explicit deductions. Phase 16's configured Creator pool uses a deliberately narrow `captured_less_refunds_chargebacks` basis per currency and reports failed/uncaptured attempts separately; it does not silently deduct unknown tax, processor, FX, app-store, salary, hosting, marketing, or operating-cost values. Deterministic Creator allocations are accounting snapshots only—earnings ledger generation and payout are separate phases.
+The stored component foundation supports calculation of customer payment less explicit deductions. Phase 16's configured Creator pool uses a deliberately narrow `captured_less_refunds_chargebacks` basis per currency and reports failed/uncaptured attempts separately; it does not silently deduct unknown tax, processor, FX, app-store, salary, hosting, marketing, or operating-cost values. Deterministic Creator allocations are accounting snapshots. Phase 17 may copy only finalized allocations into immutable Creator earnings records; payout remains a separate unavailable capability.
 
 ## Phase 12: Razorpay test-mode provider
 
@@ -209,4 +209,4 @@ The existing Razorpay Order claim, callback signature, provider Payment/Order fe
 
 A processed full refund marks only the matching CoursePurchase refunded/revoked and dates the Payment revocation. Partial, pending, and failed refunds preserve ownership. Purchase-history API output is authenticated/buyer-scoped and omits provider order/payment references. Provider live mode remains rejected, and no production Razorpay success is claimed: real test-account checkout, webhook/refund delivery, and browser QA remain required.
 
-Phase 16 Creator pool calculations are implemented without earnings or payouts. Statutory invoice/tax fields, billing-record retention/anonymization, GST treatment, the pool policy/rate, and commercial/legal text still require finance/CA/legal/privacy approval before production activation.
+Phase 16 Creator pool calculations and Phase 17 finalized earnings ledgers are implemented without payouts. Statutory invoice/tax fields, billing-record retention/anonymization, GST treatment, the pool policy/rate, earnings availability rules, and commercial/legal text still require finance/CA/legal/privacy approval before production activation.

@@ -20,6 +20,27 @@ const StatusSummary = ({ statuses = {} }) => (
   </dl>
 );
 
+const formatMinor = (amountMinor, currency) => Number.isSafeInteger(amountMinor) && currency
+  ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amountMinor / 100)
+  : "—";
+
+function EarningsView({ earnings }) {
+  if (!earnings) return <p className="creator-empty" role="status">Opening earnings ledger…</p>;
+  return <div className="creator-earnings">
+    <div className="creator-section-heading"><div><p className="creator-kicker">Authoritative ledger</p><h2>Creator earnings</h2></div><span className="creator-earnings__status">Payouts not configured</span></div>
+    <p>{earnings.message}</p>
+    <div className="creator-earnings__totals">{(earnings.totalsByCurrency || []).map((total) => <article key={total.currency}>
+      <p className="creator-kicker">{total.currency}</p><h3>{formatMinor(total.finalizedMinor, total.currency)}</h3><p>Total finalized</p>
+      <dl><div><dt>Available</dt><dd>{formatMinor(total.availableMinor, total.currency)}</dd></div><div><dt>Paid</dt><dd>{formatMinor(total.paidMinor, total.currency)}</dd></div></dl>
+    </article>)}</div>
+    {earnings.periods?.length ? <div className="creator-earnings__periods">{earnings.periods.map((period) => <article key={period.id}>
+      <div><p className="creator-kicker">{new Date(period.periodStart).toLocaleDateString()} – {new Date(period.periodEnd).toLocaleDateString()}</p><h3>{formatMinor(period.amountMinor, period.currency)}</h3><p>{period.qualifiedUnits || 0} qualified units across {period.courseContributions?.length || 0} course{period.courseContributions?.length === 1 ? "" : "s"}.</p></div>
+      <div className="creator-earnings__period-status"><strong>{period.status}</strong><span>{period.paymentStatus === "paid" ? "Paid" : "Payout not configured"}</span></div>
+    </article>)}</div> : <div className="creator-empty"><h2>No finalized earnings yet.</h2><p>Only an Admin-finalized Creator pool allocation can create an earnings entry.</p></div>}
+    <p className="creator-notice">Amounts come from finalized server-side pool calculations. There is no bank transfer or payout provider in this phase.</p>
+  </div>;
+}
+
 function CreateFlow({ onCreated }) {
   const [type, setType] = useState("");
   const [draft, setDraft] = useState(initialDraft);
@@ -151,7 +172,7 @@ export default function CreatorStudio() {
         {tab === "create" && <CreateFlow onCreated={refresh} />}
         {tab === "content" && (editing ? <EditFlow contentType={contentType} item={editing} onDone={(saved) => { setEditing(null); if (saved) refresh(); }} /> : <><div className="creator-content-toolbar" aria-label="Content format">{CONTENT_TYPES.map((type) => <button key={type} type="button" aria-pressed={contentType === type} onClick={() => setContentType(type)}>{type}</button>)}</div>{content.length ? <div className="creator-content-list">{content.map((item) => { const workflow = item.creatorWorkflowStatus || item.workflowStatus; const editable = ["draft", "changes_requested"].includes(workflow); const published = workflow === "published" || item.status === "published" || item.publicationStatus === "published"; const isFeatured = featured.some((entry) => entry.contentType === contentType && entry.contentId === String(item._id)); return <article key={item._id}><div><p className="creator-kicker">{workflow}</p><h3>{item.title}</h3><p>{item.description}</p></div><div className="creator-content-list__actions">{editable && <><button type="button" onClick={() => setEditing(item)}>Edit</button><button type="button" onClick={() => submit(item)}>Submit</button></>}{published && <button type="button" aria-pressed={isFeatured} onClick={() => toggleFeatured(item)}>{isFeatured ? "Featured" : "Feature"}</button>}</div></article>; })}</div> : <div className="creator-empty"><h2>No {contentType} drafts yet.</h2><p>Create when you have something useful to share.</p></div>}</>)}
         {tab === "analytics" && <><p className="creator-kicker">Aggregated, privacy-safe</p><h2>Qualified engagement</h2><p>{analytics?.privacy}</p><div className="creator-analytics-list">{(analytics?.aggregates || []).map((row) => <article key={row.contentType}><h3>{row.contentType}</h3><p>{row.qualifiedEvents} qualified events</p><p>{Math.round(row.qualifiedDurationSeconds / 60)} qualified minutes</p></article>)}</div></>}
-        {tab === "earnings" && <div className="creator-empty"><p className="creator-kicker">Creator economy</p><h2>{earnings?.message || "Creator Earnings Program — not yet activated."}</h2><p>Raw views are never treated as money. No payout, currency amount, KYC, or bank connection is currently active.</p></div>}
+        {tab === "earnings" && <EarningsView earnings={earnings} />}
         {tab === "profile" && <ProfileEditor slug={creatorAccess.creatorSlug} />}
       </section>}
     </main>

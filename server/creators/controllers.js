@@ -6,6 +6,7 @@ const directoryService = require("./directoryService");
 const studioService = require("./studioService");
 const learningEngagementService = require("./learningEngagementService");
 const creatorPoolService = require("./creatorPoolService");
+const economyService = require("./economyService");
 
 const userId = (req) => req.user?._id || req.user?.id;
 const sendError = (error, next) => error.status ? next(error) : next(error);
@@ -155,6 +156,20 @@ exports.finalizeCreatorPool = async (req, res, next) => {
 exports.listCreatorPools = async (req, res, next) => {
   try {
     const data = await creatorPoolService.listCreatorPools(req.query);
+    return res.set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.generateCreatorEarnings = async (req, res, next) => {
+  try {
+    const data = await economyService.generateEarningsFromPool({ calculationId: req.params.id, actorUserId: userId(req) });
+    return res.status(201).set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) { return next(error); }
+};
+
+exports.listCreatorEarnings = async (req, res, next) => {
+  try {
+    const data = await economyService.listAdminEarnings(req.query);
     return res.set("Cache-Control", "private, no-store").json({ success: true, data });
   } catch (error) { return next(error); }
 };

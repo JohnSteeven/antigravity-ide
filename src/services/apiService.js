@@ -505,6 +505,8 @@ export const creatorApi = {
   adminPoolCalculations: (params = {}) => get(`/api/creators/admin/pool-calculations${queryString(params)}`),
   calculateCreatorPool: (payload) => post("/api/creators/admin/pool-calculations", payload),
   finalizeCreatorPool: (id) => post(`/api/creators/admin/pool-calculations/${id}/finalize`, {}),
+  generateCreatorEarnings: (id) => post(`/api/creators/admin/pool-calculations/${id}/earnings`, {}),
+  adminCreatorEarnings: (params = {}) => get(`/api/creators/admin/earnings${queryString(params)}`),
   reviewContent: (contentType, contentId, payload) => patch(`/api/creators/admin/content/${contentType}/${contentId}/status`, payload),
 };
 

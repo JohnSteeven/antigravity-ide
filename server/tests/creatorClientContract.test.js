@@ -147,7 +147,8 @@ describe("Creator + Learn public and CMS client contracts", () => {
     const detail = read("src", "features", "learn", "FormatDetailPage.jsx");
     const studio = read("src", "features", "creators", "CreatorStudio.jsx");
     expect(detail).toContain("Secure delivery is not configured yet");
-    expect(studio).toContain("Creator Earnings Program — not yet activated");
-    expect(studio).toContain("No payout, currency amount, KYC, or bank connection is currently active");
+    expect(studio).toContain("Authoritative ledger");
+    expect(studio).toContain("Payouts not configured");
+    expect(studio).toContain("There is no bank transfer or payout provider in this phase");
   });
 });

@@ -700,6 +700,22 @@ body.theme-dark .creator-studio {
 .creator-content-list { display: grid; gap: .75rem; }
 .creator-content-list article { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }
 .creator-content-list__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.creator-earnings > p { color: var(--creator-muted); }
+.creator-earnings__status { background: var(--creator-chip-surface); border-radius: 999px; color: var(--creator-ink); font-size: .78rem; font-weight: 700; padding: .45rem .75rem; }
+.creator-earnings__totals { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1.5rem 0; }
+.creator-earnings__totals article,
+.creator-earnings__periods article { background: var(--creator-paper); border: 1px solid var(--creator-line); border-radius: 14px; padding: 1.25rem; }
+.creator-earnings__totals h3,
+.creator-earnings__periods h3 { color: var(--creator-ink); font-family: Georgia, "Times New Roman", serif; font-size: 1.7rem; margin: .3rem 0; }
+.creator-earnings__totals dl { display: flex; gap: 1.5rem; margin: 1rem 0 0; }
+.creator-earnings__totals dl div { display: grid; gap: .2rem; }
+.creator-earnings__totals dt,
+.creator-earnings__periods p,
+.creator-earnings__period-status span { color: var(--creator-muted); font-size: .82rem; }
+.creator-earnings__totals dd { color: var(--creator-ink); font-weight: 700; margin: 0; }
+.creator-earnings__periods { display: grid; gap: .75rem; margin: 1.5rem 0; }
+.creator-earnings__periods article { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }
+.creator-earnings__period-status { align-items: flex-end; display: grid; gap: .25rem; text-align: right; text-transform: capitalize; }
 
 /* Creator Dark Mode is surface-owned. The rules below deliberately enumerate
    real Creator roles instead of applying a wildcard foreground override. */
@@ -944,6 +960,7 @@ body.theme-dark .creator-profile__header {
   .creator-profile__header { align-items: start; grid-template-columns: auto 1fr; }
   .creator-profile__actions { grid-column: 1 / -1; justify-items: start; }
   .creator-studio__status { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .creator-earnings__totals { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
@@ -985,6 +1002,8 @@ body.theme-dark .creator-profile__header {
   .creator-content-list article,
   .creator-studio__header { align-items: flex-start; flex-direction: column; }
   .creator-studio__status { grid-template-columns: 1fr 1fr; }
+  .creator-earnings__periods article { align-items: flex-start; flex-direction: column; }
+  .creator-earnings__period-status { align-items: start; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {

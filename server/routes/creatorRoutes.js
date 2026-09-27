@@ -27,6 +27,8 @@ router.get("/admin/learning-engagement", authenticate, requireAdmin, controllers
 router.get("/admin/pool-calculations", authenticate, requireAdmin, controllers.listCreatorPools);
 router.post("/admin/pool-calculations", authenticate, requireAdmin, controllers.calculateCreatorPool);
 router.post("/admin/pool-calculations/:id/finalize", authenticate, requireAdmin, controllers.finalizeCreatorPool);
+router.post("/admin/pool-calculations/:id/earnings", authenticate, requireAdmin, controllers.generateCreatorEarnings);
+router.get("/admin/earnings", authenticate, requireAdmin, controllers.listCreatorEarnings);
 
 router.get("/", searchLimiter, controllers.listCreators);
 router.post("/:slug/follow", authenticate, followLimiter, controllers.followCreator);

@@ -27,6 +27,7 @@ Current ordered migrations:
 11. `011-reader-data-foundation`
 12. `012-production-billing-domain`
 13. `013-phase5-article-catalog-reset`
+14. `014-creator-earnings-foundation`
 
 Server startup does not run these automatically.
 
@@ -83,6 +84,13 @@ Phase 15 creates no client-writable totals or parallel event collection. Canonic
 - **`CreatorPoolCalculation`**: immutable calculation inputs/results for one start-inclusive/end-exclusive period, currency, and policy version. It stores gross captures, refunds, chargebacks, failed/uncaptured exclusions, eligible revenue, pool and reconciliation totals, weighted Creator/Course contributions, allocations, policy snapshot, and SHA-256 input hash. Only status/finalization audit fields can advance from `calculated` to `finalized`; there is no paid state.
 - **Indexes**: `(periodStart, periodEnd, currency, policyVersion)` is unique, so retries reuse one snapshot. `(status, periodEnd, currency)` supports Admin review and Phase 17 finalized-allocation reads.
 - **Migration status**: additive schema/index changes require no legacy data rewrite. Production index creation must be verified before pool calculation is enabled. Existing dormant economy period/ledger rows are not rewritten or treated as Phase 16 outputs.
+
+### Phase 17 Creator Earnings Foundation Data & Migration Status
+
+- **Canonical reuse**: `CreatorEarningPeriod` stores the Creator/period/source allocation view and `CreatorLedgerEntry` remains the immutable accounting event. Phase 17 adds source calculation/hash, integer qualified units, Course contribution context, currency-aware period identity, and finalization audit fields instead of creating a parallel balance collection.
+- **Generation**: an Admin supplies only a finalized `CreatorPoolCalculation` ID. Server-stored allocations create `finalized` earning and ledger rows with deterministic references. Unique source indexes plus input verification make retries idempotent and detect conflicting period data; partial infrastructure failures can be retried without duplicating earnings.
+- **Migration 014**: creates/verifies Phase 16 pool indexes and Phase 17 source/report indexes, then replaces the legacy `(creatorId, periodStart, periodEnd)` earning-period uniqueness constraint with `(creatorId, periodStart, periodEnd, currency)` for currency isolation. Legacy rows are not assigned a source or treated as Phase 17 earnings. Apply this migration through the controlled migration command before enabling generation.
+- **Payout boundary**: no payout record, provider reference, bank transfer, or automatic `paid` transition is created. Accounting rows are retained for financial audit when a Creator account is later deactivated or deleted; account deletion must not erase them silently.
 
 
 ## Commands
