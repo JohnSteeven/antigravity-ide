@@ -78,6 +78,13 @@ const env = {
     r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || "",
     r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
   },
+  mux: {
+    tokenId: process.env.MUX_TOKEN_ID || "",
+    tokenSecret: process.env.MUX_TOKEN_SECRET || "",
+    webhookSecret: process.env.MUX_WEBHOOK_SECRET || "",
+    signingKey: process.env.MUX_SIGNING_KEY || "",
+    privateKey: process.env.MUX_PRIVATE_KEY || "",
+  },
   passwordMinLength: Number(process.env.PASSWORD_MIN_LENGTH || 8),
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,

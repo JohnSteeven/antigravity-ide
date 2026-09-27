@@ -23,6 +23,7 @@ const storyRoutes = require("./routes/storyRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const tagRoutes = require("./routes/tagRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
+const muxWebhookRoutes = require("./routes/muxWebhookRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const subscriberRoutes = require("./routes/subscriberRoutes");
 const subCategoryRoutes = require("./routes/subCategoryRoutes");
@@ -107,6 +108,7 @@ app.use(
 // Razorpay requires an HMAC over the untouched request bytes. This route must
 // remain before express.json(), request sanitization, and browser CSRF.
 app.use("/api/billing/webhooks/razorpay", express.raw({ type: "application/json", limit: "512kb" }), billingWebhookRoutes);
+app.use("/api/learn/webhooks/mux", express.raw({ type: "application/json", limit: "512kb" }), muxWebhookRoutes);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

@@ -25,6 +25,31 @@ const CANONICAL_CODING_TRACKS = {
 
 const idempotencyKey = () =>
   globalThis.crypto?.randomUUID?.() || `lesson-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const MuxVideoPlayer = React.lazy(() => import("./components/MuxVideoPlayer.jsx"));
+
+function LessonVideo({ slug, lesson }) {
+  const [retry, setRetry] = useState(0);
+  const [playback, setPlayback] = useState({ loading: true, data: null, error: "" });
+  useEffect(() => {
+    if (!lesson.mediaAssetId) return;
+    let active = true;
+    setPlayback({ loading: true, data: null, error: "" });
+    learnApi.lessonPlayback(slug, lesson.id).then((result) => {
+      if (active) setPlayback({ loading: false, data: result.data, error: "" });
+    }).catch((error) => {
+      if (active) setPlayback({ loading: false, data: null, error: error.message || "Playback unavailable." });
+    });
+    return () => { active = false; };
+  }, [slug, lesson.id, lesson.mediaAssetId, retry]);
+  if (!lesson.mediaAssetId) return <section className="learn-media-boundary" role="status"><h2>Lesson video</h2><p>The video has not been attached yet. Check back after processing.</p></section>;
+  return <section className="learn-media-boundary" aria-label="Lesson video">
+    <h2>Lesson video</h2>
+    {playback.loading ? <p role="status">Authorizing playback…</p> : playback.data ? (
+      <React.Suspense fallback={<p role="status">Loading video player…</p>}><MuxVideoPlayer playback={playback.data} title={lesson.title} onError={() => setPlayback({ loading: false, data: null, error: "Playback failed. Please retry." })} /></React.Suspense>
+    ) : <p role="alert">{playback.error}</p>}
+    {!playback.loading && !playback.data && <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry playback</button>}
+  </section>;
+}
 
 export default function LessonWorkspace() {
   const { slug, lessonId } = useParams();
@@ -407,7 +432,7 @@ export default function LessonWorkspace() {
         </aside>
         <article className="learn-lesson__reader">
           <header><p className="learn-kicker">{data.lesson.lessonType} Lesson</p><h1>{data.lesson.title}</h1>{data.lesson.description && <p>{data.lesson.description}</p>}</header>
-          {data.lesson.mediaAssetId && <section className="learn-media-boundary"><h2>Lesson media</h2><p>Playback is currently unavailable. You can continue with the lesson text and transcript below.</p></section>}
+          {(data.lesson.mediaAssetId || data.lesson.lessonType === "video") && <LessonVideo slug={slug} lesson={data.lesson} />}
           <div className="learn-prose">{bodyParagraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 18)}`}>{paragraph}</p>)}</div>
           {data.lesson.transcript && <details className="learn-transcript"><summary>Transcript</summary><div className="learn-prose"><p>{data.lesson.transcript}</p></div></details>}
           {hasQuizzes && <QuizSection courseSlug={slug} lessonId={data.lesson.id} questions={data.lesson.quizQuestions} initialPassed={quizPassed} onQuizPassed={() => setQuizPassed(true)} />}

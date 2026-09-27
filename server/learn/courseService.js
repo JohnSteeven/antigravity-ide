@@ -7,6 +7,7 @@ const CourseEnrollment = require("../models/CourseEnrollment");
 const LearningEvent = require("../models/LearningEvent");
 const Topic = require("../models/Topic");
 const LearningResource = require("../models/LearningResource");
+const ProtectedMediaAsset = require("../models/ProtectedMediaAsset");
 const CodingSubmission = require("../models/CodingSubmission");
 const { getPurchaseState } = require("../services/coursePurchaseService");
 const { resolveLearnAccess } = require("./accessPolicy");
@@ -331,13 +332,12 @@ const getLesson = async ({ courseSlug, lessonId, userId = null, creatorId = null
       { moduleId: lesson.moduleId, lessonId: null },
     ],
     publicationStatus: "published",
+    isDeleted: { $ne: true },
   }).sort({ sortOrder: 1, createdAt: 1 }).lean();
 
   const serializedResources = await Promise.all(
     attachedResources.map(async (r) => {
-      const isAllowed = r.accessLevel === "free"
-        ? true
-        : (await resolveLearnAccess({ userId, accessLevel: r.accessLevel, owner, admin })).allowed;
+      const isAllowed = (await resolveLearnAccess({ userId, courseId: course._id, monetizationType: course.monetizationType, accessLevel: r.accessLevel === "premium" || course.monetizationType === "PREMIUM_INCLUDED" ? "premium" : course.accessLevel, owner, admin })).allowed;
       return serializeResource(r, { allowed: isAllowed });
     })
   );
@@ -431,6 +431,12 @@ const replaceCurriculum = async (creatorId, courseId, input) => {
     if (!["draft", "changes_requested"].includes(course.workflowStatus)) throw errorWith("Submitted Courses cannot change curriculum.", 409, "COURSE_NOT_EDITABLE");
     if (Number(input.expectedStructuralVersion) !== course.structuralVersion) throw errorWith("The Course curriculum changed in another session. Refresh before saving.", 409, "COURSE_VERSION_CONFLICT");
 
+    const referencedAssetIds = modulesInput.flatMap((module) => (module.lessons || []).map((lesson) => lesson.mediaAssetId).filter(Boolean));
+    for (const assetId of new Set(referencedAssetIds.map(String))) {
+      const asset = await ProtectedMediaAsset.findOne({ _id: assetId, creatorId, courseId, mediaKind: "video", status: { $ne: "removed" } }).select("_id").lean();
+      if (!asset) throw errorWith("Video asset does not belong to this Course.", 422, "VIDEO_ASSET_MISMATCH");
+    }
+
     await Promise.all([
       CourseLesson.deleteMany({ courseId }, options),
       CourseModule.deleteMany({ courseId }, options),
@@ -512,6 +518,11 @@ const submitCourse = async (creatorId, courseId) => {
   if (!course) throw errorWith("Course not found.", 404, "COURSE_NOT_FOUND");
   if (!["draft", "changes_requested"].includes(course.workflowStatus)) throw errorWith("Course is already in review.", 409, "COURSE_ALREADY_SUBMITTED");
   if (!course.lessonCount) throw errorWith("Add Lessons before submitting this Course.", 422, "COURSE_CURRICULUM_REQUIRED");
+  const videoLessons = await CourseLesson.find({ courseId, lessonType: "video", isDeleted: false }).select("+mediaAssetId").lean();
+  for (const lesson of videoLessons) {
+    const ready = lesson.mediaAssetId && await ProtectedMediaAsset.exists({ _id: lesson.mediaAssetId, creatorId, courseId, lessonId: lesson._id, provider: "mux", deliveryStatus: "ready", status: "active" });
+    if (!ready) throw errorWith("Attach a ready protected video to each Video Lesson before review.", 422, "COURSE_VIDEO_NOT_READY");
+  }
   course.workflowStatus = "submitted";
   course.publicationStatus = "draft";
   await course.save();

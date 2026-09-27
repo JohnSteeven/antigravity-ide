@@ -529,6 +529,10 @@ export const creatorStudioApi = {
   updateCourse: (id, payload) => patch(`/api/creator-studio/courses/${id}`, payload),
   saveCurriculum: (id, payload) => put(`/api/creator-studio/courses/${id}/curriculum`, payload),
   submitCourse: (id) => post(`/api/creator-studio/courses/${id}/submit`, {}),
+  courseVideoLessons: (courseId) => get(`/api/creator-studio/courses/${courseId}/video-lessons`),
+  createCourseVideoUpload: (courseId, lessonId, payload) => post(`/api/creator-studio/courses/${courseId}/lessons/${lessonId}/video-uploads`, payload),
+  courseVideoStatus: (courseId, lessonId, assetId) => get(`/api/creator-studio/courses/${courseId}/lessons/${lessonId}/video-assets/${assetId}`),
+  attachCourseVideo: (courseId, lessonId, assetId) => patch(`/api/creator-studio/courses/${courseId}/lessons/${lessonId}/video`, { assetId }),
   registerAsset: (payload) => post("/api/creator-studio/media/assets", payload),
   createVideo: (payload) => post("/api/creator-studio/videos", payload),
   createPodcastSeries: (payload) => post("/api/creator-studio/podcast-series", payload),
@@ -537,6 +541,7 @@ export const creatorStudioApi = {
 };
 
 export const learnApi = {
+  lessonPlayback: (slug, lessonId) => get(`/api/learn/courses/${encodeURIComponent(slug)}/lessons/${encodeURIComponent(lessonId)}/playback`),
   home: () => get("/api/learn"),
   topics: () => get("/api/learn/topics"),
   adminTopics: () => get("/api/learn/topics/admin"),

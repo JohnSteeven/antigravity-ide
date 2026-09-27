@@ -101,6 +101,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
     "@aws-sdk/s3-request-presigner": "^3.1141.0",
+    "@mux/mux-node": "^15.3.0",
+    "@mux/mux-player": "^3.13.4",
     "@simplewebauthn/server": "^13.3.2",
     "@socket.io/redis-adapter": "^8.3.0",
     "bcrypt": "^6.0.0",

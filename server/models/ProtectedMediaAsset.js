@@ -10,6 +10,12 @@ const ProtectedMediaAssetSchema = new mongoose.Schema({
   storageKey: { type: String, default: "", select: false },
   bucket: { type: String, default: "", select: false },
   courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", default: null, index: true },
+  lessonId: { type: mongoose.Schema.Types.ObjectId, ref: "CourseLesson", default: null, index: true },
+  muxUploadId: { type: String, default: "", select: false },
+  muxPlaybackId: { type: String, default: "", select: false },
+  muxError: { type: String, default: "", select: false },
+  aspectRatio: { type: String, default: "", maxlength: 24 },
+  readyAt: { type: Date, default: null },
   checksum: { type: String, default: "", select: false },
   uploadIdempotencyKey: { type: String, default: "", select: false },
   deletedAt: { type: Date, default: null },
@@ -30,5 +36,6 @@ ProtectedMediaAssetSchema.path("sizeBytes").validate(function withinConfiguredLi
 }, "Asset exceeds the configured limit for its media type.");
 ProtectedMediaAssetSchema.index({ creatorId: 1, status: 1, createdAt: -1 });
 ProtectedMediaAssetSchema.index({ creatorId: 1, uploadIdempotencyKey: 1 }, { unique: true, partialFilterExpression: { uploadIdempotencyKey: { $gt: "" } } });
+ProtectedMediaAssetSchema.index({ muxUploadId: 1 }, { unique: true, partialFilterExpression: { muxUploadId: { $gt: "" } } });
 
 module.exports = mongoose.model("ProtectedMediaAsset", ProtectedMediaAssetSchema);

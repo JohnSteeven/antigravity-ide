@@ -194,6 +194,22 @@ exports.downloadResource = async (req, res, next) => {
     stream.on("error", next).pipe(res);
   } catch (error) { return next(error); }
 };
+exports.lessonPlayback = async (req, res, next) => {
+  try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await require("./videoService").playbackForLesson({ courseSlug: req.params.slug, lessonId: req.params.lessonId, userId: userId(req) }) }); }
+  catch (error) { return next(error); }
+};
+exports.adminVideoUpload = async (req, res, next) => {
+  try { return res.set("Cache-Control", "private, no-store").status(201).json({ success: true, data: await require("./videoService").initiateUpload({ courseId: req.params.courseId, lessonId: req.params.lessonId, userId: userId(req), admin: true, input: req.body }) }); }
+  catch (error) { return next(error); }
+};
+exports.adminVideoStatus = async (req, res, next) => {
+  try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await require("./videoService").getStatus({ courseId: req.params.courseId, lessonId: req.params.lessonId, assetId: req.params.assetId, admin: true }) }); }
+  catch (error) { return next(error); }
+};
+exports.adminAttachVideo = async (req, res, next) => {
+  try { return res.json({ success: true, data: await require("./videoService").attachVideo({ courseId: req.params.courseId, lessonId: req.params.lessonId, assetId: req.body.assetId, admin: true }) }); }
+  catch (error) { return next(error); }
+};
 exports.uploadAdminCodingMaterial = async (req, res, next) => {
   try {
     const resourceStorage = require("./resourceStorageService");

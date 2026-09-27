@@ -19,6 +19,8 @@ Tests that create database fixtures must use unmistakable test identities and cl
 
 Phase 18 private storage checks: `npx jest --runInBand server/tests/learn/resourceStorage.test.js server/tests/learn/storageAdapter.test.js server/tests/learn/resourceEntitlement.test.js server/tests/learn/codingAdminAndMaterials.test.js server/tests/learnLessonPreviewSecurity.test.js`. These use mocked provider/DB boundaries plus a temporary local filesystem adapter; they do not validate a live R2 bucket.
 
+Phase 19 protected video checks: `npx jest --runInBand server/tests/learn/videoService.test.js server/tests/learn/muxProvider.test.js server/tests/learn/muxWebhookSignature.test.js server/tests/learnDomain.test.js server/tests/learnLessonPreviewSecurity.test.js`. These exercise Course ownership, lifecycle, provider call contracts, and real SDK raw-webhook signature rejection with mocked provider HTTP; they do not validate a live Mux account or browser playback.
+
 ```bash
 npm run test:life
 npm run test:premium

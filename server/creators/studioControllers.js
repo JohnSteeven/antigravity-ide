@@ -2,6 +2,7 @@ const courseService = require("../learn/courseService");
 const mediaService = require("../learn/mediaService");
 const MediaProvider = require("../learn/mediaProviderService");
 const resourceStorage = require("../learn/resourceStorageService");
+const videoService = require("../learn/videoService");
 const directoryService = require("./directoryService");
 const studioService = require("./studioService");
 const engagementService = require("./engagementService");
@@ -100,6 +101,22 @@ exports.uploadCourseResource = async (req, res, next) => {
 };
 exports.deleteCourseResourceAsset = async (req, res, next) => {
   try { return res.json({ success: true, data: await resourceStorage.deleteUnlinkedAsset({ assetId: req.params.assetId, creatorId: req.creator._id }) }); }
+  catch (error) { return next(error); }
+};
+exports.listCourseVideoLessons = async (req, res, next) => {
+  try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await videoService.listOwnedLessons({ courseId: req.params.courseId, creatorId: req.creator._id }) }); }
+  catch (error) { return next(error); }
+};
+exports.createCourseVideoUpload = async (req, res, next) => {
+  try { return res.set("Cache-Control", "private, no-store").status(201).json({ success: true, data: await videoService.initiateUpload({ courseId: req.params.courseId, lessonId: req.params.lessonId, creatorId: req.creator._id, userId: userId(req), input: req.body }) }); }
+  catch (error) { return next(error); }
+};
+exports.courseVideoStatus = async (req, res, next) => {
+  try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await videoService.getStatus({ courseId: req.params.courseId, lessonId: req.params.lessonId, assetId: req.params.assetId, creatorId: req.creator._id }) }); }
+  catch (error) { return next(error); }
+};
+exports.attachCourseVideo = async (req, res, next) => {
+  try { return res.json({ success: true, data: await videoService.attachVideo({ courseId: req.params.courseId, lessonId: req.params.lessonId, assetId: req.body.assetId, creatorId: req.creator._id }) }); }
   catch (error) { return next(error); }
 };
 

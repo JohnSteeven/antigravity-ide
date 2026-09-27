@@ -233,6 +233,7 @@ const createResource = async (creator, input) => {
 const issueAssetAccess = async ({ assetId, userId, purpose = "playback", admin = false }) => {
   const asset = await ProtectedMediaAsset.findById(assetId).select("+providerAssetId +storageKey").lean();
   if (!asset || asset.status === "removed") throw errorWith("Media asset not found.", 404, "MEDIA_ASSET_NOT_FOUND");
+  if (asset.provider === "mux") throw errorWith("Use the Lesson playback endpoint for Course video.", 404, "MEDIA_ASSET_NOT_FOUND");
   const creator = userId ? await CreatorProfile.findOne({ userId }).select("_id").lean() : null;
   if (asset.storageKey) {
     const resource = await LearningResource.findOne({ assetId: asset._id, isDeleted: { $ne: true } }).select("+assetId").lean();

@@ -22,6 +22,7 @@ router.get("/continue", authenticate, controllers.continueLearning);
 router.get("/courses", searchLimiter, controllers.listCourses);
 router.get("/courses/:slug", optionalAuthenticate, controllers.getCourse);
 router.get("/courses/:slug/lessons/:lessonId", optionalAuthenticate, controllers.getLesson);
+router.get("/courses/:slug/lessons/:lessonId/playback", optionalAuthenticate, controllers.lessonPlayback);
 router.post("/courses/:courseId/enroll", authenticate, progressLimiter, controllers.enroll);
 router.patch("/courses/:courseId/progress", authenticate, progressLimiter, controllers.progress);
 router.post("/courses/:courseId/lessons/:lessonId/exercise-attempt", authenticate, progressLimiter, controllers.recordExerciseAttempt);
@@ -50,6 +51,9 @@ router.get("/media/:assetId/access", authenticate, controllers.assetAccess);
 
 // Admin Coding Management (Admin-only) — existing
 router.get("/admin/coding/courses", authenticate, requireAdmin, controllers.getAdminCodingCourses);
+router.post("/admin/courses/:courseId/lessons/:lessonId/video-uploads", authenticate, requireAdmin, controllers.adminVideoUpload);
+router.get("/admin/courses/:courseId/lessons/:lessonId/video-assets/:assetId", authenticate, requireAdmin, controllers.adminVideoStatus);
+router.patch("/admin/courses/:courseId/lessons/:lessonId/video", authenticate, requireAdmin, controllers.adminAttachVideo);
 router.patch("/admin/coding/courses/:id", authenticate, requireAdmin, controllers.updateAdminCodingCourse);
 router.get("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, controllers.getAdminCodingLesson);
 router.patch("/admin/coding/lessons/:lessonId", authenticate, requireAdmin, controllers.updateAdminCodingLesson);
