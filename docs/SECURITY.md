@@ -70,6 +70,7 @@ Premium is resolved server-side from ReaderMembership and access dates/status. P
 - Follow identities are unique and self-follow is denied.
 - Creator A cannot mutate Creator B's content through Studio services.
 - Learner enrollments/progress are scoped to authenticated user IDs.
+- Phase 15 Creator learning metrics are read-only calculations over server-written LearningEvent/CourseEnrollment evidence. Clients cannot submit totals; raw views and unsupported events are excluded, semantic actions and learner-days are deduplicated, creator self-activity and system-owned Courses are omitted, Creator Studio is owner-scoped, and cross-Creator reporting requires Admin middleware.
 - Admin Creator/Topic/report review requires Admin middleware.
 
 ## Interactive coding execution and curriculum security

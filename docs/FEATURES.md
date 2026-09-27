@@ -25,6 +25,7 @@ Statuses describe the code in this repository, not a launch or security certific
 | Creator applications/review | Implemented | Applicant workflow and Admin review/history are server-authorized. |
 | Creator directory/profiles/follows | Implemented | Public active profiles, shelves, owner state, follow/unfollow, dedupe, and self-follow prevention exist. |
 | Creator Studio | Implemented | Active-Creator profile, content, course/curriculum, analytics, and media-metadata workflows exist. |
+| Creator learning engagement (Phase 15) | Implemented | Read-only Creator/Admin period reports reproduce Course-level and Creator-level meaningful learner, trusted action, completion, and repeat-day metrics from server-owned Learn evidence. Raw views, browser totals, system Courses, duplicates, and creator self-activity are excluded; no money is calculated. |
 | Creator economy | Foundation only | Analytics/earnings/ledger models and inactive UI state exist; no real earnings or payouts are produced. |
 | Topics | Implemented | Public Topics and Admin management exist independently of Creators/content types. |
 | Learn home/catalog/search | Implemented | Topics and Free/Premium catalogs are exposed through `/api/learn`. |

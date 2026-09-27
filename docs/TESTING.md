@@ -46,6 +46,7 @@ This suite executes:
 - `server/tests/notifications.test.js`: Phase 9 authenticated notification APIs, recipient isolation, unread count, one/all read mutations, recipient-scoped milestone idempotency, page-view rejection, safe internal action paths, and unified Learn/Coding achievement notification integration.
 - `server/tests/notificationService.test.js`: Legacy in-app delivery compatibility and honest unavailable-channel behavior.
 - `server/tests/standaloneCourseCommerce.test.js`, `server/tests/coursePurchaseLifecycle.test.js`, and `server/tests/courseCommerceModels.test.js`: Phase 14 Free/Premium/standalone policy separation, QA override exclusion, exact-Course ownership, failed-payment denial, callback/webhook replay idempotency, server-owned pricing, full-refund revocation, buyer-scoped history, financial model validation, and uniqueness boundaries.
+- `server/tests/creatorLearningEngagement.test.js`: Phase 15 trusted Course/Creator period aggregation, semantic event and learner deduplication, creator self-activity and system-Course exclusion, multiple-Creator ownership mapping, repeat meaningful days, enrollment/completion fallback, period boundaries, read-only APIs, and Creator/Admin authorization contracts.
 - `server/tests/learnDomain.test.js`: Course, module, lesson, and enrollment domain rules.
 - `server/tests/learnLessonPreviewSecurity.test.js`: Preview vs gated lesson authorization and locked serializer privacy.
 
@@ -64,6 +65,14 @@ npx jest --runInBand server/tests/standaloneCourseCommerce.test.js server/tests/
 ```
 
 The provider lifecycle is simulated. Real Razorpay test-account checkout, webhook delivery, refund delivery, and browser checkout QA remain external validation requirements.
+
+Focused Phase 15 engagement checks:
+
+```bash
+npx jest --runInBand server/tests/creatorLearningEngagement.test.js server/tests/creatorEngagement.test.js server/tests/creatorSecurity.test.js server/tests/learn/masteryProgression.test.js server/tests/learn/retentionAndStreaks.test.js
+```
+
+These reports consume trusted persisted evidence only; they calculate no revenue, pool allocation, earnings, or payout state.
 
 Focused Phase 13 lifecycle checks:
 

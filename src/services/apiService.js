@@ -501,12 +501,14 @@ export const creatorApi = {
   adminApplication: (id) => get(`/api/creators/admin/applications/${id}`),
   reviewApplication: (id, payload) => patch(`/api/creators/admin/applications/${id}/status`, payload),
   adminContent: (params = {}) => get(`/api/creators/admin/content${queryString(params)}`),
+  adminLearningEngagement: (params = {}) => get(`/api/creators/admin/learning-engagement${queryString(params)}`),
   reviewContent: (contentType, contentId, payload) => patch(`/api/creators/admin/content/${contentType}/${contentId}/status`, payload),
 };
 
 export const creatorStudioApi = {
   overview: () => get("/api/creator-studio/overview"),
   analytics: (params = {}) => get(`/api/creator-studio/analytics${queryString(params)}`),
+  learningEngagement: (params = {}) => get(`/api/creator-studio/learning-engagement${queryString(params)}`),
   earnings: () => get("/api/creator-studio/earnings"),
   updateProfile: (payload) => patch("/api/creator-studio/profile", payload),
   updateFeatured: (items) => put("/api/creator-studio/profile/featured", { items }),

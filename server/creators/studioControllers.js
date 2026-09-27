@@ -4,6 +4,7 @@ const MediaProvider = require("../learn/mediaProviderService");
 const directoryService = require("./directoryService");
 const studioService = require("./studioService");
 const engagementService = require("./engagementService");
+const learningEngagementService = require("./learningEngagementService");
 const economyService = require("./economyService");
 
 const userId = (req) => req.user?._id || req.user?.id;
@@ -92,4 +93,5 @@ exports.createPodcastEpisode = async (req, res, next) => { try { return res.stat
 exports.createResource = async (req, res, next) => { try { return res.status(201).json({ success: true, data: await mediaService.createResource(req.creator, req.body) }); } catch (error) { return next(error); } };
 
 exports.analytics = async (req, res, next) => { try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await engagementService.creatorAnalytics(req.creator._id, req.query) }); } catch (error) { return next(error); } };
+exports.learningEngagement = async (req, res, next) => { try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await learningEngagementService.reportLearningEngagement({ creatorId: req.creator._id, courseId: req.query.courseId || null, periodStart: req.query.periodStart, periodEnd: req.query.periodEnd }) }); } catch (error) { return next(error); } };
 exports.earnings = async (req, res, next) => { try { return res.set("Cache-Control", "private, no-store").json({ success: true, data: await economyService.getCreatorEconomySummary(req.creator._id) }); } catch (error) { return next(error); } };

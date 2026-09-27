@@ -4,6 +4,7 @@ const CreatorReviewEvent = require("../models/CreatorReviewEvent");
 const applicationService = require("./applicationService");
 const directoryService = require("./directoryService");
 const studioService = require("./studioService");
+const learningEngagementService = require("./learningEngagementService");
 
 const userId = (req) => req.user?._id || req.user?.id;
 const sendError = (error, next) => error.status ? next(error) : next(error);
@@ -117,4 +118,16 @@ exports.reviewContent = async (req, res, next) => {
 exports.listContentReview = async (req, res, next) => {
   try { return res.set("Cache-Control", "private, no-store").json({ success: true, ...(await studioService.listAdminReviewContent(req.query)) }); }
   catch (error) { return next(error); }
+};
+
+exports.getLearningEngagement = async (req, res, next) => {
+  try {
+    const data = await learningEngagementService.reportLearningEngagement({
+      creatorId: req.query.creatorId || null,
+      courseId: req.query.courseId || null,
+      periodStart: req.query.periodStart,
+      periodEnd: req.query.periodEnd,
+    });
+    return res.set("Cache-Control", "private, no-store").json({ success: true, data });
+  } catch (error) { return next(error); }
 };

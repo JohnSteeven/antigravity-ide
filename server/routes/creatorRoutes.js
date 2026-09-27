@@ -23,6 +23,7 @@ router.get("/admin/applications/:id", authenticate, requireAdmin, controllers.ge
 router.patch("/admin/applications/:id/status", authenticate, requireAdmin, reviewValidator, validate, controllers.reviewApplication);
 router.get("/admin/content", authenticate, requireAdmin, controllers.listContentReview);
 router.patch("/admin/content/:contentType/:contentId/status", authenticate, requireAdmin, controllers.reviewContent);
+router.get("/admin/learning-engagement", authenticate, requireAdmin, controllers.getLearningEngagement);
 
 router.get("/", searchLimiter, controllers.listCreators);
 router.post("/:slug/follow", authenticate, followLimiter, controllers.followCreator);

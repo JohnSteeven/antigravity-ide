@@ -1,5 +1,7 @@
 const { qualify } = require("../creators/engagementService");
 const { DEFAULT_WEIGHTS, calculatePoints } = require("../creators/economyService");
+const CourseEnrollment = require("../models/CourseEnrollment");
+const LearningEvent = require("../models/LearningEvent");
 
 describe("Creator qualified engagement and economy foundation", () => {
   test("raw views and Creator self-engagement never qualify", () => {
@@ -26,5 +28,11 @@ describe("Creator qualified engagement and economy foundation", () => {
     const metrics = { qualifiedReads: 2, qualifiedWatchSeconds: 120, qualifiedListenSeconds: 60, lessonCompletions: 1, courseProgressions: 1, meaningfulSaves: 2 };
     expect(calculatePoints(metrics)).toBe(11);
     expect(calculatePoints(metrics, DEFAULT_WEIGHTS)).toBe(11);
+  });
+
+  test("trusted learning sources expose period-query indexes", () => {
+    const named = (Model) => Model.schema.indexes().map(([, options]) => options.name);
+    expect(named(LearningEvent)).toContain("learning_event_course_period_type");
+    expect(named(CourseEnrollment)).toContain("course_enrollment_course_started");
   });
 });

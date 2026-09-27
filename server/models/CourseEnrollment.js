@@ -32,5 +32,6 @@ const CourseEnrollmentSchema = new mongoose.Schema({
 
 CourseEnrollmentSchema.index({ userId: 1, courseId: 1 }, { unique: true });
 CourseEnrollmentSchema.index({ userId: 1, status: 1, lastActivityAt: -1 });
+CourseEnrollmentSchema.index({ courseId: 1, startedAt: 1 }, { name: "course_enrollment_course_started" });
 
 module.exports = mongoose.model("CourseEnrollment", CourseEnrollmentSchema);

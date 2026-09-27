@@ -68,6 +68,15 @@ Phase 9 extends the existing shared `Notification` collection; it does not creat
 - **Indexes**: unique buyer/Course and Payment identities prevent duplicate entitlement creation; buyer/history and Payment user/Course indexes support scoped reads and audit lookup.
 - **Migration status**: fields are additive and existing Free/Premium Courses and Premium Payments use defaults. No eager document rewrite is required. Deployment must create and verify the new unique indexes before enabling Course checkout. Existing malformed standalone drafts without a valid price must be corrected before save/publication.
 
+### Phase 15 Creator Learning Engagement Data & Migration Status
+
+Phase 15 creates no client-writable totals or parallel event collection. Canonical reports reproduce metrics from existing server-owned `LearningEvent` and `CourseEnrollment` records joined to `Course.creatorId` and `CreatorProfile.userId`.
+
+- Qualified event types are lesson completion, quiz pass, exercise pass, and Course completion. CourseEnrollment provides enrollment counts and a trusted historical completion fallback.
+- Raw views, browser duration/progress totals, creator self-activity, and system-owned Courses are excluded. Semantic event keys and unique learner/day sets prevent duplicate inflation.
+- `learning_event_course_period_type` on `(courseId, occurredAt, eventType)` and `course_enrollment_course_started` on `(courseId, startedAt)` support bounded period calculations.
+- No data rewrite is required. Controlled deployment must create/verify the additive indexes before using reports at production scale.
+
 
 ## Commands
 

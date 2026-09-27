@@ -175,7 +175,7 @@ CreatorApplication is the private application/review workflow. CreatorProfile is
 
 The public directory exposes active profiles only. Follow records use a unique follower/type/target identity; self-follow is denied. Creator Studio scopes profile/content mutations to the active CreatorProfile loaded from the authenticated user.
 
-Creator analytics aggregates and earnings/ledger models exist. Real revenue attribution and payouts are not active.
+Creator analytics aggregates and earnings/ledger models exist. Phase 15 adds a separate canonical learning-engagement report derived only from server-written `LearningEvent` and `CourseEnrollment` evidence for creator-owned, non-system Courses. Start-inclusive/end-exclusive UTC periods report unique enrolled and meaningful learners, qualified learning actions, lesson/quiz/exercise/course completions, and repeat meaningful learning days at Course and Creator levels. Semantic deduplication, unique learner/day sets, and creator-user exclusion prevent refresh/retry/self-activity inflation. Browser engagement totals and raw views are never inputs. Real revenue attribution and payouts are not active.
 
 ## Learn, Courses, and lessons
 

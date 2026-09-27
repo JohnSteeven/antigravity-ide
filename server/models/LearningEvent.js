@@ -13,5 +13,6 @@ const LearningEventSchema = new mongoose.Schema({
 
 LearningEventSchema.index({ userId: 1, idempotencyKey: 1 }, { unique: true });
 LearningEventSchema.index({ userId: 1, courseId: 1, occurredAt: -1 });
+LearningEventSchema.index({ courseId: 1, occurredAt: 1, eventType: 1 }, { name: "learning_event_course_period_type" });
 
 module.exports = mongoose.model("LearningEvent", LearningEventSchema);

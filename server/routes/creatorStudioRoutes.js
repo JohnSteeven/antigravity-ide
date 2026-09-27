@@ -11,6 +11,7 @@ const mediaLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 50, standardHead
 router.use(authenticate, requireActiveCreator);
 router.get("/overview", controllers.overview);
 router.get("/analytics", controllers.analytics);
+router.get("/learning-engagement", controllers.learningEngagement);
 router.get("/earnings", controllers.earnings);
 router.patch("/profile", controllers.updateProfile);
 router.put("/profile/featured", controllers.updateFeaturedContent);
