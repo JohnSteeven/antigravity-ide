@@ -1,8 +1,14 @@
 const nodemailer = require("nodemailer");
 const env = require("../config/env");
+const emailProvider = require("./emailProvider");
+const {
+  getEmailFooter,
+  renderOtpTemplate,
+  renderPasswordResetTemplate,
+  renderPasswordChangedTemplate,
+} = require("./emailTemplates");
 
-const hasSmtpConfig = () =>
-  Boolean(env.smtp.host && env.smtp.user && env.smtp.pass);
+const hasSmtpConfig = () => emailProvider.hasSmtpConfig();
 
 const createTransporter = () =>
   nodemailer.createTransport({
@@ -13,15 +19,18 @@ const createTransporter = () =>
       user: env.smtp.user,
       pass: env.smtp.pass,
     },
+    connectionTimeout: Number(env.smtp?.timeoutMs || 8000),
+    greetingTimeout: Number(env.smtp?.timeoutMs || 8000),
+    socketTimeout: Number(env.smtp?.timeoutMs || 8000),
   });
 
 const getBaseUrl = () => env.clientUrl || "http://localhost:1234";
 
+/**
+ * Transactional OTP Email
+ */
 const sendOtpEmail = async ({ to, code, purpose }) => {
-  const subject = purpose === "password-reset"
-    ? "Your MyJourney password reset code"
-    : "Your MyJourney verification code";
-  const text = `Your MyJourney verification code is ${code}. It expires in 5 minutes.`;
+  const { subject, html, text } = renderOtpTemplate({ code, purpose });
 
   if (!hasSmtpConfig()) {
     if (env.nodeEnv === "production") {
@@ -35,14 +44,14 @@ const sendOtpEmail = async ({ to, code, purpose }) => {
 
   try {
     const transporter = createTransporter();
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: env.smtp.from,
       to,
       subject,
       text,
-      html: `<p>Your MyJourney verification code is <strong>${code}</strong>.</p><p>It expires in 5 minutes.</p>`,
+      html,
     });
-    return { delivered: true, provider: "smtp" };
+    return { delivered: true, provider: "smtp", messageId: info?.messageId };
   } catch (error) {
     if (env.nodeEnv === "production") {
       const unavailable = new Error("Email OTP delivery is unavailable.");
@@ -55,25 +64,9 @@ const sendOtpEmail = async ({ to, code, purpose }) => {
   }
 };
 
-const getEmailFooter = (token = "") => {
-  const baseUrl = getBaseUrl();
-  const prefUrl = token ? `${baseUrl}/newsletter/preferences?token=${token}` : `${baseUrl}/contact`;
-  const contactUrl = `${baseUrl}/contact`;
-
-  return `
-    <div style="margin-top:32px;padding-top:24px;border-top:1px solid #e2e8f0;font-size:12px;color:#718096;text-align:center;line-height:1.6">
-      <p style="margin:0 0 8px">You received this email because of your subscription preferences on <strong>MyJourney</strong>.</p>
-      <p style="margin:0 0 12px">
-        <a href="${prefUrl}" target="_blank" style="color:#426c67;text-decoration:underline;margin:0 6px">Manage Preferences</a> &bull;
-        <a href="${prefUrl}" target="_blank" style="color:#426c67;text-decoration:underline;margin:0 6px">Unsubscribe</a> &bull;
-        <a href="${contactUrl}" target="_blank" style="color:#426c67;text-decoration:underline;margin:0 6px">Contact Support</a>
-      </p>
-      <p style="margin:0;color:#a0aec0">&copy; 2026 MyJourney. All rights reserved.</p>
-    </div>
-  `;
-};
-
-// ─── Verification Email ────────────────────────────────────────────────────────
+/**
+ * Newsletter / General Verification Email
+ */
 const sendVerificationEmail = async ({ to, token }) => {
   const verifyUrl = `${getBaseUrl()}/newsletter/verify?token=${token}`;
 
@@ -111,7 +104,7 @@ const sendVerificationEmail = async ({ to, token }) => {
 
   try {
     const transporter = createTransporter();
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: env.smtp.from,
       to,
       subject: "Confirm your MyJourney newsletter subscription",
@@ -119,7 +112,7 @@ const sendVerificationEmail = async ({ to, token }) => {
       text,
     });
     console.info("[emailService] Verification email dispatched.");
-    return { delivered: true, provider: "smtp" };
+    return { delivered: true, provider: "smtp", messageId: info?.messageId };
   } catch (err) {
     console.error("[emailService] Verification email dispatch failed.");
     if (env.nodeEnv === "production") throw err;
@@ -127,7 +120,9 @@ const sendVerificationEmail = async ({ to, token }) => {
   }
 };
 
-// ─── Already Subscribed Email ─────────────────────────────────────────────────
+/**
+ * Already Subscribed Email
+ */
 const sendAlreadySubscribedEmail = async ({ to }) => {
   const html = `
     <div style="margin:0;background:#fbfaf7;padding:32px;font-family:Inter,Segoe UI,Arial,sans-serif;color:#2f3133">
@@ -163,7 +158,9 @@ const sendAlreadySubscribedEmail = async ({ to }) => {
   });
 };
 
-// ─── Welcome Email ─────────────────────────────────────────────────────────────
+/**
+ * Welcome Subscriber Email
+ */
 const sendWelcomeSubscriberEmail = async ({ to, token }) => {
   const baseUrl = getBaseUrl();
   const html = `
@@ -206,7 +203,9 @@ const sendWelcomeSubscriberEmail = async ({ to, token }) => {
   });
 };
 
-// ─── New Article Notification ────────────────────────────────────────────────
+/**
+ * New Article Notification Email
+ */
 const sendNewArticleNotificationEmail = async ({ to, article, token }) => {
   const baseUrl = getBaseUrl();
   const articleUrl = `${baseUrl}/articles/${article.slug}`;
@@ -257,7 +256,9 @@ const sendNewArticleNotificationEmail = async ({ to, article, token }) => {
   });
 };
 
-// ─── Campaign Broadcast ───────────────────────────────────────────────────────
+/**
+ * Campaign Broadcast Email
+ */
 const sendCampaignEmail = async ({ to, campaign, token }) => {
   const html = `
     <div style="margin:0;background:#fbfaf7;padding:32px;font-family:Inter,Segoe UI,Arial,sans-serif;color:#2f3133">
@@ -294,125 +295,53 @@ const sendCampaignEmail = async ({ to, campaign, token }) => {
   });
 };
 
-// ─── Password Reset Link Email ────────────────────────────────────────────────
+/**
+ * Password Reset Link Email
+ */
 const sendPasswordResetEmail = async ({ to, token, name, requestMeta = {} }) => {
-  const baseUrl = getBaseUrl();
-  const resetUrl = `${baseUrl}/reset-password/${token}`;
-  const ip = requestMeta.ip || "Unknown IP";
-  const browser = requestMeta.browser || "Web Browser";
-  const device = requestMeta.device || "Unknown Device";
-  const time = requestMeta.time || new Date().toUTCString();
-
-  const html = `
-    <div style="margin:0;background:#fbfaf7;padding:32px;font-family:Inter,Segoe UI,Arial,sans-serif;color:#2f3133">
-      <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e4ded4;border-radius:8px;overflow:hidden">
-        <div style="padding:26px 28px;background:#2f3133;color:#fff">
-          <h1 style="margin:0;font-family:Georgia,serif;font-size:26px;color:#fff">MyJourney</h1>
-          <p style="margin:4px 0 0;color:#cbd5e1;font-size:13px">Security & Account Recovery</p>
-        </div>
-        <div style="padding:28px">
-          <h2 style="margin:0 0 12px;font-family:Georgia,serif;font-size:22px;color:#1a202c">Reset Your Password</h2>
-          <p style="margin:0 0 16px;line-height:1.7;color:#4a5568">
-            Hello ${name || "there"},
-          </p>
-          <p style="margin:0 0 20px;line-height:1.7;color:#4a5568">
-            We received a request to reset your password for your <strong>MyJourney</strong> account. Click the button below to set a new password:
-          </p>
-          <div style="margin:24px 0;text-align:center">
-            <a href="${resetUrl}" target="_blank" style="display:inline-block;padding:14px 32px;background:#c05621;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(192,86,33,0.25)">
-              Reset Password →
-            </a>
-          </div>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:#64748b;line-height:1.6">
-            <strong style="color:#334155;display:block;margin-bottom:4px">Request Details:</strong>
-            • <strong>Time:</strong> ${time}<br/>
-            • <strong>Browser & Device:</strong> ${browser} (${device})<br/>
-            • <strong>IP Address:</strong> ${ip}
-          </div>
-          <p style="margin:0 0 16px;font-size:13px;color:#ef4444;font-weight:600">
-            ⏰ Note: This password reset link will expire in 15 minutes and can only be used once.
-          </p>
-          <p style="margin:0 0 20px;font-size:13px;color:#718096">
-            If you did not request a password reset, please ignore this email or contact support immediately if you suspect unauthorized activity.
-          </p>
-          ${getEmailFooter()}
-        </div>
-      </div>
-    </div>
-  `;
-
-  const text = `MyJourney Password Reset\n\nHello ${name || "there"},\n\nReset your password by visiting this link:\n${resetUrl}\n\nThis link expires in 15 minutes.\n\nRequest Details:\nIP: ${ip}\nDevice: ${device}\nBrowser: ${browser}\nTime: ${time}`;
+  const { subject, html, text } = renderPasswordResetTemplate({ token, name, requestMeta });
 
   if (!hasSmtpConfig()) {
     return { delivered: false, provider: "unavailable" };
   }
 
   const transporter = createTransporter();
-  await transporter.sendMail({
+  const info = await transporter.sendMail({
     from: env.smtp.from,
     to,
-    subject: "Reset your MyJourney password",
+    subject,
     html,
     text,
   });
-  return { delivered: true, provider: "smtp" };
+  return { delivered: true, provider: "smtp", messageId: info?.messageId };
 };
 
-// ─── Password Changed Notification Email ─────────────────────────────────────
+/**
+ * Password Changed Notification Email
+ */
 const sendPasswordChangedNotificationEmail = async ({ to, name, requestMeta = {} }) => {
-  const baseUrl = getBaseUrl();
-  const contactUrl = `${baseUrl}/contact`;
-  const ip = requestMeta.ip || "Unknown IP";
-  const browser = requestMeta.browser || "Web Browser";
-  const device = requestMeta.device || "Unknown Device";
-  const time = requestMeta.time || new Date().toUTCString();
-
-  const html = `
-    <div style="margin:0;background:#fbfaf7;padding:32px;font-family:Inter,Segoe UI,Arial,sans-serif;color:#2f3133">
-      <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e4ded4;border-radius:8px;overflow:hidden">
-        <div style="padding:26px 28px;background:#2f3133;color:#fff">
-          <h1 style="margin:0;font-family:Georgia,serif;font-size:26px;color:#fff">MyJourney</h1>
-          <p style="margin:4px 0 0;color:#cbd5e1;font-size:13px">Security Alert</p>
-        </div>
-        <div style="padding:28px">
-          <h2 style="margin:0 0 12px;font-family:Georgia,serif;font-size:22px;color:#1a202c">Password Updated Successfully</h2>
-          <p style="margin:0 0 16px;line-height:1.7;color:#4a5568">
-            Hello ${name || "there"},
-          </p>
-          <p style="margin:0 0 20px;line-height:1.7;color:#4a5568">
-            This is a security confirmation that your password for <strong>MyJourney</strong> was successfully changed.
-          </p>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:#64748b;line-height:1.6">
-            <strong style="color:#334155;display:block;margin-bottom:4px">Security Details:</strong>
-            • <strong>Time:</strong> ${time}<br/>
-            • <strong>Browser & Device:</strong> ${browser} (${device})<br/>
-            • <strong>IP Address:</strong> ${ip}
-          </div>
-          <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:14px 16px;margin:20px 0;font-size:13px;color:#9f1239">
-            <strong>Didn't make this change?</strong><br/>
-            If you did not reset your password, your account may be compromised. Please <a href="${contactUrl}" style="color:#9f1239;font-weight:700;text-decoration:underline">contact our security team immediately</a>.
-          </div>
-          ${getEmailFooter()}
-        </div>
-      </div>
-    </div>
-  `;
-
-  const text = `MyJourney Security Alert: Your password was successfully changed.\n\nTime: ${time}\nIP: ${ip}\nDevice: ${device}\nBrowser: ${browser}\n\nIf you did not request this, please contact support immediately: ${contactUrl}`;
+  const { subject, html, text } = renderPasswordChangedTemplate({ name, requestMeta });
 
   if (!hasSmtpConfig()) {
     return { delivered: false, provider: "unavailable" };
   }
 
   const transporter = createTransporter();
-  await transporter.sendMail({
+  const info = await transporter.sendMail({
     from: env.smtp.from,
     to,
-    subject: "Security Alert: Your MyJourney password was changed",
+    subject,
     html,
     text,
   });
-  return { delivered: true, provider: "smtp" };
+  return { delivered: true, provider: "smtp", messageId: info?.messageId };
+};
+
+/**
+ * Generic Transactional Email Dispatcher
+ */
+const sendTransactionalEmail = async (options) => {
+  return emailProvider.sendEmail(options);
 };
 
 const handlers = {
@@ -423,10 +352,13 @@ const handlers = {
   campaign: sendCampaignEmail,
   passwordReset: sendPasswordResetEmail,
   passwordChanged: sendPasswordChangedNotificationEmail,
+  otp: sendOtpEmail,
 };
 
 module.exports = {
   handlers,
+  hasSmtpConfig,
+  emailProvider,
   sendOtpEmail,
   sendVerificationEmail,
   sendAlreadySubscribedEmail,
@@ -435,4 +367,5 @@ module.exports = {
   sendCampaignEmail,
   sendPasswordResetEmail,
   sendPasswordChangedNotificationEmail,
+  sendTransactionalEmail,
 };

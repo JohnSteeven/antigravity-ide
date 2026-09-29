@@ -93,27 +93,37 @@ const resendOtpChallenge = async (challengeId) => {
 };
 
 const verifyOtpChallenge = async ({ challengeId, code, purpose }) => {
+  if (!code || (typeof code !== "string" && typeof code !== "number")) {
+    const error = new Error("Invalid OTP. Please check the code and try again.");
+    error.status = 400;
+    error.code = "OTP_INVALID";
+    throw error;
+  }
+
   const challenge = await OTP.findById(challengeId).populate("user");
 
   if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
     const error = new Error("OTP challenge expired. Please request a new code.");
     error.status = 400;
+    error.code = "OTP_EXPIRED";
     throw error;
   }
 
   if (challenge.purpose !== purpose) {
     const error = new Error("This OTP cannot be used for the selected action.");
     error.status = 400;
+    error.code = "OTP_INVALID_PURPOSE";
     throw error;
   }
 
   if (challenge.attempts >= 5) {
     const error = new Error("Too many failed attempts. Please request a new OTP.");
     error.status = 429;
+    error.code = "OTP_ATTEMPTS_EXHAUSTED";
     throw error;
   }
 
-  const isValid = await bcrypt.compare(String(code), challenge.otpHash);
+  const isValid = await bcrypt.compare(String(code).trim(), challenge.otpHash);
   if (!isValid) {
     const updated = await OTP.findOneAndUpdate(
       {
@@ -145,4 +155,10 @@ const verifyOtpChallenge = async ({ challengeId, code, purpose }) => {
   return challenge;
 };
 
-module.exports = { createOtpChallenge, generateCode, resendOtpChallenge, verifyOtpChallenge };
+module.exports = {
+  createOtpChallenge,
+  generateCode,
+  maskIdentifier,
+  resendOtpChallenge,
+  verifyOtpChallenge,
+};

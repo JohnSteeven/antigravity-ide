@@ -2,13 +2,14 @@ const mongoose = require("mongoose");
 
 const OTPSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
     identifier: { type: String, required: true, index: true },
     channel: { type: String, enum: ["email", "mobile"], required: true },
     purpose: {
       type: String,
-      enum: ["register", "login-otp", "password-reset"],
+      enum: ["register", "login-otp", "password-reset", "verify-email", "account-confirm"],
       required: true,
+      index: true,
     },
     otpHash: { type: String, required: true },
     attempts: { type: Number, default: 0 },
@@ -18,5 +19,7 @@ const OTPSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+OTPSchema.index({ user: 1, purpose: 1 });
 
 module.exports = mongoose.model("OTP", OTPSchema);
