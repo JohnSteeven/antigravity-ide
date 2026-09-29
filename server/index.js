@@ -235,6 +235,12 @@ const startServer = async () => {
     console.log(`Received ${signal}; shutting down MyJourney.`);
     schedulerRuntime?.close();
     await multiplayerRuntime?.close();
+    try {
+      const { defaultJobQueue } = require("./jobs/jobQueue");
+      const { redisManager } = require("./redis/redisClient");
+      await defaultJobQueue.shutdown(3000);
+      await redisManager.disconnect();
+    } catch (_e) {}
     if (httpServer.listening) await new Promise((resolve) => httpServer.close(resolve));
     await mongoose.disconnect();
   };
