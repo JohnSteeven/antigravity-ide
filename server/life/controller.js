@@ -25,6 +25,8 @@ const templateService = require("./services/templateService");
 const webPushService = require("./services/webPushService");
 const healthExpansionService = require("./services/healthExpansionService");
 const osExpansionService = require("./services/osExpansionService");
+const correlationService = require("./services/correlationService");
+const reminderEngine = require("./services/reminderEngine");
 
 const ok = (res, data, status = 200) => res.status(status).json({ success: true, data });
 const userId = (req) => req.user._id;
@@ -191,6 +193,11 @@ const controller = {
     await audit(req, "data", userId(req), "delete_all");
     ok(res, result);
   }),
+  getCorrelations: handle("correlations", async (req, res) => ok(res, await correlationService.getCorrelations(userId(req), req.query))),
+  getPeriodicReport: handle("periodic_report", async (req, res) => ok(res, await reportService.buildPeriodicReport(userId(req), req.query))),
+  getReminderStatus: handle("reminder_status", async (req, res) => ok(res, await reminderEngine.getReminderStatus(userId(req), req.query.time, req.query.date))),
+  evaluateReminders: handle("reminder_evaluate", async (req, res) => ok(res, await reminderEngine.evaluateReminderDelivery(userId(req), req.body.date, req.body.time))),
+  aiCoach: handle("ai_coach", async (req, res) => ok(res, await lifeAiService.coachingSession(userId(req), req.body))),
 };
 
 module.exports = controller;

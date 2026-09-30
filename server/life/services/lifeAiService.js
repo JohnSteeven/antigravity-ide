@@ -57,4 +57,47 @@ const ask = async (userId, question, query = {}) => {
   }
 };
 
-module.exports = { ask, generateReview, normalizedReviewInput };
+const coachingSession = async (userId, options = {}) => {
+  const profile = await assertEnabled(userId);
+  const focusArea = options.focusArea || "holistic";
+  const input = await normalizedReviewInput(userId, options.query || {});
+
+  const scopes = profile.aiReview || {};
+  const activeScopes = ["habits", "goals"];
+  if (scopes.includeHealth) activeScopes.push("health");
+  if (scopes.includeFinance) activeScopes.push("finance");
+  if (scopes.includeJournal) activeScopes.push("journal");
+
+  const messages = [
+    {
+      role: "system",
+      content: "You are MyJourney Life's personal rhythm coach. Your guidance is grounded strictly in the provided Life summary. Never diagnose health conditions, never prescribe medications, never provide financial investment advice. Emphasize sustainable human rhythms, acknowledge constraints, celebrate small consistency milestones, and suggest one realistic, gentle focus for the coming days."
+    },
+    {
+      role: "user",
+      content: `USER CONTEXT & DATA SCOPES (${activeScopes.join(", ")}):\n${JSON.stringify(input)}\n\nFOCUS AREA:\n${focusArea}\n\nUSER NOTE:\n${options.note || "Please provide holistic coaching on my recent rhythms."}`
+    }
+  ];
+
+  try {
+    const result = await AIProviderService.complete({
+      messages,
+      action: "life-coaching",
+      source: "life-private-coach",
+      userId,
+      overrides: { temperature: 0.3, maxTokens: 850 }
+    });
+    return {
+      available: true,
+      coaching: result.content,
+      focusArea,
+      activeScopes,
+      disclaimer: "Life AI coaching is reflective and supportive. It does not replace medical, nutritional, psychiatric, or certified financial counsel."
+    };
+  } catch (error) {
+    metrics.increment("life_ai_coach_failures");
+    throw new LifeError("Life AI coaching is temporarily unavailable. Deterministic reviews remain available.", 503, "LIFE_AI_FAILED");
+  }
+};
+
+module.exports = { ask, generateReview, coachingSession, normalizedReviewInput };
