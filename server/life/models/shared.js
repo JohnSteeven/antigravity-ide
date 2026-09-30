@@ -29,7 +29,11 @@ const ReminderSchema = new mongoose.Schema({
 }, { _id: false });
 
 const SourceSchema = new mongoose.Schema({
-  type: { type: String, enum: ["manual", "import", "integration", "system"], default: "manual" },
+  type: {
+    type: String,
+    enum: ["manual", "phone", "wearable", "import", "integration", "system", "api", "derived"],
+    default: "manual",
+  },
   provider: { type: String, default: "" },
   externalId: { type: String, default: "" },
   originalTimestamp: { type: Date, default: null },

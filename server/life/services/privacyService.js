@@ -16,6 +16,12 @@ const LifePushSubscription = require("../models/LifePushSubscription");
 const LifeRoutine = require("../models/LifeRoutine");
 const LifeScheduleVersion = require("../models/LifeScheduleVersion");
 const LifeTask = require("../models/LifeTask");
+const LifeBodyEntry = require("../models/LifeBodyEntry");
+const LifeSleepSession = require("../models/LifeSleepSession");
+const LifeWorkoutSession = require("../models/LifeWorkoutSession");
+const LifeNutritionEntry = require("../models/LifeNutritionEntry");
+const LifeFinanceAccount = require("../models/LifeFinanceAccount");
+const LifeDailySummary = require("../models/LifeDailySummary");
 const Notification = require("../../models/Notification");
 
 const EXPORT_MODELS = Object.freeze({
@@ -27,8 +33,14 @@ const EXPORT_MODELS = Object.freeze({
   tasks: LifeTask,
   goals: LifeGoal,
   health: LifeHealthEntry,
+  body: LifeBodyEntry,
+  sleepSessions: LifeSleepSession,
+  workouts: LifeWorkoutSession,
+  nutrition: LifeNutritionEntry,
+  financeAccounts: LifeFinanceAccount,
   financeEntries: LifeFinanceEntry,
   financePlans: LifeFinancePlan,
+  dailySummaries: LifeDailySummary,
   journal: LifeJournalEntry,
   medications: LifeMedication,
   insights: LifeInsight,
@@ -54,4 +66,4 @@ const deleteAllLifeData = async (userId) => {
   return { deleted: { ...Object.fromEntries(results), siteNotifications: notifications.deletedCount || 0 } };
 };
 
-module.exports = { deleteAllLifeData, exportLifeData, LIFE_OWNED_MODELS: EXPORT_MODELS };
+module.exports = { deleteAllLifeData, exportLifeData, LIFE_OWNED_MODELS: EXPORT_MODELS, EXPORT_MODELS };
