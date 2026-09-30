@@ -15,6 +15,15 @@ jest.mock("../life/controller", () => ({
   insightFeedback: send("insight-feedback"), report: send("report"), planTomorrow: send("plan-tomorrow"), aiReview: send("ai-review"), aiAsk: send("ai-ask"),
   readNotification: send("notification-read"), pushConfig: send("push-config"), pushSubscriptions: send("push-list"), subscribePush: send("push-subscribe", 201), unsubscribePush: send("push-unsubscribe"),
   financeImportPreview: send("finance-import-preview", 201), financeImportConfirm: send("finance-import-confirm"),
+  habitAnalytics: send("habit-analytics"), goalAnalytics: send("goal-analytics"), toggleGoalMilestone: send("goal-milestone-toggle"), addGoalMilestone: send("goal-milestone-add", 201),
+  listBodyEntries: send("body-list"), bodySummary: send("body-summary"), createBodyEntry: send("body-create", 201), deleteBodyEntry: send("body-delete"), listVitals: send("vitals-list"),
+  listSleepSessions: send("sleep-list"), sleepAnalytics: send("sleep-analytics"), createSleepSession: send("sleep-create", 201), deleteSleepSession: send("sleep-delete"),
+  fitnessSummary: send("fitness-summary"), listWorkoutSessions: send("workout-list"), strengthVolume: send("workout-volume"), createWorkoutSession: send("workout-create", 201), deleteWorkoutSession: send("workout-delete"),
+  listNutritionEntries: send("nutrition-list"), nutritionSummary: send("nutrition-summary"), createNutritionEntry: send("nutrition-create", 201), deleteNutritionEntry: send("nutrition-delete"),
+  mindSummary: send("mind-summary"), listMindEntries: send("mind-list"), createMindEntry: send("mind-create", 201),
+  markBillPaid: send("bill-paid"), listAccounts: send("accounts-list"), createAccount: send("account-create", 201), updateAccount: send("account-update"), deleteAccount: send("account-delete"), cashflowAnalytics: send("cashflow-analytics"),
+  journalSearch: send("journal-search"), journalAnalytics: send("journal-analytics"),
+  getCorrelations: send("correlations"), getPeriodicReport: send("periodic-report"), aiCoach: send("ai-coach"), getReminderStatus: send("reminder-status"), evaluateReminders: send("reminder-evaluate"),
 }));
 
 const lifeRoutes = require("../life/routes");

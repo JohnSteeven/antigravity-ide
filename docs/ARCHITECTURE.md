@@ -157,6 +157,30 @@ AI review, web push, calendar, and health-provider adapters are capability-gated
 
 Life's browser offline queue is a narrow, non-authoritative convenience boundary. Schema version 2 accepts only type- and length-validated minimal task creation and non-sensitive habit/task/goal-action event logs, binds each record to the authenticated Mongo user ID, expires it within 24 hours, and revalidates the active owner immediately before replay. Health, medication, routine, journal, money, notes, arbitrary URLs, and arbitrary headers are online-only. Logout, session invalidation, account/role changes, and Life-data deletion initiate private IndexedDB removal. The queue is not encrypted; server authentication, entitlement, validation, and ownership remain the final controls. The Life service worker caches only the public app shell scripts/styles/fonts and Life navigation fallback; it never intercepts authenticated API, private image, or non-Life navigation responses.
 
+### Life Premium Personal Operating System (Phase 29.5)
+
+Phase 29.5 expands MyJourney Life from a basic tracker into a deep, analytical Personal Operating System while strictly maintaining zero-knowledge user isolation, server-authoritative entitlements, and calm, non-diagnostic boundaries:
+
+- **Scalable Additive Persistence Domain**: To prevent `LifeHealthEntry` from becoming an unscalable dumping ground for years of high-volume time-series data, specialized compound-indexed collections handle high-frequency telemetry:
+  - `LifeBodyEntry`: Tracks weight, height, derived BMI, body fat %, and circumference measurements (waist, chest, hips, arms, thighs, neck) indexed on `(userId, localDate DESC, occurredAt DESC)`.
+  - `LifeSleepSession`: Supports multi-session sleep (main sleep, nap) with sleep debt rollups, awakenings, refreshed rating, and wearable-ready stage summaries indexed on `(userId, localDate DESC, sleepStart DESC)`.
+  - `LifeWorkoutSession`: Encapsulates workouts, exercise sets, reps, load, distance, and RPE intensity indexed on `(userId, localDate DESC, startedAt DESC)`.
+  - `LifeNutritionEntry`: Tracks meal types (breakfast, lunch, dinner, snack), servings, calories, and macronutrient distributions (protein, carbs, fat, fiber) indexed on `(userId, localDate DESC, mealType ASC)`.
+  - `LifeFinanceAccount`: Manages multi-currency accounts (checking, savings, credit, investment, cash) indexed on `(userId, isArchived ASC, name ASC)`.
+  - `LifeDailySummary`: Maintains daily rollups for fast historical queries and rollups with a unique compound index on `(userId, localDate DESC)`.
+- **Authoritative Provenance Contract**: Every biometric, vital, body, sleep, and workout record enforces a normalized data source contract (`sourceKind`: `manual`, `phone`, `wearable`, `import`, `api`, `derived`) along with optional sync metadata (`provider`, `externalRecordId`, `deviceName`, `recordedAt`, `importedAt`, `originalUnit`, `normalizedUnit`). Consumer wearable imports are cleanly attributed without fabricating fake "connected" device states.
+- **Clinical & Medical Safety Disclaimers**: MyJourney Life is not a diagnostic medical device. Biometric measurements and correlations are presented strictly as personal observations, trends, and user/device-imported facts. The platform explicitly prohibits disease diagnoses, medication alteration recommendations, or inferring pathological conditions.
+- **Financial Safety Boundaries**: Money OS provides personal tracking, budget planning, and cashflow analytics. The platform never integrates directly with banking APIs to initiate external wire transfers or automated bill debits. "Mark Paid" actions strictly update internal tracking state upon explicit user confirmation.
+- **Domain Services**:
+  - `healthExpansionService`: Computes derived BMI, rolling 7-day sleep debt against user target, workout training load volume ($load = sets \times reps \times weight$), daily macronutrient totals, and deterministic 0–100 Life Signals (Rhythm, Recovery, Strain, Balance) alongside morning brief syntheses.
+  - `osExpansionService`: Generates 52-week habit calendar heatmaps, streak metrics, habit-mood correlation analysis, goal velocity run-rates and projected completion dates, multi-currency cashflow rollups, safe bill tracking, and journal keyword metrics.
+  - `correlationService`: Implements a deterministic Pearson correlation coefficient ($r$) engine across Sleep vs Energy, Movement vs Sleep, Habits vs Mood, and Spending vs Stress. Enforces a strict minimum threshold of $N \ge 7$ paired data points before reporting correlation strength, returning truthful `insufficient_data` otherwise.
+  - `reportService`: Synthesizes weekly (Mon–Sun) and monthly periodic reviews with dimension scorecards (Habits, Sleep, Movement, Financials), letter grades (A, B, C, Needs Attention), and period-over-period delta comparisons.
+  - `reminderEngine`: Evaluates contextual, gentle reminders while enforcing strict quiet hours windows (including overnight spans, e.g., 22:00 to 07:00) and daily reminder caps.
+  - `lifeAiService`: Powers Journey AI Life Intelligence ("Rhythm Coach") with strict user-controlled privacy scopes (`includeHealth`, `includeFinance`, `includeJournal`), ensuring unselected domains are completely filtered from prompt context.
+- **Information Hierarchy & UI Design**: Implements WHOOP-style information depth (headline metric → trend → comparison → graph → explanation → deeper detail → actionable insight) while retaining MyJourney's dark tokens (`#0f172a`, `#1e293b`, `#38bdf8`), high-contrast accessible typography, 4-group navigation hierarchy, and responsive mobile navigation with centered `+ Add` button and slide-up "More" drawer.
+
+
 ## Premium subscription and entitlement architecture
 
 ```text

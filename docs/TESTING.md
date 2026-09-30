@@ -261,3 +261,30 @@ When browser automation is unavailable, report exactly:
 > STRUCTURALLY VERIFIED — MANUAL BROWSER QA REQUIRED
 
 That means automated build, API, integration, and source contracts passed, but no claim is made about rendered interactive behavior.
+### Life Premium Personal Operating System (Phase 29.5)
+
+Run the comprehensive Life OS test suites:
+
+```bash
+npm run test:life
+```
+
+Or run the specific Phase 29.5 test suites:
+
+```bash
+npx jest --runInBand \
+  server/tests/lifeDataFoundation.test.js \
+  server/tests/lifeVisualizationContract.test.js \
+  server/tests/lifeToday.test.js \
+  server/tests/lifeHealthAndWellbeing.test.js \
+  server/tests/lifeHabitsGoalsMoneyJournal.test.js \
+  server/tests/lifeInsightsCorrelationsReports.test.js
+```
+
+These suites verify:
+- `lifeDataFoundation.test.js`: Additive time-series collections (`LifeBodyEntry`, `LifeSleepSession`, `LifeWorkoutSession`, `LifeNutritionEntry`, `LifeFinanceAccount`, `LifeDailySummary`), compound indexes, Zod validation schemas, and authoritative provenance constraints.
+- `lifeVisualizationContract.test.js`: Reusable SVG visualization suite contracts (`LifeLineChart`, `LifeBarChart`, `LifeDonutChart`, `LifeCalendarHeatmap`, `LifeProgressRing`, `LifeMetricSummaryCard`, `LifeComparisonBadge`, `LifeDataSourceBadge`, `LifeRangeSelector`, `LifeSparkline`).
+- `lifeToday.test.js`: Expanded Today aggregation, deterministic 0–100 Life Signals, and morning brief synthesis.
+- `lifeHealthAndWellbeing.test.js`: Body measurements, BMI derivation, multi-session sleep debt rollups, strength volume analytics, macronutrient distribution, and reflection distributions.
+- `lifeHabitsGoalsMoneyJournal.test.js`: 52-week habit heatmaps, streak calculation, habit-mood correlation, goal velocity projections, multi-currency cashflow rollups, safe bill tracking, and journal keyword metrics.
+- `lifeInsightsCorrelationsReports.test.js`: Pearson correlation coefficient ($r$) engine with strict $N \ge 7$ sample size threshold, weekly/monthly periodic report scorecards with dimension letter grades, quiet-hours reminder engine, and privacy-scoped Journey AI Rhythm Coach.

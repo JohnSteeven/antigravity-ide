@@ -201,6 +201,23 @@ Permanent deletion removes auth, ReaderProfile/ReadingProgress/ReadingCollection
 - **AgentConfirmationToken**: Automatically expired and removed by MongoDB TTL background index on `expiresAt` (`expireAfterSeconds: 0`).
 - **AgentToolExecution**: Persisted with count-only operational summaries and `expiresAt`; Mongo TTL retains it for `AGENT_TOOL_AUDIT_RETENTION_DAYS` (default: 90 days). Assistant messages store provider-reported input/output token counts; prompts and provider keys are not usage metadata.
 
+### Life OS Expansion Data Foundation & Migration 016 (Phase 29.5)
+
+Phase 29.5 introduces specialized additive time-series collections designed to support 5+ years of high-frequency personal telemetry without unbounded unbounded query degradation on legacy `LifeHealthEntry`:
+
+- **Collections and Compound Indexes**:
+  - `LifeBodyEntry`: `(userId, localDate DESC, occurredAt DESC)` — indexes weight, height, body fat, and circumference time-series.
+  - `LifeSleepSession`: `(userId, localDate DESC, sleepStart DESC)` — indexes multi-session sleep, nap sessions, sleep debt, and wearable-ready stages.
+  - `LifeWorkoutSession`: `(userId, localDate DESC, startedAt DESC)` — indexes workouts, sets, reps, load, and RPE intensity.
+  - `LifeNutritionEntry`: `(userId, localDate DESC, mealType ASC)` — indexes meals, calories, and macronutrient breakdowns.
+  - `LifeFinanceAccount`: `(userId, isArchived ASC, name ASC)` — indexes multi-currency accounts and institution metadata.
+  - `LifeDailySummary`: `(userId, localDate DESC)` unique index — stores precomputed daily rollups for high-performance dashboard reads.
+- **Migration 016**: Script `server/migrations/016_life_os_expansion.js` creates and validates these compound indexes idempotently across all six collections.
+- **Export & Deletion Lifecycle**:
+  - `privacyService.exportLifeData` includes all six Phase 29.5 collections in `EXPORT_MODELS`, producing a comprehensive, owner-scoped JSON export (`/api/life/settings/export`).
+  - `privacyService.deleteAllLifeData` and `accountDeletionService` execute hard deletions across all six collections, guaranteeing that zero orphaned biometric, financial, sleep, workout, or nutrition documents remain after user deletion.
+
+
 ## Fixture and test hygiene
 
 
