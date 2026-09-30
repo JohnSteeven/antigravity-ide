@@ -10,9 +10,18 @@ import {
 } from "react-icons/fi";
 import { useCms } from "../context/CmsContext";
 import AboutProjectsSection from "../features/about/AboutProjectsSection";
+import AboutPillarsSection from "../features/about/AboutPillarsSection";
+import DocumentMetadata from "./shared/DocumentMetadata";
 import "../styles/pages/about.css";
 
 const ReadMyStory = () => {
+  React.useEffect(() => {
+    const previousTitle = document.title;
+    document.title = "About | MyJourney";
+    return () => {
+      document.title = previousTitle;
+    };
+  }, []);
   const { data } = useCms();
   const { story, timeline, projects, skills, stats } = data;
 
@@ -22,6 +31,15 @@ const ReadMyStory = () => {
 
   return (
     <main className="about-page">
+      <DocumentMetadata
+        content={{
+          title: "About",
+          description:
+            story?.about?.text ||
+            "Learn more about MyJourney, our architectural vision, flagship interactive platforms, and five foundational pillars.",
+        }}
+        kind="About"
+      />
       {/* ── Full-Bleed Background Hero Section ── */}
       <section
         className="about-hero"
@@ -129,7 +147,7 @@ const ReadMyStory = () => {
                   meaningful and useful experiences.
                 </p>
               </div>
-              <Link to="/articles" className="about-outline-btn">
+              <Link to="/projects" className="about-outline-btn">
                 <span>View All Projects</span>
                 <FiArrowRight />
               </Link>
@@ -170,6 +188,9 @@ const ReadMyStory = () => {
 
       {/* ── Flagship Projects & Experiences Section ── */}
       <AboutProjectsSection />
+
+      {/* ── Five Pillars Architecture Section ── */}
+      <AboutPillarsSection />
 
       {/* ── Lower Grid: Stats, Skills, Values, CTA ── */}
       <section className="about-lower-section" aria-label="Experience and Values">

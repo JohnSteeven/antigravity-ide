@@ -1,4 +1,6 @@
 import { playWithFriendsEnabled } from "../play-with-friends/config";
+import playLifeBg from "../../../public/images/play-life-environment.png";
+import playWithFriendsBg from "../../../public/images/play-with-friends-social.png";
 
 /**
  * Structured Data Architecture for Projects & Experiences on About Me page.
@@ -15,7 +17,7 @@ export const aboutProjectsData = [
     badgeText: "Interactive Experience",
     themeKey: "play-life",
     visualMotif: "horizon-path",
-    bgImage: "/images/play-life-environment.png",
+    bgImage: playLifeBg,
     enabled: true,
     order: 1,
   },
@@ -29,7 +31,7 @@ export const aboutProjectsData = [
     badgeText: "Multiplayer Experience",
     themeKey: "play-with-friends",
     visualMotif: "social-connection",
-    bgImage: "/images/play-with-friends-social.png",
+    bgImage: playWithFriendsBg,
     enabled: playWithFriendsEnabled,
     order: 2,
   },

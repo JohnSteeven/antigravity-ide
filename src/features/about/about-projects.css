@@ -152,6 +152,10 @@ body.theme-dark .about-project-card:hover {
   background: linear-gradient(135deg, #1c1815 0%, #2b211a 50%, #3e2d21 100%);
 }
 
+.theme-play-life .about-project-art-bg {
+  background-image: url("../../../public/images/play-life-environment.png");
+}
+
 .theme-play-life .about-project-art-overlay {
   background: radial-gradient(circle at 75% 30%, rgba(245, 158, 11, 0.22) 0%, transparent 65%);
 }
@@ -199,6 +203,10 @@ body.theme-dark .about-project-card:hover {
 /* Theme 2: Play With Friends (Warm Social Connection) */
 .theme-play-with-friends .about-project-art-wrapper {
   background: linear-gradient(135deg, #1e1a24 0%, #2b1f28 50%, #3b232e 100%);
+}
+
+.theme-play-with-friends .about-project-art-bg {
+  background-image: url("../../../public/images/play-with-friends-social.png");
 }
 
 .theme-play-with-friends .about-project-art-overlay {

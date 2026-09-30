@@ -1,34 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link } from "react-router";
 import { FiCompass, FiUsers } from "react-icons/fi";
 import { motion, useReducedMotion } from "framer-motion";
 import { aboutProjectsData } from "./aboutProjectsData";
-import { settingApi } from "../../services/apiService";
 import "./about-projects.css";
 
 const AboutProjectsSection = ({ projects: customProjects }) => {
   const reducedMotion = useReducedMotion();
-  const [serverProjects, setServerProjects] = useState(null);
 
-  useEffect(() => {
-    if (customProjects) return;
-    let mounted = true;
-    settingApi
-      .getPublic("projects")
-      .then((res) => {
-        if (mounted && Array.isArray(res?.value) && res.value.length > 0) {
-          setServerProjects(res.value);
-        }
-      })
-      .catch(() => {
-        // Fallback gracefully to bundled projects
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [customProjects]);
-
-  const sourceData = customProjects || serverProjects || aboutProjectsData;
+  // If custom projects are explicitly passed as a prop, use them;
+  // otherwise default directly to the canonical flagship games & experiences (Play Life & Play With Friends).
+  const sourceData = customProjects || aboutProjectsData;
   const activeProjects = (Array.isArray(sourceData) ? sourceData : aboutProjectsData)
     .filter((project) => project && project.enabled !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));

@@ -1,0 +1,355 @@
+/* ==========================================================================
+   MYJOURNEY — FIVE PILLARS & ARCHITECTURE STYLES
+   ========================================================================== */
+
+.about-pillars-section {
+  padding: 84px 0;
+  background: var(--surface, #ffffff);
+  border-bottom: 1px solid var(--line, #e4ded4);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+body.theme-dark .about-pillars-section,
+.dark-mode .about-pillars-section {
+  background: #0d1117;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.about-pillars-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 28px;
+  box-sizing: border-box;
+}
+
+/* Header */
+.about-pillars-header {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 52px;
+}
+
+.about-pillars-kicker {
+  display: inline-block;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--teal, #426c67);
+  margin-bottom: 12px;
+}
+
+body.theme-dark .about-pillars-kicker,
+.dark-mode .about-pillars-kicker {
+  color: #38bdf8;
+}
+
+.about-pillars-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink, #1e293b);
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+}
+
+body.theme-dark .about-pillars-title,
+.dark-mode .about-pillars-title {
+  color: #f8fafc;
+}
+
+.about-pillars-intro {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: var(--muted, #64748b);
+  margin: 0;
+}
+
+body.theme-dark .about-pillars-intro,
+.dark-mode .about-pillars-intro {
+  color: #94a3b8;
+}
+
+/* Grid Layout */
+.about-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+  margin-bottom: 48px;
+}
+
+@media (min-width: 1100px) {
+  .about-pillars-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Pillar Card */
+.about-pillar-card {
+  background: var(--paper, #fbfaf7);
+  border: 1px solid var(--line, #e4ded4);
+  border-radius: 16px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+body.theme-dark .about-pillar-card,
+.dark-mode .about-pillar-card {
+  background: #161b22;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.about-pillar-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+  border-color: rgba(66, 108, 103, 0.4);
+}
+
+body.theme-dark .about-pillar-card:hover,
+.dark-mode .about-pillar-card:hover {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.about-pillar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.about-pillar-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(66, 108, 103, 0.1);
+  color: var(--teal, #426c67);
+}
+
+body.theme-dark .about-pillar-badge,
+.dark-mode .about-pillar-badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.about-pillar-index {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted, #94a3b8);
+  font-family: monospace;
+}
+
+.about-pillar-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  margin-bottom: 18px;
+}
+
+/* Pillar Color Accents */
+.pillar-read .about-pillar-icon-box { background: #ecfdf5; color: #059669; }
+.pillar-learn .about-pillar-icon-box { background: #f0f9ff; color: #0284c7; }
+.pillar-life .about-pillar-icon-box { background: #fffbeb; color: #d97706; }
+.pillar-create .about-pillar-icon-box { background: #f5f3ff; color: #7c3aed; }
+.pillar-play .about-pillar-icon-box { background: #fff1f2; color: #e11d48; }
+
+body.theme-dark .pillar-read .about-pillar-icon-box,
+.dark-mode .pillar-read .about-pillar-icon-box { background: rgba(5, 150, 105, 0.2); color: #34d399; }
+body.theme-dark .pillar-learn .about-pillar-icon-box,
+.dark-mode .pillar-learn .about-pillar-icon-box { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
+body.theme-dark .pillar-life .about-pillar-icon-box,
+.dark-mode .pillar-life .about-pillar-icon-box { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
+body.theme-dark .pillar-create .about-pillar-icon-box,
+.dark-mode .pillar-create .about-pillar-icon-box { background: rgba(124, 58, 237, 0.2); color: #a78bfa; }
+body.theme-dark .pillar-play .about-pillar-icon-box,
+.dark-mode .pillar-play .about-pillar-icon-box { background: rgba(225, 29, 72, 0.2); color: #fb7185; }
+
+.about-pillar-heading {
+  font-family: Georgia, serif;
+  font-size: 1.42rem;
+  font-weight: 700;
+  color: var(--ink, #1e293b);
+  margin: 0 0 12px;
+  line-height: 1.25;
+}
+
+body.theme-dark .about-pillar-heading,
+.dark-mode .about-pillar-heading {
+  color: #f8fafc;
+}
+
+.about-pillar-desc {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-secondary, #475569);
+  margin: 0 0 20px;
+  flex: 1;
+}
+
+body.theme-dark .about-pillar-desc,
+.dark-mode .about-pillar-desc {
+  color: #94a3b8;
+}
+
+.about-pillar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.about-pillar-chip {
+  font-size: 0.76rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #e2e8f0);
+  color: var(--muted, #64748b);
+}
+
+body.theme-dark .about-pillar-chip,
+.dark-mode .about-pillar-chip {
+  background: #0d1117;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+.about-pillar-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--teal, #426c67);
+  text-decoration: none;
+  transition: gap 0.2s ease, color 0.2s ease;
+  margin-top: auto;
+}
+
+body.theme-dark .about-pillar-cta,
+.dark-mode .about-pillar-cta {
+  color: #38bdf8;
+}
+
+.about-pillar-cta:hover {
+  gap: 12px;
+  color: var(--gold-dark, #8f6b48);
+}
+
+body.theme-dark .about-pillar-cta:hover,
+.dark-mode .about-pillar-cta:hover {
+  color: #7dd3fc;
+}
+
+/* Connected Architecture & Journey AI Banner */
+.about-connection-card {
+  background: linear-gradient(135deg, rgba(66, 108, 103, 0.05) 0%, rgba(143, 107, 72, 0.05) 100%);
+  border: 1px solid var(--line, #e4ded4);
+  border-radius: 18px;
+  padding: 38px 34px;
+  margin-top: 36px;
+}
+
+body.theme-dark .about-connection-card,
+.dark-mode .about-connection-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.about-connection-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+@media (min-width: 860px) {
+  .about-connection-grid {
+    grid-template-columns: 1.15fr 1fr;
+  }
+}
+
+.about-connection-col h3 {
+  font-family: Georgia, serif;
+  font-size: 1.38rem;
+  font-weight: 700;
+  color: var(--ink, #1e293b);
+  margin: 0 0 12px;
+}
+
+body.theme-dark .about-connection-col h3,
+.dark-mode .about-connection-col h3 {
+  color: #f8fafc;
+}
+
+.about-connection-col p {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #475569);
+  margin: 0 0 16px;
+}
+
+body.theme-dark .about-connection-col p,
+.dark-mode .about-connection-col p {
+  color: #94a3b8;
+}
+
+.about-trust-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.about-trust-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink, #1e293b);
+}
+
+body.theme-dark .about-trust-item,
+.dark-mode .about-trust-item {
+  color: #e2e8f0;
+}
+
+.about-trust-item-icon {
+  margin-top: 3px;
+  font-size: 1.1rem;
+  color: var(--teal, #426c67);
+  flex-shrink: 0;
+}
+
+body.theme-dark .about-trust-item-icon,
+.dark-mode .about-trust-item-icon {
+  color: #38bdf8;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .about-pillar-card,
+  .about-pillar-cta {
+    transition: none !important;
+  }
+  .about-pillar-card:hover {
+    transform: none !important;
+  }
+}

@@ -39,6 +39,7 @@ const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"))
 const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));
 const PlayHubPage = lazy(() => import("./features/play/PlayHubPage.jsx"));
 const ThisOrThatGame = lazy(() => import("./features/play/ThisOrThatGame.jsx"));
+const ProjectsPage = lazy(() => import("./features/projects/ProjectsPage.jsx"));
 const ArticlesPage = lazy(() => import("./components/ArticlesPage.js"));
 const ArticleDetail = lazy(() => import("./components/ArticleDetail.js"));
 const StoriesPage = lazy(() => import("./stories/StoriesPage.js"));
@@ -243,6 +244,10 @@ const appRouter = createBrowserRouter([
       {
         path: "about",
         element: withRouteFallback(<ReadMyStory />, "Opening About..."),
+      },
+      {
+        path: "projects",
+        element: withRouteFallback(<ProjectsPage />, "Opening Projects..."),
       },
       {
         path: "play",

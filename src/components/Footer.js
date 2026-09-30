@@ -225,6 +225,9 @@ const Footer = () => {
                 <Link to="/articles">Articles</Link>
               </li>
               <li>
+                <Link to="/projects">Projects</Link>
+              </li>
+              <li>
                 <Link to="/#categories">Categories</Link>
               </li>
               <li>
