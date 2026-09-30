@@ -22,7 +22,7 @@ function getGradeColor(grade) {
 
 export default function PeriodicReportPage({ initialType }) {
   const location = useLocation();
-  const defaultType = initialType || (location.pathname.includes("monthly") ? "monthly" : "weekly");
+  const defaultType = initialType || (location.pathname.includes("yearly") ? "yearly" : location.pathname.includes("monthly") ? "monthly" : "weekly");
   const [reportType, setReportType] = useState(defaultType);
   const [currentDate, setCurrentDate] = useState(localDateInput());
 
@@ -32,7 +32,7 @@ export default function PeriodicReportPage({ initialType }) {
   }, [reportType, currentDate]);
 
   const navigatePeriod = (direction) => {
-    const step = reportType === "weekly" ? 7 : 30;
+    const step = reportType === "weekly" ? 7 : reportType === "monthly" ? 30 : 365;
     setCurrentDate((d) => addDateDays(d, direction * step));
   };
 
@@ -43,6 +43,11 @@ export default function PeriodicReportPage({ initialType }) {
   const period = data?.period || {};
   const scorecards = data?.scorecards || {};
   const summary = data?.executiveSummary || [];
+  const monthlyTrends = data?.monthlyTrends || [];
+  const currencies = data?.currencies || {};
+  const bodyTrends = data?.bodyTrends;
+  const journalActivity = data?.journalActivity;
+  const achievements = data?.achievements || [];
 
   return (
     <div className="life-periodic-report-page">
@@ -62,7 +67,7 @@ export default function PeriodicReportPage({ initialType }) {
 
       <LifePageHeader
         eyebrow="Periodic Synthesis & Scorecard"
-        title={period.title || (reportType === "weekly" ? "Weekly Review" : "Monthly Review")}
+        title={period.title || (reportType === "weekly" ? "Weekly Review" : reportType === "monthly" ? "Monthly Review" : "Yearly Review")}
         description="Deterministic review of your recorded patterns, dimension grades, and period-over-period changes without subjective pressure."
         actions={
           <div className="life-page-actions" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -82,6 +87,14 @@ export default function PeriodicReportPage({ initialType }) {
                 style={{ padding: "0.35rem 0.75rem", fontSize: "0.8125rem", border: "none", borderRadius: "6px", background: reportType === "monthly" ? "#1e293b" : "transparent", color: reportType === "monthly" ? "#38bdf8" : "#94a3b8", cursor: "pointer" }}
               >
                 Monthly
+              </button>
+              <button
+                type="button"
+                className={reportType === "yearly" ? "is-active" : ""}
+                onClick={() => setReportType("yearly")}
+                style={{ padding: "0.35rem 0.75rem", fontSize: "0.8125rem", border: "none", borderRadius: "6px", background: reportType === "yearly" ? "#1e293b" : "transparent", color: reportType === "yearly" ? "#38bdf8" : "#94a3b8", cursor: "pointer" }}
+              >
+                Yearly
               </button>
             </div>
 
@@ -111,6 +124,23 @@ export default function PeriodicReportPage({ initialType }) {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {achievements.length > 0 && (
+        <section className="life-card" style={{ background: "#1e293b", borderRadius: "12px", padding: "1.25rem 1.5rem", marginBottom: "1.5rem", border: "1px solid #334155" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <FiAward style={{ color: "#f59e0b", fontSize: "1.25rem" }} />
+            <h3 style={{ margin: 0, fontSize: "1rem", color: "#f8fafc" }}>Yearly Milestones & Achievements</h3>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
+            {achievements.map((ach, idx) => (
+              <div key={idx} style={{ background: "#0f172a", borderRadius: "8px", padding: "1rem", border: "1px solid #334155" }}>
+                <h4 style={{ margin: "0 0 0.35rem 0", color: "#38bdf8", fontSize: "0.95rem" }}>{ach.title}</h4>
+                <p style={{ margin: 0, color: "#cbd5e1", fontSize: "0.85rem", lineHeight: 1.4 }}>{ach.description}</p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -180,6 +210,117 @@ export default function PeriodicReportPage({ initialType }) {
           );
         })}
       </section>
+
+      {/* YEARLY 12-MONTH OVERVIEW TABLE */}
+      {reportType === "yearly" && monthlyTrends.length > 0 && (
+        <section className="life-card" style={{ background: "#1e293b", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem", border: "1px solid #334155" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <div>
+              <h3 style={{ margin: "0 0 0.25rem 0", color: "#f8fafc", fontSize: "1.1rem" }}>12-Month Progression Overview</h3>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.85rem" }}>Month-by-month trajectory across all monitored dimensions</p>
+            </div>
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "#cbd5e1", textAlign: "left" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
+                  <th style={{ padding: "0.6rem 0.8rem" }}>Month</th>
+                  <th style={{ padding: "0.6rem 0.8rem" }}>Habit Consistency</th>
+                  <th style={{ padding: "0.6rem 0.8rem" }}>Sleep Avg</th>
+                  <th style={{ padding: "0.6rem 0.8rem" }}>Movement</th>
+                  <th style={{ padding: "0.6rem 0.8rem" }}>Mood</th>
+                  <th style={{ padding: "0.6rem 0.8rem" }}>Reflections</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyTrends.map((m) => (
+                  <tr key={m.month} style={{ borderBottom: "1px solid rgba(51, 65, 85, 0.5)" }}>
+                    <td style={{ padding: "0.6rem 0.8rem", fontWeight: 600, color: "#f8fafc" }}>{m.label}</td>
+                    <td style={{ padding: "0.6rem 0.8rem" }}>
+                      {m.habitsPlanned > 0 ? (
+                        <span style={{ color: m.habitConsistency >= 70 ? "#34d399" : "#f59e0b" }}>
+                          {m.habitConsistency}% ({m.habitsCompleted}/{m.habitsPlanned})
+                        </span>
+                      ) : <span style={{ color: "#64748b" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "0.6rem 0.8rem" }}>
+                      {m.sleepNights > 0 ? (
+                        <span>{Math.floor(m.sleepAverageMinutes / 60)}h {m.sleepAverageMinutes % 60}m ({m.sleepNights}n)</span>
+                      ) : <span style={{ color: "#64748b" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "0.6rem 0.8rem" }}>
+                      {m.workoutSessions > 0 ? (
+                        <span>{m.workoutMinutes}m ({m.workoutSessions} sessions)</span>
+                      ) : <span style={{ color: "#64748b" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "0.6rem 0.8rem" }}>
+                      {m.moodAverage != null ? (
+                        <span>{m.moodAverage} / 5</span>
+                      ) : <span style={{ color: "#64748b" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "0.6rem 0.8rem" }}>
+                      {m.journalEntries > 0 ? (
+                        <span>{m.journalEntries} entries ({m.journalWords}w)</span>
+                      ) : <span style={{ color: "#64748b" }}>—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* YEARLY CURRENCY TOTALS */}
+      {reportType === "yearly" && Object.keys(currencies).length > 0 && (
+        <section className="life-card" style={{ background: "#1e293b", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem", border: "1px solid #334155" }}>
+          <h3 style={{ margin: "0 0 0.5rem 0", color: "#f8fafc", fontSize: "1.1rem" }}>Annual Financial Summary (by Currency)</h3>
+          <p style={{ margin: "0 0 1rem 0", color: "#94a3b8", fontSize: "0.85rem" }}>Currencies maintained separately without conversion</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+            {Object.entries(currencies).map(([curr, flow]) => (
+              <div key={curr} style={{ background: "#0f172a", borderRadius: "8px", padding: "1rem", border: "1px solid #334155" }}>
+                <span style={{ fontSize: "0.8rem", color: "#38bdf8", fontWeight: 700, textTransform: "uppercase" }}>{curr}</span>
+                <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#94a3b8" }}>Inflow:</span>
+                    <strong style={{ color: "#34d399" }}>{formatMoney(flow.incomeMinor, curr)}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#94a3b8" }}>Outflow:</span>
+                    <strong style={{ color: "#f87171" }}>{formatMoney(flow.expenseMinor, curr)}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #334155", paddingTop: "0.35rem", marginTop: "0.25rem" }}>
+                    <span style={{ color: "#cbd5e1" }}>Net Saved:</span>
+                    <strong style={{ color: flow.netMinor >= 0 ? "#38bdf8" : "#f59e0b" }}>{formatMoney(flow.netMinor, curr)}</strong>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* YEARLY BODY & JOURNAL PRACTICE */}
+      {reportType === "yearly" && (bodyTrends || journalActivity) && (
+        <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginBottom: "1.5rem" }}>
+          {bodyTrends && (
+            <div className="life-card" style={{ background: "#1e293b", borderRadius: "12px", padding: "1.25rem", border: "1px solid #334155" }}>
+              <h4 style={{ margin: "0 0 0.5rem 0", color: "#f8fafc", fontSize: "0.95rem" }}>Body & Health Progression</h4>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.85rem" }}>
+                Recorded {bodyTrends.entriesCount} checkpoints: from <strong>{bodyTrends.firstRecorded}</strong> to <strong>{bodyTrends.latestRecorded}</strong> ({bodyTrends.delta >= 0 ? `+${bodyTrends.delta}` : bodyTrends.delta}).
+              </p>
+            </div>
+          )}
+          {journalActivity && (
+            <div className="life-card" style={{ background: "#1e293b", borderRadius: "12px", padding: "1.25rem", border: "1px solid #334155" }}>
+              <h4 style={{ margin: "0 0 0.5rem 0", color: "#f8fafc", fontSize: "0.95rem" }}>Reflection & Mind Practice</h4>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.85rem" }}>
+                Recorded {journalActivity.totalEntries} private entries totaling ~{journalActivity.totalWords} words across {journalActivity.activeMonthsCount} months.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
 
       <p className="life-language-boundary" style={{ marginTop: "2rem", textAlign: "center", color: "#64748b", fontSize: "0.8125rem" }}>
         {data?.languageBoundary}

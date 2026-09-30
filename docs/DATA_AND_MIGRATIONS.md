@@ -46,6 +46,7 @@ Launch, deployment, and test-execution collections are historical evidence store
 Phase 6 introduces coding lessons, exercises, quizzes, and progress gating into the existing Learn persistence domain:
 - **`CourseLesson`**: Extended with embedded `codingBlocks` (`CodingBlockSchema`) representing initial code, editable code, solution code, test suites, and structured validation rules (`type`, `target`, `expectedOutput`, `hint`). Also supports embedded `quizQuestions` (`question`, `options`, `correctOptionIndex`, `explanation`).
 - **`CourseEnrollment`**: Extended with `exercisePassed` (boolean, default false), `exerciseAttempts` (number, default 0), `quizPassed` (boolean, default false), `quizScore` (number, default null), and `solutionViewed` (boolean, default false) on individual lesson progress subdocuments.
+- **Non-coding lesson reading position**: `CourseEnrollment.lessonProgress` also stores `readingPositionPercent` (0–100) and `lastReadAt` for enrolled learners. Existing subdocuments default to zero/no read timestamp; no data migration is required. These fields are separate from lesson completion, learning events, and retention evidence.
 - **`CodingSubmission`**: Dedicated collection (`server/models/CodingSubmission.js`) storing learner code submission snapshots (hard 64 KB cap), test metrics (`testsPassed`, `testsTotal`), execution duration (`runtimeMs`), validation check results array, and status enum (`accepted`, `partially_passed`, `failed`, `runtime_error`, `syntax_error`, `timeout`). Compound indexes on `(userId, lessonId, submittedAt: -1)` and `(userId, courseId, submittedAt: -1)` ensure fast chronological retrieval.
 - **Migration & Index Status**: No database migration or new collection is required. Embedded subdocuments and field extensions are natively supported by Mongoose defaults on existing collections with existing indexes (`(userId, courseId)`). `npm run migrate:validate` validates cleanly with zero missing indexes.
 - **Canonical Seeder**: `server/scripts/seedCodingCurriculum.js` (`npm run seed:coding-curriculum`) provides idempotent seeding of all 4 canonical coding tracks (HTML Foundations, CSS Foundations, JavaScript Foundations, and Python Foundations), 55 lessons, and the system author `MyJourney Learning` (`myjourney-learning`).
@@ -212,13 +213,17 @@ Phase 29.5 introduces specialized additive time-series collections designed to s
   - `LifeNutritionEntry`: `(userId, localDate DESC, mealType ASC)` — indexes meals, calories, and macronutrient breakdowns.
   - `LifeFinanceAccount`: `(userId, isArchived ASC, name ASC)` — indexes multi-currency accounts and institution metadata.
   - `LifeDailySummary`: `(userId, localDate DESC)` unique index — stores precomputed daily rollups for high-performance dashboard reads.
-- **Migration 016**: Script `server/migrations/016_life_os_expansion.js` creates and validates these compound indexes idempotently across all six collections.
+- **Migration 016**: Script `server/migrations/016-life-premium-expansion.js` creates and validates these compound indexes idempotently across all six collections.
 - **Export & Deletion Lifecycle**:
   - `privacyService.exportLifeData` includes all six Phase 29.5 collections in `EXPORT_MODELS`, producing a comprehensive, owner-scoped JSON export (`/api/life/settings/export`).
   - `privacyService.deleteAllLifeData` and `accountDeletionService` execute hard deletions across all six collections, guaranteeing that zero orphaned biometric, financial, sleep, workout, or nutrition documents remain after user deletion.
 
 
 ## Fixture and test hygiene
+
+### Browser-local reading and Play data
+
+Authenticated Article, Story, and non-coding Lesson notes use the new `ReaderNote` MongoDB collection, indexed for owner listing, content lookup, and owner/content/client-note import idempotency. Existing account-scoped browser notes are imported through the authenticated API; guest notes remain browser-local until explicitly imported. Permanent account deletion removes `ReaderNote` rows with other Reader data. Play Life uses `myjourney-play-life-v1:<account-id-or-guest>` for its local game state; a matching older single-key save is copied into that namespace on first load. Server account deletion cannot erase data retained in a browser profile, so clearing that browser's site data removes remaining guest/device notes and Play Life sessions. This feature creates a new collection; it does not alter existing Article, Story, or Learn documents.
 
 
 - Test records must be named unambiguously and cleaned after the suite.

@@ -5,20 +5,21 @@ import lifeApi from "../api/lifeApi";
 import useLifeQuery from "../hooks/useLifeQuery";
 import { LifePageHeader, LifeLoading, LifeError } from "../components/LifeUI";
 
-function getStrengthBadge(strength, r) {
+function getStrengthBadge(strength, r, method) {
+  const symbol = method === "spearman" ? "\u03c1" : "r";
   switch (strength) {
     case "strong_positive":
-      return { text: `Strong Positive (r = ${r})`, color: "#34d399", bg: "rgba(52, 211, 153, 0.12)" };
+      return { text: `Strong Positive (${symbol} = ${r})`, color: "#34d399", bg: "rgba(52, 211, 153, 0.12)" };
     case "moderate_positive":
-      return { text: `Moderate Positive (r = ${r})`, color: "#38bdf8", bg: "rgba(56, 189, 248, 0.12)" };
+      return { text: `Moderate Positive (${symbol} = ${r})`, color: "#38bdf8", bg: "rgba(56, 189, 248, 0.12)" };
     case "strong_negative":
-      return { text: `Strong Inverse (r = ${r})`, color: "#f87171", bg: "rgba(239, 68, 68, 0.12)" };
+      return { text: `Strong Inverse (${symbol} = ${r})`, color: "#f87171", bg: "rgba(239, 68, 68, 0.12)" };
     case "moderate_negative":
-      return { text: `Moderate Inverse (r = ${r})`, color: "#fb923c", bg: "rgba(251, 146, 60, 0.12)" };
+      return { text: `Moderate Inverse (${symbol} = ${r})`, color: "#fb923c", bg: "rgba(251, 146, 60, 0.12)" };
     case "insufficient_data":
       return { text: "Insufficient Data (N < 7)", color: "#94a3b8", bg: "rgba(148, 163, 184, 0.12)" };
     default:
-      return { text: `Neutral / Weak (r = ${r != null ? r : 0})`, color: "#94a3b8", bg: "rgba(148, 163, 184, 0.12)" };
+      return { text: `Neutral / Weak (${symbol} = ${r != null ? r : 0})`, color: "#94a3b8", bg: "rgba(148, 163, 184, 0.12)" };
   }
 }
 
@@ -83,13 +84,13 @@ export default function CorrelationExplorerPage() {
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.75rem 1rem", background: "#0f172a", borderRadius: "8px", border: "1px solid #334155", marginBottom: "1.5rem", color: "#94a3b8", fontSize: "0.8125rem" }}>
         <FiInfo style={{ color: "#38bdf8", flexShrink: 0, fontSize: "1rem" }} />
         <span>
-          Correlation does not mean causation. These metrics highlight observational patterns in your self-reported logs and synced inputs to help guide mindful adjustments.
+          Correlation does not mean causation. Association does not establish causation. These metrics highlight observational patterns in your self-reported logs and synced inputs to help guide mindful adjustments.
         </span>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "1.5rem" }}>
         {correlations.map((c) => {
-          const badge = getStrengthBadge(c.strength, c.r);
+          const badge = getStrengthBadge(c.strength, c.r, c.method);
           const icon = getPairIcon(c.id);
 
           return (
@@ -151,7 +152,7 @@ export default function CorrelationExplorerPage() {
                   <div style={{ padding: "1rem", background: "#0f172a", borderRadius: "8px", border: "1px solid #334155" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.5rem" }}>
                       <span>Sample: {c.sampleSize} paired days</span>
-                      <span>Coefficient r: {c.r}</span>
+                      <span>{c.method === "spearman" ? "Spearman rank (\u03c1)" : "Pearson (r)"}: {c.r}</span>
                     </div>
                     <div style={{ height: "6px", width: "100%", background: "#334155", borderRadius: "3px", position: "relative", overflow: "hidden" }}>
                       <div

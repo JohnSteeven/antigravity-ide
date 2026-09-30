@@ -7,19 +7,28 @@ const LifeEvent = require("../models/LifeEvent");
 const { addLocalDays, assertDateKey, enumerateDateKeys, localDateKey } = require("../domain/time");
 const profileService = require("./profileService");
 
-function calculatePearson(pairs) {
-  const n = pairs.length;
-  if (n < 7) {
-    return {
-      sampleSize: n,
-      insufficientData: true,
-      requiredMin: 7,
-      r: null,
-      strength: "insufficient_data",
-      description: `Insufficient data (${n}/7 paired days recorded). Keep logging to reveal patterns.`
-    };
-  }
+function rankValues(values) {
+  const indexed = values.map((val, idx) => ({ val, idx }));
+  indexed.sort((a, b) => a.val - b.val);
 
+  const ranks = new Array(values.length);
+  let i = 0;
+  while (i < indexed.length) {
+    let j = i;
+    while (j < indexed.length - 1 && indexed[j + 1].val === indexed[j].val) {
+      j++;
+    }
+    const averageRank = (i + 1 + j + 1) / 2;
+    for (let k = i; k <= j; k++) {
+      ranks[indexed[k].idx] = averageRank;
+    }
+    i = j + 1;
+  }
+  return ranks;
+}
+
+function calculatePearsonCore(pairs) {
+  const n = pairs.length;
   let sumX = 0;
   let sumY = 0;
   let sumXY = 0;
@@ -39,8 +48,6 @@ function calculatePearson(pairs) {
 
   if (denom === 0 || isNaN(denom)) {
     return {
-      sampleSize: n,
-      insufficientData: false,
       r: 0,
       strength: "neutral_or_weak",
       description: "No variation detected in observed values."
@@ -57,17 +64,89 @@ function calculatePearson(pairs) {
 
   let description = "No clear correlation observed in this timeframe.";
   if (r > 0.3) {
-    description = `Positive correlation (r = ${r}): as one increases, the other tends to increase.`;
+    description = `Positive correlation (${r}): as one increases, the other tends to increase.`;
   } else if (r < -0.3) {
-    description = `Inverse correlation (r = ${r}): as one increases, the other tends to decrease.`;
+    description = `Inverse correlation (${r}): as one increases, the other tends to decrease.`;
+  }
+
+  return { r, strength, description };
+}
+
+function calculatePearson(rawPairs) {
+  const validPairs = (rawPairs || []).filter(
+    (p) => Array.isArray(p) && p.length >= 2 && p[0] != null && p[1] != null && !isNaN(p[0]) && !isNaN(p[1])
+  );
+  const n = validPairs.length;
+  if (n < 7) {
+    return {
+      method: "pearson",
+      sampleSize: n,
+      insufficientData: true,
+      requiredMin: 7,
+      r: null,
+      strength: "insufficient_data",
+      description: `Insufficient data (${n}/7 paired days recorded). Keep logging to reveal patterns.`,
+      disclaimer: "Association does not establish causation."
+    };
+  }
+
+  const core = calculatePearsonCore(validPairs);
+  return {
+    method: "pearson",
+    sampleSize: n,
+    insufficientData: false,
+    requiredMin: 7,
+    r: core.r,
+    strength: core.strength,
+    description: core.description,
+    disclaimer: "Association does not establish causation."
+  };
+}
+
+function calculateSpearman(rawPairs) {
+  const validPairs = (rawPairs || []).filter(
+    (p) => Array.isArray(p) && p.length >= 2 && p[0] != null && p[1] != null && !isNaN(p[0]) && !isNaN(p[1])
+  );
+  const n = validPairs.length;
+  if (n < 7) {
+    return {
+      method: "spearman",
+      sampleSize: n,
+      insufficientData: true,
+      requiredMin: 7,
+      r: null,
+      strength: "insufficient_data",
+      description: `Insufficient data (${n}/7 paired days recorded). Keep logging to reveal patterns.`,
+      disclaimer: "Association does not establish causation."
+    };
+  }
+
+  const xVals = validPairs.map((p) => p[0]);
+  const yVals = validPairs.map((p) => p[1]);
+  const xRanks = rankValues(xVals);
+  const yRanks = rankValues(yVals);
+
+  const rankedPairs = xRanks.map((rx, idx) => [rx, yRanks[idx]]);
+  const core = calculatePearsonCore(rankedPairs);
+
+  let description = "No clear monotonic correlation observed in this timeframe.";
+  if (core.r > 0.3) {
+    description = `Positive rank correlation (\u03c1 = ${core.r}): as one ranks higher, the other tends to rank higher.`;
+  } else if (core.r < -0.3) {
+    description = `Inverse rank correlation (\u03c1 = ${core.r}): as one ranks higher, the other tends to rank lower.`;
+  } else if (core.strength === "neutral_or_weak" && core.r === 0) {
+    description = core.description;
   }
 
   return {
+    method: "spearman",
     sampleSize: n,
     insufficientData: false,
-    r,
-    strength,
-    description
+    requiredMin: 7,
+    r: core.r,
+    strength: core.strength,
+    description,
+    disclaimer: "Association does not establish causation."
   };
 }
 
@@ -206,7 +285,7 @@ const getCorrelations = async (userId, query = {}) => {
     title: "Sleep Duration → Next-Day Energy",
     independentVar: { label: "Sleep Duration", unit: "hours" },
     dependentVar: { label: "Next-Day Energy", unit: "pts" },
-    ...calculatePearson(sleepEnergyPairs),
+    ...calculateSpearman(sleepEnergyPairs),
     pairs: sleepEnergyPairs.map(([x, y]) => ({ x, y }))
   };
 
@@ -224,7 +303,7 @@ const getCorrelations = async (userId, query = {}) => {
     title: "Habit Consistency → Daily Mood",
     independentVar: { label: "Habit Completion", unit: "%" },
     dependentVar: { label: "Reported Mood", unit: "pts" },
-    ...calculatePearson(habitMoodPairs),
+    ...calculateSpearman(habitMoodPairs),
     pairs: habitMoodPairs.map(([x, y]) => ({ x, y }))
   };
 
@@ -233,7 +312,7 @@ const getCorrelations = async (userId, query = {}) => {
     title: "Daily Spending → Stress Level",
     independentVar: { label: "Spending Amount", unit: profile.currency || "USD" },
     dependentVar: { label: "Recorded Stress", unit: "pts" },
-    ...calculatePearson(spendingStressPairs),
+    ...calculateSpearman(spendingStressPairs),
     pairs: spendingStressPairs.map(([x, y]) => ({ x, y }))
   };
 
@@ -247,11 +326,13 @@ const getCorrelations = async (userId, query = {}) => {
       correlationHabitMood,
       correlationSpendingStress,
     ],
-    languageBoundary: "Correlations reflect observational associations in recorded data and do not imply medical causality or financial diagnosis."
+    languageBoundary: "Correlations reflect observational associations in recorded data and do not imply medical causality or financial diagnosis. Association does not establish causation."
   };
 };
 
 module.exports = {
+  rankValues,
   calculatePearson,
+  calculateSpearman,
   getCorrelations,
 };

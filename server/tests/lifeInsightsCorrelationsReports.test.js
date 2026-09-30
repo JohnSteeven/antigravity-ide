@@ -69,24 +69,103 @@ describe("Phase 29.5 Checkpoint 4: Insights, Correlations, Reports, Smart Remind
     });
   });
 
-  describe("1. Pearson Correlation Engine", () => {
-    test("computes strong positive correlation correctly for paired data", () => {
-      // Direct linear relationship: y = 2x
-      const pairs = [
-        [6, 50],
-        [6.5, 55],
-        [7, 60],
-        [7.5, 65],
-        [8, 70],
-        [8.5, 75],
-        [9, 80],
-        [9.5, 85],
+  describe("1. Empirical Correlation Engine (Pearson Continuous & Spearman Ordinal)", () => {
+    test("computes Pearson correlation correctly for continuous-continuous paired data", () => {
+      // Continuous linear relationship (e.g. workout minutes vs sleep hours)
+      const continuousPairs = [
+        [30, 6.5],
+        [45, 7.0],
+        [60, 7.5],
+        [75, 8.0],
+        [90, 8.5],
+        [105, 9.0],
+        [120, 9.5],
       ];
-      const result = correlationService.calculatePearson(pairs);
+      const result = correlationService.calculatePearson(continuousPairs);
+      expect(result.method).toBe("pearson");
       expect(result.insufficientData).toBe(false);
-      expect(result.sampleSize).toBe(8);
+      expect(result.sampleSize).toBe(7);
       expect(result.r).toBeCloseTo(1.0, 1);
       expect(result.strength).toBe("strong_positive");
+      expect(result.disclaimer).toContain("Association does not establish causation");
+    });
+
+    test("computes Spearman rank correlation for ordinal ratings (mood/energy 1-5)", () => {
+      // Ordinal discrete rating pairs (e.g. mood 1-5 vs energy 1-5)
+      const ordinalPairs = [
+        [1, 1],
+        [2, 2],
+        [3, 3],
+        [4, 4],
+        [4, 4],
+        [5, 5],
+        [5, 5],
+      ];
+      const result = correlationService.calculateSpearman(ordinalPairs);
+      expect(result.method).toBe("spearman");
+      expect(result.insufficientData).toBe(false);
+      expect(result.sampleSize).toBe(7);
+      expect(result.r).toBeCloseTo(1.0, 1);
+      expect(result.strength).toBe("strong_positive");
+      expect(result.disclaimer).toContain("Association does not establish causation");
+    });
+
+    test("computes Spearman rank correlation correctly with tied ranks", () => {
+      // Values with heavy ties: fractional ranks must be applied correctly
+      const tiedPairs = [
+        [10, 2],
+        [20, 2], // tie on Y
+        [20, 3], // tie on X
+        [30, 4],
+        [30, 4], // tie on both
+        [40, 5],
+        [50, 5], // tie on Y
+      ];
+      const result = correlationService.calculateSpearman(tiedPairs);
+      expect(result.method).toBe("spearman");
+      expect(result.insufficientData).toBe(false);
+      expect(result.sampleSize).toBe(7);
+      expect(typeof result.r).toBe("number");
+      expect(result.r).toBeGreaterThan(0.9);
+      expect(result.strength).toBe("strong_positive");
+    });
+
+    test("computes negative (inverse) correlation correctly", () => {
+      // Inverse relationship: as X increases, Y decreases
+      const inversePairs = [
+        [100, 5],
+        [200, 4],
+        [300, 3],
+        [400, 2],
+        [500, 1],
+        [600, 1],
+        [700, 1],
+      ];
+      const result = correlationService.calculateSpearman(inversePairs);
+      expect(result.r).toBeLessThan(-0.8);
+      expect(result.strength).toBe("strong_negative");
+      expect(result.description).toContain("Inverse rank correlation");
+    });
+
+    test("handles constant series (zero variance) gracefully without division by zero", () => {
+      const constantPairs = [
+        [5, 50],
+        [5, 50],
+        [5, 50],
+        [5, 50],
+        [5, 50],
+        [5, 50],
+        [5, 50],
+      ];
+      const pearsonResult = correlationService.calculatePearson(constantPairs);
+      expect(pearsonResult.insufficientData).toBe(false);
+      expect(pearsonResult.r).toBe(0);
+      expect(pearsonResult.strength).toBe("neutral_or_weak");
+
+      const spearmanResult = correlationService.calculateSpearman(constantPairs);
+      expect(spearmanResult.insufficientData).toBe(false);
+      expect(spearmanResult.r).toBe(0);
+      expect(spearmanResult.strength).toBe("neutral_or_weak");
     });
 
     test("returns insufficientData when sample size is below required minimum (N < 7)", () => {
@@ -103,24 +182,27 @@ describe("Phase 29.5 Checkpoint 4: Insights, Correlations, Reports, Smart Remind
       expect(result.strength).toBe("insufficient_data");
     });
 
-    test("handles zero-variance gracefully without throwing", () => {
-      const flatPairs = [
-        [7, 50],
-        [7, 50],
-        [7, 50],
-        [7, 50],
-        [7, 50],
-        [7, 50],
-        [7, 50],
+    test("safely handles missing data and null/undefined/NaN values", () => {
+      const dirtyPairs = [
+        [1, 10],
+        [null, 20],
+        [2, undefined],
+        [3, NaN],
+        [4, 40],
+        [5, 50],
+        [6, 60],
+        [7, 70],
+        [8, 80],
+        [9, 90],
       ];
-      const result = correlationService.calculatePearson(flatPairs);
+      const result = correlationService.calculatePearson(dirtyPairs);
+      expect(result.sampleSize).toBe(7); // only 7 clean pairs
       expect(result.insufficientData).toBe(false);
-      expect(result.r).toBe(0);
-      expect(result.strength).toBe("neutral_or_weak");
+      expect(result.r).toBeCloseTo(1.0, 1);
     });
   });
 
-  describe("2. Periodic Reports Synthesis (Weekly & Monthly)", () => {
+  describe("2. Periodic Reports Synthesis (Weekly, Monthly & Yearly)", () => {
     test("builds weekly report with dimension scorecards and period-over-period deltas", async () => {
       const mockQuery = (data = []) => ({
         select: jest.fn().mockReturnThis(),
@@ -160,6 +242,104 @@ describe("Phase 29.5 Checkpoint 4: Insights, Correlations, Reports, Smart Remind
       expect(report.scorecards.sleep).toBeDefined();
       expect(report.scorecards.movement).toBeDefined();
       expect(report.scorecards.financial).toBeDefined();
+      expect(report.languageBoundary).toContain("Not clinical");
+    });
+
+    test("builds yearly report with 12-month trends, separated currency totals, body progression, and privacy-preserving journal metrics", async () => {
+      const mockQuery = (data = []) => ({
+        select: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue(data),
+      });
+
+      // Mock habit events across multiple months in 2026
+      jest.spyOn(LifeEvent, "find").mockReturnValue(mockQuery([
+        { itemType: "habit", itemId: "h1", scheduledDate: "2026-01-15", status: "completed", occurredAt: new Date() },
+        { itemType: "habit", itemId: "h1", scheduledDate: "2026-01-16", status: "completed", occurredAt: new Date() },
+        { itemType: "habit", itemId: "h1", scheduledDate: "2026-06-10", status: "completed", occurredAt: new Date() },
+        { itemType: "habit", itemId: "h1", scheduledDate: "2026-10-01", status: "completed", occurredAt: new Date() },
+      ]));
+
+      // Mock health entries with sleep, workouts, mood, and body weight
+      jest.spyOn(LifeHealthEntry, "find").mockReturnValue(mockQuery([
+        { type: "sleep", durationMinutes: 480, localDate: "2026-01-15" },
+        { type: "sleep", durationMinutes: 460, localDate: "2026-06-10" },
+        { type: "workout", durationMinutes: 60, localDate: "2026-01-16" },
+        { type: "workout", durationMinutes: 45, localDate: "2026-10-01" },
+        { type: "mood", canonicalValue: 4, localDate: "2026-01-15" },
+        { type: "mood", canonicalValue: 5, localDate: "2026-06-10" },
+        { type: "weight", canonicalValue: 74.5, localDate: "2026-01-05" },
+        { type: "weight", canonicalValue: 72.0, localDate: "2026-10-01" },
+      ]));
+
+      // Mock finance entries across multiple currencies (USD and EUR)
+      jest.spyOn(LifeFinanceEntry, "find").mockReturnValue(mockQuery([
+        { type: "income", amountMinor: 500000, currency: "USD", localDate: "2026-01-10" },
+        { type: "expense", amountMinor: 250000, currency: "USD", category: "rent", localDate: "2026-01-15" },
+        { type: "income", amountMinor: 200000, currency: "EUR", localDate: "2026-06-01" },
+        { type: "expense", amountMinor: 80000, currency: "EUR", category: "travel", localDate: "2026-06-05" },
+      ]));
+
+      // Mock goals with a completed goal
+      jest.spyOn(LifeGoal, "find").mockReturnValue(mockQuery([
+        { _id: "g1", title: "Complete Marathon", status: "completed", manualProgress: 100 },
+        { _id: "g2", title: "Read 24 Books", status: "active", manualProgress: 75 },
+      ]));
+
+      // Mock journal entries with words and types, without exposing raw body
+      jest.spyOn(LifeJournalEntry, "find").mockReturnValue(mockQuery([
+        { type: "daily", wordCount: 250, title: "New Year Intentions", localDate: "2026-01-01" },
+        { type: "monthly_review", wordCount: 450, title: "Mid-Year Reflection", localDate: "2026-06-30" },
+      ]));
+
+      const report = await reportService.buildPeriodicReport(mockUserId, {
+        type: "yearly",
+        date: "2026-10-01"
+      });
+
+      expect(report.type).toBe("yearly");
+      expect(report.period.year).toBe(2026);
+      expect(report.period.title).toContain("Yearly Review (2026)");
+      expect(report.previousPeriod.title).toContain("Previous Year (2025)");
+
+      // 12-month progression data
+      expect(report.monthlyTrends).toBeDefined();
+      expect(report.monthlyTrends.length).toBe(12);
+      expect(report.monthlyTrends[0].label).toBe("Jan");
+      expect(report.monthlyTrends[11].label).toBe("Dec");
+      expect(report.monthlyTrends[0].habitsCompleted).toBe(2);
+      expect(report.monthlyTrends[0].workoutSessions).toBe(1);
+
+      // Money totals separated by currency
+      expect(report.currencies).toBeDefined();
+      expect(report.currencies.USD).toBeDefined();
+      expect(report.currencies.USD.incomeMinor).toBe(500000);
+      expect(report.currencies.USD.expenseMinor).toBe(250000);
+      expect(report.currencies.USD.netMinor).toBe(250000);
+      expect(report.currencies.EUR).toBeDefined();
+      expect(report.currencies.EUR.incomeMinor).toBe(200000);
+      expect(report.currencies.EUR.expenseMinor).toBe(80000);
+      expect(report.currencies.EUR.netMinor).toBe(120000);
+
+      // Body trends where data exists
+      expect(report.bodyTrends).toBeDefined();
+      expect(report.bodyTrends.firstRecorded).toBe(74.5);
+      expect(report.bodyTrends.latestRecorded).toBe(72.0);
+      expect(report.bodyTrends.delta).toBe(-2.5);
+
+      // Journal activity respecting privacy rules
+      expect(report.journalActivity).toBeDefined();
+      expect(report.journalActivity.totalEntries).toBe(2);
+      expect(report.journalActivity.totalWords).toBe(700);
+      expect(report.journalActivity.byType.daily).toBe(1);
+      expect(report.journalActivity.byType.monthly_review).toBe(1);
+
+      // Real achievements based on actual data
+      expect(report.achievements).toBeDefined();
+      expect(report.achievements.some((a) => a.type === "goals")).toBe(true);
+      expect(report.achievements.some((a) => a.type === "fitness")).toBe(true);
+
+      // Scorecards benchmarked for yearly targets
+      expect(report.scorecards.movement.target).toBe("7200 min");
       expect(report.languageBoundary).toContain("Not clinical");
     });
   });

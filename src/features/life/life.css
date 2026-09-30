@@ -37,16 +37,16 @@
 .life-mark span { color: var(--life-muted); font-size: .62rem; font-weight: 700; letter-spacing: .18em; }
 .life-mark strong { margin-top: 4px; font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; letter-spacing: .06em; }
 .life-sidebar > p { margin: 16px 3px 26px; font-family: Georgia, "Times New Roman", serif; font-size: .92rem; font-style: italic; }
-.life-side-nav { display: grid; gap: 4px; }
+.life-side-nav { display: grid; gap: 4px; flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--life-line) transparent; }
 .life-side-nav a { display: flex; align-items: center; gap: 12px; min-height: 43px; padding: 0 13px; color: #536762; border-radius: 10px; font-size: .9rem; font-weight: 600; text-decoration: none; }
 .life-side-nav a:hover { color: var(--life-ink); background: var(--life-soft); }
 .life-side-nav a.is-active { color: var(--life-accent-dark); background: #deeee6; }
 .life-side-nav a svg { width: 17px; height: 17px; }
-.life-side-nav a:last-child { margin-top: 14px; border-top: 1px solid var(--life-line); border-radius: 0 0 10px 10px; }
-.life-sidebar-private { display: flex; gap: 8px; align-items: center; margin-top: auto; padding: 12px; color: var(--life-muted); border: 1px solid var(--life-line); border-radius: 10px; font-size: .72rem; }
+.life-side-nav > a:last-child { margin-top: 14px; border-top: 1px solid var(--life-line); border-radius: 0 0 10px 10px; }
+.life-sidebar-private { display: flex; flex-shrink: 0; gap: 8px; align-items: center; margin-top: auto; padding: 12px; color: var(--life-muted); border: 1px solid var(--life-line); border-radius: 10px; font-size: .72rem; }
 .life-sidebar-private span { color: var(--life-accent); font-size: .55rem; }
 .life-workspace { min-width: 0; }
-.life-page { width: min(1280px, 100%); margin: 0 auto; padding: 54px clamp(28px, 4vw, 66px) 90px; }
+.life-page { width: min(1560px, 100%); margin: 0 auto; padding: 54px clamp(28px, 3.2vw, 52px) 90px; }
 .life-mobile-bar, .life-mobile-nav { display: none; }
 .life-entry-state { display: grid; place-items: center; padding: 40px; }
 
@@ -277,7 +277,7 @@ body.life-dialog-open { overflow: hidden; }
 /* Advanced Life surfaces stay inside the existing calm shell. */
 .life-sidebar-add { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; margin: -9px 0 17px; color: #fff; background: var(--life-accent); border: 1px solid var(--life-accent); border-radius: 10px; font-weight: 750; }
 .life-sidebar-add:hover { background: var(--life-accent-dark); }
-.life-desktop-tools { width: min(1280px, 100%); display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 0 auto; padding: 18px clamp(28px, 4vw, 66px) 0; }
+.life-desktop-tools { width: min(1560px, 100%); display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 0 auto; padding: 18px clamp(28px, 3.2vw, 52px) 0; }
 .life-desktop-tools > button:not(.life-primary-button) { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; color: var(--life-muted); background: var(--life-paper); border: 1px solid var(--life-line); border-radius: 9px; }
 .life-desktop-tools kbd { padding: 2px 5px; color: var(--life-muted); background: var(--life-soft); border: 1px solid var(--life-line); border-radius: 4px; font-size: .66rem; }
 .life-desktop-tools + .life-page { padding-top: 24px; }

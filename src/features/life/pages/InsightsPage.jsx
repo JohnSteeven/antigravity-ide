@@ -132,6 +132,9 @@ export default function InsightsPage() {
         <NavLink to="/life/reports/monthly" className={({ isActive }) => `life-subnav-link ${isActive ? "is-active" : ""}`} style={({ isActive }) => ({ color: isActive ? "#38bdf8" : "#94a3b8", textDecoration: "none", fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.35rem" })}>
           <FiCompass /> Monthly Report
         </NavLink>
+        <NavLink to="/life/reports/yearly" className={({ isActive }) => `life-subnav-link ${isActive ? "is-active" : ""}`} style={({ isActive }) => ({ color: isActive ? "#38bdf8" : "#94a3b8", textDecoration: "none", fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.35rem" })}>
+          <FiCalendar /> Yearly Report
+        </NavLink>
       </nav>
 
       <LifePageHeader
