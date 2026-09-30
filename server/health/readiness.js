@@ -30,11 +30,31 @@ const getReadiness = (req, res) => {
     checks.queue = queueHealth.status;
   }
 
-  res.status(allReady ? 200 : 503).json({
+  const payload = {
     ready: allReady,
     service: "myjourney-api",
     checks,
-  });
+  };
+
+  const isApiReadiness = req.path === "/api/readiness" || (req.originalUrl && req.originalUrl.includes("/api/readiness"));
+  if (isApiReadiness || req.query?.verbose === "true") {
+    payload.providers = {
+      cloudflareR2: Boolean(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY)
+        ? "ready"
+        : "unconfigured",
+      muxVideo: Boolean(process.env.MUX_TOKEN_ID && process.env.MUX_TOKEN_SECRET)
+        ? "ready"
+        : "unconfigured",
+      razorpay: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET)
+        ? "ready"
+        : "unconfigured",
+      ai: Boolean(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY)
+        ? "ready"
+        : "unconfigured",
+    };
+  }
+
+  res.status(allReady ? 200 : 503).json(payload);
 };
 
 module.exports = { getHealth, getReadiness };
