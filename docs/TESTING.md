@@ -181,7 +181,15 @@ npx jest --runInBand server/tests/responsiveAccessibilityContract.test.js
 npx jest --runInBand server/tests/launchHonesty.test.js server/tests/seoEvidence.test.js server/tests/routes.test.js
 npx jest --runInBand server/tests/observabilityPrivacy.test.js server/tests/multiplayer/mongoAuthority.test.js
 npx jest --runInBand server/tests/security.test.js server/tests/routes.test.js server/tests/premiumSecurity.test.js server/tests/creatorSecurity.test.js
+npx jest --runInBand server/tests/emailAndOtpFoundation.test.js
+npx jest --runInBand server/tests/redisAndJobQueue.test.js
+npx jest --runInBand server/tests/playLifeAudit.test.js server/tests/playLifeEngine.test.js
+npx jest --runInBand server/tests/multiplayer/whoKnowsMeBetterPhase24.test.js
+npx jest --runInBand server/tests/multiplayer/lifeAuctionPhase25.test.js
+npx jest --runInBand server/tests/multiplayer/playHubPhase26.test.js
 ```
+
+`whoKnowsMeBetterPhase24.test.js`, `lifeAuctionPhase25.test.js`, and `playHubPhase26.test.js` verify full lifecycle and security for the multiplayer platform: room creation across supported games, host-only authority controls, speed-weighted scoring, equal starting budget enforcement, outbid refund mechanisms, atomic bid placement, party game switching (`party:switch-game`), and complete privacy isolation from private user Life data.
 
 `storyEditorialAudit.test.js` and `npm run audit:stories` verify the canonical 8-story launch catalog (35,718 words, 121 sections across batches A, B, and C), reading time calculation at 200 wpm from clean readable text, valid preset bindings, section schemas (including dialogue and callouts), zero verbatim sentence or paragraph duplication across stories, and server-authoritative premium redaction. `storyReaderPersistence.integration.test.js` exercises real Mongo persistence for launch stories, verified query bounds, and API serialization.
 

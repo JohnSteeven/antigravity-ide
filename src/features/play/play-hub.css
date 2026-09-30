@@ -1,0 +1,325 @@
+.play-hub-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+  font-family: inherit;
+  color: var(--text-primary, #0f172a);
+}
+
+.play-hub-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.play-hub-eyebrow {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 0.75rem;
+}
+
+.play-hub-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary, #0f172a);
+}
+
+.play-hub-subtitle {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--text-secondary, #64748b);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* Quick Room Join Bar */
+.play-hub-join-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 640px) {
+  .play-hub-join-bar {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.play-hub-join-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .play-hub-join-info {
+    margin-bottom: 0;
+  }
+}
+
+.play-hub-join-icon {
+  font-size: 1.5rem;
+  color: #0284c7;
+}
+
+.play-hub-join-form {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .play-hub-join-form {
+    width: auto;
+  }
+}
+
+.play-hub-code-input {
+  text-transform: uppercase;
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 0.5rem;
+  width: 140px;
+  text-align: center;
+  background: var(--bg-surface-subtle, #f8fafc);
+  color: var(--text-primary, #0f172a);
+}
+
+.play-hub-join-btn {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: background 0.15s ease;
+}
+
+.play-hub-join-btn:hover {
+  background: #0369a1;
+}
+
+/* Section */
+.play-hub-section {
+  margin-bottom: 3.5rem;
+}
+
+.play-hub-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.play-hub-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.play-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .play-hub-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Card */
+.play-game-card {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.play-game-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+.play-game-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.play-game-icon {
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.play-game-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.play-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.play-badge-players {
+  background: var(--bg-surface-elevated, #f1f5f9);
+  color: var(--text-secondary, #475569);
+}
+
+.play-badge-tag {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+}
+
+.play-game-card-body h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.375rem;
+  color: var(--text-primary, #0f172a);
+}
+
+.play-game-tagline {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0284c7;
+  margin-bottom: 0.75rem;
+}
+
+.play-game-desc {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 1.5rem;
+}
+
+.play-game-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #f1f5f9);
+}
+
+.play-game-meta {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted, #94a3b8);
+}
+
+.play-game-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: #0284c7;
+  color: #ffffff;
+  padding: 0.5rem 1.125rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.play-game-action-btn:hover {
+  background: #0369a1;
+}
+
+.play-game-action-btn.is-disabled {
+  background: var(--bg-surface-elevated, #e2e8f0);
+  color: var(--text-muted, #94a3b8);
+  cursor: not-allowed;
+}
+
+/* Privacy Footer */
+.play-hub-privacy-callout {
+  background: var(--bg-surface-subtle, #f8fafc);
+  border: 1px dashed var(--border-color, #cbd5e1);
+  border-radius: 0.875rem;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Dark mode compatibility */
+body.dark-mode .play-hub-title,
+body.dark-mode .play-hub-section-title,
+body.dark-mode .play-game-card-body h3 {
+  color: #f8fafc;
+}
+
+body.dark-mode .play-hub-subtitle,
+body.dark-mode .play-game-desc,
+body.dark-mode .play-hub-privacy-callout {
+  color: #cbd5e1;
+}
+
+body.dark-mode .play-hub-join-bar,
+body.dark-mode .play-game-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-mode .play-hub-code-input {
+  background: #0f172a;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+body.dark-mode .play-badge-players {
+  background: #334155;
+  color: #cbd5e1;
+}
+
+body.dark-mode .play-game-card-footer {
+  border-top-color: #334155;
+}
+
+body.dark-mode .play-hub-privacy-callout {
+  background: #0f172a;
+  border-color: #334155;
+}

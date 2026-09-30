@@ -353,3 +353,59 @@ After a successful Mongo connection and HTTP startup, `server/cron.js` schedules
 - minute-level Life notification delivery processing.
 
 Every scheduler entry checks Mongoose readiness, so a later disconnect does not create uncontrolled database error loops. Production-required workers are not silently disabled; provider-dependent delivery reports failures/unavailability.
+
+## Email and OTP Foundation (Phase 21)
+
+```text
+HTTP / Workflow -> emailService -> emailProvider (Smtp / Test / Development) -> Provider Network
+HTTP / Auth -> otpService -> OTP Model (bcrypt hash, TTL index) -> emailService / smsService
+```
+
+The platform email and OTP architecture establishes a vendor-agnostic foundation for transactional authentication and account security:
+
+- **Email Provider Abstraction**: `emailProvider.js` decouples domain code from specific vendors. It supports SMTP (`SmtpEmailProvider`) with explicit socket/connection timeout budgets (8s default) and sanitized error handling, an in-memory test provider (`TestEmailProvider`) for hermetic Jest suites, and a development fallback (`DevelopmentEmailProvider`). In production, missing credentials fail closed with 503 `OTP_DELIVERY_UNAVAILABLE` without exposing secrets to client callers.
+- **Transactional Templates**: `emailTemplates.js` standardizes accessible, branded, high-contrast HTML and plain-text fallbacks for OTP codes, password resets, security alerts, and newsletter verification. Templates explicitly display expiry limits, request context metadata, and security advisories while omitting internal database IDs.
+- **OTP Lifecycle & Security**: Generated via `crypto.randomInt(0, 1_000_000)` (6 zero-padded digits) and stored exclusively as bcrypt hashes (`otpHash`) with a MongoDB TTL expiration index (`expiresAt`). Plaintext codes are never persisted and never logged. Verification atomically consumes the document via `findOneAndDelete` with checks for attempt caps (max 5) and expiration, preventing replay attacks. Resend requests enforce a 60-second cooldown window.
+- **Anti-Enumeration Protection**: For public password reset and OTP requests, non-existent accounts trigger a simulated bcrypt workload (`bcrypt.hash("dummy_timing_workload", 10)`) and return identical timing-resistant responses ("If an eligible account exists, an OTP will be sent").
+
+## Redis and Background Jobs Foundation (Phase 22)
+
+```text
+HTTP / Event -> JobQueue -> [Payload Validation & Deduplication] -> Job Handler -> Execution / Bounded Retry
+Domain Services -> RedisClientManager (MemoryAdapter / Node-Redis) -> Namespaced Keys (myjourney:*)
+```
+
+The Redis and Background Jobs Foundation introduces a production-oriented asynchronous execution layer:
+
+- **Redis Client Abstraction**: `redisClient.js` provides a canonical connection manager for Redis v5 (`redisManager`). It enforces namespaced keys (`myjourney:*`), server-only credential isolation, and configurable socket timeouts. In local development or test environments without an external Redis instance, it transparently uses an in-memory simulation (`MemoryRedisAdapter`). In production when `REQUIRE_REDIS=true` or when Redis-dependent drivers are selected, missing connectivity fails closed with a 503 `REDIS_UNAVAILABLE` error.
+- **Job Queue Architecture**: `jobQueue.js` implements a strictly allowlisted job system (`EMAIL_DISPATCH`, `NOTIFICATION_DISPATCH`, `MAINTENANCE_CLEANUP`, `MEDIA_SYNC`). Every job payload is strongly validated against Zod schemas before enqueueing. Arbitrary serialized functions or unsanctioned job names are rejected with 400/422.
+- **Idempotency & Deduplication**: Jobs accept deterministic `deduplicationKey` attributes with TTL caching, ensuring retries and duplicate events cannot trigger duplicate transactional emails, duplicate milestone notifications, or redundant maintenance tasks.
+- **Resilience & Bounded Retries**: Failed jobs undergo exponential backoff with a bounded retry limit (max 3). Terminal failures are logged and recorded via `activityLogRepository` without leaking sensitive credentials.
+- **Health & Graceful Shutdown**: `readiness.js` incorporates Redis and Queue states into the `/readiness` check. On process termination (`SIGTERM`/`SIGINT`), the queue drains in-flight jobs gracefully within a shutdown timeout before closing connections.
+
+## Play and Life-Adjacent Experiences (Phase 23)
+
+```text
+Play Life Engine -> Client-Side State & Reduced Motion -> No Mongo Writes / Private
+Play With Friends -> /api/multiplayer -> Mongo-Authoritative Rooms -> Guest Tokens & Socket.IO
+```
+
+The Play and Life-Adjacent architecture maintains strict domain boundaries between personal reflective tools and interactive party games:
+
+- **Play Life Engine**: Casual, reflective experience (`/play-life`) operating entirely as a deterministic, client-side state machine (`playLifeEngine.js`). It creates initial state with zero database mutations, adapts to reduced motion settings (`getMotionProfile`), and gracefully recovers from missing scenes or invalid inputs. Emotional transitions and interactive choices remain ephemeral and local to the user session, preserving personal privacy.
+- **Play With Friends & Multiplayer Architecture**: Interactive party gaming (`/play-with-friends`) operates via `/api/multiplayer/*` routes and Socket.IO. Game manifests are restricted to an allowlist (`who-knows-me-better`, `life-auction`). Room state is server-authoritative and persisted in MongoDB (`MongoRoomRepository`), protected by optimistic locking with version checks.
+- **Guest Tokens & Isolation**: Room participants receive HMAC/JWT-signed guest tokens containing room code and player ID. Tokens issued for one room cannot access or resume another. Player perspectives are serialized per-player to prevent cheating (e.g. hiding pending questions or secrets). Duplicate nicknames within a room return 409 conflict, and malformed codes or payloads are rejected via Zod/REST schema validation (422).
+- **Life vs Play Separation**: The MyJourney Life domain (`server/life/`, `/life`) is private to the authenticated user and protected by server-side authorization. Play Life and Play With Friends do not read, write, or leak Life goals, journals, habits, or private financial records.
+
+## Multiplayer Games and Play Hub (Phases 24, 25, 26)
+
+```text
+Play Hub (/play) -> Catalog Registry (Solo & Multiplayer) -> Navigation / Room Join
+Party Host -> /api/multiplayer/rooms -> Socket.IO (party:switch-game) -> Who Knows Me Better / Life Auction
+```
+
+The multi-game multiplayer platform expands party entertainment while enforcing strict server authority, zero client trust, and complete privacy from user Life records:
+
+- **Who Knows Me Better? (Phase 24)**: Live social guessing game (`server/multiplayer/games/whoKnowsMeBetter/`). The host configures personal question prompts during the setup phase; server-side state projection conceals host answers from other players until all have submitted or the deadline expires. Server calculates speed-weighted scoring (100–1000 pts) based on elapsed time within each round window. Real-time standings break ties deterministically, and host transfer/disconnection grace periods preserve party stability without accessing any user Life history.
+- **Life Auction (Phase 25)**: Strategic bidding game (`server/multiplayer/games/lifeAuction/`). All players start with an equal virtual budget (default 100 Life Coins). Bids are validated atomically by the server against current balances and minimum increments. Outbid reservations are refunded immediately. Features open ascending and sealed-bid auction rounds, mystery lots, and server-determined tie breaks. Zero persistent currency is stored, and zero private Life workspace or financial records are touched.
+- **Play Hub and Multi-Game Catalog (Phase 26)**: Centralized gaming surface (`/play`) backed by a unified catalog registry (`src/features/play/playCatalog.js` and `server/multiplayer/games/registry.js`). Exposes both solo experiences (`/play-life`, `/play/this-or-that`, `/play/rapid-reflections`) and live multiplayer experiences (`/play/who-knows-me-better`, `/play/life-auction`). In-party game switching (`party:switch-game`) permits the host of a finished party room to transition all connected guests into another game without disbanding the lobby. Solo games run client-side with complete accessibility and zero database mutation.

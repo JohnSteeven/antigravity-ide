@@ -37,6 +37,8 @@ import "./stories/story-reader.css";
 
 const PlayLifePage = lazy(() => import("./features/play-life/PlayLifePage.jsx"));
 const PlayWithFriendsPage = lazy(() => import("./features/play-with-friends/PlayWithFriendsPage.jsx"));
+const PlayHubPage = lazy(() => import("./features/play/PlayHubPage.jsx"));
+const ThisOrThatGame = lazy(() => import("./features/play/ThisOrThatGame.jsx"));
 const ArticlesPage = lazy(() => import("./components/ArticlesPage.js"));
 const ArticleDetail = lazy(() => import("./components/ArticleDetail.js"));
 const StoriesPage = lazy(() => import("./stories/StoriesPage.js"));
@@ -241,6 +243,30 @@ const appRouter = createBrowserRouter([
       {
         path: "about",
         element: withRouteFallback(<ReadMyStory />, "Opening About..."),
+      },
+      {
+        path: "play",
+        element: withRouteFallback(<PlayHubPage />, "Opening Play Hub..."),
+      },
+      {
+        path: "play/life",
+        element: <Navigate to="/play-life" replace />,
+      },
+      {
+        path: "play/this-or-that",
+        element: withRouteFallback(<ThisOrThatGame />, "Opening This or That..."),
+      },
+      {
+        path: "play/friends",
+        element: <Navigate to="/play-with-friends" replace />,
+      },
+      {
+        path: "play/who-knows-me-better",
+        element: <Navigate to="/play-with-friends" replace />,
+      },
+      {
+        path: "play/life-auction",
+        element: <Navigate to="/play-with-friends" replace />,
       },
       {
         path: "play-life",
