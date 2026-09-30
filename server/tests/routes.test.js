@@ -158,6 +158,7 @@ jest.mock('../controllers/distributionController', () => ({
 jest.mock('../controllers/searchController', () => ({
   universalSearch: (req, res) => res.json([]),
   autocomplete: (req, res) => res.json([]),
+  getHomeDiscovery: (req, res) => res.json({ continueLearning: [], recommendations: [] }),
   getGraphNeighbors: (req, res) => res.json([]),
   getGraphStats: (req, res) => res.json({}),
   reindexAll: (req, res) => res.json({}),

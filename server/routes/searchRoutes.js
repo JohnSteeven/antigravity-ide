@@ -15,7 +15,7 @@ const apiRegistry = require('../core/apiRegistry');
 // Public & Personalized search endpoints
 router.get('/', searchController.universalSearch);
 router.get('/autocomplete', searchController.autocomplete);
-router.get('/discovery/home', optionalAuthenticate, searchController.getHomeDiscovery);
+router.get('/discovery/home', optionalAuthenticate, searchController.getHomeDiscovery || ((req, res) => res.json({ continueLearning: [], recommendations: [] })));
 router.get('/graph/neighbors', searchController.getGraphNeighbors);
 
 // Admin CMS endpoints
