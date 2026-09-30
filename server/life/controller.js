@@ -24,6 +24,7 @@ const searchService = require("./services/searchService");
 const templateService = require("./services/templateService");
 const webPushService = require("./services/webPushService");
 const healthExpansionService = require("./services/healthExpansionService");
+const osExpansionService = require("./services/osExpansionService");
 
 const ok = (res, data, status = 200) => res.status(status).json({ success: true, data });
 const userId = (req) => req.user._id;
@@ -67,6 +68,7 @@ const controller = {
     await audit(req, "habit", habit._id, req.body.status);
     ok(res, habit);
   }),
+  habitAnalytics: handle("habit_analytics", async (req, res) => ok(res, await osExpansionService.getHabitAnalytics(userId(req), req.params.id, req.query))),
   logEvent: handle("event_create", async (req, res) => {
     const result = await eventService.logEvent(userId(req), req.params.itemType, req.params.id, req.body);
     if (result.event.status === "snoozed") {
@@ -88,6 +90,9 @@ const controller = {
   createGoal: handle("goal_create", async (req, res) => { const item = await lifeDataService.createGoal(userId(req), req.body); await audit(req, "goal", item._id, "create"); ok(res, item, 201); }),
   updateGoal: handle("goal_update", async (req, res) => { const item = await lifeDataService.updateGoal(userId(req), req.params.id, req.body); await audit(req, "goal", item._id, "update"); ok(res, item); }),
   archiveGoal: handle("goal_archive", async (req, res) => { const item = await lifeDataService.archiveGoal(userId(req), req.params.id); await audit(req, "goal", item._id, "archive"); ok(res, item); }),
+  goalAnalytics: handle("goal_analytics", async (req, res) => ok(res, await osExpansionService.getGoalAnalytics(userId(req), req.params.id))),
+  toggleGoalMilestone: handle("goal_milestone_toggle", async (req, res) => ok(res, await osExpansionService.toggleMilestone(userId(req), req.params.id, req.params.milestoneId, req.body.completed))),
+  addGoalMilestone: handle("goal_milestone_add", async (req, res) => ok(res, await osExpansionService.addMilestone(userId(req), req.params.id, req.body))),
 
   listTasks: handle("tasks_list", async (req, res) => ok(res, await lifeDataService.listTasks(userId(req), req.query))),
   createTask: handle("task_create", async (req, res) => { const item = await lifeDataService.createTask(userId(req), req.body); await audit(req, "task", item._id, "create"); ok(res, item, 201); }),
@@ -140,9 +145,18 @@ const controller = {
   createFinancePlan: handle("finance_plan_create", async (req, res) => { const item = await lifeDataService.createFinancePlan(userId(req), req.body); await audit(req, "finance_plan", item._id, "create"); ok(res, item, 201); }),
   updateFinancePlan: handle("finance_plan_update", async (req, res) => { const item = await lifeDataService.updateFinancePlan(userId(req), req.params.id, req.body); await audit(req, "finance_plan", item._id, "update"); ok(res, item); }),
 
+  listAccounts: handle("accounts_list", async (req, res) => ok(res, await osExpansionService.listAccounts(userId(req)))),
+  createAccount: handle("account_create", async (req, res) => { const a = await osExpansionService.createAccount(userId(req), req.body); await audit(req, "finance_account", a._id, "create"); ok(res, a, 201); }),
+  updateAccount: handle("account_update", async (req, res) => { const a = await osExpansionService.updateAccount(userId(req), req.params.id, req.body); await audit(req, "finance_account", a._id, "update"); ok(res, a); }),
+  deleteAccount: handle("account_delete", async (req, res) => { const a = await osExpansionService.deleteAccount(userId(req), req.params.id); await audit(req, "finance_account", a._id, "delete"); ok(res, { id: a._id }); }),
+  cashflowAnalytics: handle("cashflow_analytics", async (req, res) => ok(res, await osExpansionService.cashflowAnalytics(userId(req), req.query))),
+  markBillPaid: handle("bill_mark_paid", async (req, res) => { const r = await osExpansionService.markBillPaid(userId(req), req.params.id, req.body); await audit(req, "finance_plan", req.params.id, "mark_paid"); ok(res, r); }),
+
   listJournal: handle("journal_list", async (req, res) => ok(res, await lifeDataService.listJournalEntries(userId(req), req.query))),
   createJournal: handle("journal_create", async (req, res) => { const item = await lifeDataService.createJournalEntry(userId(req), req.body); await audit(req, "journal_entry", item._id, "create"); ok(res, item, 201); }),
   deleteJournal: handle("journal_delete", async (req, res) => { const item = await lifeDataService.deleteJournalEntry(userId(req), req.params.id); await audit(req, "journal_entry", item._id, "delete"); ok(res, { id: item._id }); }),
+  journalSearch: handle("journal_search", async (req, res) => ok(res, await osExpansionService.searchJournal(userId(req), req.query))),
+  journalAnalytics: handle("journal_analytics", async (req, res) => ok(res, await osExpansionService.journalAnalytics(userId(req)))),
 
   insights: handle("insights", async (req, res) => ok(res, await insightService.buildInsights(userId(req), req.query))),
   dismissInsight: handle("insight_dismiss", async (req, res) => { const item = await insightService.dismissInsight(userId(req), req.params.id); if (!item) throw notFound("Insight"); ok(res, item); }),

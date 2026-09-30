@@ -29,6 +29,7 @@ router.get("/templates", controller.templates);
 router.post("/templates/:key/apply", mutationLimiter, schemas.validate(schemas.templateApply), controller.applyTemplate);
 
 router.get("/habits", controller.listHabits);
+router.get("/habits/:id/analytics", controller.habitAnalytics);
 router.post("/habits", mutationLimiter, schemas.validate(schemas.habitCreate), controller.createHabit);
 router.patch("/habits/:id", mutationLimiter, schemas.validate(schemas.habitUpdate), controller.updateHabit);
 router.patch("/habits/:id/status", mutationLimiter, schemas.validate(require("zod").z.object({ status: require("zod").z.enum(["active", "paused", "archived"]) })), controller.setHabitStatus);
@@ -46,9 +47,12 @@ router.post("/medications", mutationLimiter, schemas.validate(schemas.medication
 router.patch("/medications/:id", mutationLimiter, schemas.validate(schemas.medicationUpdate), controller.updateMedication);
 
 router.get("/goals", controller.listGoals);
+router.get("/goals/:id/analytics", controller.goalAnalytics);
 router.post("/goals", mutationLimiter, schemas.validate(schemas.goal), controller.createGoal);
 router.patch("/goals/:id", mutationLimiter, schemas.validate(schemas.goal.partial()), controller.updateGoal);
 router.delete("/goals/:id", mutationLimiter, controller.archiveGoal);
+router.patch("/goals/:id/milestones/:milestoneId", mutationLimiter, controller.toggleGoalMilestone);
+router.post("/goals/:id/milestones", mutationLimiter, controller.addGoalMilestone);
 
 router.get("/health", controller.listHealth);
 router.get("/health/summary", controller.healthSummary);
@@ -88,8 +92,16 @@ router.delete("/money/entries/:id", mutationLimiter, controller.deleteFinance);
 router.get("/money/plans", controller.listFinancePlans);
 router.post("/money/plans", mutationLimiter, schemas.validate(schemas.financePlan), controller.createFinancePlan);
 router.patch("/money/plans/:id", mutationLimiter, controller.updateFinancePlan);
+router.post("/money/plans/:id/pay", mutationLimiter, controller.markBillPaid);
+router.get("/money/accounts", controller.listAccounts);
+router.post("/money/accounts", mutationLimiter, schemas.validate(schemas.financeAccount), controller.createAccount);
+router.patch("/money/accounts/:id", mutationLimiter, schemas.validate(schemas.financeAccountUpdate), controller.updateAccount);
+router.delete("/money/accounts/:id", mutationLimiter, controller.deleteAccount);
+router.get("/money/cashflow", controller.cashflowAnalytics);
 
 router.get("/journal", controller.listJournal);
+router.get("/journal/search", controller.journalSearch);
+router.get("/journal/analytics", controller.journalAnalytics);
 router.post("/journal", mutationLimiter, schemas.validate(schemas.journal), controller.createJournal);
 router.delete("/journal/:id", mutationLimiter, controller.deleteJournal);
 router.get("/insights", controller.insights);
