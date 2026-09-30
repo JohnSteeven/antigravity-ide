@@ -1,20 +1,21 @@
 /**
  * ─────────────────────────────────────────────────────────────────────────────
  *  searchRoutes.js  —  Enterprise Search & Knowledge Graph Routes
- *  MyJourney Platform  |  Stage 5 — Phase 25: Enterprise Search & Knowledge Graph
+ *  MyJourney Platform  |  Phase 28: Global Search / Discovery / Personalization
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 const express = require('express');
 const router = express.Router();
 const searchController = require('../controllers/searchController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/admin');
 const apiRegistry = require('../core/apiRegistry');
 
-// Public search endpoints
+// Public & Personalized search endpoints
 router.get('/', searchController.universalSearch);
 router.get('/autocomplete', searchController.autocomplete);
+router.get('/discovery/home', optionalAuthenticate, searchController.getHomeDiscovery);
 router.get('/graph/neighbors', searchController.getGraphNeighbors);
 
 // Admin CMS endpoints

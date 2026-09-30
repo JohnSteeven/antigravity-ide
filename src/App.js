@@ -16,6 +16,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import Header from "./components/Header";
 import "./styles/publicPolish.css";
 import Hero from "./components/Hero";
+import HomeDiscoverySection from "./components/home/HomeDiscoverySection.jsx";
 import StoriesSection from "./components/StoriesSection";
 import ExploreCategories from "./components/categories";
 import FeaturedArticles from "./components/FeaturedArticles";
@@ -100,6 +101,7 @@ const CodingLessonRedirect = ({ track }) => {
 const HomePage = () => (
   <main className="home-page">
     <Hero />
+    <HomeDiscoverySection />
     <StoriesSection />
     <ExploreCategories />
     <FeaturedArticles />

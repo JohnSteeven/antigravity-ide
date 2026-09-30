@@ -1,7 +1,7 @@
 /**
  * ─────────────────────────────────────────────────────────────────────────────
  *  searchController.js  —  Enterprise Search & Knowledge Graph Controller
- *  MyJourney Platform  |  Stage 5 — Phase 25: Enterprise Search & Knowledge Graph
+ *  MyJourney Platform  |  Phase 28: Global Search / Discovery / Personalization
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -31,6 +31,15 @@ exports.autocomplete = async (req, res) => {
   try {
     const suggestions = await EnterpriseSearchService.autocomplete(req.query.q);
     res.json({ success: true, data: suggestions });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getHomeDiscovery = async (req, res) => {
+  try {
+    const data = await EnterpriseSearchService.getHomeDiscovery(req.user?._id);
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

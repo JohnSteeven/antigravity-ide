@@ -417,3 +417,10 @@ The multi-game multiplayer platform expands party entertainment while enforcing 
 - **Strict Privacy Guarantees**: The Life OS domain (`/life`) remains strictly zero-knowledge and isolated to the authenticated user. Public pages, showcase engines, and search indexing never read, index, or expose private Life data.
 - **Honest Journey AI Boundaries**: Platform AI services assist with learning comprehension, code debugging, and editorial drafting. They operate under explicit boundaries and never claim authoritative medical, clinical, legal, or financial guarantees.
 - **Projects & Flagship Showcase**: The dedicated `/projects` route presents the core platform engines alongside interactive flagship games (Play Life, Play With Friends). Dynamic CMS-authored portfolio items supplement the platform showcase without overwriting canonical interactive games.
+
+### Global Search, Discovery & Home Personalization Architecture (Phase 28)
+
+- **Universal Search Engine (`/api/search`)**: Aggregates multi-domain discovery across published public Articles, Stories, Learn Courses, Coding Tracks, Creator Profiles, and Play Catalog games.
+- **Strict Privacy Isolation**: The Life OS domain (`server/life/`, `/life`) is completely excluded from search and discovery. Search never queries, indexes, or returns private Life journals, habits, finances, or moods.
+- **Sanitized Authority & Immutability**: Protected bodies and server solutions are never returned in search result projections. Draft, archived, or soft-deleted content is filtered at the database level.
+- **Home Discovery & Personalization (`/api/search/discovery/home`)**: Serves authenticated learners with Continue Learning cards (populated with course title, progress percentage, next lesson, and direct resume route). For anonymous or new users, it provides deterministic recommendations and flagship engine quick-starts without third-party tracking.
