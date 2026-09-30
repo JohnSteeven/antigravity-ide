@@ -49,6 +49,37 @@ export const lifeApi = {
   createHealth: (body) => send("/health", "POST", body),
   deleteHealth: (id) => send(`/health/${id}`, "DELETE"),
 
+  // Health Expansion & Body Measurements
+  bodyEntries: (params) => get("/health/body", params),
+  bodySummary: (params) => get("/health/body/summary", params),
+  createBodyEntry: (body) => send("/health/body", "POST", body),
+  deleteBodyEntry: (id) => send(`/health/body/${id}`, "DELETE"),
+  vitals: (params) => get("/health/vitals", params),
+
+  // Sleep Sessions & Analytics
+  sleepSessions: (params) => get("/health/sleep", params),
+  sleepAnalytics: (params) => get("/health/sleep/analytics", params),
+  createSleepSession: (body) => send("/health/sleep", "POST", body),
+  deleteSleepSession: (id) => send(`/health/sleep/${id}`, "DELETE"),
+
+  // Fitness & Strength
+  fitnessSummary: (params) => get("/fitness", params),
+  workoutSessions: (params) => get("/fitness/workouts", params),
+  createWorkoutSession: (body) => send("/fitness/workouts", "POST", body),
+  deleteWorkoutSession: (id) => send(`/fitness/workouts/${id}`, "DELETE"),
+  strengthVolume: (params) => get("/fitness/volume", params),
+
+  // Nutrition
+  nutritionEntries: (params) => get("/nutrition", params),
+  nutritionSummary: (params) => get("/nutrition/summary", params),
+  createNutritionEntry: (body) => send("/nutrition", "POST", body),
+  deleteNutritionEntry: (id) => send(`/nutrition/${id}`, "DELETE"),
+
+  // Mind & Reflection
+  mindSummary: (params) => get("/mind", params),
+  mindEntries: (params) => get("/mind/entries", params),
+  createMindEntry: (body) => send("/mind/entries", "POST", body),
+
   moneyEntries: (params) => get("/money/entries", params),
   moneySummary: (params) => get("/money/summary", params),
   createMoneyEntry: (body) => send("/money/entries", "POST", body),

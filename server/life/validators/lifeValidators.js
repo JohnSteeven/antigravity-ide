@@ -88,9 +88,11 @@ const health = z.object({
   localDate: dateKey.optional(), occurredAt: z.string().datetime().optional(), value: z.coerce.number().nullable().optional(), unit: z.string().max(40).optional(),
   startedAt: z.string().datetime().optional(), endedAt: z.string().datetime().optional(), durationMinutes: z.coerce.number().min(0).optional(),
   quality: z.coerce.number().int().min(1).max(5).nullable().optional(), mood: z.coerce.number().int().min(1).max(5).nullable().optional(), energy: z.coerce.number().int().min(1).max(5).nullable().optional(), stress: z.coerce.number().int().min(1).max(5).nullable().optional(),
+  focus: z.coerce.number().int().min(1).max(5).nullable().optional(), motivation: z.coerce.number().int().min(1).max(5).nullable().optional(),
+  emotions: z.array(z.string().trim().max(60)).max(30).optional(), contextTags: z.array(z.string().trim().max(60)).max(30).optional(),
   severity: z.coerce.number().int().min(1).max(10).nullable().optional(), label: z.string().max(160).optional(), doseText: z.string().max(160).optional(),
   workoutType: z.enum(["strength", "cardio", "mobility", "sport", "custom", ""]).optional(), exercises: z.array(z.any()).max(100).optional(), effort: z.coerce.number().min(1).max(10).nullable().optional(),
-  note: z.string().max(3000).optional(), dedupeKey: z.string().max(240).optional(), source: z.object({ type: z.enum(["manual", "import", "integration", "system"]).optional(), provider: z.string().max(80).optional(), externalId: z.string().max(200).optional(), originalTimestamp: z.string().datetime().optional(), importedAt: z.string().datetime().optional() }).optional(),
+  note: z.string().max(3000).optional(), dedupeKey: z.string().max(240).optional(), source: z.object({ type: z.enum(["manual", "phone", "wearable", "import", "integration", "system", "api", "derived"]).optional(), provider: z.string().max(80).optional(), externalId: z.string().max(200).optional(), originalTimestamp: z.string().datetime().optional(), importedAt: z.string().datetime().optional() }).optional(),
 }).passthrough();
 
 const medication = z.object({

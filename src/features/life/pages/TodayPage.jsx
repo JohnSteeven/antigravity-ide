@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router";
 import { FiArrowLeft, FiArrowRight, FiCalendar, FiCheck, FiClock, FiPlus, FiSkipForward, FiSun } from "react-icons/fi";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../../hooks/useAuth";
@@ -7,6 +8,7 @@ import useLifeQuery from "../hooks/useLifeQuery";
 import { addDateDays, formatLifeDate, localDateInput, mutationId } from "../utils/lifeFormat";
 import { LifeDialog, LifeError, LifeLoading, LifeNotice, LifePageHeader } from "../components/LifeUI";
 import CompactTodaySummary from "../components/CompactTodaySummary";
+import "../lifeExpansion.css";
 
 const periods = [
   ["all_day", "Anytime"], ["morning", "Morning"], ["afternoon", "Afternoon"], ["evening", "Evening"],
@@ -123,6 +125,39 @@ export default function TodayPage() {
         />
       </div>
       <LifeNotice tone={notice?.includes("Couldn't") ? "error" : "success"}>{notice}</LifeNotice>
+
+      {today.morningBrief && (
+        <div className="life-morning-brief">
+          <div className="life-morning-brief-header">
+            <span>☀</span> Morning Briefing
+          </div>
+          <div className="life-morning-brief-content">
+            {today.morningBrief}
+          </div>
+        </div>
+      )}
+
+      {today.signals?.length > 0 && (
+        <div className="life-signals-grid">
+          {today.signals.map((sig) => (
+            <div key={sig.name} className="life-signal-card">
+              <div className="life-signal-top">
+                <span className="life-signal-label">{sig.name}</span>
+                <span style={{ fontSize: "0.8rem", color: sig.score >= 80 ? "#34d399" : sig.score >= 60 ? "#38bdf8" : "#f59e0b", fontWeight: 600 }}>
+                  {sig.score >= 80 ? "Optimal" : sig.score >= 60 ? "Steady" : "Rebuilding"}
+                </span>
+              </div>
+              <div className="life-signal-score-row">
+                <span className="life-signal-score">{sig.score}</span>
+                <span className="life-signal-max">/ 100</span>
+              </div>
+              <div className="life-signal-formula">
+                {sig.formula}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <CompactTodaySummary today={today} />
 

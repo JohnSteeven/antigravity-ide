@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
+import { Link } from "react-router";
 import lifeApi from "../api/lifeApi";
 import useLifeQuery from "../hooks/useLifeQuery";
 import { formatMinutes, localDateInput } from "../utils/lifeFormat";
 import { LifeEmpty, LifeError, LifeLoading, LifeNotice, LifePageHeader } from "../components/LifeUI";
+import "../lifeExpansion.css";
 
 const nowInput = () => {
   const date = new Date();
@@ -57,6 +59,15 @@ export default function HealthPage() {
 
   return <div>
     <LifePageHeader eyebrow="Recorded, not judged" title="Health" description="A private, lightweight record of sleep, hydration, movement, mood, symptoms, and medication." actions={<label className="life-inline-date">Day<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>} />
+    <div className="life-subnav" style={{ marginBottom: "1.5rem" }}>
+      <Link to="/life/health" className="life-subnav-link active">Overview</Link>
+      <Link to="/life/health/body" className="life-subnav-link">Body</Link>
+      <Link to="/life/health/vitals" className="life-subnav-link">Vitals</Link>
+      <Link to="/life/health/sleep" className="life-subnav-link">Sleep</Link>
+      <Link to="/life/fitness" className="life-subnav-link">Fitness</Link>
+      <Link to="/life/nutrition" className="life-subnav-link">Nutrition</Link>
+      <Link to="/life/mind" className="life-subnav-link">Mind</Link>
+    </div>
     <div className="life-safety-note">Life records what you enter; it does not diagnose conditions or replace professional care. Seek qualified help for medical concerns.</div>
     <LifeNotice tone={notice.toLowerCase().includes("could") ? "error" : "success"}>{notice}</LifeNotice>
     <section className="life-stat-grid" aria-label="Health summary">

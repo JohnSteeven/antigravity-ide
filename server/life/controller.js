@@ -23,6 +23,7 @@ const reportService = require("./services/reportService");
 const searchService = require("./services/searchService");
 const templateService = require("./services/templateService");
 const webPushService = require("./services/webPushService");
+const healthExpansionService = require("./services/healthExpansionService");
 
 const ok = (res, data, status = 200) => res.status(status).json({ success: true, data });
 const userId = (req) => req.user._id;
@@ -104,6 +105,32 @@ const controller = {
   healthSummary: handle("health_summary", async (req, res) => ok(res, await lifeDataService.healthSummary(userId(req), req.query))),
   createHealth: handle("health_create", async (req, res) => { const item = await lifeDataService.createHealthEntry(userId(req), req.body); await audit(req, "health_entry", item._id, "create"); ok(res, item, 201); }),
   deleteHealth: handle("health_delete", async (req, res) => { const item = await lifeDataService.deleteHealthEntry(userId(req), req.params.id); await audit(req, "health_entry", item._id, "delete"); ok(res, { id: item._id }); }),
+
+  listBodyEntries: handle("body_list", async (req, res) => ok(res, await healthExpansionService.listBodyEntries(userId(req), req.query))),
+  createBodyEntry: handle("body_create", async (req, res) => { const item = await healthExpansionService.createBodyEntry(userId(req), req.body); await audit(req, "body_entry", item._id, "create"); ok(res, item, 201); }),
+  deleteBodyEntry: handle("body_delete", async (req, res) => { const item = await healthExpansionService.deleteBodyEntry(userId(req), req.params.id); await audit(req, "body_entry", item._id, "delete"); ok(res, { id: item._id }); }),
+  bodySummary: handle("body_summary", async (req, res) => ok(res, await healthExpansionService.bodySummary(userId(req), req.query))),
+  listVitals: handle("vitals_list", async (req, res) => ok(res, await healthExpansionService.listVitals(userId(req), req.query))),
+
+  listSleepSessions: handle("sleep_list", async (req, res) => ok(res, await healthExpansionService.listSleepSessions(userId(req), req.query))),
+  createSleepSession: handle("sleep_create", async (req, res) => { const item = await healthExpansionService.createSleepSession(userId(req), req.body); await audit(req, "sleep_session", item._id, "create"); ok(res, item, 201); }),
+  deleteSleepSession: handle("sleep_delete", async (req, res) => { const item = await healthExpansionService.deleteSleepSession(userId(req), req.params.id); await audit(req, "sleep_session", item._id, "delete"); ok(res, { id: item._id }); }),
+  sleepAnalytics: handle("sleep_analytics", async (req, res) => ok(res, await healthExpansionService.sleepAnalytics(userId(req), req.query))),
+
+  fitnessSummary: handle("fitness_summary", async (req, res) => ok(res, await healthExpansionService.fitnessSummary(userId(req), req.query))),
+  listWorkoutSessions: handle("workouts_list", async (req, res) => ok(res, await healthExpansionService.listWorkoutSessions(userId(req), req.query))),
+  createWorkoutSession: handle("workout_create", async (req, res) => { const item = await healthExpansionService.createWorkoutSession(userId(req), req.body); await audit(req, "workout_session", item._id, "create"); ok(res, item, 201); }),
+  deleteWorkoutSession: handle("workout_delete", async (req, res) => { const item = await healthExpansionService.deleteWorkoutSession(userId(req), req.params.id); await audit(req, "workout_session", item._id, "delete"); ok(res, { id: item._id }); }),
+  strengthVolume: handle("strength_volume", async (req, res) => ok(res, await healthExpansionService.strengthVolumeAnalytics(userId(req), req.query))),
+
+  listNutritionEntries: handle("nutrition_list", async (req, res) => ok(res, await healthExpansionService.listNutritionEntries(userId(req), req.query))),
+  nutritionSummary: handle("nutrition_summary", async (req, res) => ok(res, await healthExpansionService.nutritionSummary(userId(req), req.query))),
+  createNutritionEntry: handle("nutrition_create", async (req, res) => { const item = await healthExpansionService.createNutritionEntry(userId(req), req.body); await audit(req, "nutrition_entry", item._id, "create"); ok(res, item, 201); }),
+  deleteNutritionEntry: handle("nutrition_delete", async (req, res) => { const item = await healthExpansionService.deleteNutritionEntry(userId(req), req.params.id); await audit(req, "nutrition_entry", item._id, "delete"); ok(res, { id: item._id }); }),
+
+  listMindEntries: handle("mind_list", async (req, res) => ok(res, await healthExpansionService.listMindEntries(userId(req), req.query))),
+  mindSummary: handle("mind_summary", async (req, res) => ok(res, await healthExpansionService.mindSummary(userId(req), req.query))),
+  createMindEntry: handle("mind_create", async (req, res) => { const item = await healthExpansionService.createMindEntry(userId(req), req.body); await audit(req, "mind_entry", item._id, "create"); ok(res, item, 201); }),
 
   listFinance: handle("finance_list", async (req, res) => ok(res, await lifeDataService.listFinanceEntries(userId(req), req.query))),
   financeSummary: handle("finance_summary", async (req, res) => ok(res, await lifeDataService.financeSummary(userId(req), req.query))),

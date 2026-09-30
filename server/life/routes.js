@@ -55,6 +55,32 @@ router.get("/health/summary", controller.healthSummary);
 router.post("/health", mutationLimiter, schemas.validate(schemas.health), controller.createHealth);
 router.delete("/health/:id", mutationLimiter, controller.deleteHealth);
 
+router.get("/health/body", controller.listBodyEntries);
+router.get("/health/body/summary", controller.bodySummary);
+router.post("/health/body", mutationLimiter, schemas.validate(schemas.bodyEntry), controller.createBodyEntry);
+router.delete("/health/body/:id", mutationLimiter, controller.deleteBodyEntry);
+router.get("/health/vitals", controller.listVitals);
+
+router.get("/health/sleep", controller.listSleepSessions);
+router.get("/health/sleep/analytics", controller.sleepAnalytics);
+router.post("/health/sleep", mutationLimiter, schemas.validate(schemas.sleepSession), controller.createSleepSession);
+router.delete("/health/sleep/:id", mutationLimiter, controller.deleteSleepSession);
+
+router.get("/fitness", controller.fitnessSummary);
+router.get("/fitness/workouts", controller.listWorkoutSessions);
+router.get("/fitness/volume", controller.strengthVolume);
+router.post("/fitness/workouts", mutationLimiter, schemas.validate(schemas.workoutSession), controller.createWorkoutSession);
+router.delete("/fitness/workouts/:id", mutationLimiter, controller.deleteWorkoutSession);
+
+router.get("/nutrition", controller.listNutritionEntries);
+router.get("/nutrition/summary", controller.nutritionSummary);
+router.post("/nutrition", mutationLimiter, schemas.validate(schemas.nutritionEntry), controller.createNutritionEntry);
+router.delete("/nutrition/:id", mutationLimiter, controller.deleteNutritionEntry);
+
+router.get("/mind", controller.mindSummary);
+router.get("/mind/entries", controller.listMindEntries);
+router.post("/mind/entries", mutationLimiter, schemas.validate(schemas.health), controller.createMindEntry);
+
 router.get("/money/entries", controller.listFinance);
 router.get("/money/summary", controller.financeSummary);
 router.post("/money/entries", mutationLimiter, schemas.validate(schemas.financeEntry), controller.createFinance);

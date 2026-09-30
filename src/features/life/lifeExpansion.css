@@ -1,0 +1,401 @@
+/* MyJourney Life OS - Premium Expansion Styles */
+.life-expansion-page {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #f8fafc;
+}
+
+.life-header {
+  margin-bottom: 2rem;
+}
+
+.life-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.life-page-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.life-page-subtitle {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.life-subnav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #334155;
+  overflow-x: auto;
+}
+
+.life-subnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #94a3b8;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.life-subnav-link:hover {
+  color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.life-subnav-link.active {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+/* KPI Summary Cards Grid */
+.life-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Section Cards */
+.life-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.life-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.life-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.life-card-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+}
+
+/* Form Styling */
+.life-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.life-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.life-form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.life-input,
+.life-select,
+.life-textarea {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #f8fafc;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.life-input:focus,
+.life-select:focus,
+.life-textarea:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.life-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.life-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.life-btn-primary {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.life-btn-primary:hover {
+  background: #0369a1;
+}
+
+.life-btn-secondary {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.life-btn-secondary:hover {
+  background: #475569;
+}
+
+.life-btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #f87171;
+}
+
+.life-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Non-medical Disclaimer Notice */
+.life-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(30, 41, 59, 0.7);
+  border-left: 3px solid #38bdf8;
+  padding: 0.85rem 1rem;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.825rem;
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+}
+
+.life-disclaimer-icon {
+  color: #38bdf8;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+/* History Tables */
+.life-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #334155;
+}
+
+.life-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.life-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #334155;
+}
+
+.life-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #1e293b;
+  color: #f8fafc;
+}
+
+.life-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Emotion & Context Tags Chips */
+.life-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.life-tag-chip {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 9999px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.life-tag-chip.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+/* Morning Briefing Banner */
+.life-morning-brief {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid #334155;
+  border-left: 4px solid #38bdf8;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.life-morning-brief-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  margin-bottom: 0.5rem;
+}
+
+.life-morning-brief-content {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #f8fafc;
+  font-weight: 500;
+}
+
+/* Life Signals (WHOOP-style 0-100 indicator cards) */
+.life-signals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.life-signal-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.life-signal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.life-signal-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.life-signal-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.life-signal-score {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.life-signal-max {
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.life-signal-formula {
+  font-size: 0.775rem;
+  color: #94a3b8;
+  background: #0f172a;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  line-height: 1.4;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Strength Set Logger */
+.exercise-builder {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.set-index {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  width: 50px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .life-expansion-page {
+    padding: 1rem;
+  }
+  .life-page-title {
+    font-size: 1.5rem;
+  }
+  .life-signals-grid {
+    grid-template-columns: 1fr;
+  }
+  .life-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

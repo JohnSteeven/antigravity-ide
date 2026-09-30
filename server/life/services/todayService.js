@@ -135,7 +135,11 @@ const getToday = async (userId, requestedDate) => {
     map[item.currency] = (map[item.currency] || 0) + item.amountMinor;
     return map;
   }, {});
-  const goalProgress = await progressForGoals(userId, goals);
+  const [goalProgress, signalsData, morningBrief] = await Promise.all([
+    progressForGoals(userId, goals),
+    require("./healthExpansionService").computeLifeSignals(userId, dateKey).catch(() => null),
+    require("./healthExpansionService").generateMorningBrief(userId, dateKey).catch(() => null),
+  ]);
 
   return {
     date: dateKey,
@@ -157,6 +161,8 @@ const getToday = async (userId, requestedDate) => {
       spending,
       goals: goals.map((goal) => ({ id: String(goal._id), title: goal.title, progress: goalProgress.get(String(goal._id)) || 0, targetDate: goal.targetDate })),
     },
+    signals: signalsData?.signals || [],
+    morningBrief: morningBrief || null,
     upcomingBills: bills.map((bill) => ({ id: String(bill._id), name: bill.name, amountMinor: bill.amountMinor, currency: bill.currency })),
     reflection: journalEntry ? { id: String(journalEntry._id), saved: true, title: journalEntry.title } : { saved: false },
     visibleModules: profile.visibleModules,
