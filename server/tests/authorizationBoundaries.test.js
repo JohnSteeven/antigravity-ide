@@ -81,6 +81,9 @@ jest.mock('../controllers/readerController', () => ({
   getStoryProgress: mockOk,
   getStoryContinueReading: mockOk,
   getStoryCompleted: mockOk,
+  listNotes: mockOk,
+  createNote: mockOk,
+  deleteNote: mockOk,
 }));
 
 jest.mock('../controllers/articleController', () => ({
@@ -148,6 +151,10 @@ describe('server-authoritative authorization boundaries', () => {
     expect((await request(app).get('/api/reader/continue-reading')).status).toBe(401);
     expect((await request(app).get('/api/reader/completed')).status).toBe(401);
     expect((await request(app).get('/api/reader/progress/article-1')).status).toBe(401);
+    expect((await request(app).get('/api/reader/notes')).status).toBe(401);
+    expect((await request(app).get('/api/reader/notes').set('x-test-role', 'Reader')).status).toBe(200);
+    expect((await request(app).post('/api/reader/notes')).status).toBe(401);
+    expect((await request(app).post('/api/reader/notes').set('x-test-role', 'Reader')).status).toBe(200);
   });
 
   test('Article like, bookmark, and save reject anonymous callers', async () => {
